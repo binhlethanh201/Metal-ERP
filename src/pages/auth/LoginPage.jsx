@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Factory, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../shared/hooks/useAuth';
-import { MOCK_USERS } from '../../shared/data/mockUsers';
+import { loginRequest } from '../../services/authService';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ sdt: '', password: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -17,18 +17,28 @@ const LoginPage = () => {
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
-    const foundUser = MOCK_USERS.find(
-      (u) => u.email === formData.email && u.password === formData.password
-    );
+    try {
+      const response = await loginRequest({
+        sdt: formData.sdt,
+        phone: formData.sdt,
+        password: formData.password,
+      });
 
-    if (foundUser) {
-      const fakeToken = 'mock_token_' + Date.now();
-      const { password, ...userInfo } = foundUser;
-      login(userInfo, fakeToken);
-      switch (foundUser.role) {
+      const userInfo = response.user || {
+        sdt: formData.sdt,
+        role: 'store_owner',
+      };
+
+      // ensure `email` exists for compatibility with existing auth logic
+      userInfo.email = userInfo.email || userInfo.sdt || userInfo.phone || '';
+
+      login(userInfo, response.token);
+
+      switch (userInfo.role) {
         case 'admin':
           navigate('/admin');
           break;
@@ -42,10 +52,10 @@ const LoginPage = () => {
           navigate('/forum');
           break;
         default:
-          navigate('/');
+          navigate('/inventory');
       }
-    } else {
-      setError('Email hoặc mật khẩu không chính xác!');
+    } catch (loginError) {
+      setError(loginError?.message || 'Không thể đăng nhập vào backend');
     }
   };
 
@@ -72,20 +82,20 @@ const LoginPage = () => {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface" htmlFor="email">
-                Email
+              <label className="text-sm font-medium text-on-surface" htmlFor="sdt">
+                Số điện thoại (SĐT)
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
                   <Mail size={18} />
                 </div>
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
+                  id="sdt"
+                  name="sdt"
+                  type="tel"
                   required
-                  placeholder="ten@email.com"
-                  value={formData.email}
+                  placeholder="0912xxxxxx"
+                  value={formData.sdt}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest py-2.5 pl-10 pr-4 text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />

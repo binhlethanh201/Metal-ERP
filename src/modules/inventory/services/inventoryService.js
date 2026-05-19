@@ -3,8 +3,20 @@
  * Gọi đến apiClient và endpoints tập trung
  */
 
-import { apiGet, apiPost, apiPut, apiDelete } from '../../services/apiClient';
-import ENDPOINTS from '../../services/endpoints';
+import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
+import ENDPOINTS from '../../../services/endpoints';
+
+const buildQueryString = (filters = {}) => {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    params.set(key, value);
+  });
+
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : '';
+};
 
 // ============ Dashboard ============
 export const getInventoryDashboard = () => {
@@ -13,9 +25,7 @@ export const getInventoryDashboard = () => {
 
 // ============ Products ============
 export const getProducts = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.INVENTORY.GET_PRODUCTS}?${queryParams}`;
-  return apiGet(endpoint);
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_PRODUCTS}${buildQueryString(filters)}`);
 };
 
 export const getProduct = (id) => {
@@ -36,9 +46,7 @@ export const deleteProduct = (id) => {
 
 // ============ Stock ============
 export const getStock = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.INVENTORY.GET_STOCK}?${queryParams}`;
-  return apiGet(endpoint);
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_STOCK}${buildQueryString(filters)}`);
 };
 
 export const getStockByProduct = (productId) => {
@@ -51,9 +59,7 @@ export const updateStock = (productId, stockData) => {
 
 // ============ Stock Import ============
 export const getImports = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.INVENTORY.GET_IMPORTS}?${queryParams}`;
-  return apiGet(endpoint);
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_IMPORTS}${buildQueryString(filters)}`);
 };
 
 export const createImport = (importData) => {
@@ -66,9 +72,7 @@ export const getImport = (id) => {
 
 // ============ Stock Export ============
 export const getExports = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.INVENTORY.GET_EXPORTS}?${queryParams}`;
-  return apiGet(endpoint);
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_EXPORTS}${buildQueryString(filters)}`);
 };
 
 export const createExport = (exportData) => {
@@ -86,22 +90,18 @@ export const getLowStockAlerts = () => {
 
 // ============ Reports ============
 export const getStockReport = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.INVENTORY.GET_STOCK_REPORT}?${queryParams}`;
-  return apiGet(endpoint);
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_STOCK_REPORT}${buildQueryString(filters)}`);
 };
 
 export const getMovementReport = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.INVENTORY.GET_MOVEMENT_REPORT}?${queryParams}`;
-  return apiGet(endpoint);
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_MOVEMENT_REPORT}${buildQueryString(filters)}`);
 };
 
 export const getImportSuggestions = () => {
   return apiGet(ENDPOINTS.INVENTORY.GET_IMPORT_SUGGESTIONS);
 };
 
-export default {
+const inventoryService = {
   getInventoryDashboard,
   getProducts,
   getProduct,
@@ -122,3 +122,5 @@ export default {
   getMovementReport,
   getImportSuggestions,
 };
+
+export default inventoryService;

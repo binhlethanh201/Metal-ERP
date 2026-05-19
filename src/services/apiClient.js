@@ -13,6 +13,14 @@ const API_CONFIG = {
   },
 };
 
+const getAuthToken = () => {
+  try {
+    return sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+  } catch (error) {
+    return null;
+  }
+};
+
 /**
  * Hàm wrapper cho tất cả API requests
  * @param {string} endpoint - Đường dẫn API (không cần base URL)
@@ -37,7 +45,7 @@ export const apiClient = async (endpoint, options = {}) => {
   }
 
   // Thêm Authorization header nếu có token
-  const token = localStorage.getItem('authToken');
+  const token = getAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -54,8 +62,19 @@ export const apiClient = async (endpoint, options = {}) => {
       throw error;
     }
 
-    // Parse response
-    const data = await response.json();
+    // Parse response linh hoạt theo JSON hoặc text
+    const responseText = await response.text();
+    if (!responseText) {
+      return null;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      data = responseText;
+    }
+
     return data;
   } catch (error) {
     console.error(`API Error [${config.method} ${endpoint}]:`, error);

@@ -1,6 +1,13 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import MaterialIcon from '../components/MaterialIcon';
 import EditProductModal from '../components/EditProductModal';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import {
+  createProduct,
+  deleteProduct,
+  getProducts,
+  updateProduct,
+} from '../services/inventoryService';
 
 const topTabs = [
   { key: 'inventory', label: 'Kho hàng', icon: 'inventory_2' },
@@ -200,6 +207,118 @@ const inventoryRows = [
   },
 ];
 
+const extractProductList = (response) => {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.items)) return response.items;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.result?.items)) return response.result.items;
+  return [];
+};
+
+const normalizeProduct = (product, index) => {
+  const id =
+    product?.id ||
+    product?.Id ||
+    product?.productId ||
+    product?.ProductId ||
+    product?.productCode ||
+    product?.ProductCode ||
+    `API-${index + 1}`;
+  const stock = Number(
+    product?.actualStock ??
+      product?.ActualStock ??
+      product?.initialStock ??
+      product?.InitialStock ??
+      product?.stock ??
+      product?.Stock ??
+      0
+  );
+
+  return {
+    id,
+    name: product?.productName || product?.ProductName || product?.name || product?.Name || '',
+    // map common image fields from API to `image` used by UI
+    image:
+      product?.image ||
+      product?.ImageUrl ||
+      product?.imageUrl ||
+      (Array.isArray(product?.images) && product.images[0]) ||
+      (Array.isArray(product?.Images) && product.Images[0]) ||
+      product?.thumbnailUrl ||
+      product?.Thumbnail ||
+      '',
+    unit: product?.unit || product?.Unit || '',
+    brand: product?.brandName || product?.BrandName || product?.brand || product?.Brand || '',
+    salePrice: Number(
+      product?.sellPrice ?? product?.SellPrice ?? product?.price ?? product?.Price ?? 0
+    ),
+    costPrice: Number(product?.costPrice ?? product?.CostPrice ?? 0),
+    stock,
+    location:
+      product?.shelfLocation ||
+      product?.ShelfLocation ||
+      product?.location ||
+      product?.Location ||
+      '',
+    status: stock > 0 ? 'Sẵn hàng' : 'Hết hàng',
+    statusTone: stock > 0 ? 'green' : 'red',
+    createdAt: product?.createdAt || product?.CreatedAt || '',
+    group: product?.categoryName || product?.CategoryName || product?.group || product?.Group || '',
+    barcode: product?.barcode || product?.Barcode || 'Chưa có',
+    stockLevel:
+      (product?.minimumStock ?? product?.MinimumStock)
+        ? `${product?.minimumStock ?? product?.MinimumStock} - ${stock}`
+        : 'Chưa có',
+    weight: product?.weight || product?.Weight || 'Chưa có',
+    dimension: product?.dimension || product?.Dimension || 'Chưa có',
+    supplier: product?.supplierName || product?.SupplierName || 'Chưa có',
+    itemType: product?.itemType || product?.ItemType || 'Hàng hóa thường',
+    directSale: Boolean(product?.directSale ?? product?.DirectSale ?? true),
+    salesChannelLinked: Boolean(
+      product?.salesChannelLinked ?? product?.SalesChannelLinked ?? false
+    ),
+    productStatus: (product?.isActive ?? product?.IsActive) === false ? 'inactive' : 'active',
+    estimatedOutAt: product?.estimatedOutAt || product?.EstimatedOutAt || '',
+  };
+};
+
+const createProductPayload = (form) => ({
+  CategoryId: null,
+  BrandId: null,
+  WarehouseId: null,
+  ProductCode: form.id || '',
+  Barcode: form.barcode || '',
+  ProductName: form.name || '',
+  Unit: form.baseUnit?.name || form.unit || 'Cái',
+  Specification: form.group || '',
+  CostPrice: Number(form.costPrice || 0),
+  SellPrice: Number(form.salePrice || 0),
+  InitialStock: Number(form.stock || 0),
+  MinimumStock: Number(form.stockMin || 0),
+  ShelfLocation: form.location || form.locations?.[0] || '',
+  ImageUrl: form.image || '',
+});
+
+const updateProductPayload = (form) => ({
+  CategoryId: null,
+  BrandId: null,
+  WarehouseId: null,
+  ProductCode: form.id || '',
+  Barcode: form.barcode || '',
+  ProductName: form.name || '',
+  Unit: form.baseUnit?.name || form.unit || 'Cái',
+  Specification: form.group || '',
+  CostPrice: Number(form.costPrice || 0),
+  SellPrice: Number(form.salePrice || 0),
+  ActualStock: Number(form.stock || 0),
+  ReservedStock: 0,
+  MinimumStock: Number(form.stockMin || 0),
+  ShelfLocation: form.location || form.locations?.[0] || '',
+  ImageUrl: form.image || '',
+  IsActive: form.productStatus !== 'inactive',
+});
+
 const toneClass = {
   green: 'bg-green-100 text-green-700',
   amber: 'bg-amber-100 text-amber-700',
@@ -335,6 +454,10 @@ export const ProductManagement = () => {
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [expandedId, setExpandedId] = useState('SP34405804');
   const [products, setProducts] = useState(inventoryRows);
+  const [apiStatus, setApiStatus] = useState({ loading: true, error: '' });
+  const [isRemoteData, setIsRemoteData] = useState(false);
+  // re-fetch when auth token becomes available so users who login while on this page will get data
+  const { token } = useAuth();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [search, setSearch] = useState('');
@@ -370,6 +493,54 @@ export const ProductManagement = () => {
       document.body.classList.remove('overflow-hidden');
     };
   }, [isHubOpen]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadProducts = async () => {
+      setApiStatus({ loading: true, error: '' });
+
+      try {
+        const response = await getProducts({ Page: 1, PageSize: 100 });
+        // Debug: log raw API response to help trace missing data
+        // (temporary - can be removed after diagnosing)
+        // eslint-disable-next-line no-console
+        console.debug('[ProductManagement] getProducts response:', response);
+        const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
+
+        if (!isActive) return;
+
+        setIsRemoteData(true);
+
+        if (items.length > 0) {
+          setProducts(items);
+        }
+
+        setApiStatus({ loading: false, error: '' });
+      } catch (error) {
+        // Debug: log error details
+        // eslint-disable-next-line no-console
+        console.error('[ProductManagement] getProducts error:', error);
+        if (!isActive) return;
+
+        setProducts(inventoryRows);
+        setIsRemoteData(false);
+        setApiStatus({
+          loading: false,
+          error:
+            error?.status === 401
+              ? 'API đang yêu cầu JWT. Hãy đăng nhập thật hoặc dán token vào Swagger Authorize.'
+              : 'Không tải được dữ liệu từ API, đang dùng dữ liệu mẫu.',
+        });
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      isActive = false;
+    };
+  }, [token]);
 
   useEffect(() => {
     const onClickOutside = (event) => {
@@ -470,6 +641,7 @@ export const ProductManagement = () => {
       return sortConfig.direction === 'asc' ? compare : -compare;
     });
   }, [
+    products,
     search,
     sortConfig,
     groupKeyword,
@@ -487,9 +659,64 @@ export const ProductManagement = () => {
   ]);
 
   const handleSaveProduct = (updated) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
-    setEditModalOpen(false);
-    setProductToEdit(null);
+    const saveProduct = async () => {
+      const payload = productToEdit ? updateProductPayload(updated) : createProductPayload(updated);
+
+      try {
+        if (isRemoteData) {
+          if (productToEdit?.id) {
+            await updateProduct(productToEdit.id, payload);
+          } else {
+            await createProduct(payload);
+          }
+
+          const response = await getProducts({ Page: 1, PageSize: 100 });
+          const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
+          setProducts(items.length > 0 ? items : inventoryRows);
+        } else {
+          setProducts((prev) => {
+            if (productToEdit) {
+              return prev.map((p) => (p.id === productToEdit.id ? { ...p, ...updated } : p));
+            }
+
+            return [
+              {
+                ...updated,
+                status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
+                statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
+              },
+              ...prev,
+            ];
+          });
+        }
+
+        setApiStatus((current) => ({ ...current, error: '' }));
+        setEditModalOpen(false);
+        setProductToEdit(null);
+      } catch (error) {
+        alert(error?.message || 'Không thể lưu hàng hóa vào API');
+      }
+    };
+
+    saveProduct();
+  };
+
+  const handleDeleteProduct = async (row) => {
+    const confirmed = window.confirm(`Xóa hàng hóa ${row.name}?`);
+    if (!confirmed) return;
+
+    try {
+      if (isRemoteData) {
+        await deleteProduct(row.id);
+        const response = await getProducts({ Page: 1, PageSize: 100 });
+        const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
+        setProducts(items.length > 0 ? items : inventoryRows);
+      } else {
+        setProducts((prev) => prev.filter((item) => item.id !== row.id));
+      }
+    } catch (error) {
+      alert(error?.message || 'Không thể xóa hàng hóa');
+    }
   };
 
   const toggleSort = (key) => {
@@ -698,6 +925,20 @@ export const ProductManagement = () => {
             </button>
           ))}
         </nav>
+      </div>
+
+      <div className="mx-auto flex max-w-[1600px] px-6 pt-3">
+        <div
+          className={`rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${
+            apiStatus.error
+              ? 'border-amber-200 bg-amber-50 text-amber-700'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+          }`}
+        >
+          {apiStatus.loading
+            ? 'Đang đồng bộ dữ liệu API...'
+            : apiStatus.error || 'Đã đồng bộ dữ liệu sản phẩm từ API'}
+        </div>
       </div>
 
       <div className="relative mx-auto flex max-w-[1600px] gap-6 px-6 pb-6 pt-4">
@@ -1149,6 +1390,10 @@ export const ProductManagement = () => {
               <button
                 type="button"
                 className="flex items-center gap-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+                onClick={() => {
+                  setProductToEdit(null);
+                  setEditModalOpen(true);
+                }}
               >
                 <MaterialIcon name="add" className="text-sm" />
                 <span>Tạo mới</span>
@@ -1461,6 +1706,10 @@ export const ProductManagement = () => {
                                   <div className="flex gap-4">
                                     <button
                                       type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteProduct(row);
+                                      }}
                                       className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-red-600"
                                     >
                                       <MaterialIcon name="delete" className="text-[18px]" />
@@ -1533,7 +1782,7 @@ export const ProductManagement = () => {
           </div>
         </div>
       </div>
-      {productToEdit && (
+      {editModalOpen && (
         <EditProductModal
           open={editModalOpen}
           onClose={() => {
@@ -1542,6 +1791,7 @@ export const ProductManagement = () => {
           }}
           product={productToEdit}
           onSave={handleSaveProduct}
+          title={productToEdit ? 'Sửa hàng hóa' : 'Thêm hàng hóa'}
         />
       )}
     </div>

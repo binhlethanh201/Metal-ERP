@@ -10,11 +10,11 @@ export const ENDPOINTS = {
     DASHBOARD: '/inventory/dashboard',
 
     // Products
-    GET_PRODUCTS: '/inventory/products',
-    GET_PRODUCT: (id) => `/inventory/products/${id}`,
-    CREATE_PRODUCT: '/inventory/products',
-    UPDATE_PRODUCT: (id) => `/inventory/products/${id}`,
-    DELETE_PRODUCT: (id) => `/inventory/products/${id}`,
+    GET_PRODUCTS: '/api/products',
+    GET_PRODUCT: (id) => `/api/products/${id}`,
+    CREATE_PRODUCT: '/api/products',
+    UPDATE_PRODUCT: (id) => `/api/products/${id}`,
+    DELETE_PRODUCT: (id) => `/api/products/${id}`,
 
     // Stock
     GET_STOCK: '/inventory/stock',
@@ -104,12 +104,12 @@ export const ENDPOINTS = {
 
   // ============ AUTH (Xác thực) ============
   AUTH: {
-    LOGIN: '/auth/login',
-    LOGOUT: '/auth/logout',
-    REGISTER: '/auth/register',
-    REFRESH_TOKEN: '/auth/refresh',
-    GET_PROFILE: '/auth/profile',
-    UPDATE_PROFILE: '/auth/profile',
+    LOGIN: '/api/auth/login',
+    LOGOUT: '/api/auth/logout',
+    REGISTER: '/api/auth/register',
+    REFRESH_TOKEN: '/api/auth/refresh',
+    GET_PROFILE: '/api/auth/profile',
+    UPDATE_PROFILE: '/api/auth/profile',
   },
 
   // ============ COMMON (Chung) ============
