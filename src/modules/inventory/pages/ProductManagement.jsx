@@ -481,6 +481,8 @@ export const ProductManagement = () => {
   const [directSaleFilter, setDirectSaleFilter] = useState('all');
   const [salesChannelFilter, setSalesChannelFilter] = useState('all');
   const [productStatusFilter, setProductStatusFilter] = useState('active');
+  const [pageSize, setPageSize] = useState(15);
+  const [currentPage, setCurrentPage] = useState(1);
   const estimatedRef = useRef(null);
   const createdRef = useRef(null);
   const statusDropdownRef = useRef(null);
@@ -561,7 +563,7 @@ export const ProductManagement = () => {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  const displayedRows = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const filtered = products.filter((row) => {
       const q = search.trim().toLowerCase();
       const isSearchMatched =
@@ -657,6 +659,31 @@ export const ProductManagement = () => {
     createdRange,
     estimatedRange,
   ]);
+
+  // Phân trang dữ liệu
+  const displayedRows = useMemo(() => {
+    const startIdx = (currentPage - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+    return filteredRows.slice(startIdx, endIdx);
+  }, [filteredRows, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(filteredRows.length / pageSize);
+  const startRowNum = filteredRows.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endRowNum = Math.min(currentPage * pageSize, filteredRows.length);
+
+  // Ensure current page is within bounds when filteredRows or pageSize change
+  useEffect(() => {
+    if (totalPages === 0) {
+      setCurrentPage(1);
+    } else if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages]);
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
 
   const handleSaveProduct = (updated) => {
     const saveProduct = async () => {
@@ -1498,8 +1525,16 @@ export const ProductManagement = () => {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded bg-slate-100">
-                                <MaterialIcon name="image" className="text-xl text-slate-400" />
+                              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-slate-100">
+                                {row.image ? (
+                                  <img
+                                    src={row.image}
+                                    alt={row.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <MaterialIcon name="image" className="text-xl text-slate-400" />
+                                )}
                               </div>
                               <span className="font-medium text-primary">{row.id}</span>
                             </div>
@@ -1585,7 +1620,10 @@ export const ProductManagement = () => {
                                 <div className="mb-8 mt-3 flex gap-8">
                                   <div className="h-32 w-32 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                     <img
-                                      src="https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=300&auto=format&fit=crop"
+                                      src={
+                                        row.image ||
+                                        'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=300&auto=format&fit=crop'
+                                      }
                                       alt={row.name}
                                       className="h-full w-full object-cover"
                                     />
@@ -1770,13 +1808,41 @@ export const ProductManagement = () => {
               <div className="flex items-center gap-4 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                   <span>Hiển thị</span>
-                  <select className="rounded border border-slate-300 px-2 py-1 text-xs focus:border-primary focus:ring-primary">
-                    <option>15 dòng</option>
-                    <option>30 dòng</option>
-                    <option>50 dòng</option>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs focus:border-primary focus:ring-primary"
+                  >
+                    <option value={15}>15 dòng</option>
+                    <option value={30}>30 dòng</option>
+                    <option value={50}>50 dòng</option>
                   </select>
                 </div>
-                <span>{`1 - ${displayedRows.length} trong ${displayedRows.length} hàng hóa`}</span>
+                <span>{`${startRowNum} - ${endRowNum} trong ${filteredRows.length} hàng hóa`}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className={`rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  <MaterialIcon name="chevron_left" className="text-[18px]" />
+                </button>
+
+                <div className="px-3 text-sm text-slate-700">
+                  Trang {totalPages === 0 ? 1 : currentPage} / {totalPages === 0 ? 1 : totalPages}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className={`rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  <MaterialIcon name="chevron_right" className="text-[18px]" />
+                </button>
               </div>
             </div>
           </div>
