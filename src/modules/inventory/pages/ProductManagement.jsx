@@ -678,7 +678,7 @@ export const ProductManagement = () => {
     } else if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
-  }, [totalPages]);
+  }, [totalPages, currentPage]);
 
   const handlePageSizeChange = (newSize) => {
     setPageSize(newSize);
