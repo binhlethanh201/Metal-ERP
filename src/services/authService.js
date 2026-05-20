@@ -160,11 +160,18 @@ export const loginRequest = async (credentials) => {
   }
 };
 
-export const registerRequest = async (payload) => authRequest(ENDPOINTS.AUTH.REGISTER, payload);
+export const registerStartRequest = async (payload) => {
+  return authRequest(ENDPOINTS.AUTH.REGISTER_START, payload);
+};
+
+export const registerVerifyRequest = async (payload) => {
+  return authRequest(ENDPOINTS.AUTH.REGISTER_VERIFY, payload);
+};
 
 const authService = {
   loginRequest,
-  registerRequest,
+  registerStartRequest,
+  registerVerifyRequest
 };
 
 export default authService;

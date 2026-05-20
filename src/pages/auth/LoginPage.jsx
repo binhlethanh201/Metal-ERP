@@ -33,7 +33,6 @@ const LoginPage = () => {
         role: 'store_owner',
       };
 
-      // ensure `email` exists for compatibility with existing auth logic
       userInfo.email = userInfo.email || userInfo.sdt || userInfo.phone || '';
 
       login(userInfo, response.token);
@@ -94,7 +93,7 @@ const LoginPage = () => {
                   name="sdt"
                   type="tel"
                   required
-                  placeholder="0912xxxxxx"
+                  placeholder=""
                   value={formData.sdt}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest py-2.5 pl-10 pr-4 text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -117,7 +116,7 @@ const LoginPage = () => {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="••••••••"
+                  placeholder=""
                   value={formData.password}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest py-2.5 pl-10 pr-10 text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"

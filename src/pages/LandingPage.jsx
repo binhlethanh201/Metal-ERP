@@ -58,7 +58,7 @@ const LandingPage = () => {
 
         <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary shadow-sm backdrop-blur-sm">
           <Sparkles size={16} className="animate-pulse" />
-          Phiên bản MVP
+          Phiên bản Demo
         </div>
 
         <h1 className="mb-6 max-w-4xl text-4xl font-black leading-tight text-on-surface md:text-[3.5rem] md:leading-[1.15]">
