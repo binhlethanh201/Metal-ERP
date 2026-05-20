@@ -128,6 +128,10 @@ export const ForumCategory = ({ categoryId = 1 }) => {
           </div>
         </main>
       </div>
+      <CreatePostModal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setIsCreatePostModalOpen(false)}
+      />
     </div>
   );
 };

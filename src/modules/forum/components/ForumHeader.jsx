@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router-dom';
-
 const MaterialIcon = ({ name, className = '', fill = false }) => (
   <span
     className={`material-symbols-outlined ${className}`}
@@ -14,8 +12,6 @@ const MaterialIcon = ({ name, className = '', fill = false }) => (
  * @param {Function} onCreatePostClick - Callback khi bấm nút đăng bài
  */
 const ForumHeader = ({ onCreatePostClick = () => {} }) => {
-  const navigate = useNavigate();
-
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white font-['Be_Vietnam_Pro'] antialiased dark:border-slate-800 dark:bg-slate-900">
       <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-2">

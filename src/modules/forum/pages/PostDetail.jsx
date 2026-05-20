@@ -3,7 +3,6 @@
  */
 
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import ForumHeader from '../components/ForumHeader';
 import CreatePostModal from '../components/CreatePostModal';
 import ForumLeftSidebar from '../components/ForumLeftSidebar';
@@ -53,7 +52,6 @@ const ProductThumbnail = ({ name }) => (
 );
 
 export const PostDetail = ({ postId = 1 }) => {
-  const navigate = useNavigate();
   const [commentText, setCommentText] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [isVoted, setIsVoted] = useState(false);
