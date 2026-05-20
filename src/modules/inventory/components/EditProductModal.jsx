@@ -60,7 +60,8 @@ const mapProductToForm = (source = {}) => {
       source.ActualStock ??
       0,
     stockMin: source.minimumStock ?? source.MinimumStock ?? 0,
-    stockMax: source.maximumStock ?? source.MaximumStock ?? 10,
+    minimumStock: source.minimumStock ?? source.MinimumStock ?? 0,
+    stockMax: source.maximumStock ?? source.MaximumStock ?? 0,
     locations: source.locations || source.Locations || [],
     shelfLocation:
       source.shelfLocation || source.ShelfLocation || source.location || source.Location || '',
@@ -311,6 +312,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
       reservedStock: 0,
       availableStock: 0,
       stockMin: 0,
+      minimumStock: 0,
       stockMax: 0,
       locations: [],
       shelfLocation: '',
@@ -804,7 +806,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                   subtitle="Quản lý số lượng tồn kho và định mức tồn. Khi tồn kho chạm đến định mức, bạn sẽ nhận được cảnh báo."
                   defaultOpen
                 >
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <div className="space-y-2">
                       <label className="text-label-md text-on-surface-variant">
                         Tồn kho hiện tại
@@ -823,8 +825,14 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                       <input
                         className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right focus:ring-0"
                         type="text"
-                        value={form.stockMin || '0'}
-                        onChange={(event) => handleChange('stockMin', event.target.value)}
+                        value={form.minimumStock ?? form.stockMin ?? '0'}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            minimumStock: event.target.value,
+                            stockMin: event.target.value,
+                          }))
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -834,7 +842,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                       <input
                         className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right focus:ring-0"
                         type="text"
-                        value={form.stockMax || '10'}
+                        value={form.stockMax ?? '0'}
                         onChange={(event) => handleChange('stockMax', event.target.value)}
                       />
                     </div>
@@ -950,7 +958,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="mt-6 space-y-2 border-t border-outline-variant/60 pt-5">
                     <label className="text-label-md text-on-surface-variant">Kích thước</label>
                     <div className="max-w-lg">
                       <label className="sr-only">Kích thước - Rộng</label>
@@ -985,6 +993,21 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-6 space-y-2">
+                    <label className="text-label-md text-on-surface-variant">Quy cách</label>
+                    <input
+                      className="text-body-md w-full max-w-lg rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 focus:ring-0"
+                      type="text"
+                      placeholder="Ví dụ: 20x30cm, 2kg"
+                      value={form.specification || ''}
+                      onChange={(event) => handleChange('specification', event.target.value)}
+                    />
+                    <p className="text-body-sm max-w-lg text-on-surface-variant">
+                      Có thể nhập tay hoặc để trống để hệ thống tự ghép từ chiều rộng, chiều dài và
+                      trọng lượng.
+                    </p>
                   </div>
                 </Section>
 

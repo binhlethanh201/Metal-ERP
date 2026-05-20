@@ -216,6 +216,29 @@ const extractProductList = (response) => {
   return [];
 };
 
+const buildDimensionText = (product = {}) => {
+  const specification = product?.specification || product?.Specification || '';
+  if (specification) return specification;
+
+  const width = product?.width || product?.Width || '';
+  const length = product?.length || product?.Length || '';
+  const weight = product?.weight || product?.Weight || '';
+  const weightUnit = product?.weightUnit || product?.WeightUnit || '';
+  const sizeUnit = product?.sizeUnit || product?.SizeUnit || '';
+
+  const sizeParts = [width, length].filter(
+    (value) => value !== undefined && value !== null && `${value}`.trim() !== ''
+  );
+  const sizeText = sizeParts.join(' x ');
+  const weightText = weight ? `${weight}${weightUnit || ''}` : '';
+
+  if (sizeText && weightText && sizeUnit) return `${sizeText}${sizeUnit}, ${weightText}`;
+  if (sizeText && weightText) return `${sizeText}, ${weightText}`;
+  if (sizeText && sizeUnit) return `${sizeText}${sizeUnit}`;
+  if (sizeText) return sizeText;
+  return weightText || '';
+};
+
 const normalizeProduct = (product, index) => {
   const resolveImageUrl = (value) => {
     if (!value) return '';
@@ -299,7 +322,7 @@ const normalizeProduct = (product, index) => {
         : 'Chưa có',
     minimumStock: Number(product?.minimumStock ?? product?.MinimumStock ?? 0),
     weight: product?.weight || product?.Weight || 'Chưa có',
-    dimension: product?.dimension || product?.Dimension || 'Chưa có',
+    dimension: product?.dimension || product?.Dimension || buildDimensionText(product) || 'Chưa có',
     supplier: product?.supplierName || product?.SupplierName || 'Chưa có',
     itemType: product?.itemType || product?.ItemType || 'Hàng hóa thường',
     directSale: Boolean(product?.directSale ?? product?.DirectSale ?? true),
@@ -317,13 +340,20 @@ const buildSpecification = (form) => {
   const sizeParts = [form.width, form.length].filter(
     (value) => value !== undefined && value !== null && `${value}`.trim() !== ''
   );
-  if (!sizeParts.length && !form.height) return '';
+  const weightText = [form.weight, form.weightUnit].filter(
+    (value) => value !== undefined && value !== null && `${value}`.trim() !== ''
+  );
+  if (!sizeParts.length && !weightText.length && !form.height) return '';
 
   const sizeText = sizeParts.join(' x ');
   const unit = form.sizeUnit || form.weightUnit || '';
+  const weightValue = form.weight ? `${form.weight}${form.weightUnit || ''}` : '';
 
+  if (sizeText && weightValue && unit) return `${sizeText}${unit}, ${weightValue}`;
+  if (sizeText && weightValue) return `${sizeText}, ${weightValue}`;
   if (sizeText && unit) return `${sizeText}${unit}`;
   if (sizeText) return sizeText;
+  if (weightValue) return weightValue;
   if (form.height && unit) return `${form.height}${unit}`;
   return `${form.height || ''}`.trim();
 };
@@ -339,7 +369,7 @@ const createProductPayload = (form) => ({
   ActualStock: Number(form.stock || 0),
   ReservedStock: Number(form.reservedStock || 0),
   AvailableStock: Number(form.availableStock ?? form.stock ?? 0),
-  MinimumStock: Number(form.stockMin || 0),
+  MinimumStock: Number(form.minimumStock ?? form.stockMin ?? 0),
   ShelfLocation: form.shelfLocation || form.location || form.locations?.[0] || '',
   ImageUrl: form.image || '',
   Images: (form.images || []).map((i) => i?.url || ''),
@@ -359,7 +389,7 @@ const updateProductPayload = (form) => ({
   ActualStock: Number(form.stock || 0),
   ReservedStock: Number(form.reservedStock || 0),
   AvailableStock: Number(form.availableStock ?? form.stock ?? 0),
-  MinimumStock: Number(form.stockMin || 0),
+  MinimumStock: Number(form.minimumStock ?? form.stockMin ?? 0),
   ShelfLocation: form.shelfLocation || form.location || form.locations?.[0] || '',
   ImageUrl: form.image || '',
   Images: (form.images || []).map((i) => i?.url || ''),
