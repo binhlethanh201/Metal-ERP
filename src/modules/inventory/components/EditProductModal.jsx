@@ -579,12 +579,14 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
         {/* Tabs */}
         <div className="flex h-12 border-b border-gray-200">
           <button
+            type="button"
             onClick={() => setActiveTab('info')}
             className={`flex h-12 items-center px-4 text-sm tracking-wider ${activeTab === 'info' ? 'border-b-2 border-transparent font-semibold text-gray-700' : 'text-gray-500'}`}
           >
             Thông tin
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('description')}
             className={`flex h-12 items-center px-4 text-sm tracking-wider ${activeTab === 'description' ? 'border-b-2 border-blue-600 font-semibold text-blue-600' : 'text-gray-500'}`}
           >
@@ -958,7 +960,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                     </div>
                   </div>
 
-                  <div className="mt-6 space-y-2 border-t border-outline-variant/60 pt-5">
+                  <div className="space-y-2">
                     <label className="text-label-md text-on-surface-variant">Kích thước</label>
                     <div className="max-w-lg">
                       <label className="sr-only">Kích thước - Rộng</label>
@@ -993,21 +995,6 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="mt-6 space-y-2">
-                    <label className="text-label-md text-on-surface-variant">Quy cách</label>
-                    <input
-                      className="text-body-md w-full max-w-lg rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 focus:ring-0"
-                      type="text"
-                      placeholder="Ví dụ: 20x30cm, 2kg"
-                      value={form.specification || ''}
-                      onChange={(event) => handleChange('specification', event.target.value)}
-                    />
-                    <p className="text-body-sm max-w-lg text-on-surface-variant">
-                      Có thể nhập tay hoặc để trống để hệ thống tự ghép từ chiều rộng, chiều dài và
-                      trọng lượng.
-                    </p>
                   </div>
                 </Section>
 
@@ -1294,6 +1281,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
 
                       <div>
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             addAttrRow();
