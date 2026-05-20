@@ -7,6 +7,82 @@ const formatMoney = (value) => {
   return new Intl.NumberFormat('vi-VN').format(numberValue);
 };
 
+const mapProductToForm = (source = {}) => {
+  const resolveImageUrl = (value) => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      return (
+        value.url || value.Url || value.imageUrl || value.ImageUrl || value.src || value.path || ''
+      );
+    }
+    return '';
+  };
+
+  const productId = source.productId || source.ProductId || source.id || source.Id || '';
+  const productCode = source.productCode || source.ProductCode || source.code || source.Code || '';
+  const imageUrl =
+    resolveImageUrl(source.image) ||
+    resolveImageUrl(source.ImageUrl) ||
+    resolveImageUrl(source.imageUrl) ||
+    resolveImageUrl(source.ImageURL);
+
+  const imageList = Array.isArray(source.images)
+    ? source.images.map((item, index) => ({
+        id: item?.id || item?.Id || `${Date.now()}-${index}`,
+        url: resolveImageUrl(item),
+      }))
+    : Array.isArray(source.Images)
+      ? source.Images.map((item, index) => ({
+          id: item?.id || item?.Id || `${Date.now()}-${index}`,
+          url: resolveImageUrl(item),
+        }))
+      : [];
+
+  return {
+    id: productCode || productId,
+    productId,
+    productCode,
+    barcode: source.barcode || source.Barcode || '',
+    name: source.productName || source.ProductName || source.name || source.Name || '',
+    group: source.categoryName || source.CategoryName || source.group || source.Group || '',
+    brand: source.brandName || source.BrandName || source.brand || source.Brand || '',
+    image: imageUrl,
+    images: imageList,
+    costPrice: source.costPrice ?? source.CostPrice ?? '',
+    salePrice: source.sellPrice ?? source.SellPrice ?? source.price ?? source.Price ?? '',
+    stock: source.actualStock ?? source.ActualStock ?? source.stock ?? source.Stock ?? 0,
+    reservedStock: source.reservedStock ?? source.ReservedStock ?? 0,
+    availableStock:
+      source.availableStock ??
+      source.AvailableStock ??
+      source.actualStock ??
+      source.ActualStock ??
+      0,
+    stockMin: source.minimumStock ?? source.MinimumStock ?? 0,
+    stockMax: source.maximumStock ?? source.MaximumStock ?? 10,
+    locations: source.locations || source.Locations || [],
+    shelfLocation:
+      source.shelfLocation || source.ShelfLocation || source.location || source.Location || '',
+    specification: source.specification || source.Specification || '',
+    unit: source.unit || source.Unit || '',
+    baseUnit: {
+      name: source.unit || source.Unit || '',
+      price: source.sellPrice ?? source.SellPrice ?? source.price ?? source.Price ?? '',
+      directSale: source.directSale ?? source.DirectSale ?? true,
+    },
+    weight: source.weight || source.Weight || '',
+    weightUnit: source.weightUnit || source.WeightUnit || 'g',
+    width: source.width || source.Width || '',
+    length: source.length || source.Length || '',
+    height: source.height || source.Height || '',
+    sizeUnit: source.sizeUnit || source.SizeUnit || '',
+    conversionUnits: source.conversionUnits || source.ConversionUnits || [],
+    attributes: source.attributes || source.Attributes || [],
+    productStatus: (source.isActive ?? source.IsActive) === false ? 'inactive' : 'active',
+  };
+};
+
 // Component Section có thể ẩn/hiện nội dung bằng cách click vào header
 // Dùng mũi tên bên phải để biểu thị trạng thái (xoay khi mở/đóng)
 const Section = ({ title, subtitle, defaultOpen = true, children }) => {
@@ -55,9 +131,6 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
       return ['HÃNG', 'MAQUF'];
     }
   });
-  const [editAttrModalOpen, setEditAttrModalOpen] = useState(false);
-  const [editAttrIndex, setEditAttrIndex] = useState(null);
-  const [editAttrValue, setEditAttrValue] = useState('');
 
   const persistAvailableAttributes = (next) => {
     try {
@@ -155,7 +228,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
   };
 
   // Image management state
-  const MAX_IMAGES = 4;
+  const MAX_IMAGES = 5;
   const [images, setImages] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -213,9 +286,19 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
     setForm((current) => ({ ...current, image: images[0]?.url || '' }));
   }, [images]);
 
+  // keep form.images in sync with images state so submit receives latest uploads/selections
+  useEffect(() => {
+    setForm((current) => ({
+      ...current,
+      images: (images || []).map((it) => ({ id: it.id, url: it.url, file: it.file })),
+    }));
+  }, [images]);
+
   useEffect(() => {
     const defaultForm = {
       id: '',
+      productId: '',
+      productCode: '',
       barcode: '',
       name: '',
       group: '',
@@ -225,14 +308,20 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
       costPrice: '',
       salePrice: '',
       stock: 0,
+      reservedStock: 0,
+      availableStock: 0,
       stockMin: 0,
       stockMax: 0,
       locations: [],
+      shelfLocation: '',
+      specification: '',
+      unit: '',
       weight: '',
       weightUnit: 'g',
       width: '',
       length: '',
       height: '',
+      sizeUnit: '',
       baseUnit: {
         name: '',
         price: '',
@@ -240,19 +329,21 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
       },
       conversionUnits: [],
       attributes: [],
+      productStatus: 'active',
     };
 
     if (product) {
-      setForm((current) => ({ ...defaultForm, ...product }));
+      const mapped = mapProductToForm(product);
+      setForm((current) => ({ ...defaultForm, ...mapped }));
       // initialize images from product if available
       const initImages =
-        product.images && product.images.length
-          ? product.images
-          : product.image
+        mapped.images && mapped.images.length
+          ? mapped.images
+          : mapped.image
             ? [
                 {
                   id: crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-init`,
-                  url: product.image,
+                  url: mapped.image,
                 },
               ]
             : [];
@@ -281,6 +372,9 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
   const [createAttrModalOpen, setCreateAttrModalOpen] = useState(false);
   const [editingAttrId, setEditingAttrId] = useState(null);
   const [newAttrName, setNewAttrName] = useState('');
+  const [editAttrModalOpen, setEditAttrModalOpen] = useState(false);
+  const [editAttrIndex, setEditAttrIndex] = useState(null);
+  const [editAttrValue, setEditAttrValue] = useState('');
 
   // Conversion units modal state
   const [addConversionUnitModal, setAddConversionUnitModal] = useState(false);
@@ -611,79 +705,94 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
                       />
 
                       {/* Main preview */}
-                      <div className="relative aspect-[1/1] w-full overflow-hidden rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb]">
-                        {images && images.length > 0 ? (
-                          <>
-                            <img
-                              src={images[0].url}
-                              alt={form.name || 'Product'}
-                              className="h-full w-full object-cover"
-                            />
+                      <div className="flex w-full items-start gap-4">
+                        <div className="relative flex-1 overflow-hidden rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb]">
+                          <div className="aspect-[1/1] w-full">
+                            {images && images.length > 0 ? (
+                              <img
+                                src={images[0].url}
+                                alt={form.name || 'Product'}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center py-8 text-gray-400">
+                                <button
+                                  type="button"
+                                  onClick={handleOpenFilePicker}
+                                  className="flex flex-col items-center gap-2"
+                                >
+                                  <MaterialIcon name="add" className="text-3xl text-gray-400" />
+                                  <span className="text-sm">Upload</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {images && images.length > 0 ? (
                             <div className="absolute left-2 top-2 z-20 rounded-full bg-black/75 px-3 py-1 text-[12px] font-semibold text-white">
                               Main
                             </div>
-                          </>
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-gray-400">
-                            <button
-                              type="button"
-                              onClick={handleOpenFilePicker}
-                              className="flex flex-col items-center gap-2"
-                            >
-                              <MaterialIcon name="add" className="text-3xl text-gray-400" />
-                              <span className="text-sm">Upload</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Thumbnail list */}
-                      <div className="grid grid-cols-4 gap-3">
-                        {/* Upload box */}
-                        <div
-                          onClick={handleOpenFilePicker}
-                          className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-[12px] border-2 border-dashed border-[#d1d5db] bg-white text-[28px] text-[#6b7280] transition-all duration-200 hover:border-blue-600 hover:bg-[#eff6ff] hover:text-blue-600"
-                        >
-                          +
+                          ) : null}
                         </div>
 
-                        {images.map((img, idx) => (
-                          <div
-                            key={img.id}
-                            className="thumbnail-hover relative aspect-square cursor-pointer overflow-hidden rounded-[12px] border border-[#e5e7eb] bg-[#f9fafb] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-                          >
-                            <img
-                              src={img.url}
-                              alt={`thumb-${idx}`}
-                              className="h-full w-full object-cover"
-                            />
+                        {/* Vertical thumbnails */}
+                        <div className="flex w-20 flex-col items-center gap-3">
+                          <input
+                            ref={fileInputRef}
+                            onChange={handleUpload}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                          />
 
-                            {/* Overlay actions */}
-                            <div className="thumbnail-actions absolute right-2 top-2 flex -translate-y-1 transform flex-col gap-2 opacity-0 transition-all duration-200">
+                          {/* Upload box */}
+                          {images.length < MAX_IMAGES ? (
+                            <button
+                              onClick={handleOpenFilePicker}
+                              type="button"
+                              className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[10px] border-2 border-dashed border-[#d1d5db] bg-white text-[28px] text-[#6b7280] transition-all duration-200 hover:border-blue-600 hover:bg-[#eff6ff] hover:text-blue-600"
+                            >
+                              <div className="flex flex-col items-center">
+                                <span className="text-2xl">+</span>
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="h-20 w-20" />
+                          )}
+
+                          {images.map((img, idx) => (
+                            <div
+                              key={img.id}
+                              className="relative h-20 w-20 overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb]"
+                            >
                               <button
-                                title="Pin"
                                 type="button"
                                 onClick={() => handlePinImage(idx)}
-                                className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#e5e7eb] bg-white/95 hover:border-blue-600 hover:bg-[#eff6ff]"
+                                className="absolute left-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-md border border-[#e5e7eb] bg-white/90"
+                                title={idx === 0 ? 'Ảnh đại diện' : 'Đặt làm ảnh đại diện'}
                               >
-                                <MaterialIcon name="push_pin" className="text-gray-600" />
+                                <MaterialIcon
+                                  name="push_pin"
+                                  className={`${idx === 0 ? 'text-blue-600' : 'text-gray-600'}`}
+                                />
                               </button>
                               <button
-                                title="Xóa"
                                 type="button"
                                 onClick={() => handleRemoveImage(idx)}
-                                className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#e5e7eb] bg-white/95 hover:border-red-500 hover:bg-[#fef2f2]"
+                                className="absolute bottom-1 right-1 z-10 flex h-7 w-7 items-center justify-center rounded-md border border-[#e5e7eb] bg-white/90"
+                                title="Xóa ảnh"
                               >
                                 <MaterialIcon name="delete" className="text-red-500" />
                               </button>
+                              <img
+                                src={img.url}
+                                alt={`thumb-${idx}`}
+                                className={`h-full w-full object-cover ${idx === 0 ? 'ring-2 ring-blue-300' : ''}`}
+                              />
                             </div>
-
-                            {/* show overlay on hover via parent group */}
-                            <style>{`
-                              .thumbnail-hover:hover .thumbnail-actions { opacity: 1; transform: translateY(0); }
-                            `}</style>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1162,7 +1271,6 @@ const EditProductModal = ({ open, onClose, product, onSave, title }) => {
 
                       <div>
                         <button
-                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             addAttrRow();

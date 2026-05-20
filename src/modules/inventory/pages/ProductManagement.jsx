@@ -217,6 +217,17 @@ const extractProductList = (response) => {
 };
 
 const normalizeProduct = (product, index) => {
+  const resolveImageUrl = (value) => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      return (
+        value.url || value.Url || value.imageUrl || value.ImageUrl || value.src || value.path || ''
+      );
+    }
+    return '';
+  };
+
   const id =
     product?.id ||
     product?.Id ||
@@ -225,6 +236,9 @@ const normalizeProduct = (product, index) => {
     product?.productCode ||
     product?.ProductCode ||
     `API-${index + 1}`;
+  const productId = product?.productId || product?.ProductId || id;
+  const productCode =
+    product?.productCode || product?.ProductCode || product?.code || product?.Code || id;
   const stock = Number(
     product?.actualStock ??
       product?.ActualStock ??
@@ -237,25 +251,36 @@ const normalizeProduct = (product, index) => {
 
   return {
     id,
+    productId,
+    productCode,
     name: product?.productName || product?.ProductName || product?.name || product?.Name || '',
     // map common image fields from API to `image` used by UI
     image:
       product?.image ||
       product?.ImageUrl ||
       product?.imageUrl ||
-      (Array.isArray(product?.images) && product.images[0]) ||
-      (Array.isArray(product?.Images) && product.Images[0]) ||
+      resolveImageUrl(Array.isArray(product?.images) ? product.images[0] : null) ||
+      resolveImageUrl(Array.isArray(product?.Images) ? product.Images[0] : null) ||
       product?.thumbnailUrl ||
       product?.Thumbnail ||
       '',
     unit: product?.unit || product?.Unit || '',
     brand: product?.brandName || product?.BrandName || product?.brand || product?.Brand || '',
+    brandName: product?.brandName || product?.BrandName || '',
     salePrice: Number(
       product?.sellPrice ?? product?.SellPrice ?? product?.price ?? product?.Price ?? 0
     ),
     costPrice: Number(product?.costPrice ?? product?.CostPrice ?? 0),
     stock,
+    reservedStock: Number(product?.reservedStock ?? product?.ReservedStock ?? 0),
+    availableStock: Number(product?.availableStock ?? product?.AvailableStock ?? stock),
     location:
+      product?.shelfLocation ||
+      product?.ShelfLocation ||
+      product?.location ||
+      product?.Location ||
+      '',
+    shelfLocation:
       product?.shelfLocation ||
       product?.ShelfLocation ||
       product?.location ||
@@ -265,11 +290,14 @@ const normalizeProduct = (product, index) => {
     statusTone: stock > 0 ? 'green' : 'red',
     createdAt: product?.createdAt || product?.CreatedAt || '',
     group: product?.categoryName || product?.CategoryName || product?.group || product?.Group || '',
+    categoryName: product?.categoryName || product?.CategoryName || '',
     barcode: product?.barcode || product?.Barcode || 'Chưa có',
+    specification: product?.specification || product?.Specification || '',
     stockLevel:
       (product?.minimumStock ?? product?.MinimumStock)
         ? `${product?.minimumStock ?? product?.MinimumStock} - ${stock}`
         : 'Chưa có',
+    minimumStock: Number(product?.minimumStock ?? product?.MinimumStock ?? 0),
     weight: product?.weight || product?.Weight || 'Chưa có',
     dimension: product?.dimension || product?.Dimension || 'Chưa có',
     supplier: product?.supplierName || product?.SupplierName || 'Chưa có',
@@ -283,39 +311,60 @@ const normalizeProduct = (product, index) => {
   };
 };
 
-const createProductPayload = (form) => ({
-  CategoryId: null,
-  BrandId: null,
-  WarehouseId: null,
-  ProductCode: form.id || '',
-  Barcode: form.barcode || '',
-  ProductName: form.name || '',
-  Unit: form.baseUnit?.name || form.unit || 'Cái',
-  Specification: form.group || '',
-  CostPrice: Number(form.costPrice || 0),
-  SellPrice: Number(form.salePrice || 0),
-  InitialStock: Number(form.stock || 0),
-  MinimumStock: Number(form.stockMin || 0),
-  ShelfLocation: form.location || form.locations?.[0] || '',
-  ImageUrl: form.image || '',
-});
+const buildSpecification = (form) => {
+  if (form.specification) return form.specification;
 
-const updateProductPayload = (form) => ({
-  CategoryId: null,
-  BrandId: null,
-  WarehouseId: null,
-  ProductCode: form.id || '',
+  const sizeParts = [form.width, form.length].filter(
+    (value) => value !== undefined && value !== null && `${value}`.trim() !== ''
+  );
+  if (!sizeParts.length && !form.height) return '';
+
+  const sizeText = sizeParts.join(' x ');
+  const unit = form.sizeUnit || form.weightUnit || '';
+
+  if (sizeText && unit) return `${sizeText}${unit}`;
+  if (sizeText) return sizeText;
+  if (form.height && unit) return `${form.height}${unit}`;
+  return `${form.height || ''}`.trim();
+};
+
+const createProductPayload = (form) => ({
+  ProductCode: form.productCode || form.id || '',
   Barcode: form.barcode || '',
   ProductName: form.name || '',
   Unit: form.baseUnit?.name || form.unit || 'Cái',
-  Specification: form.group || '',
+  Specification: buildSpecification(form),
   CostPrice: Number(form.costPrice || 0),
   SellPrice: Number(form.salePrice || 0),
   ActualStock: Number(form.stock || 0),
-  ReservedStock: 0,
+  ReservedStock: Number(form.reservedStock || 0),
+  AvailableStock: Number(form.availableStock ?? form.stock ?? 0),
   MinimumStock: Number(form.stockMin || 0),
-  ShelfLocation: form.location || form.locations?.[0] || '',
+  ShelfLocation: form.shelfLocation || form.location || form.locations?.[0] || '',
   ImageUrl: form.image || '',
+  Images: (form.images || []).map((i) => i?.url || ''),
+  CategoryName: form.group || '',
+  BrandName: form.brand || '',
+  IsActive: form.productStatus !== 'inactive',
+});
+
+const updateProductPayload = (form) => ({
+  ProductCode: form.productCode || form.id || '',
+  Barcode: form.barcode || '',
+  ProductName: form.name || '',
+  Unit: form.baseUnit?.name || form.unit || 'Cái',
+  Specification: buildSpecification(form),
+  CostPrice: Number(form.costPrice || 0),
+  SellPrice: Number(form.salePrice || 0),
+  ActualStock: Number(form.stock || 0),
+  ReservedStock: Number(form.reservedStock || 0),
+  AvailableStock: Number(form.availableStock ?? form.stock ?? 0),
+  MinimumStock: Number(form.stockMin || 0),
+  ShelfLocation: form.shelfLocation || form.location || form.locations?.[0] || '',
+  ImageUrl: form.image || '',
+  Images: (form.images || []).map((i) => i?.url || ''),
+  CategoryName: form.group || '',
+  BrandName: form.brand || '',
   IsActive: form.productStatus !== 'inactive',
 });
 
@@ -567,7 +616,11 @@ export const ProductManagement = () => {
     const filtered = products.filter((row) => {
       const q = search.trim().toLowerCase();
       const isSearchMatched =
-        !q || row.id.toLowerCase().includes(q) || row.name.toLowerCase().includes(q);
+        !q ||
+        String(row.productCode || row.id || '')
+          .toLowerCase()
+          .includes(q) ||
+        row.name.toLowerCase().includes(q);
 
       const groupQuery = groupKeyword.trim().toLowerCase();
       const isGroupMatched = !groupQuery || row.group.toLowerCase().includes(groupQuery);
@@ -685,30 +738,104 @@ export const ProductManagement = () => {
     setCurrentPage(1);
   };
 
+  const sameProductKey = (left, right) => {
+    const leftKey = String(left?.productId || left?.id || left?.productCode || '').trim();
+    const rightKey = String(right?.productId || right?.id || right?.productCode || '').trim();
+    return !!leftKey && leftKey === rightKey;
+  };
+
   const handleSaveProduct = (updated) => {
     const saveProduct = async () => {
-      const payload = productToEdit ? updateProductPayload(updated) : createProductPayload(updated);
+      // normalize image files: convert File -> dataURL so backend (or local mock) receives usable URL
+      const fileToDataUrl = (file) =>
+        new Promise((resolve, reject) => {
+          try {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('File read error'));
+            reader.readAsDataURL(file);
+          } catch (e) {
+            reject(e);
+          }
+        });
+
+      const prepared = { ...updated };
+      if (Array.isArray(prepared.images) && prepared.images.length > 0) {
+        const mapped = await Promise.all(
+          prepared.images.map(async (it) => {
+            if (it && it.file) {
+              try {
+                const data = await fileToDataUrl(it.file);
+                return { id: it.id || Date.now(), url: data };
+              } catch (e) {
+                return { id: it.id || Date.now(), url: it.url || '' };
+              }
+            }
+            if (typeof it === 'string') return { id: `${Date.now()}`, url: it };
+            return { id: it.id || `${Date.now()}`, url: it.url || '' };
+          })
+        );
+        prepared.images = mapped.slice(0, 10);
+        // set main image if not present
+        if (!prepared.image && prepared.images.length > 0) prepared.image = prepared.images[0].url;
+      }
+
+      const payload = productToEdit
+        ? updateProductPayload(prepared)
+        : createProductPayload(prepared);
 
       try {
         if (isRemoteData) {
-          if (productToEdit?.id) {
-            await updateProduct(productToEdit.id, payload);
+          const productKey = productToEdit?.productId || productToEdit?.id;
+          let savedRow = normalizeProduct({ ...payload, ...updated }, 0);
+
+          if (productKey) {
+            const response = await updateProduct(productKey, payload);
+            const savedData = response?.data || response?.result || response || payload;
+            savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
           } else {
-            await createProduct(payload);
+            const response = await createProduct(payload);
+            const savedData = response?.data || response?.result || response || payload;
+            savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
           }
+
+          setProducts((prev) => {
+            const withoutSaved = prev.filter((item) => !sameProductKey(item, savedRow));
+            return [savedRow, ...withoutSaved];
+          });
 
           const response = await getProducts({ Page: 1, PageSize: 100 });
           const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
-          setProducts(items.length > 0 ? items : inventoryRows);
+          setProducts(() => {
+            const nextItems = items.length > 0 ? items : inventoryRows;
+            const withoutSaved = nextItems.filter((item) => !sameProductKey(item, savedRow));
+            return [savedRow, ...withoutSaved];
+          });
         } else {
           setProducts((prev) => {
             if (productToEdit) {
-              return prev.map((p) => (p.id === productToEdit.id ? { ...p, ...updated } : p));
+              return prev.map((p) =>
+                p.id === productToEdit.id
+                  ? {
+                      ...p,
+                      ...updated,
+                      id: p.id,
+                      productId: p.productId || p.id,
+                      productCode: updated.id || updated.productCode || p.productCode || p.id,
+                      status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
+                      statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
+                    }
+                  : p
+              );
             }
 
+            const nextProductCode = updated.id || updated.productCode || updated.productId || '';
             return [
               {
                 ...updated,
+                id: updated.productId || nextProductCode,
+                productId: updated.productId || '',
+                productCode: nextProductCode,
                 status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
                 statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
               },
@@ -718,6 +845,24 @@ export const ProductManagement = () => {
         }
 
         setApiStatus((current) => ({ ...current, error: '' }));
+        // Persist brand to localStorage so EditProductModal brand list shows selection
+        try {
+          const brandName = (updated?.brand || updated?.BrandName || '').trim();
+          if (brandName) {
+            const raw = localStorage.getItem('productBrands');
+            const arr = raw ? JSON.parse(raw) : [];
+            if (!arr.includes(brandName)) {
+              const next = [...arr, brandName];
+              try {
+                localStorage.setItem('productBrands', JSON.stringify(next));
+              } catch (e) {
+                // ignore storage errors
+              }
+            }
+          }
+        } catch (e) {}
+
+        setCurrentPage(1);
         setEditModalOpen(false);
         setProductToEdit(null);
       } catch (error) {
@@ -734,7 +879,7 @@ export const ProductManagement = () => {
 
     try {
       if (isRemoteData) {
-        await deleteProduct(row.id);
+        await deleteProduct(row.productId || row.id);
         const response = await getProducts({ Page: 1, PageSize: 100 });
         const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
         setProducts(items.length > 0 ? items : inventoryRows);
@@ -1536,7 +1681,9 @@ export const ProductManagement = () => {
                                   <MaterialIcon name="image" className="text-xl text-slate-400" />
                                 )}
                               </div>
-                              <span className="font-medium text-primary">{row.id}</span>
+                              <span className="font-medium text-primary">
+                                {row.productCode || row.id}
+                              </span>
                             </div>
                           </td>
                           <td className="px-4 py-3 text-slate-700">{row.name}</td>
@@ -1658,7 +1805,9 @@ export const ProductManagement = () => {
                                       <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">
                                         Mã hàng
                                       </p>
-                                      <p className="text-sm font-bold text-slate-800">{row.id}</p>
+                                      <p className="text-sm font-bold text-slate-800">
+                                        {row.productCode || row.id}
+                                      </p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">
