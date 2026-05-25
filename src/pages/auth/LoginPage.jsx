@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Factory, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Phone, Lock, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { loginRequest } from '../../services/authService';
+import Logo from '../../shared/components/Logo';
+
+import loginBg from '../../assets/images/auth-bg.png';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -11,143 +14,170 @@ const LoginPage = () => {
   const [formData, setFormData] = useState({ sdt: '', password: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isLoading) return;
+
+    setIsLoading(true);
     setError('');
 
     try {
       const response = await loginRequest({
-        sdt: formData.sdt,
         phone: formData.sdt,
         password: formData.password,
       });
 
-      const userInfo = response.user || {
-        sdt: formData.sdt,
-        role: 'store_owner',
-      };
-
-      userInfo.email = userInfo.email || userInfo.sdt || userInfo.phone || '';
+      const userInfo = response?.user;
+      if (!userInfo) {
+        throw new Error('Hệ thống không trả về thông tin tài khoản hợp lệ.');
+      }
 
       login(userInfo, response.token);
-
-      switch (userInfo.role) {
-        case 'admin':
-          navigate('/admin');
-          break;
-        case 'store_owner':
-          navigate('/inventory');
-          break;
-        case 'cashier':
-          navigate('/pos');
-          break;
-        case 'guest':
-          navigate('/forum');
-          break;
-        default:
-          navigate('/inventory');
-      }
-    } catch (loginError) {
-      setError(loginError?.message || 'Không thể đăng nhập vào backend');
+      navigate(userInfo.role === 'admin' ? '/admin' : '/inventory');
+    } catch (err) {
+      setError(err?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 font-sans">
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-outline-variant/30 bg-surface shadow-xl">
-        <div className="p-8">
-          <div className="mb-8 flex flex-col items-center text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-on-primary shadow-sm">
-              <Factory size={28} />
+    <div className="flex min-h-screen w-full bg-[#FAFAFA]">
+      <div className="flex w-full flex-col justify-center px-8 lg:w-1/2 lg:px-24">
+        <div className="mb-6">
+          <Logo className="mb-8" />
+          <h1 className="text-3xl font-black tracking-tighter text-textMain">Chào mừng trở lại.</h1>
+          <p className="mt-2 text-sm text-placeholder">
+            Vui lòng nhập thông tin để truy cập hệ thống.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-center text-sm font-bold text-red-600 transition-all">
+              {error}
             </div>
-            <h1 className="text-2xl font-bold text-on-surface">Chào mừng trở lại</h1>
-            <p className="mt-2 text-sm text-on-surface-variant">
-              Đăng nhập vào hệ thống{' '}
-              <span className="font-semibold text-primary">AI RETAIL ERP</span>
-            </p>
+          )}
+
+          <div className="space-y-1.5">
+            <label
+              className="text-xs font-bold uppercase tracking-widest text-slate-500"
+              htmlFor="sdt"
+            >
+              Số điện thoại
+            </label>
+            <div className="group relative">
+              <Phone
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-placeholder transition-colors group-focus-within:text-primary"
+                size={18}
+              />
+              <input
+                id="sdt"
+                name="sdt"
+                type="tel"
+                required
+                value={formData.sdt}
+                onChange={handleChange}
+                disabled={isLoading}
+                className="w-full rounded-customer border border-borderLight bg-white py-3 pl-10 pr-4 text-sm font-semibold outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-400"
+                placeholder="Nhập SĐT của bạn"
+              />
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="rounded-xl bg-error-container p-3 text-center text-sm font-medium text-on-error-container">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface" htmlFor="sdt">
-                Số điện thoại (SĐT)
-              </label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
-                  <Mail size={18} />
-                </div>
-                <input
-                  id="sdt"
-                  name="sdt"
-                  type="tel"
-                  required
-                  placeholder=""
-                  value={formData.sdt}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest py-2.5 pl-10 pr-4 text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-on-surface" htmlFor="password">
-                  Mật khẩu
-                </label>
-              </div>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
-                  <Lock size={18} />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder=""
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest py-2.5 pl-10 pr-10 text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-outline transition-colors hover:text-primary focus:outline-none"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-5">
-              <button
-                type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold tracking-btn text-on-primary transition-all hover:bg-on-primary-fixed hover:shadow-md active:scale-[0.98]"
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                className="text-xs font-bold uppercase tracking-widest text-slate-500"
+                htmlFor="password"
               >
-                ĐĂNG NHẬP <ArrowRight size={18} />
+                Mật khẩu
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                Quên mật khẩu?
+              </Link>
+            </div>
+
+            <div className="group relative">
+              <Lock
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-placeholder transition-colors group-focus-within:text-primary"
+                size={18}
+              />
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={formData.password}
+                onChange={handleChange}
+                disabled={isLoading}
+                className="w-full rounded-customer border border-borderLight bg-white py-3 pl-10 pr-10 text-sm font-semibold outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-400"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-placeholder hover:text-primary disabled:hover:text-placeholder"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-          </form>
-
-          <div className="mt-8 text-center text-sm text-on-surface-variant">
-            Chưa có tài khoản?{' '}
-            <Link to="/register" className="font-bold text-primary hover:underline">
-              Đăng ký ngay
-            </Link>
           </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="flex w-full items-center justify-center gap-2 rounded-customer bg-primary py-3.5 text-sm font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-black active:scale-[0.98] disabled:pointer-events-none disabled:bg-gray-400"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                Đang xác thực...
+              </>
+            ) : (
+              <>
+                Đăng nhập <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+        </form>
+
+        <p className="mt-8 text-center text-sm font-medium text-placeholder">
+          Chưa có tài khoản?{' '}
+          <Link to="/register" className="font-bold text-primary hover:underline">
+            Đăng ký ngay
+          </Link>
+        </p>
+      </div>
+
+      <div className="relative hidden items-center justify-center overflow-hidden lg:flex lg:w-1/2">
+        <img
+          src={loginBg}
+          alt="M.E.P Retail Management Background"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/80 to-primary/60 mix-blend-multiply" />
+        <div className="relative z-10 max-w-md px-8 text-center text-white drop-shadow-lg">
+          <h2 className="mb-6 text-4xl font-black leading-tight tracking-tighter">
+            M.E.P Intelligent Retail Management System
+          </h2>
+          <div className="mx-auto mb-6 h-1 w-16 bg-white/40" />
+          <p className="text-base font-medium leading-relaxed text-white/95">
+            Hệ thống Quản lý Bán hàng Thông minh ngành Kim khí Điện Nước.
+          </p>
         </div>
       </div>
     </div>

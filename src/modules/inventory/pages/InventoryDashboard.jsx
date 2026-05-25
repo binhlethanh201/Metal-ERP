@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MaterialIcon from '../components/MaterialIcon';
+import Logo from '../../../shared/components/Logo';
 import {
   cashSummary,
   dashboardKpis,
@@ -272,16 +273,8 @@ const InventoryDashboard = () => {
       </div>
 
       <aside className="fixed left-0 top-0 z-40 hidden h-full w-[260px] flex-col border-r border-slate-200 bg-white p-4 lg:flex">
-        <div className="mb-8 flex items-center gap-3 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-container text-white">
-            <MaterialIcon name="factory" fill />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-blue-900">MetalERP</h1>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Industrial Precision
-            </p>
-          </div>
+        <div className="mb-8 px-2">
+          <Logo moduleName="Tổng Kho" />
         </div>
 
         <nav className="flex-1 space-y-6 overflow-y-auto pr-1">

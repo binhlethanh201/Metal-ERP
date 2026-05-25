@@ -106,8 +106,8 @@ export const ENDPOINTS = {
   AUTH: {
     LOGIN: '/api/auth/login',
     LOGOUT: '/api/auth/logout',
-    REGISTER_START: '/api/auth/register/start',   
-    REGISTER_VERIFY: '/api/auth/register/verify', 
+    REGISTER_START: '/api/auth/register/start',
+    REGISTER_VERIFY: '/api/auth/register/verify',
     REFRESH_TOKEN: '/api/auth/refresh',
     GET_PROFILE: '/api/auth/profile',
     UPDATE_PROFILE: '/api/auth/profile',

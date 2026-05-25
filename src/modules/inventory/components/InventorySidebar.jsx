@@ -1,5 +1,6 @@
 import React from 'react';
 import MaterialIcon from './MaterialIcon';
+import Logo from '../../../shared/components/Logo';
 
 const menuGroups = [
   {
@@ -29,16 +30,8 @@ const menuGroups = [
 const InventorySidebar = () => {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-full w-[260px] flex-col border-r border-slate-200 bg-white p-4">
-      <div className="mb-8 flex items-center gap-3 px-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1e3a5f] text-white">
-          <MaterialIcon name="factory" fill />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold tracking-tight text-blue-900">MetalERP</h1>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-            Industrial Precision
-          </p>
-        </div>
+      <div className="mb-8 px-2">
+        <Logo moduleName="Tổng Kho" />
       </div>
 
       <nav className="flex-1 space-y-6 overflow-y-auto pr-1">

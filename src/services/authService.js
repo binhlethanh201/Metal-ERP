@@ -171,7 +171,7 @@ export const registerVerifyRequest = async (payload) => {
 const authService = {
   loginRequest,
   registerStartRequest,
-  registerVerifyRequest
+  registerVerifyRequest,
 };
 
 export default authService;
