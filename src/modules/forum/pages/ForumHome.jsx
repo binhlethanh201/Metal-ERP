@@ -21,7 +21,7 @@ const posts = [
     id: 1,
     author: 'Minh Nguyễn',
     role: 'Chuyên gia',
-    roleClass: 'bg-blue-100 text-[#1E6BB8]',
+    roleClass: 'bg-blue-100 text-[#004785]',
     time: '2 giờ trước',
     status: 'Nổi bật',
     statusClass: 'bg-green-50 text-green-700',
@@ -138,16 +138,21 @@ const ForumHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9ff] font-['Be_Vietnam_Pro','Inter',sans-serif] text-[#0b1c30]">
+    <div className="min-h-screen bg-[#f0f2f5] font-sans text-slate-900">
       <ForumHeader onCreatePostClick={() => setIsCreatePostModalOpen(true)} />
 
-      <div className="relative mx-auto flex max-w-[1200px] gap-4">
-        <ForumLeftSidebar activeKey="home" />
+      <div className="mx-auto flex max-w-[1400px] justify-center gap-4 px-4 py-4">
+        {/* Left Sidebar */}
+        <aside className="sticky top-[64px] hidden h-[calc(100vh-64px)] w-[300px] shrink-0 overflow-y-auto lg:block">
+          <ForumLeftSidebar activeKey="home" />
+        </aside>
 
-        <main className="mx-auto min-w-0 max-w-[760px] flex-1 px-2 py-4">
-          <section className="relative mb-6 overflow-hidden rounded-xl bg-gradient-to-br from-[#1E6BB8] to-[#005296] p-6 text-white shadow-lg shadow-primary/10">
+        {/* Main Feed */}
+        <main className="w-full min-w-0 max-w-[720px]">
+          {/* Hero Banner */}
+          <section className="relative mb-4 overflow-hidden rounded-2xl bg-gradient-to-br from-[#004785] to-[#00305e] p-6 text-white shadow-md">
             <div className="relative z-10 max-w-lg">
-              <h1 className="mb-2 text-2xl font-bold leading-tight">
+              <h1 className="mb-2 text-xl font-bold leading-tight">
                 Cộng đồng kinh doanh kim khí & vật tư xây dựng
               </h1>
               <p className="mb-4 text-sm text-blue-50 opacity-90">
@@ -155,10 +160,10 @@ const ForumHome = () => {
                 shop.
               </p>
               <div className="flex gap-3">
-                <button className="rounded-full bg-white px-5 py-1.5 text-xs font-bold text-[#1E6BB8] transition-colors hover:bg-blue-50">
+                <button className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#004785] transition-colors hover:bg-blue-50">
                   Khám phá ngay
                 </button>
-                <button className="rounded-full border border-white/40 bg-transparent px-5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-white/10">
+                <button className="rounded-lg border border-white/40 bg-transparent px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10">
                   Xem xu hướng
                 </button>
               </div>
@@ -172,16 +177,17 @@ const ForumHome = () => {
             </div>
           </section>
 
-          <section>
-            <div className="mb-4 flex items-center overflow-x-auto border-b border-slate-200">
+          {/* Tabs */}
+          <section className="mb-4 rounded-2xl bg-white shadow-sm">
+            <div className="flex items-center overflow-x-auto border-b border-gray-100 px-5">
               {tabs.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`whitespace-nowrap px-4 py-2 text-xs ${
+                  className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-all ${
                     activeTab === tab
-                      ? 'border-b-2 border-[#1E6BB8] font-bold text-[#1E6BB8]'
-                      : 'font-medium text-slate-500 hover:text-[#0b1c30]'
+                      ? 'border-b-2 border-[#004785] font-bold text-[#004785]'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {tab}
@@ -189,9 +195,10 @@ const ForumHome = () => {
               ))}
             </div>
 
-            <div className="space-y-3">
+            {/* Post List */}
+            <div className="space-y-0">
               {filteredPosts.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+                <div className="p-8 text-center text-sm text-slate-500">
                   Không tìm thấy bài viết phù hợp.
                 </div>
               ) : (
@@ -199,35 +206,35 @@ const ForumHome = () => {
                   <article
                     key={post.id}
                     onClick={() => navigate(`/forum/post/${post.id}`)}
-                    className="cursor-pointer rounded-xl border border-[#1E6BB8]/10 bg-white p-4 shadow-[0_2px_4px_rgba(0,82,150,0.04)] transition-all hover:border-[#1E6BB8]/30 hover:shadow-md"
+                    className="cursor-pointer border-b border-gray-100 bg-white p-5 transition-all last:border-b-0 hover:bg-gray-50/50"
                   >
-                    <div className="mb-2 flex items-center justify-between gap-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <img
                           alt="Author Avatar"
-                          className="h-5 w-5 rounded-full object-cover"
+                          className="h-10 w-10 rounded-full object-cover"
                           src={post.avatar}
                         />
-                        <span className="text-[11px] font-bold text-[#0b1c30]">{post.author}</span>
+                        <span className="text-sm font-bold text-gray-900">{post.author}</span>
                         <span
-                          className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${post.roleClass}`}
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${post.roleClass}`}
                         >
                           {post.role}
                         </span>
-                        <span className="text-[10px] text-slate-400">• {post.time}</span>
+                        <span className="text-xs text-slate-400">• {post.time}</span>
                       </div>
                       {post.status && (
                         <span
-                          className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${post.statusClass}`}
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${post.statusClass}`}
                         >
                           {post.status}
                         </span>
                       )}
                     </div>
-                    <h3 className="mb-1.5 cursor-pointer text-sm font-bold hover:text-[#1E6BB8]">
+                    <h3 className="mb-1.5 cursor-pointer text-xl font-bold text-gray-900 hover:text-[#004785]">
                       {post.title}
                     </h3>
-                    <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-slate-600">
+                    <p className="mb-3 line-clamp-2 text-[15px] leading-relaxed text-gray-600">
                       {post.description}
                     </p>
                     <div className="flex items-center justify-between gap-3">
@@ -235,19 +242,22 @@ const ForumHome = () => {
                         {post.tags.map((tag) => (
                           <button
                             key={tag}
-                            onClick={() => handleSearchByTag(tag)}
-                            className="rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-500 transition-colors hover:bg-blue-50 hover:text-[#1E6BB8]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSearchByTag(tag);
+                            }}
+                            className="rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100"
                           >
                             {tag}
                           </button>
                         ))}
                       </div>
                       <div className="flex items-center gap-3 text-slate-400">
-                        <span className="flex items-center gap-1 text-[10px]">
+                        <span className="flex items-center gap-1 text-xs">
                           <MaterialIcon name="chat_bubble" className="text-[14px]" />{' '}
                           {post.comments}
                         </span>
-                        <span className="flex items-center gap-1 text-[10px]">
+                        <span className="flex items-center gap-1 text-xs">
                           <MaterialIcon name="visibility" className="text-[14px]" /> {post.views}
                         </span>
                       </div>
@@ -259,78 +269,91 @@ const ForumHome = () => {
           </section>
         </main>
 
-        <aside className="hidden w-64 space-y-4 py-4 xl:block">
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase text-slate-500">
+        {/* Right Sidebar */}
+        <aside className="sticky top-[64px] hidden h-[calc(100vh-64px)] w-[300px] shrink-0 space-y-4 overflow-y-auto xl:block">
+          {/* Xu hướng tìm kiếm */}
+          <section className="rounded-2xl bg-white p-4 shadow-sm">
+            <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.05em] text-slate-500">
               Xu hướng tìm kiếm
             </h3>
             <div className="space-y-3">
               {trendSearches.map((trend) => (
                 <div key={trend.label}>
-                  <div className="mb-1 flex justify-between text-[10px]">
-                    <span className="font-medium">{trend.label}</span>
+                  <div className="mb-1 flex justify-between text-xs">
+                    <span className="font-medium text-slate-700">{trend.label}</span>
                     <span className="font-bold text-green-600">{trend.value}</span>
                   </div>
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full bg-blue-500" style={{ width: trend.width }} />
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-[#004785]"
+                      style={{ width: trend.width }}
+                    />
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <h3 className="mb-3 text-xs font-bold uppercase text-slate-500">Chủ đề quan tâm</h3>
+          {/* Chủ đề quan tâm */}
+          <section className="rounded-2xl bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.05em] text-slate-500">
+              Chủ đề quan tâm
+            </h3>
             <div className="flex flex-wrap gap-1.5">
               {topicTags.map((tag) => (
                 <button
                   key={tag}
                   onClick={() => handleSearchByTag(tag)}
-                  className="rounded-full border border-slate-100 bg-[#F8FAFC] px-2 py-0.5 text-[9px] font-bold text-slate-600 transition-colors hover:bg-blue-50 hover:text-[#1E6BB8]"
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-[#004785]"
                 >
                   {tag}
                 </button>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <h3 className="mb-3 text-xs font-bold uppercase text-slate-500">Thảo luận nổi bật</h3>
+          {/* Thảo luận nổi bật */}
+          <section className="rounded-2xl bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.05em] text-slate-500">
+              Thảo luận nổi bật
+            </h3>
             <div className="space-y-3">
               {hotPosts.map((post, index) => (
                 <div key={post.title} className="group flex gap-2">
-                  <span className="text-base font-black text-slate-200 transition-colors group-hover:text-blue-500">
+                  <span className="text-base font-black text-slate-200 transition-colors group-hover:text-[#004785]">
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <div>
-                    <h4 className="line-clamp-2 cursor-pointer text-[11px] font-bold group-hover:text-[#1E6BB8]">
+                    <h4 className="line-clamp-2 cursor-pointer text-sm font-bold text-slate-700 transition-colors group-hover:text-[#004785]">
                       {post.title}
                     </h4>
-                    <div className="mt-0.5 flex gap-2 text-[9px] text-slate-400">
+                    <div className="mt-0.5 flex gap-2 text-[11px] text-slate-400">
                       <span>{post.comments}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="rounded-xl border border-green-100 bg-green-50 p-3">
-            <div className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase text-green-700">
+          {/* Quy định chung */}
+          <section className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.05em] text-green-700">
               <MaterialIcon name="gpp_maybe" className="text-lg" /> Quy định chung
             </div>
-            <ul className="space-y-1.5 text-[10px] text-green-800/80">
+            <ul className="space-y-1.5 text-xs text-slate-600">
               {[
                 'Không spam, quảng cáo rác.',
                 'Không tin giả thị trường.',
                 'Không hàng lậu, hàng giả.',
               ].map((rule) => (
                 <li key={rule} className="flex items-start gap-1.5">
-                  <MaterialIcon name="check_circle" className="mt-0.5 text-[12px]" /> {rule}
+                  <MaterialIcon name="check_circle" className="mt-0.5 text-[12px] text-green-600" />{' '}
+                  {rule}
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         </aside>
       </div>
 

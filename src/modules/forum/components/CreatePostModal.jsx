@@ -366,7 +366,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
 
           <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
             <section className="space-y-6 xl:col-span-8">
-              <div className="rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+              <div className="rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                 <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-primary">
                   1. Chọn loại bài đăng
                 </h3>
@@ -379,7 +379,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                         key={item.key}
                         type="button"
                         onClick={() => handlePostTypeChange(item.key)}
-                        className={`group flex min-h-24 flex-col items-center justify-center rounded-xl border p-3 text-center transition-all ${
+                        className={`group flex min-h-24 flex-col items-center justify-center rounded-lg border p-3 text-center transition-all ${
                           active
                             ? 'border-2 border-primary-container bg-surface-container-low text-primary'
                             : 'border-outline-variant text-on-surface-variant hover:border-primary-container hover:text-primary'
@@ -393,7 +393,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                 </div>
               </div>
 
-              <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+              <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                 <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
                   2. Nội dung chi tiết
                 </h3>
@@ -401,7 +401,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-on-surface">Tiêu đề bài đăng</label>
                   <input
-                    className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                    className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                     placeholder="Ví dụ: Cung cấp thép xây dựng Hòa Phát số lượng lớn tại TP.HCM"
                     type="text"
                     value={formData.title}
@@ -413,7 +413,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-on-surface">Danh mục</label>
                     <select
-                      className="w-full appearance-none rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                      className="w-full appearance-none rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                       value={formData.category}
                       onChange={(event) => handleFormField('category', event.target.value)}
                     >
@@ -427,7 +427,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-on-surface">Khu vực</label>
                     <input
-                      className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                       placeholder="Toàn quốc, Hà Nội, TP.HCM..."
                       type="text"
                       value={formData.area}
@@ -438,7 +438,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-on-surface">Nội dung bài viết</label>
-                  <div className="overflow-hidden rounded-xl border border-outline-variant">
+                  <div className="overflow-hidden rounded-lg border border-outline-variant">
                     <div className="flex gap-2 border-b border-outline-variant bg-slate-100 p-2">
                       <button
                         type="button"
@@ -479,7 +479,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                   <label className="text-sm font-medium text-on-surface">
                     Gắn thẻ bài viết (Tags)
                   </label>
-                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-outline-variant bg-surface-bright p-3">
+                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant bg-surface-bright p-3">
                     {formData.tags.map((tag) => (
                       <span
                         key={tag}
@@ -514,7 +514,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-on-surface">Ảnh sản phẩm</label>
                     <div className="flex gap-4">
-                      <label className="flex h-32 w-32 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-outline-variant bg-surface-bright transition-all hover:border-primary hover:bg-primary-container/5">
+                      <label className="flex h-32 w-32 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-outline-variant bg-surface-bright transition-all hover:border-primary hover:bg-primary-container/5">
                         <MaterialIcon
                           name="add_a_photo"
                           className="text-2xl text-on-surface-variant"
@@ -536,7 +536,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                           {images.map((image, index) => (
                             <div
                               key={image.id}
-                              className="group relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-xl bg-gray-200"
+                              className="group relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-slate-200"
                             >
                               <img
                                 src={image.url}
@@ -561,7 +561,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
               </div>
 
               {postType !== 'wholesale' && (
-                <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                   <div className="mb-1 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                       <MaterialIcon name="inventory_2" className="text-[20px] text-primary" fill />
@@ -585,7 +585,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                             }))
                           }
                         />
-                        <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
+                        <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
                       </label>
                     </div>
                   </div>
@@ -598,7 +598,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                           className="absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-slate-400"
                         />
                         <input
-                          className="w-full rounded-xl border border-outline-variant bg-surface-bright py-3 pl-12 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                          className="w-full rounded-lg border border-outline-variant bg-surface-bright py-3 pl-12 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                           placeholder="Tìm sản phẩm trong kho..."
                           type="text"
                         />
@@ -608,7 +608,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                         <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
                           SẢN PHẨM ĐÃ CHỌN
                         </p>
-                        <div className="rounded-xl border border-outline-variant p-4">
+                        <div className="rounded-lg border border-outline-variant p-4">
                           <div className="mb-4 flex items-start gap-4">
                             <img
                               alt={quoteProduct.name}
@@ -759,7 +759,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
               )}
 
               {!isQuotePost && !isClearancePost && (
-                <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                   <div className="flex items-center justify-between gap-4">
                     <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
                       4. THÔNG TIN &amp; THÔNG SỐ KỸ THUẬT SẢN PHẨM
@@ -773,7 +773,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                           checked={showTrustedSpecs}
                           onChange={(event) => setShowTrustedSpecs(event.target.checked)}
                         />
-                        <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
+                        <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
                       </label>
                     </div>
                   </div>
@@ -826,7 +826,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                             ẢNH SP
                           </label>
                           {activeProduct.image ? (
-                            <div className="group relative aspect-square overflow-hidden rounded-xl border border-outline-variant bg-gray-200">
+                            <div className="group relative aspect-square overflow-hidden rounded-lg border border-outline-variant bg-slate-200">
                               <img
                                 src={activeProduct.image}
                                 alt="Sản phẩm"
@@ -850,7 +850,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                               </button>
                             </div>
                           ) : (
-                            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-outline-variant bg-surface-bright text-slate-400 transition-all hover:border-primary hover:text-primary">
+                            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-outline-variant bg-surface-bright text-slate-400 transition-all hover:border-primary hover:text-primary">
                               <MaterialIcon name="add_a_photo" className="text-2xl" />
                               <span className="mt-1 text-[10px] font-medium">Tải ảnh</span>
                               <input
@@ -884,7 +884,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                             TIÊU ĐỀ SẢN PHẨM
                           </label>
                           <input
-                            className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                            className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                             placeholder="Nhập tên sản phẩm cụ thể..."
                             type="text"
                             value={activeProduct.title}
@@ -905,7 +905,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                               Giá sỉ (VNĐ)
                             </label>
                             <input
-                              className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                              className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                               type="text"
                               value={productWholesalePrice}
                               onChange={(event) => setProductWholesalePrice(event.target.value)}
@@ -916,7 +916,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                               Giá lẻ (VNĐ)
                             </label>
                             <input
-                              className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                              className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                               type="text"
                               value={productRetailPrice}
                               onChange={(event) => setProductRetailPrice(event.target.value)}
@@ -1021,7 +1021,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
 
             <aside className="space-y-6 xl:col-span-4">
               <div className="space-y-6 xl:sticky xl:top-4">
-                <div className="flex flex-col items-center rounded-xl border border-outline-variant bg-white p-4 text-center md:p-6">
+                <div className="flex flex-col items-center rounded-lg border border-outline-variant bg-white p-4 text-center md:p-6">
                   <h3 className="mb-4 w-full text-left text-sm font-semibold text-on-surface">
                     Phần trăm hoàn thành
                   </h3>
@@ -1063,7 +1063,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-[#b7cae9] bg-[#c9dbf4] p-4 md:p-6">
+                <div className="rounded-lg border border-[#b7cae9] bg-[#c9dbf4] p-4 md:p-6">
                   <div className="mb-4 flex items-center gap-2 text-[#005ea4]">
                     <MaterialIcon name="lightbulb" className="text-[18px]" />
                     <h3 className="text-xs font-bold uppercase tracking-[0.12em]">MẸO ĐĂNG BÀI</h3>

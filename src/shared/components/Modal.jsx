@@ -64,12 +64,12 @@ export const Modal = ({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+            <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
             {closeButton && (
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                className="text-slate-400 hover:text-slate-500 focus:outline-none"
               >
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -88,7 +88,7 @@ export const Modal = ({
 
           {/* Footer */}
           {footer && (
-            <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+            <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
               {footer}
             </div>
           )}

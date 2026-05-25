@@ -34,8 +34,8 @@ export const PaymentBox = ({ total, onPaymentComplete }) => {
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
-      <h3 className="font-semibold text-gray-900">Chọn phương thức thanh toán</h3>
+    <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+      <h3 className="font-bold text-slate-900">Chọn phương thức thanh toán</h3>
 
       {/* Payment Methods */}
       <div className="grid grid-cols-3 gap-2">
@@ -43,14 +43,14 @@ export const PaymentBox = ({ total, onPaymentComplete }) => {
           <button
             key={method.id}
             onClick={() => setSelectedMethod(method.id)}
-            className={`rounded-lg border-2 p-3 text-center transition-all ${
+            className={`rounded-lg border p-3 text-center transition-all ${
               selectedMethod === method.id
-                ? 'border-blue-600 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-[#004785] bg-blue-50'
+                : 'border-slate-200 hover:border-slate-300'
             } `}
           >
             <div className="mb-1 text-2xl">{method.icon}</div>
-            <p className="text-xs font-medium text-gray-900">{method.name}</p>
+            <p className="text-xs font-medium text-slate-900">{method.name}</p>
           </button>
         ))}
       </div>
@@ -65,7 +65,7 @@ export const PaymentBox = ({ total, onPaymentComplete }) => {
       />
 
       {/* Change */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
         <div className="flex justify-between text-sm">
           <span className="text-blue-900">Tổng cần thanh toán:</span>
           <span className="font-semibold text-blue-900">{formatCurrency(total)}</span>

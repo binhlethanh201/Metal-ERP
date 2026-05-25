@@ -5,7 +5,7 @@ import { Sidebar } from './Sidebar';
 
 export const MainLayout = ({ onNavigate = () => {} }) => {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-slate-50">
       <Sidebar onNavigate={onNavigate} />
       <div className="ml-[260px] flex flex-1 flex-col overflow-hidden">
         <Header />
@@ -14,7 +14,7 @@ export const MainLayout = ({ onNavigate = () => {} }) => {
             <Suspense
               fallback={
                 <div className="flex h-96 items-center justify-center">
-                  <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600" />
+                  <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#004785]" />
                 </div>
               }
             >

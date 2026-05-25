@@ -10,10 +10,10 @@ export const TrendInsightCard = ({ trend, type = 'trend' }) => {
 
   return (
     <div
-      className={`rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-md ${bgColor}`}
+      className={`rounded-lg border border-slate-200 p-4 transition-shadow hover:shadow-md ${bgColor}`}
     >
       <div className="mb-2 flex items-start justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">{trend.title}</h3>
+        <h3 className="text-sm font-bold text-slate-900">{trend.title}</h3>
         <span className="text-2xl">{trendIcon}</span>
       </div>
 
@@ -23,12 +23,12 @@ export const TrendInsightCard = ({ trend, type = 'trend' }) => {
       </div>
 
       {type === 'suggestion' && trend.reason && (
-        <p className="mt-2 text-xs text-gray-600">{trend.reason}</p>
+        <p className="mt-2 text-xs text-slate-500">{trend.reason}</p>
       )}
 
       {type === 'suggestion' && trend.votes && (
         <div className="mt-3 border-t border-current border-opacity-20 pt-3">
-          <span className="text-xs font-medium text-gray-700">👍 {trend.votes} đề xuất</span>
+          <span className="text-xs font-medium text-slate-600">👍 {trend.votes} đề xuất</span>
         </div>
       )}
     </div>

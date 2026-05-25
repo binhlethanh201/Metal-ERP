@@ -198,105 +198,112 @@ const POSScreen = () => {
   return (
     <div className="h-screen overflow-hidden bg-[#f7f9fc] font-sans text-slate-900">
       {notice && (
-        <div className="fixed left-1/2 top-5 z-[80] -translate-x-1/2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-2xl">
+        <div className="fixed left-1/2 top-5 z-[80] -translate-x-1/2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-2xl">
           {notice}
         </div>
       )}
 
-      <aside className="custom-scrollbar fixed left-0 top-0 z-50 flex h-screen w-[240px] flex-col overflow-y-auto border-r border-slate-200 bg-white py-4 pb-8">
-        <div className="mb-8 flex items-center gap-x-2 px-6">
-          <Icon name="inventory_2" className="text-2xl text-[#00315e]" />
-          <span className="text-lg font-bold tracking-tight text-[#00315e]">Inventory Pro</span>
+      <aside className="custom-scrollbar fixed left-0 top-0 z-50 flex h-[calc(100vh-3rem)] w-[260px] flex-col overflow-y-auto border-r border-slate-200 bg-white p-4">
+        <div className="mb-8 flex items-center gap-3 px-2">
+          <Icon name="inventory_2" className="text-2xl text-[#004785]" />
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-blue-900">Inventory Pro</h1>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Point of Sale
+            </p>
+          </div>
         </div>
 
-        <nav className="flex flex-col gap-y-1 px-4">
-          {menuItems.map(([icon, label]) => {
-            const active = activeMenu === label;
-            return (
-              <button
-                key={label}
-                onClick={() => {
-                  setActiveMenu(label);
-                  showNotice(`${label} đang ở giao diện demo`);
-                }}
-                className={`flex w-full items-center gap-x-3 rounded-lg px-3 py-2 text-left transition-colors ${
-                  active
-                    ? 'bg-[#00315e]/5 font-bold text-[#00315e]'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-[#00315e]'
-                }`}
-              >
-                <Icon name={icon} className="text-xl" />
-                <span className="text-sm">{label}</span>
-              </button>
-            );
-          })}
+        <nav className="flex-1 space-y-6 overflow-y-auto pr-1">
+          <div>
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              CHỨC NĂNG
+            </p>
+            <div className="space-y-1">
+              {menuItems.map(([icon, label]) => {
+                const active = activeMenu === label;
+                return (
+                  <button
+                    key={label}
+                    onClick={() => {
+                      setActiveMenu(label);
+                      showNotice(`${label} đang ở giao diện demo`);
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                      active
+                        ? 'bg-blue-50 font-semibold text-blue-900'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon name={icon} className="text-xl" />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </nav>
 
-        <div className="mb-10 mt-auto px-4">
+        <div className="mt-auto space-y-2 border-t border-slate-100 pt-4">
           <button
             onClick={() => safeNavigate(WAREHOUSE)}
-            className="flex w-full items-center justify-center gap-x-3 rounded-lg bg-[#004785] px-3 py-3 text-center font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#004785] py-3 font-bold text-white transition-all active:scale-95"
           >
-            <Icon name="inventory" className="text-xl" />
-            <span className="text-sm uppercase tracking-wider">Kho hàng</span>
+            <Icon name="inventory" className="text-sm" />
+            <span>Kho hàng</span>
           </button>
         </div>
       </aside>
 
-      <header className="fixed left-[240px] right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
-        <div className="flex flex-1 items-center gap-x-8">
-          <div className="group relative w-full max-w-xl">
-            <Icon
-              name="search"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#00315e]"
-            />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm outline-none transition-all focus:border-[#00315e] focus:ring-2 focus:ring-blue-100"
-              placeholder="Tìm sản phẩm (Tên, mã SKU, barcode...)"
-            />
-          </div>
+      <header className="fixed left-[260px] right-0 top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-6">
+        <div className="flex flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
+          <Icon name="search" className="mr-2 text-slate-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
+            placeholder="Tìm sản phẩm (Tên, mã SKU, barcode...)"
+          />
         </div>
 
-        <div className="flex items-center gap-x-4">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => showNotice('Đang mở chế độ quét mã')}
-            className="flex items-center gap-x-2 rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
+            className="flex items-center gap-x-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
           >
             <Icon name="barcode_scanner" />
-            <span className="text-xs font-semibold">Quét mã</span>
+            <span>Quét mã</span>
           </button>
           <button
             onClick={() => showNotice('Đang mở lịch sử đơn hàng')}
-            className="flex items-center gap-x-2 rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
+            className="flex items-center gap-x-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
           >
             <Icon name="history" />
-            <span className="text-xs font-semibold">Lịch sử</span>
+            <span>Lịch sử</span>
           </button>
           <button
             onClick={() => showNotice('Đang mở thêm sản phẩm nhanh')}
-            className="flex items-center gap-x-2 rounded-lg bg-[#00315e] px-3 py-1.5 text-white transition-opacity hover:opacity-90 active:scale-95"
+            className="flex items-center gap-x-2 rounded-lg bg-[#004785] px-4 py-2 text-sm font-bold text-white transition-all active:scale-95"
           >
             <Icon name="add" />
-            <span className="text-xs font-semibold">Thêm nhanh</span>
+            <span>Thêm nhanh</span>
           </button>
           <div className="mx-2 h-8 w-px bg-slate-200" />
           <div className="flex cursor-pointer items-center gap-x-3">
             <div className="text-right">
-              <div className="text-xs font-bold leading-none text-slate-900">Nguyễn Văn A</div>
-              <div className="mt-1 text-[10px] uppercase tracking-widest text-slate-500">
+              <div className="text-sm font-bold leading-none text-slate-900">Nguyễn Văn A</div>
+              <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Quản lý kho
               </div>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-slate-200 font-bold text-[#00315e]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-200 font-bold text-[#004785]">
               A
             </div>
           </div>
         </div>
       </header>
 
-      <main className="fixed bottom-12 left-[240px] right-[400px] top-16 flex flex-col overflow-hidden bg-[#f7f9fc] p-6">
+      <main className="fixed bottom-12 left-[260px] right-[400px] top-16 flex flex-col overflow-hidden bg-[#f7f9fc] p-6">
         <div className="custom-scrollbar mb-6 flex items-center gap-x-2 overflow-x-auto pb-2">
           {categories.map((category) => (
             <button
@@ -304,8 +311,8 @@ const POSScreen = () => {
               onClick={() => setSelectedCategory(category)}
               className={`whitespace-nowrap rounded-full px-5 py-2 text-xs font-bold transition-colors active:scale-95 ${
                 selectedCategory === category
-                  ? 'bg-[#00315e] text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:border-[#00315e] hover:text-[#00315e]'
+                  ? 'bg-[#004785] text-white'
+                  : 'border border-slate-200 bg-white text-slate-600 hover:border-[#004785] hover:text-[#004785]'
               }`}
             >
               {category}
@@ -318,7 +325,7 @@ const POSScreen = () => {
             <button
               key={product.id}
               onClick={() => addToCart(product)}
-              className="group flex min-h-[350px] flex-col rounded-xl border border-slate-200 bg-white p-3 text-left transition-all hover:shadow-lg active:scale-95"
+              className="group flex min-h-[350px] flex-col rounded-lg border border-slate-200 bg-white p-3 text-left transition-all hover:shadow-lg active:scale-95"
             >
               <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-lg bg-slate-100">
                 <img
@@ -331,7 +338,7 @@ const POSScreen = () => {
                   }}
                 />
                 <span
-                  className={`absolute right-2 top-2 rounded px-2 py-1 text-[10px] font-bold ${product.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}
+                  className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[10px] font-bold ${product.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}
                 >
                   {product.status}
                 </span>
@@ -340,7 +347,7 @@ const POSScreen = () => {
                 <h4 className="mb-1 line-clamp-2 text-sm font-bold text-slate-800">
                   {product.name}
                 </h4>
-                <div className="mt-auto text-xl font-black text-[#00315e]">
+                <div className="mt-auto text-xl font-black text-[#004785]">
                   {formatCurrency(product.price)}
                 </div>
                 <div className="mt-2 flex items-center justify-between">
@@ -368,26 +375,26 @@ const POSScreen = () => {
         <div className="custom-scrollbar flex flex-1 flex-col gap-y-4 overflow-y-auto p-4">
           {cart.map((item) => (
             <div key={item.id} className="flex items-center gap-x-3">
-              <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-50">
+              <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                 <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
               </div>
               <div className="min-w-0 flex-1">
                 <h5 className="truncate text-xs font-bold text-slate-900">{item.name}</h5>
-                <div className="mt-1 text-xs font-black text-[#00315e]">
+                <div className="mt-1 text-xs font-black text-[#004785]">
                   {formatCurrency(item.price)}
                 </div>
               </div>
               <div className="flex items-center gap-x-2">
                 <button
                   onClick={() => changeQty(item.id, -1)}
-                  className="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
+                  className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
                 >
                   -
                 </button>
                 <span className="w-4 text-center text-xs font-bold">{item.quantity}</span>
                 <button
                   onClick={() => changeQty(item.id, 1)}
-                  className="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
+                  className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
                 >
                   +
                 </button>
@@ -418,7 +425,7 @@ const POSScreen = () => {
                 value={voucher}
                 onChange={(e) => setVoucher(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && applyVoucher()}
-                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-[#00315e]"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-[#004785]"
                 placeholder="Nhập mã..."
                 type="text"
               />
@@ -447,7 +454,7 @@ const POSScreen = () => {
             <div className="my-1 h-px bg-slate-200" />
             <div className="flex items-end justify-between">
               <span className="text-xs font-bold uppercase text-slate-900">Tổng cộng</span>
-              <span className="text-2xl font-black text-[#00315e]">{formatCurrency(total)}</span>
+              <span className="text-2xl font-black text-[#004785]">{formatCurrency(total)}</span>
             </div>
           </div>
 
@@ -463,7 +470,7 @@ const POSScreen = () => {
                 <button
                   key={method}
                   onClick={() => setPaymentMethod(method)}
-                  className={`flex items-center gap-x-2 rounded-lg border p-2 transition-colors active:scale-95 ${active ? 'border-[#00315e] bg-[#00315e]/5 text-[#00315e]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#00315e]'}`}
+                  className={`flex items-center gap-x-2 rounded-lg border p-2 transition-colors active:scale-95 ${active ? 'border-[#004785] bg-[#004785]/5 text-[#004785]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#004785]'}`}
                 >
                   <Icon name={icon} className="text-sm" />
                   <span className="text-[10px] font-bold">{method}</span>
@@ -475,13 +482,13 @@ const POSScreen = () => {
           <div className="flex flex-col gap-y-2">
             <button
               onClick={handlePay}
-              className="w-full rounded-xl bg-[#00315e] py-4 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-blue-900/20 transition-all hover:opacity-90 active:scale-95"
+              className="w-full rounded-lg bg-[#004785] py-4 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-blue-900/20 transition-all hover:opacity-90 active:scale-95"
             >
               THANH TOÁN (F9)
             </button>
             <button
               onClick={handleSaveDraft}
-              className="w-full rounded-xl border-2 border-slate-200 bg-white py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-[#00315e] hover:text-[#00315e] active:scale-95"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-[#004785] hover:text-[#004785] active:scale-95"
             >
               Lưu bản nháp
             </button>

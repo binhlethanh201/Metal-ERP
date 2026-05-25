@@ -319,14 +319,16 @@ export const CreatePost = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background font-sans text-on-surface antialiased">
+    <div className="min-h-screen bg-[#f0f2f5] font-sans text-slate-900 antialiased">
       <ForumHeader />
 
-      <div className="relative mx-auto flex max-w-[1200px] gap-4">
-        <ForumLeftSidebar activeKey="" />
+      <div className="mx-auto flex max-w-[1400px] justify-center gap-4 px-4 py-4">
+        <aside className="sticky top-[64px] hidden h-[calc(100vh-64px)] w-[300px] shrink-0 overflow-y-auto lg:block">
+          <ForumLeftSidebar activeKey="" />
+        </aside>
 
-        <main className="min-w-0 flex-1 bg-surface py-4 pb-24 lg:pb-10">
-          <div className="mx-auto w-full max-w-[1280px] px-4 pb-12 pt-8 md:px-8">
+        <main className="w-full min-w-0 max-w-[720px] pb-24 lg:pb-10">
+          <div className="w-full pb-12 pt-2">
             <header className="mb-6">
               <h1 className="mb-2 text-3xl font-bold leading-tight text-on-surface md:text-4xl">
                 {isQuotePost
@@ -354,7 +356,7 @@ export const CreatePost = () => {
 
             <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
               <section className="space-y-6 xl:col-span-8">
-                <div className="rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                <div className="rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                   <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-primary">
                     1. Chọn loại bài đăng
                   </h3>
@@ -367,7 +369,7 @@ export const CreatePost = () => {
                           key={item.key}
                           type="button"
                           onClick={() => handlePostTypeChange(item.key)}
-                          className={`group flex min-h-24 flex-col items-center justify-center rounded-xl border p-3 text-center transition-all ${
+                          className={`group flex min-h-24 flex-col items-center justify-center rounded-lg border p-3 text-center transition-all ${
                             active
                               ? 'border-2 border-primary-container bg-surface-container-low text-primary'
                               : 'border-outline-variant text-on-surface-variant hover:border-primary-container hover:text-primary'
@@ -385,7 +387,7 @@ export const CreatePost = () => {
                   </div>
                 </div>
 
-                <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                   <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
                     2. Nội dung chi tiết
                   </h3>
@@ -395,7 +397,7 @@ export const CreatePost = () => {
                       {isQuotePost ? 'Tiêu đề yêu cầu báo giá' : 'Tiêu đề bài đăng'}
                     </label>
                     <input
-                      className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                       placeholder={
                         isQuotePost
                           ? 'Ví dụ: Cần báo giá thép xây dựng Hòa Phát số lượng lớn tại TP.HCM'
@@ -413,7 +415,7 @@ export const CreatePost = () => {
                         {isQuotePost ? 'Tin tức ngành' : 'Danh mục'}
                       </label>
                       <select
-                        className="w-full appearance-none rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                        className="w-full appearance-none rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                         value={formData.category}
                         onChange={(event) => handleFormField('category', event.target.value)}
                       >
@@ -427,7 +429,7 @@ export const CreatePost = () => {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-on-surface">Khu vực</label>
                       <input
-                        className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                        className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                         placeholder="Toàn quốc, Hà Nội, TP.HCM..."
                         type="text"
                         value={formData.area}
@@ -440,7 +442,7 @@ export const CreatePost = () => {
                     <label className="text-sm font-medium text-on-surface">
                       {isQuotePost ? 'Nội dung yêu cầu báo giá' : 'Nội dung bài viết'}
                     </label>
-                    <div className="overflow-hidden rounded-xl border border-outline-variant">
+                    <div className="overflow-hidden rounded-lg border border-outline-variant">
                       <div className="flex gap-2 border-b border-outline-variant bg-slate-100 p-2">
                         <button
                           type="button"
@@ -485,7 +487,7 @@ export const CreatePost = () => {
                     <label className="text-sm font-medium text-on-surface">
                       Gắn thẻ bài viết (Tags)
                     </label>
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-outline-variant bg-surface-bright p-3">
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant bg-surface-bright p-3">
                       {formData.tags.map((tag) => (
                         <span
                           key={tag}
@@ -521,7 +523,7 @@ export const CreatePost = () => {
                       <label className="text-sm font-medium text-on-surface">Ảnh sản phẩm</label>
                       <div className="flex gap-4">
                         {/* Upload Area */}
-                        <label className="flex h-32 w-32 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-outline-variant bg-surface-bright transition-all hover:border-primary hover:bg-primary-container/5">
+                        <label className="flex h-32 w-32 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-outline-variant bg-surface-bright transition-all hover:border-primary hover:bg-primary-container/5">
                           <MaterialIcon
                             name="add_a_photo"
                             className="text-2xl text-on-surface-variant"
@@ -553,7 +555,7 @@ export const CreatePost = () => {
                             {images.map((image, index) => (
                               <div
                                 key={index}
-                                className="group relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-xl bg-gray-200"
+                                className="group relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-slate-200"
                               >
                                 <img
                                   src={image}
@@ -578,7 +580,7 @@ export const CreatePost = () => {
                 </div>
 
                 {isQuotePost || isClearancePost ? (
-                  <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                  <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                     <div className="mb-1 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
                         <MaterialIcon
@@ -606,7 +608,7 @@ export const CreatePost = () => {
                               }))
                             }
                           />
-                          <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
+                          <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
                         </label>
                       </div>
                     </div>
@@ -619,7 +621,7 @@ export const CreatePost = () => {
                             className="absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-slate-400"
                           />
                           <input
-                            className="w-full rounded-xl border border-outline-variant bg-surface-bright py-3 pl-12 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                            className="w-full rounded-lg border border-outline-variant bg-surface-bright py-3 pl-12 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                             placeholder="Tìm sản phẩm trong kho..."
                             type="text"
                           />
@@ -629,7 +631,7 @@ export const CreatePost = () => {
                           <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
                             SẢN PHẨM ĐÃ CHỌN
                           </p>
-                          <div className="rounded-xl border border-outline-variant p-4">
+                          <div className="rounded-lg border border-outline-variant p-4">
                             <div className="mb-4 flex items-start gap-4">
                               <img
                                 alt={quoteProduct.name}
@@ -796,7 +798,7 @@ export const CreatePost = () => {
                 ) : isSupplyPost || isTrustedPost ? (
                   <>
                     {/* Phần 3: Gắn sản phẩm từ kho */}
-                    <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                    <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                       <div className="mb-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                           <MaterialIcon
@@ -824,7 +826,7 @@ export const CreatePost = () => {
                                 }))
                               }
                             />
-                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
+                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
                           </label>
                         </div>
                       </div>
@@ -838,7 +840,7 @@ export const CreatePost = () => {
                               className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                             />
                             <input
-                              className="w-full rounded-xl border border-outline-variant bg-surface-bright py-3 pl-12 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                              className="w-full rounded-lg border border-outline-variant bg-surface-bright py-3 pl-12 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                               placeholder="Tìm sản phẩm trong kho..."
                               type="text"
                             />
@@ -849,7 +851,7 @@ export const CreatePost = () => {
                             <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
                               Sản phẩm đã chọn
                             </p>
-                            <div className="rounded-xl border border-outline-variant p-4">
+                            <div className="rounded-lg border border-outline-variant p-4">
                               <div className="mb-4 flex items-start gap-4">
                                 <img
                                   src={quoteProduct.image}
@@ -979,7 +981,7 @@ export const CreatePost = () => {
                     </div>
 
                     {/* Phần 4: Thông số kỹ thuật sản phẩm */}
-                    <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                    <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                       <div className="mb-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                           <MaterialIcon name="settings" className="text-[20px] text-primary" fill />
@@ -1000,7 +1002,7 @@ export const CreatePost = () => {
                               checked={showTrustedSpecs}
                               onChange={(event) => setShowTrustedSpecs(event.target.checked)}
                             />
-                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
+                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
                           </label>
                         </div>
                       </div>
@@ -1061,7 +1063,7 @@ export const CreatePost = () => {
                                   {supplyProducts[currentProductIndex].image &&
                                   supplyProducts[currentProductIndex].image !==
                                     quoteProduct.image ? (
-                                    <div className="group relative aspect-square h-32 w-32 overflow-hidden rounded-xl bg-gray-200">
+                                    <div className="group relative aspect-square h-32 w-32 overflow-hidden rounded-lg bg-slate-200">
                                       <img
                                         src={supplyProducts[currentProductIndex].image}
                                         alt="Product"
@@ -1082,7 +1084,7 @@ export const CreatePost = () => {
                                       </button>
                                     </div>
                                   ) : (
-                                    <label className="flex aspect-square h-32 w-32 flex-col items-center justify-center rounded-xl border-2 border-dashed border-outline-variant bg-surface-bright text-on-surface-variant transition-all hover:border-primary hover:bg-primary-container/5">
+                                    <label className="flex aspect-square h-32 w-32 flex-col items-center justify-center rounded-lg border-2 border-dashed border-outline-variant bg-surface-bright text-on-surface-variant transition-all hover:border-primary hover:bg-primary-container/5">
                                       <MaterialIcon name="add_a_photo" className="text-2xl" />
                                       <span className="mt-1 text-[10px]">Tải ảnh</span>
                                       <input
@@ -1115,7 +1117,7 @@ export const CreatePost = () => {
                                     Tiêu đề sản phẩm
                                   </label>
                                   <input
-                                    className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                                    className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                                     placeholder="Ví dụ: Máy khoan bê tông chuyên dụng"
                                     type="text"
                                     value={supplyProducts[currentProductIndex].title}
@@ -1136,7 +1138,7 @@ export const CreatePost = () => {
                                       Giá sỉ (VNĐ)
                                     </label>
                                     <input
-                                      className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                                       placeholder="Thỏa thuận"
                                       type="text"
                                       value={productWholesalePrice}
@@ -1150,7 +1152,7 @@ export const CreatePost = () => {
                                       Giá lẻ (VNĐ)
                                     </label>
                                     <input
-                                      className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
                                       placeholder="Liên hệ"
                                       type="text"
                                       value={productRetailPrice}
@@ -1236,7 +1238,7 @@ export const CreatePost = () => {
                   </>
                 ) : (
                   <>
-                    <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                    <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                       <div className="mb-1 flex items-center justify-between gap-4">
                         <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
                           3. Thông tin giao thương
@@ -1254,7 +1256,7 @@ export const CreatePost = () => {
                                 handleFormField('showTradeInfo', event.target.checked)
                               }
                             />
-                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
+                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
                           </label>
                         </div>
                       </div>
@@ -1267,7 +1269,7 @@ export const CreatePost = () => {
                                 Tên sản phẩm đại diện
                               </label>
                               <input
-                                className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
+                                className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
                                 placeholder="Thép cuộn CB300-V"
                                 type="text"
                                 value={formData.productName}
@@ -1279,7 +1281,7 @@ export const CreatePost = () => {
                             <div className="space-y-2">
                               <label className="text-sm font-medium text-on-surface">Đơn vị</label>
                               <input
-                                className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
+                                className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
                                 placeholder="Tấn, Kg, Cái..."
                                 type="text"
                                 value={formData.unit}
@@ -1294,7 +1296,7 @@ export const CreatePost = () => {
                                 Giá sỉ (VNĐ)
                               </label>
                               <input
-                                className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
+                                className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
                                 placeholder="Thỏa thuận"
                                 type="text"
                                 value={formData.wholesalePrice}
@@ -1308,7 +1310,7 @@ export const CreatePost = () => {
                                 Giá lẻ (VNĐ)
                               </label>
                               <input
-                                className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
+                                className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
                                 placeholder="Liên hệ"
                                 type="text"
                                 value={formData.retailPrice}
@@ -1322,7 +1324,7 @@ export const CreatePost = () => {
                                 MOQ (Tối thiểu)
                               </label>
                               <input
-                                className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
+                                className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
                                 placeholder="100 đơn vị"
                                 type="text"
                                 value={formData.moq}
@@ -1370,7 +1372,7 @@ export const CreatePost = () => {
                       )}
                     </div>
 
-                    <div className="space-y-5 rounded-xl border border-outline-variant bg-white p-4 md:p-6">
+                    <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
                       <div className="mb-1 flex items-center justify-between gap-4">
                         <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
                           4. Thông số kỹ thuật
@@ -1388,7 +1390,7 @@ export const CreatePost = () => {
                                 handleFormField('showSpecInfo', event.target.checked)
                               }
                             />
-                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
+                            <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
                           </label>
                         </div>
                       </div>
@@ -1408,7 +1410,7 @@ export const CreatePost = () => {
                               >
                                 <div className="flex-1">
                                   <input
-                                    className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
+                                    className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
                                     placeholder="Ví dụ: Độ phủ lý thuyết"
                                     type="text"
                                     value={row.name}
@@ -1419,7 +1421,7 @@ export const CreatePost = () => {
                                 </div>
                                 <div className="flex-1">
                                   <input
-                                    className="w-full rounded-xl border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
+                                    className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm"
                                     placeholder="Ví dụ: 10-12 m²/lít"
                                     type="text"
                                     value={row.value}
@@ -1492,7 +1494,7 @@ export const CreatePost = () => {
 
               <aside className="space-y-6 xl:col-span-4">
                 <div className="space-y-6 xl:sticky xl:top-24">
-                  <div className="flex flex-col items-center rounded-xl border border-outline-variant bg-white p-4 text-center md:p-6">
+                  <div className="flex flex-col items-center rounded-lg border border-outline-variant bg-white p-4 text-center md:p-6">
                     <h3 className="mb-4 w-full text-left text-sm font-semibold text-on-surface">
                       Phần trăm hoàn thành
                     </h3>
@@ -1534,7 +1536,7 @@ export const CreatePost = () => {
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-[#b7cae9] bg-[#c9dbf4] p-4 md:p-6">
+                  <div className="rounded-lg border border-[#b7cae9] bg-[#c9dbf4] p-4 md:p-6">
                     <div className="mb-4 flex items-center gap-2 text-[#005ea4]">
                       <MaterialIcon name="lightbulb" className="text-[18px]" />
                       <h3 className="text-xs font-bold uppercase tracking-[0.12em]">

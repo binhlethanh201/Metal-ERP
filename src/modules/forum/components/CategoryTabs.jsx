@@ -9,8 +9,8 @@ export const CategoryTabs = ({ categories = [], selectedCategory, onSelectCatego
         onClick={() => onSelectCategory(null)}
         className={`whitespace-nowrap rounded-lg px-4 py-2 font-medium transition-colors ${
           selectedCategory === null
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+            ? 'bg-[#004785] text-white'
+            : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
         }`}
       >
         Tất cả
@@ -21,8 +21,8 @@ export const CategoryTabs = ({ categories = [], selectedCategory, onSelectCatego
           onClick={() => onSelectCategory(category.id)}
           className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 font-medium transition-colors ${
             selectedCategory === category.id
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+              ? 'bg-[#004785] text-white'
+              : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
           }`}
         >
           <span>{category.icon}</span>

@@ -97,74 +97,77 @@ const ForumDiscussion = () => {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f8f9ff] font-['Be_Vietnam_Pro','Inter',sans-serif] text-[#0b1c30]">
+    <div className="min-h-screen bg-[#f0f2f5] font-sans text-slate-900">
       <ForumHeader onCreatePostClick={() => setIsCreatePostModalOpen(true)} />
 
-      <div className="relative mx-auto flex max-w-[1200px] gap-4">
-        <ForumLeftSidebar activeKey="discussion" />
+      <div className="mx-auto flex max-w-[1400px] justify-center gap-4 px-4 py-4">
+        {/* Left Sidebar */}
+        <aside className="sticky top-[64px] hidden h-[calc(100vh-64px)] w-[300px] shrink-0 overflow-y-auto lg:block">
+          <ForumLeftSidebar activeKey="discussion" />
+        </aside>
 
-        <main className="min-w-0 flex-1 bg-slate-50/30 px-2 py-4 pb-24 lg:pb-8">
-          <section className="mb-6">
-            <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-              <div>
-                <nav className="mb-3 flex items-center gap-1 text-xs text-slate-400">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/forum')}
-                    className="transition-colors hover:text-[#1E6BB8]"
-                  >
-                    Diễn đàn
-                  </button>
-                  <MaterialIcon name="chevron_right" className="text-[12px]" />
-                  <span className="font-medium text-[#1E6BB8]">Thảo luận</span>
-                </nav>
-                <h1 className="mb-2 text-3xl font-semibold leading-tight text-[#0b1c30] md:text-[32px]">
-                  Thảo luận mới nhất
-                </h1>
-                <p className="max-w-2xl text-sm text-slate-600 md:text-base">
-                  Trao đổi kinh nghiệm, giải đáp thắc mắc về kỹ thuật, thị trường và quản lý trong
-                  ngành kim khí.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-slate-100 bg-white p-2 px-4 shadow-sm md:p-3">
-              {tabItems.map((tab) => {
-                const active = activeTab === tab;
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveTab(tab)}
-                    className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-semibold transition-all ${
-                      active
-                        ? 'bg-[#1E6BB8] font-bold text-white shadow-md shadow-[#1E6BB8]/20'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-[#1E6BB8]'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Main Feed */}
+        <main className="w-full min-w-0 max-w-[720px] pb-24 lg:pb-8">
+          {/* Page Header */}
+          <section className="mb-4">
+            <nav className="mb-3 flex items-center gap-1 text-xs text-slate-400">
+              <button
+                type="button"
+                onClick={() => navigate('/forum')}
+                className="transition-colors hover:text-[#004785]"
+              >
+                Diễn đàn
+              </button>
+              <MaterialIcon name="chevron_right" className="text-[12px]" />
+              <span className="font-medium text-[#004785]">Thảo luận</span>
+            </nav>
+            <h1 className="mb-2 text-xl font-bold leading-tight text-gray-900">
+              Thảo luận mới nhất
+            </h1>
+            <p className="max-w-2xl text-[15px] leading-relaxed text-gray-600">
+              Trao đổi kinh nghiệm, giải đáp thắc mắc về kỹ thuật, thị trường và quản lý trong ngành
+              kim khí.
+            </p>
           </section>
 
+          {/* Tabs */}
+          <div className="mb-4 flex items-center gap-2 rounded-2xl bg-white p-1.5 shadow-sm">
+            {tabItems.map((tab) => {
+              const active = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`whitespace-nowrap rounded-xl px-6 py-2.5 text-sm font-semibold transition-all ${
+                    active
+                      ? 'bg-[#004785] font-bold text-white shadow-md shadow-[#004785]/20'
+                      : 'text-slate-600 hover:bg-gray-100 hover:text-[#004785]'
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Thread List */}
           <div className="space-y-4">
             {visibleThreads.map((thread) => (
               <article
                 key={thread.id}
-                className="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-[#1E6BB8]/40 hover:shadow-md md:p-6"
+                className="cursor-pointer rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm transition-all hover:border-[#004785]/30 hover:shadow-md"
               >
                 <div className="flex gap-4">
                   <div className="shrink-0">
                     {thread.avatar ? (
                       <img
                         alt={thread.author}
-                        className="h-12 w-12 rounded-xl border border-slate-100 object-cover"
+                        className="h-12 w-12 rounded-full border border-slate-100 object-cover"
                         src={thread.avatar}
                       />
                     ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-lg font-bold text-blue-600">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-[#004785]">
                         {thread.avatarInitials}
                       </div>
                     )}
@@ -172,7 +175,7 @@ const ForumDiscussion = () => {
 
                   <div className="min-w-0 flex-1">
                     <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <span className="text-sm font-bold text-[#0b1c30] transition-colors hover:text-[#1E6BB8]">
+                      <span className="text-sm font-bold text-gray-900 transition-colors hover:text-[#004785]">
                         {thread.author}
                       </span>
                       <span className="text-slate-400">•</span>
@@ -181,16 +184,16 @@ const ForumDiscussion = () => {
                         {thread.time}
                       </span>
                       <span
-                        className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${thread.categoryClass}`}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${thread.categoryClass}`}
                       >
                         {thread.category}
                       </span>
                     </div>
 
-                    <h3 className="mb-2 line-clamp-2 text-lg font-bold leading-tight text-[#0b1c30] transition-colors group-hover:text-[#1E6BB8]">
+                    <h3 className="mb-2 line-clamp-2 text-xl font-bold leading-tight text-gray-900 transition-colors hover:text-[#004785]">
                       {thread.title}
                     </h3>
-                    <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                    <p className="mb-4 line-clamp-2 text-[15px] leading-relaxed text-gray-600">
                       {thread.description}
                     </p>
 
@@ -198,14 +201,14 @@ const ForumDiscussion = () => {
                       {thread.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-full border border-slate-100 bg-slate-50 px-3 py-1 text-[12px] font-medium text-slate-500"
+                          className="rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-600"
                         >
                           {tag}
                         </span>
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-6 border-t border-slate-50 pt-4">
+                    <div className="flex items-center gap-6 border-t border-gray-100 pt-4">
                       <div className="flex items-center gap-2 text-slate-500">
                         <MaterialIcon name="forum" className="text-[20px]" />
                         <span className="text-xs font-bold">{thread.comments}</span>
@@ -217,7 +220,7 @@ const ForumDiscussion = () => {
                       <div className="ml-auto">
                         <button
                           type="button"
-                          className="text-slate-400 transition-colors hover:text-[#1E6BB8]"
+                          className="text-slate-400 transition-colors hover:text-[#004785]"
                         >
                           <MaterialIcon name="bookmark" className="text-[20px]" />
                         </button>
@@ -229,60 +232,63 @@ const ForumDiscussion = () => {
             ))}
           </div>
 
-          <div className="mt-12 flex items-center justify-center gap-2">
+          {/* Pagination */}
+          <div className="mt-8 flex items-center justify-center gap-2">
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-all hover:border-[#1E6BB8] hover:text-[#1E6BB8]"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-all hover:border-[#004785] hover:text-[#004785]"
             >
               <MaterialIcon name="chevron_left" />
             </button>
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1E6BB8] font-bold text-white shadow-md shadow-[#1E6BB8]/20"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#004785] font-bold text-white shadow-md shadow-[#004785]/20"
             >
               1
             </button>
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#1E6BB8]"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#004785]"
             >
               2
             </button>
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#1E6BB8]"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#004785]"
             >
               3
             </button>
             <span className="mx-1 text-slate-400">...</span>
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#1E6BB8]"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#004785]"
             >
               12
             </button>
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-all hover:border-[#1E6BB8] hover:text-[#1E6BB8]"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-all hover:border-[#004785] hover:text-[#004785]"
             >
               <MaterialIcon name="chevron_right" />
             </button>
           </div>
         </main>
 
-        <aside className="sidebar-scroll sticky top-[72px] hidden h-fit w-80 flex-col gap-6 px-6 py-6 xl:flex">
-          <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        {/* Right Sidebar */}
+        <aside className="sticky top-[64px] hidden h-[calc(100vh-64px)] w-[300px] shrink-0 space-y-4 overflow-y-auto xl:block">
+          {/* Chủ đề đang hot */}
+          <section className="rounded-2xl bg-white p-4 shadow-sm">
             <h4 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-700">
-              <MaterialIcon name="trending_up" className="text-[20px] text-[#1E6BB8]" />
+              <MaterialIcon name="trending_up" className="text-[20px] text-[#004785]" />
               Chủ đề đang hot
             </h4>
             <div className="space-y-4">
               {hotTopics.map((topic) => (
                 <button key={topic.title} type="button" className="group block text-left">
-                  <p className="line-clamp-2 text-xs font-bold leading-tight text-slate-700 transition-colors group-hover:text-[#1E6BB8]">
+                  <p className="line-clamp-2 text-sm font-bold leading-tight text-slate-700 transition-colors group-hover:text-[#004785]">
                     {topic.title}
                   </p>
-                  <p className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-400">
+                  <p className="mt-1.5 flex items-center gap-1 text-xs text-slate-400">
                     {topic.meta} <span className="h-1 w-1 rounded-full bg-slate-300" /> {topic.time}
                   </p>
                 </button>
@@ -290,26 +296,27 @@ const ForumDiscussion = () => {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#1E6BB8]/20 bg-[#1E6BB8]/10 p-5">
-            <div className="mb-2.5 flex items-center gap-2 text-[#1E6BB8]">
+          {/* Nội quy thảo luận */}
+          <section className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2 text-[#004785]">
               <MaterialIcon name="gavel" className="text-[20px]" />
               <h4 className="text-xs font-bold uppercase tracking-widest">Nội quy thảo luận</h4>
             </div>
             <ul className="space-y-2">
-              <li className="flex gap-2 text-[11px] leading-relaxed text-slate-500">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1E6BB8]/10 text-[10px] font-bold text-[#1E6BB8]">
+              <li className="flex gap-2 text-xs leading-relaxed text-slate-600">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#004785]/10 text-[10px] font-bold text-[#004785]">
                   1
                 </span>
                 <span>Tôn trọng người dùng khác, không dùng từ ngữ khiếm nhã.</span>
               </li>
-              <li className="flex gap-2 text-[11px] leading-relaxed text-slate-500">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1E6BB8]/10 text-[10px] font-bold text-[#1E6BB8]">
+              <li className="flex gap-2 text-xs leading-relaxed text-slate-600">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#004785]/10 text-[10px] font-bold text-[#004785]">
                   2
                 </span>
                 <span>Đăng bài đúng chuyên mục, không spam quảng cáo rác.</span>
               </li>
-              <li className="flex gap-2 text-[11px] leading-relaxed text-slate-500">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1E6BB8]/10 text-[10px] font-bold text-[#1E6BB8]">
+              <li className="flex gap-2 text-xs leading-relaxed text-slate-600">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#004785]/10 text-[10px] font-bold text-[#004785]">
                   3
                 </span>
                 <span>Khuyến khích chia sẻ thông tin có ích cho cộng đồng.</span>
@@ -319,6 +326,7 @@ const ForumDiscussion = () => {
         </aside>
       </div>
 
+      {/* Mobile Bottom Nav */}
       <nav className="fixed bottom-0 left-0 z-50 flex h-16 w-full items-center justify-around border-t border-slate-100 bg-white px-4 md:hidden">
         <button
           type="button"
@@ -340,7 +348,7 @@ const ForumDiscussion = () => {
           <button
             type="button"
             onClick={() => setIsCreatePostModalOpen(true)}
-            className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-[#1E6BB8] text-white shadow-xl transition-all active:scale-90"
+            className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-[#004785] text-white shadow-xl transition-all active:scale-90"
           >
             <MaterialIcon name="add" className="text-2xl" />
           </button>
@@ -348,7 +356,7 @@ const ForumDiscussion = () => {
         <button
           type="button"
           onClick={() => navigate('/forum/discussion')}
-          className="flex flex-col items-center gap-1 text-[#1E6BB8]"
+          className="flex flex-col items-center gap-1 text-[#004785]"
         >
           <MaterialIcon name="forum" fill />
           <span className="text-[10px] font-bold">Thảo luận</span>

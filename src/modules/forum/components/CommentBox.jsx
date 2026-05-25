@@ -26,15 +26,15 @@ export const CommentBox = ({ comments = [], onAddComment }) => {
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-gray-900">Bình luận ({comments.length})</h3>
+      <h3 className="font-bold text-slate-900">Bình luận ({comments.length})</h3>
 
       {/* Comment Input */}
-      <div className="space-y-3 rounded-lg bg-gray-50 p-4">
+      <div className="space-y-3 rounded-lg bg-slate-50 p-4">
         <textarea
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           placeholder="Viết bình luận của bạn..."
-          className="w-full resize-none rounded-lg border-2 border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+          className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
           rows="3"
         />
         <div className="flex justify-end">
@@ -53,13 +53,13 @@ export const CommentBox = ({ comments = [], onAddComment }) => {
       {/* Comments List */}
       <div className="space-y-3">
         {comments.map((comment) => (
-          <div key={comment.id} className="rounded-lg border border-gray-200 p-4">
+          <div key={comment.id} className="rounded-lg border border-slate-200 p-4">
             <div className="mb-2 flex items-start justify-between">
-              <h4 className="font-semibold text-gray-900">{comment.author}</h4>
-              <span className="text-xs text-gray-500">{formatDate(comment.date)}</span>
+              <h4 className="font-bold text-slate-900">{comment.author}</h4>
+              <span className="text-xs text-slate-500">{formatDate(comment.date)}</span>
             </div>
-            <p className="mb-3 text-sm text-gray-700">{comment.content}</p>
-            <button className="text-sm text-blue-600 hover:underline">❤️ {comment.likes}</button>
+            <p className="mb-3 text-sm text-slate-600">{comment.content}</p>
+            <button className="text-sm text-[#004785] hover:underline">❤️ {comment.likes}</button>
           </div>
         ))}
       </div>

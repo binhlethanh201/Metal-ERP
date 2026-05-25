@@ -13,13 +13,13 @@ export const Card = ({
 }) => {
   return (
     <div
-      className={`rounded-lg border border-gray-200 bg-white shadow-md ${className} `}
+      className={`rounded-lg border border-slate-200 bg-white shadow-md ${className} `}
       {...props}
     >
       {header && (
-        <div className="border-b border-gray-200 px-6 py-4">
+        <div className="border-b border-slate-200 px-6 py-4">
           {typeof header === 'string' ? (
-            <h2 className="text-lg font-semibold text-gray-900">{header}</h2>
+            <h2 className="text-lg font-bold text-slate-900">{header}</h2>
           ) : (
             header
           )}
@@ -28,7 +28,7 @@ export const Card = ({
 
       <div className={padding}>{children}</div>
 
-      {footer && <div className="border-t border-gray-200 px-6 py-4">{footer}</div>}
+      {footer && <div className="border-t border-slate-200 px-6 py-4">{footer}</div>}
     </div>
   );
 };
