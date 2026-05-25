@@ -23,7 +23,7 @@ const InventoryTopbar = () => {
           <button className="rounded-xl bg-[#004785] px-4 py-2 text-sm font-bold text-white transition-all active:scale-95">
             Nhập kho
           </button>
-          <button className="rounded-xl border border-[#F59E0B] px-4 py-2 text-sm font-bold text-[#F59E0B] transition-all active:scale-95">
+          <button className="rounded border border-[#F59E0B] px-4 py-2 text-sm font-bold text-[#F59E0B] transition-all active:scale-95">
             Xuất kho
           </button>
           <button

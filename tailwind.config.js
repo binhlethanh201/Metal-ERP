@@ -75,10 +75,13 @@ module.exports = {
         label: ['Be Vietnam Pro'],
       },
       borderRadius: {
-        DEFAULT: '0.125rem',
-        lg: '0.25rem',
-        xl: '0.5rem',
-        full: '0.75rem',
+        DEFAULT: '0.5rem', 
+        sm: '0.125rem',  //2px
+        md: '0.25rem',   
+        lg: '0.375rem', 
+        xl: '0.75rem',    
+        '2xl': '1rem',    
+        full: '9999px',    
         customer: '4px',
         admin: '2px',
       },
