@@ -1,4 +1,7 @@
 /**
+ * Trang Báo cáo tồn kho - Báo cáo  thống kê.
+ */
+/**
  * InventoryReports Page - Báo cáo thống kê
  */
 

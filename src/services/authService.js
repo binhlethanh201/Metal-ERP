@@ -1,5 +1,7 @@
 /**
- * Auth Service - Xử lý đăng nhập/đăng ký qua API backend
+ * Auth Service - Xử lý đăng nhập/đăng ký qua API backend.
+ * LƯU Ý: Auth dùng authRequest riêng thay vì apiClient vì auth URL có thể khác
+ * với API_BASE_URL chính (REACT_APP_AUTH_URL vs REACT_APP_API_URL).
  */
 
 import ENDPOINTS from './endpoints';

@@ -3,7 +3,11 @@
  * Gọi đến apiClient và endpoints tập trung
  */
 
-import { apiGet, apiPost, apiPut, apiDelete } from '../../services/apiClient';
+/**
+ * POS Service - Tất cả API calls cho module Bán hàng.
+ * Gọi qua apiClient + endpoints tập trung. Gồm: Products, Cart, Orders, Payment, Receipt, Shift.
+ */
+import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
 import ENDPOINTS from '../../services/endpoints';
 
 // ============ Products ============

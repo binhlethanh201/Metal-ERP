@@ -1,3 +1,6 @@
+/**
+ * Mock data cho PostDetail: bài viết, bình luận (kèm replies), bài viết liên quan, xu hướng, tags.
+ */
 const postDetailMockData = {
   post: {
     id: 1,

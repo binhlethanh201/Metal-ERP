@@ -1,51 +1,46 @@
 /**
- * ProductCard Component - Thẻ sản phẩm cho POS
+ * Thẻ sản phẩm POS - Ảnh, tên, giá, SKU, tồn kho, badge trạng thái. Click để thêm vào giỏ.
  */
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
-export const ProductCard = ({ product, onAddToCart, disabled = false }) => {
+const ProductCard = ({ product, onAddToCart, disabled = false }) => {
   const outOfStock = product.stock === 0;
 
   return (
-    <div
-      className={`overflow-hidden rounded-lg border border-slate-200 bg-white transition-all hover:border-[#004785] hover:shadow-lg ${outOfStock ? 'opacity-50' : ''} `}
+    <button
+      onClick={() => onAddToCart?.(product)}
+      disabled={outOfStock || disabled}
+      className="group flex min-h-[350px] flex-col rounded-lg border border-slate-200 bg-white p-3 text-left transition-all hover:shadow-lg active:scale-95"
     >
-      {/* Image */}
-      <div className="flex aspect-square items-center justify-center overflow-hidden bg-slate-200">
-        <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-      </div>
-
-      {/* Info */}
-      <div className="p-3">
-        <h3 className="line-clamp-2 text-sm font-bold text-slate-900">{product.name}</h3>
-
-        <div className="mt-2 flex items-center justify-between">
-          <div className="text-xl font-bold text-[#004785]">
-            {(product.price / 1000).toFixed(0)}K
-          </div>
-          {product.stock === 0 ? (
-            <div className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
-              Hết
-            </div>
-          ) : (
-            <div className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-              {product.stock}
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={() => onAddToCart(product)}
-          disabled={outOfStock || disabled}
-          className={`mt-3 w-full rounded-lg py-2 text-sm font-medium transition-colors ${
-            outOfStock || disabled
-              ? 'cursor-not-allowed bg-slate-200 text-slate-400'
-              : 'bg-[#004785] text-white hover:brightness-90'
-          } `}
+      <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-lg bg-slate-100">
+        <img
+          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          src={product.image}
+          alt={product.name}
+          onError={(e) => {
+            e.currentTarget.src =
+              'https://images.unsplash.com/photo-1586864387789-628af9feed72?q=80&w=900&auto=format&fit=crop';
+          }}
+        />
+        <span
+          className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[10px] font-bold ${product.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}
         >
-          {outOfStock ? 'Hết hàng' : 'Thêm'}
-        </button>
+          {product.status || (outOfStock ? 'Hết hàng' : 'Còn hàng')}
+        </span>
       </div>
-    </div>
+      <div className="flex flex-1 flex-col">
+        <h4 className="mb-1 line-clamp-2 text-sm font-bold text-slate-800">{product.name}</h4>
+        <div className="mt-auto text-xl font-black text-[#004785]">
+          {formatCurrency(product.price)}
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            {product.sku}
+          </span>
+          <span className="text-xs font-semibold text-slate-600">SL: {product.stock}</span>
+        </div>
+      </div>
+    </button>
   );
 };
 
