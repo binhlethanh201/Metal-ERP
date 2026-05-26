@@ -59,6 +59,9 @@ const staticIconMap = {
   account_balance: 'Landmark',
   qr_code_2: 'QrCode',
   credit_card: 'CreditCard',
+  gpp_maybe: 'ShieldAlert',
+  check_circle: 'CheckCircle2',
+  chat_bubble: 'MessageSquare',
 };
 
 const toPascalCase = (str) => {

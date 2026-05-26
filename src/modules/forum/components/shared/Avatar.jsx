@@ -1,8 +1,9 @@
 /**
- * Avatar - Hiển thị ảnh đại diện hoặc chữ viết tắt.
- * Props: name, src (url ảnh), size (sm/md/lg).
- * Nếu có src thì hiển thị ảnh, không có thì hiển thị initials từ name.
+ * src/modules/forum/components/shared/Avatar.jsx
+ * Avatar thành viên - Đã chuyển đổi từ dáng tròn sang dáng hộp vuông bo góc rounded-lg đồng bộ.
  */
+import React from 'react';
+
 const getInitials = (name) =>
   (name || '')
     .split(' ')
@@ -13,9 +14,9 @@ const getInitials = (name) =>
     .toUpperCase();
 
 const sizeMap = {
-  sm: 'h-8 w-8 text-[10px]',
-  md: 'h-10 w-10 text-xs',
-  lg: 'h-12 w-12 text-sm',
+  sm: 'h-8 w-8 text-[10px] rounded-md',
+  md: 'h-10 w-10 text-xs rounded-lg',
+  lg: 'h-12 w-12 text-sm rounded-xl',
 };
 
 const Avatar = ({ name = '', src, size = 'md', className = '' }) => {
@@ -23,7 +24,7 @@ const Avatar = ({ name = '', src, size = 'md', className = '' }) => {
     return (
       <img
         alt={name}
-        className={`rounded-full object-cover ${sizeMap[size]} ${className}`}
+        className={`shadow-sm/5 border border-slate-100 object-cover ${sizeMap[size]} ${className}`}
         src={src}
       />
     );
@@ -31,7 +32,7 @@ const Avatar = ({ name = '', src, size = 'md', className = '' }) => {
 
   return (
     <div
-      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#004785] to-[#005296] font-bold text-white ${sizeMap[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center bg-gradient-to-br from-[#004785] to-[#005296] font-black text-white shadow-sm ${sizeMap[size]} ${className}`}
     >
       {getInitials(name)}
     </div>

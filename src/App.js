@@ -31,6 +31,7 @@ const OrderHistory = lazy(() => import('./modules/pos/pages/OrderHistory'));
 const ShiftManagement = lazy(() => import('./modules/pos/pages/ShiftManagement'));
 
 // Forum Module
+const ForumLayout = lazy(() => import('./modules/forum/layouts/ForumLayout'));
 const ForumHome = lazy(() => import('./modules/forum/pages/ForumHome'));
 const PostDetail = lazy(() => import('./modules/forum/pages/PostDetail'));
 const CreatePost = lazy(() => import('./modules/forum/pages/CreatePost'));
@@ -76,7 +77,7 @@ function App() {
             </Route>
 
             {/* FORUM */}
-            <Route path="/forum">
+            <Route path="/forum" element={<ForumLayout />}>
               <Route index element={<ForumHome />} />
               <Route path="post/:id" element={<PostDetail />} />
               <Route path="create" element={<CreatePost />} />

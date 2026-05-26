@@ -1,9 +1,5 @@
-/**
- * ForumHomeRightSidebar - Cột phải trang chủ.
- * 4 khối: Xu hướng tìm kiếm, Chủ đề quan tâm, Thảo luận nổi bật, Quy định chung.
- * Props: trendSearches, topicTags, hotPosts, onSearchByTag.
- */
-import MaterialIcon from '../shared/MaterialIcon';
+import React from 'react';
+import Icon from '../../../../shared/components/Icon';
 
 const ForumHomeRightSidebar = ({ trendSearches, topicTags, hotPosts, onSearchByTag }) => (
   <>
@@ -25,6 +21,7 @@ const ForumHomeRightSidebar = ({ trendSearches, topicTags, hotPosts, onSearchByT
         ))}
       </div>
     </section>
+
     <section className="rounded-2xl bg-white p-4 shadow-sm">
       <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.05em] text-slate-500">
         Chủ đề quan tâm
@@ -33,6 +30,7 @@ const ForumHomeRightSidebar = ({ trendSearches, topicTags, hotPosts, onSearchByT
         {topicTags.map((tag) => (
           <button
             key={tag}
+            type="button"
             onClick={() => onSearchByTag(tag)}
             className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-[#004785]"
           >
@@ -41,6 +39,7 @@ const ForumHomeRightSidebar = ({ trendSearches, topicTags, hotPosts, onSearchByT
         ))}
       </div>
     </section>
+
     <section className="rounded-2xl bg-white p-4 shadow-sm">
       <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.05em] text-slate-500">
         Thảo luận nổi bật
@@ -63,9 +62,10 @@ const ForumHomeRightSidebar = ({ trendSearches, topicTags, hotPosts, onSearchByT
         ))}
       </div>
     </section>
+
     <section className="rounded-2xl bg-white p-4 shadow-sm">
       <div className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.05em] text-green-700">
-        <MaterialIcon name="gpp_maybe" className="text-lg" /> Quy định chung
+        <Icon name="gpp_maybe" size={16} /> Quy định chung
       </div>
       <ul className="space-y-1.5 text-xs text-slate-600">
         {[
@@ -74,8 +74,7 @@ const ForumHomeRightSidebar = ({ trendSearches, topicTags, hotPosts, onSearchByT
           'Không hàng lậu, hàng giả.',
         ].map((rule) => (
           <li key={rule} className="flex items-start gap-1.5">
-            <MaterialIcon name="check_circle" className="mt-0.5 text-[12px] text-green-600" />{' '}
-            {rule}
+            <Icon name="check_circle" className="mt-0.5 text-green-600" size={12} /> {rule}
           </li>
         ))}
       </ul>

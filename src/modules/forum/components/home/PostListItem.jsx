@@ -1,10 +1,6 @@
-/**
- * PostListItem - Một item bài viết trong feed trang chủ.
- * Avatar + author + role badge + thời gian + status badge + title + description + tags + comments/views.
- * Props: post (object), onClick, onTagClick.
- */
+import React from 'react';
 import Avatar from '../shared/Avatar';
-import MaterialIcon from '../shared/MaterialIcon';
+import Icon from '../../../../shared/components/Icon';
 
 const PostListItem = ({ post, onClick, onTagClick }) => (
   <article
@@ -39,6 +35,7 @@ const PostListItem = ({ post, onClick, onTagClick }) => (
         {post.tags.map((tag) => (
           <button
             key={tag}
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onTagClick?.(tag);
@@ -51,10 +48,10 @@ const PostListItem = ({ post, onClick, onTagClick }) => (
       </div>
       <div className="flex items-center gap-3 text-slate-400">
         <span className="flex items-center gap-1 text-xs">
-          <MaterialIcon name="chat_bubble" className="text-[14px]" /> {post.comments}
+          <Icon name="chat_bubble" size={14} /> {post.comments}
         </span>
         <span className="flex items-center gap-1 text-xs">
-          <MaterialIcon name="visibility" className="text-[14px]" /> {post.views}
+          <Icon name="visibility" size={14} /> {post.views}
         </span>
       </div>
     </div>

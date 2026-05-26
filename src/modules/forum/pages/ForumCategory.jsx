@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ForumLayout from '../components/shared/ForumLayout';
+import ForumLayout from '../layouts/ForumLayout';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { PostCard } from '../components/shared/PostCard';

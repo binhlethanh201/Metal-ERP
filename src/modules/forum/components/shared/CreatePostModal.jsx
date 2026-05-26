@@ -1,25 +1,38 @@
 /**
+ * src/modules/forum/components/shared/CreatePostModal.jsx
  * CreatePostModal - Modal đăng bài nhanh (phiên bản popup của CreatePost page).
- * Props: isOpen, onClose.
+ * Đã thay thế trực tiếp sang Icon Lucide chuẩn và quy chuẩn bo góc rounded-xl hệ thống.
  */
-/**
- * CreatePostModal Component - Modal để đăng bài
- * Đầy đủ tất cả các form từ CreatePost.jsx
- */
-
 import { useMemo, useState } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
-import MaterialIconBase from './MaterialIcon';
+import {
+  Store,
+  SearchCode,
+  FileText,
+  TrendingUp,
+  CheckCircle,
+  Bold,
+  Italic,
+  List,
+  Link2,
+  X,
+  Camera,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Minus,
+  Eye,
+  Lightbulb,
+} from 'lucide-react'; // Import trực tiếp từ thư viện lucide-react
 
-const MaterialIcon = (props) => <MaterialIconBase opsz={24} {...props} />;
-
-// Các hằng số loại bài đăng và tùy chọn
+// Cấu hình mảng loại bài đăng với Icon Lucide tương ứng
 const POST_TYPES = [
-  { key: 'wholesale', icon: 'storefront', label: 'Đăng bán sỉ' },
-  { key: 'supply', icon: 'search_insights', label: 'Tìm nguồn hàng' },
-  { key: 'quote', icon: 'request_quote', label: 'Hỏi giá' },
-  { key: 'trend', icon: 'trending_up', label: 'Thanh lý kho' },
-  { key: 'trusted', icon: 'verified', label: 'Mua chung' },
+  { key: 'wholesale', icon: Store, label: 'Đăng bán sỉ' },
+  { key: 'supply', icon: SearchCode, label: 'Tìm nguồn hàng' },
+  { key: 'quote', icon: FileText, label: 'Hỏi giá' },
+  { key: 'trend', icon: TrendingUp, label: 'Thanh lý kho' },
+  { key: 'trusted', icon: CheckCircle, label: 'Mua chung' },
 ];
 
 const CATEGORY_OPTIONS = ['Vật liệu xây dựng', 'Thiết bị điện', 'Kim khí', 'Máy móc công nghiệp'];
@@ -46,9 +59,9 @@ const TRUSTED_POST_PRESET = {
 };
 
 export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
-  // State chính
   const [postType, setPostType] = useState('trusted');
   const postTypeLabel = POST_TYPES.find((p) => p.key === postType)?.label || '';
+
   const modalTitleMap = {
     wholesale: 'Đăng bán sỉ',
     supply: 'Tìm nguồn hàng',
@@ -61,7 +74,6 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Form data chính
   const [formData, setFormData] = useState({
     title: TRUSTED_POST_PRESET.title,
     category: CATEGORY_OPTIONS[0],
@@ -78,11 +90,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
     stockStatus: 'in-stock',
   });
 
-  // State cho thông số kỹ thuật (đang không sử dụng)
   const [images, setImages] = useState([{ id: 1, url: sampleImage, file: null }]);
-
-  // State cho gắn sản phẩm
-  // Mặc định tắt attachProduct để phần "Gắn sản phẩm" luôn ẩn cho đến khi user bật
   const [quoteOptions, setQuoteOptions] = useState({
     attachProduct: false,
     showPrice: false,
@@ -96,10 +104,8 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
   const [attachedRetailPrice, setAttachedRetailPrice] = useState('850.000');
   const [productWholesalePrice, setProductWholesalePrice] = useState('15.500.000');
   const [productRetailPrice, setProductRetailPrice] = useState('Liên hệ');
-  // Mặc định tắt hiển thị thông số để phần thông tin luôn ẩn cho đến khi user bật
   const [showTrustedSpecs, setShowTrustedSpecs] = useState(false);
 
-  // State cho supply products
   const [supplyProducts, setSupplyProducts] = useState([
     {
       id: 1,
@@ -114,7 +120,6 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
   ]);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
 
-  // Tính phần trăm hoàn thiện
   const completionPercent = useMemo(() => {
     const checkpoints =
       postType === 'trusted'
@@ -152,7 +157,6 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
     return circumference - (completionPercent / 100) * circumference;
   }, [completionPercent]);
 
-  // Các hàm handler
   const handleFormField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -175,9 +179,6 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
     }));
   };
 
-  // (spec handlers removed because not used in this component)
-
-  // Xử lý upload ảnh (preview)
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
@@ -262,7 +263,6 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
       alert('Phải giữ lại ít nhất 1 sản phẩm.');
       return;
     }
-
     setSupplyProducts((prev) => prev.filter((_, index) => index !== currentProductIndex));
     setCurrentProductIndex(Math.max(0, currentProductIndex - 1));
   };
@@ -282,8 +282,6 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
 
   const handlePostTypeChange = (nextType) => {
     setPostType(nextType);
-
-    // Khi đổi loại bài, giữ các toggle chi tiết ở trạng thái tắt mặc định.
     setQuoteOptions({
       attachProduct: false,
       showPrice: false,
@@ -292,11 +290,8 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
     });
     setShowTrustedSpecs(false);
 
-    if (nextType !== 'trusted') {
-      return;
-    }
+    if (nextType !== 'trusted') return;
 
-    // Nếu là 'trusted', vẫn áp preset cho form nhưng không tự động bật các toggle.
     setFormData((prev) => ({
       ...prev,
       ...TRUSTED_POST_PRESET,
@@ -351,55 +346,58 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="7xl">
-      <div className="max-h-[85vh] overflow-y-auto px-1 pb-2 pt-1 md:px-2">
+      <div className="no-scrollbar max-h-[85vh] overflow-y-auto px-1 pb-2 pt-1 md:px-2">
         <div className="space-y-6 px-2 md:px-4">
-          <header className="space-y-2">
-            <h1 className="text-3xl font-bold leading-tight text-on-surface md:text-4xl">
+          <header className="space-y-1">
+            <h2 className="text-xl font-bold leading-tight text-slate-900 md:text-2xl">
               {modalTitle}
-            </h1>
-            <p className="text-sm text-on-surface-variant md:text-base">
+            </h2>
+            <p className="text-sm font-medium text-slate-500">
               Điền đầy đủ thông tin để thu hút đối tác và khách hàng B2B tiềm năng.
             </p>
           </header>
 
           <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
-            <section className="space-y-6 xl:col-span-8">
-              <div className="rounded-lg border border-outline-variant bg-white p-4 md:p-6">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-primary">
+            <section className="space-y-5 xl:col-span-8">
+              {/* KHỐI 1: CHỌN LOẠI BÀI ĐĂNG */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+                <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-[#004785]">
                   1. Chọn loại bài đăng
                 </h3>
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
                   {POST_TYPES.map((item) => {
                     const active = postType === item.key;
+                    const TypeIcon = item.icon; // Định dạng component động từ Lucide
 
                     return (
                       <button
                         key={item.key}
                         type="button"
                         onClick={() => handlePostTypeChange(item.key)}
-                        className={`group flex min-h-24 flex-col items-center justify-center rounded-lg border p-3 text-center transition-all ${
+                        className={`group flex min-h-24 flex-col items-center justify-center rounded-xl border p-3 text-center transition-all duration-150 active:scale-95 ${
                           active
-                            ? 'border-2 border-primary-container bg-surface-container-low text-primary'
-                            : 'border-outline-variant text-on-surface-variant hover:border-primary-container hover:text-primary'
+                            ? 'shadow-sm/5 border-2 border-blue-200 bg-blue-50/50 font-bold text-[#004785]'
+                            : 'border-slate-200 text-slate-500 hover:border-blue-200 hover:text-[#004785]'
                         }`}
                       >
-                        <MaterialIcon name={item.icon} className="mb-2 text-[24px]" fill={active} />
-                        <span className="text-xs font-medium md:text-sm">{item.label}</span>
+                        <TypeIcon className="mb-2" size={22} />
+                        <span className="text-xs font-semibold md:text-sm">{item.label}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
-                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
+              {/* KHỐI 2: NỘI DUNG CHI TIẾT */}
+              <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+                <h3 className="text-xs font-black uppercase tracking-widest text-[#004785]">
                   2. Nội dung chi tiết
                 </h3>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-on-surface">Tiêu đề bài đăng</label>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-slate-700">Tiêu đề bài đăng</label>
                   <input
-                    className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#004785] focus:bg-white focus:ring-0"
                     placeholder="Ví dụ: Cung cấp thép xây dựng Hòa Phát số lượng lớn tại TP.HCM"
                     type="text"
                     value={formData.title}
@@ -408,24 +406,26 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-on-surface">Danh mục</label>
-                    <select
-                      className="w-full appearance-none rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
-                      value={formData.category}
-                      onChange={(event) => handleFormField('category', event.target.value)}
-                    >
-                      {CATEGORY_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-700">Danh mục</label>
+                    <div className="relative">
+                      <select
+                        className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-[#004785] focus:bg-white"
+                        value={formData.category}
+                        onChange={(event) => handleFormField('category', event.target.value)}
+                      >
+                        {CATEGORY_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-on-surface">Khu vực</label>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-700">Khu vực</label>
                     <input
-                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#004785] focus:bg-white focus:ring-0"
                       placeholder="Toàn quốc, Hà Nội, TP.HCM..."
                       type="text"
                       value={formData.area}
@@ -434,68 +434,68 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-on-surface">Nội dung bài viết</label>
-                  <div className="overflow-hidden rounded-lg border border-outline-variant">
-                    <div className="flex gap-2 border-b border-outline-variant bg-slate-100 p-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-slate-700">Nội dung bài viết</label>
+                  <div className="overflow-hidden rounded-xl border border-slate-200">
+                    <div className="flex gap-1 border-b border-slate-200 bg-slate-50 p-2">
                       <button
                         type="button"
-                        className="rounded p-1 text-on-surface-variant hover:bg-white"
+                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white hover:text-slate-900"
                       >
-                        <MaterialIcon name="format_bold" className="text-[18px]" />
+                        <Bold size={16} />
                       </button>
                       <button
                         type="button"
-                        className="rounded p-1 text-on-surface-variant hover:bg-white"
+                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white hover:text-slate-900"
                       >
-                        <MaterialIcon name="format_italic" className="text-[18px]" />
+                        <Italic size={16} />
                       </button>
                       <button
                         type="button"
-                        className="rounded p-1 text-on-surface-variant hover:bg-white"
+                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white hover:text-slate-900"
                       >
-                        <MaterialIcon name="format_list_bulleted" className="text-[18px]" />
+                        <List size={16} />
                       </button>
                       <button
                         type="button"
-                        className="rounded p-1 text-on-surface-variant hover:bg-white"
+                        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white hover:text-slate-900"
                       >
-                        <MaterialIcon name="link" className="text-[18px]" />
+                        <Link2 size={16} />
                       </button>
                     </div>
                     <textarea
-                      className="w-full resize-none bg-surface-bright p-4 text-sm outline-none"
+                      className="w-full resize-none bg-white p-4 text-sm font-medium text-slate-600 outline-none placeholder:text-slate-400"
                       placeholder="Mô tả chi tiết về nhu cầu mua chung, số lượng, khu vực giao hàng, yêu cầu chứng từ..."
-                      rows="6"
+                      rows="5"
                       value={formData.content}
                       onChange={(event) => handleFormField('content', event.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-on-surface">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-slate-700">
                     Gắn thẻ bài viết (Tags)
                   </label>
-                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant bg-surface-bright p-3">
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/40 p-3">
                     {formData.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="flex items-center gap-1 rounded-full bg-primary-container/10 px-3 py-1 text-xs font-medium text-primary md:text-sm"
+                        className="flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600"
                       >
                         #{tag}
                         <button
                           type="button"
                           onClick={() => handleRemoveTag(tag)}
-                          className="leading-none text-primary/80 hover:text-primary"
+                          className="text-blue-400 transition-colors hover:text-blue-800"
                           aria-label={`Xóa thẻ ${tag}`}
                         >
-                          <MaterialIcon name="close" className="text-[14px]" />
+                          <X size={12} />
                         </button>
                       </span>
                     ))}
                     <input
-                      className="min-w-[120px] flex-1 border-none bg-transparent p-0 text-sm outline-none focus:ring-0"
+                      className="min-w-[120px] flex-1 border-none bg-transparent p-0 text-sm font-semibold outline-none focus:ring-0"
                       placeholder="Thêm thẻ mới..."
                       type="text"
                       value={newTag}
@@ -503,21 +503,18 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                       onKeyDown={handleAddTag}
                     />
                   </div>
-                  <p className="text-xs text-on-surface-variant">
+                  <p className="text-[11px] font-medium text-slate-400">
                     Nhập thẻ và nhấn Enter để thêm (Tối đa 5 thẻ)
                   </p>
                 </div>
 
                 {!isSupplyPost && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-on-surface">Ảnh sản phẩm</label>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-700">Ảnh sản phẩm</label>
                     <div className="flex gap-4">
-                      <label className="flex h-32 w-32 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-outline-variant bg-surface-bright transition-all hover:border-primary hover:bg-primary-container/5">
-                        <MaterialIcon
-                          name="add_a_photo"
-                          className="text-2xl text-on-surface-variant"
-                        />
-                        <span className="text-center text-xs font-medium text-on-surface-variant">
+                      <label className="flex h-28 w-28 flex-shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 text-slate-400 transition-all hover:border-[#004785] hover:bg-blue-50/30 hover:text-[#004785]">
+                        <Camera size={22} />
+                        <span className="text-center text-[10px] font-black uppercase tracking-wider">
                           Tải ảnh
                         </span>
                         <input
@@ -530,11 +527,11 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                       </label>
 
                       {images.length > 0 && (
-                        <div className="flex flex-1 gap-3 overflow-x-auto pb-2">
+                        <div className="no-scrollbar flex flex-1 gap-3 overflow-x-auto pb-1">
                           {images.map((image, index) => (
                             <div
                               key={image.id}
-                              className="group relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-slate-200"
+                              className="group relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl border border-slate-100"
                             >
                               <img
                                 src={image.url}
@@ -544,10 +541,10 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                               <button
                                 type="button"
                                 onClick={() => handleRemoveImage(index)}
-                                className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-black/60 text-white shadow-md backdrop-blur-sm transition-all group-hover:bg-red-600"
                                 aria-label={`Xóa ảnh ${index + 1}`}
                               >
-                                <MaterialIcon name="close" className="text-[16px]" />
+                                <X size={14} />
                               </button>
                             </div>
                           ))}
@@ -558,196 +555,180 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                 )}
               </div>
 
+              {/* KHỐI 3: GẮN SẢN PHẨM TỪ KHO */}
               {postType !== 'wholesale' && (
-                <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
-                  <div className="mb-1 flex items-center justify-between gap-4">
+                <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+                  <div className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3">
                     <div className="flex items-center gap-2">
-                      <MaterialIcon name="inventory_2" className="text-[20px] text-primary" fill />
-                      <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-[#004785]">
                         3. Gắn sản phẩm từ kho (tuỳ chọn)
                       </h3>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-on-surface-variant">
-                        Gắn sản phẩm vào bài viết
-                      </span>
-                      <label className="relative inline-flex cursor-pointer items-center">
-                        <input
-                          className="peer sr-only"
-                          type="checkbox"
-                          checked={quoteOptions.attachProduct}
-                          onChange={(event) =>
-                            setQuoteOptions((prev) => ({
-                              ...prev,
-                              attachProduct: event.target.checked,
-                            }))
-                          }
-                        />
-                        <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
-                      </label>
-                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        className="peer sr-only"
+                        type="checkbox"
+                        checked={quoteOptions.attachProduct}
+                        onChange={(event) =>
+                          setQuoteOptions((prev) => ({
+                            ...prev,
+                            attachProduct: event.target.checked,
+                          }))
+                        }
+                      />
+                      <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
+                    </label>
                   </div>
 
                   {quoteOptions.attachProduct && activeProduct && (
                     <div className="space-y-4">
                       <div className="relative">
-                        <MaterialIcon
-                          name="search"
-                          className="absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-slate-400"
-                        />
                         <input
-                          className="w-full rounded-lg border border-outline-variant bg-surface-bright py-3 pl-12 pr-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm font-semibold outline-none focus:border-[#004785] focus:bg-white"
                           placeholder="Tìm sản phẩm trong kho..."
                           type="text"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                          SẢN PHẨM ĐÃ CHỌN
-                        </p>
-                        <div className="rounded-lg border border-outline-variant p-4">
-                          <div className="mb-4 flex items-start gap-4">
-                            <img
-                              alt={quoteProduct.name}
-                              className="h-20 w-20 rounded-lg border border-outline-variant object-cover"
-                              src={activeProduct.image || quoteProduct.image}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <h4 className="mb-1 text-base font-semibold text-on-surface">
-                                {activeProduct.title || quoteProduct.name}
-                              </h4>
-                              <p className="mb-2 text-xs text-on-surface-variant">
-                                {quoteProduct.description}
-                              </p>
-                              <div className="flex flex-wrap gap-4 text-[10px] font-bold uppercase text-slate-400">
-                                <span>SKU: {quoteProduct.sku}</span>
-                                <span>NSX: {quoteProduct.supplier}</span>
+                      <div className="shadow-sm/5 rounded-xl border border-slate-200 bg-white p-4">
+                        <div className="mb-4 flex items-start gap-4">
+                          <img
+                            alt={quoteProduct.name}
+                            className="h-20 w-20 shrink-0 rounded-xl border border-slate-100 object-cover"
+                            src={activeProduct.image || quoteProduct.image}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <h4 className="truncate text-sm font-bold text-slate-800">
+                              {activeProduct.title || quoteProduct.name}
+                            </h4>
+                            <p className="mt-0.5 line-clamp-1 text-xs font-medium text-slate-400">
+                              {quoteProduct.description}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-4 text-[10px] font-black uppercase text-slate-400">
+                              <span>SKU: {quoteProduct.sku}</span>
+                              <span>NSX: {quoteProduct.supplier}</span>
+                            </div>
+
+                            {!isSupplyPost && !isQuotePost && !isClearancePost && (
+                              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    Giá sỉ (VNĐ)
+                                  </label>
+                                  <input
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-bold text-[#004785]"
+                                    type="text"
+                                    value={attachedWholesalePrice}
+                                    onChange={(e) => setAttachedWholesalePrice(e.target.value)}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    Giá lẻ (VNĐ)
+                                  </label>
+                                  <input
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-bold text-slate-700"
+                                    type="text"
+                                    value={attachedRetailPrice}
+                                    onChange={(e) => setAttachedRetailPrice(e.target.value)}
+                                  />
+                                </div>
                               </div>
-                              {!isSupplyPost && !isQuotePost && !isClearancePost && (
-                                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                  <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
-                                      Giá sỉ (VNĐ)
-                                    </label>
-                                    <input
-                                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
-                                      placeholder="Nhập giá..."
-                                      type="text"
-                                      value={attachedWholesalePrice}
-                                      onChange={(event) =>
-                                        setAttachedWholesalePrice(event.target.value)
-                                      }
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
-                                      Giá lẻ (VNĐ)
-                                    </label>
-                                    <input
-                                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
-                                      placeholder="Liên hệ"
-                                      type="text"
-                                      value={attachedRetailPrice}
-                                      onChange={(event) =>
-                                        setAttachedRetailPrice(event.target.value)
-                                      }
-                                    />
-                                  </div>
-                                </div>
-                              )}
+                            )}
 
-                              {isClearancePost && (
-                                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                  <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
-                                      Giá bán lẻ (VNĐ)
-                                    </label>
-                                    <input
-                                      className="w-full rounded-lg border border-outline-variant bg-surface-bright px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
-                                      placeholder="Nhập giá..."
-                                      type="text"
-                                      value={retailPrice}
-                                      onChange={(event) => setRetailPrice(event.target.value)}
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-red-600">
-                                      Giá thanh lý (VNĐ)
-                                    </label>
-                                    <input
-                                      className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 outline-none transition-all focus:ring-2 focus:ring-red-300"
-                                      placeholder="Liên hệ"
-                                      type="text"
-                                      value={clearancePrice}
-                                      onChange={(event) => setClearancePrice(event.target.value)}
-                                    />
-                                  </div>
+                            {isClearancePost && (
+                              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    Giá bán lẻ (VNĐ)
+                                  </label>
+                                  <input
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-bold text-slate-700"
+                                    type="text"
+                                    value={retailPrice}
+                                    onChange={(e) => setRetailPrice(e.target.value)}
+                                  />
                                 </div>
-                              )}
-                            </div>
-                            <button type="button" className="flex flex-col items-center text-error">
-                              <MaterialIcon name="delete" />
-                              <span className="text-[10px] font-bold">Xóa khỏi bài</span>
-                            </button>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-black uppercase tracking-wider text-red-500">
+                                    Giá thanh lý (VNĐ)
+                                  </label>
+                                  <input
+                                    className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-600"
+                                    type="text"
+                                    value={clearancePrice}
+                                    onChange={(e) => setClearancePrice(e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
+                          <button
+                            type="button"
+                            className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl p-1 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 size={16} />
+                            <span className="text-[9px] font-black uppercase tracking-wider">
+                              Xóa
+                            </span>
+                          </button>
+                        </div>
 
-                          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 md:grid-cols-3">
-                            <div className="flex items-center justify-between rounded-lg bg-slate-50 p-2">
-                              <span className="text-sm text-on-surface-variant">Hiển thị giá</span>
-                              <label className="relative inline-flex scale-75 cursor-pointer items-center">
-                                <input
-                                  className="peer sr-only"
-                                  type="checkbox"
-                                  checked={quoteOptions.showPrice}
-                                  onChange={(event) =>
-                                    setQuoteOptions((prev) => ({
-                                      ...prev,
-                                      showPrice: event.target.checked,
-                                    }))
-                                  }
-                                />
-                                <span className="peer h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
-                              </label>
-                            </div>
-                            <div className="flex items-center justify-between rounded-lg bg-slate-50 p-2">
-                              <span className="text-sm text-on-surface-variant">
-                                Hiển thị tồn kho
-                              </span>
-                              <label className="relative inline-flex scale-75 cursor-pointer items-center">
-                                <input
-                                  className="peer sr-only"
-                                  type="checkbox"
-                                  checked={quoteOptions.showStock}
-                                  onChange={(event) =>
-                                    setQuoteOptions((prev) => ({
-                                      ...prev,
-                                      showStock: event.target.checked,
-                                    }))
-                                  }
-                                />
-                                <span className="peer h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
-                              </label>
-                            </div>
-                            <div className="flex items-center justify-between rounded-lg bg-slate-50 p-2">
-                              <span className="text-sm text-on-surface-variant">
-                                Hiển thị nhà cung cấp
-                              </span>
-                              <label className="relative inline-flex scale-75 cursor-pointer items-center">
-                                <input
-                                  className="peer sr-only"
-                                  type="checkbox"
-                                  checked={quoteOptions.showSupplier}
-                                  onChange={(event) =>
-                                    setQuoteOptions((prev) => ({
-                                      ...prev,
-                                      showSupplier: event.target.checked,
-                                    }))
-                                  }
-                                />
-                                <span className="peer h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
-                              </label>
-                            </div>
+                        {/* Toggles điều kiện hiển thị sản phẩm */}
+                        <div className="grid grid-cols-1 gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-600 md:grid-cols-3">
+                          {/* Item toggle hiển thị giá */}
+                          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5">
+                            <span>Hiển thị giá</span>
+                            <label className="relative inline-flex scale-75 cursor-pointer items-center">
+                              <input
+                                className="peer sr-only"
+                                type="checkbox"
+                                checked={quoteOptions.showPrice}
+                                onChange={(e) =>
+                                  setQuoteOptions((prev) => ({
+                                    ...prev,
+                                    showPrice: e.target.checked,
+                                  }))
+                                }
+                              />
+                              <span className="h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
+                            </label>
+                          </div>
+                          {/* Item toggle hiển thị tồn kho */}
+                          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5">
+                            <span>Hiển thị tồn kho</span>
+                            <label className="relative inline-flex scale-75 cursor-pointer items-center">
+                              <input
+                                className="peer sr-only"
+                                type="checkbox"
+                                checked={quoteOptions.showStock}
+                                onChange={(e) =>
+                                  setQuoteOptions((prev) => ({
+                                    ...prev,
+                                    showStock: e.target.checked,
+                                  }))
+                                }
+                              />
+                              <span className="h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
+                            </label>
+                          </div>
+                          {/* Item toggle hiển thị nhà cung cấp */}
+                          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5">
+                            <span>Hiển thị nhà cung cấp</span>
+                            <label className="relative inline-flex scale-75 cursor-pointer items-center">
+                              <input
+                                className="peer sr-only"
+                                type="checkbox"
+                                checked={quoteOptions.showSupplier}
+                                onChange={(e) =>
+                                  setQuoteOptions((prev) => ({
+                                    ...prev,
+                                    showSupplier: e.target.checked,
+                                  }))
+                                }
+                              />
+                              <span className="h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
+                            </label>
                           </div>
                         </div>
                       </div>
@@ -756,45 +737,45 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                 </div>
               )}
 
+              {/* KHỐI 4: THÔNG SỐ KỸ THUẬT SẢN PHẨM */}
               {!isQuotePost && !isClearancePost && (
-                <div className="space-y-5 rounded-lg border border-outline-variant bg-white p-4 md:p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
-                      4. THÔNG TIN &amp; THÔNG SỐ KỸ THUẬT SẢN PHẨM
+                <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+                  <div className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#004785]">
+                      4. Thông số kỹ thuật sản phẩm
                     </h3>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-on-surface-variant">Hiển thị thông tin</span>
-                      <label className="relative inline-flex cursor-pointer items-center">
-                        <input
-                          className="peer sr-only"
-                          type="checkbox"
-                          checked={showTrustedSpecs}
-                          onChange={(event) => setShowTrustedSpecs(event.target.checked)}
-                        />
-                        <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-200 after:bg-white after:transition-transform after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full" />
-                      </label>
-                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        className="peer sr-only"
+                        type="checkbox"
+                        checked={showTrustedSpecs}
+                        onChange={(event) => setShowTrustedSpecs(event.target.checked)}
+                      />
+                      <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
+                    </label>
                   </div>
 
                   {showTrustedSpecs && activeProduct && (
                     <>
-                      <div className="rounded-lg border border-outline-variant bg-surface-container-low p-2">
+                      {/* Bộ điều khiển lật chuyển nhiều sản phẩm sỉ */}
+                      <div className="shadow-sm/5 rounded-xl border border-slate-100 bg-slate-50 p-2">
                         <div className="flex items-center justify-between gap-4">
                           <button
                             type="button"
                             onClick={handleSupplyRemoveProduct}
-                            className="flex items-center gap-2 rounded-lg border border-error/20 bg-white px-4 py-1.5 text-sm font-medium text-error transition-all hover:bg-error/5"
+                            className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 transition-all hover:bg-red-50"
                           >
-                            <MaterialIcon name="remove" className="text-sm" />
-                            Giảm sản phẩm
+                            <Minus size={14} />
+                            <span>Giảm hàng</span>
                           </button>
-                          <div className="flex items-center gap-4 text-sm font-semibold text-on-surface">
+
+                          <div className="flex items-center gap-4 text-xs font-bold text-slate-700">
                             <button
                               type="button"
                               onClick={handleSupplyPrevProduct}
-                              className="material-symbols-outlined text-primary"
+                              className="shadow-sm/5 rounded border border-slate-200 p-0.5 text-[#004785] hover:bg-white"
                             >
-                              chevron_left
+                              <ChevronLeft size={16} />
                             </button>
                             <span>
                               Sản phẩm {currentProductIndex + 1} / {supplyProducts.length}
@@ -802,29 +783,31 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                             <button
                               type="button"
                               onClick={handleSupplyNextProduct}
-                              className="material-symbols-outlined text-primary"
+                              className="shadow-sm/5 rounded border border-slate-200 p-0.5 text-[#004785] hover:bg-white"
                             >
-                              chevron_right
+                              <ChevronRight size={16} />
                             </button>
                           </div>
+
                           <button
                             type="button"
                             onClick={handleSupplyAddProduct}
-                            className="flex items-center gap-2 rounded-lg border border-primary px-4 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/5"
+                            className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-bold text-[#004785] transition-all hover:bg-blue-50"
                           >
-                            <MaterialIcon name="add" className="text-sm" />
-                            Thêm sản phẩm
+                            <Plus size={14} />
+                            <span>Thêm hàng</span>
                           </button>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+                      {/* Thông tin nhập chi tiết sản phẩm thuộc khối */}
+                      <div className="grid grid-cols-1 items-start gap-4 pt-1 md:grid-cols-12">
                         <div className="md:col-span-2">
-                          <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            ẢNH SP
+                          <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Ảnh SP
                           </label>
                           {activeProduct.image ? (
-                            <div className="group relative aspect-square overflow-hidden rounded-lg border border-outline-variant bg-slate-200">
+                            <div className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                               <img
                                 src={activeProduct.image}
                                 alt="Sản phẩm"
@@ -842,32 +825,33 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                                     return updated;
                                   })
                                 }
-                                className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-black/60 text-white shadow-md group-hover:bg-red-600"
                               >
-                                <MaterialIcon name="close" className="text-[16px]" />
+                                <X size={14} />
                               </button>
                             </div>
                           ) : (
-                            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-outline-variant bg-surface-bright text-slate-400 transition-all hover:border-primary hover:text-primary">
-                              <MaterialIcon name="add_a_photo" className="text-2xl" />
-                              <span className="mt-1 text-[10px] font-medium">Tải ảnh</span>
+                            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-[#004785] hover:text-[#004785]">
+                              <Camera size={20} />
+                              <span className="mt-1 text-[9px] font-black uppercase tracking-wider">
+                                Tải ảnh
+                              </span>
                               <input
                                 type="file"
                                 accept="image/*"
                                 className="hidden"
-                                onChange={(event) => {
-                                  const file = event.target.files?.[0];
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
                                   if (!file) return;
-
                                   const reader = new FileReader();
-                                  reader.onload = (readerEvent) => {
-                                    setSupplyProducts((prev) => {
-                                      const updated = [...prev];
-                                      updated[currentProductIndex] = {
-                                        ...updated[currentProductIndex],
-                                        image: readerEvent.target?.result,
+                                  reader.onload = (re) => {
+                                    setSupplyProducts((p) => {
+                                      const up = [...p];
+                                      up[currentProductIndex] = {
+                                        ...up[currentProductIndex],
+                                        image: re.target?.result,
                                       };
-                                      return updated;
+                                      return up;
                                     });
                                   };
                                   reader.readAsDataURL(file);
@@ -877,89 +861,77 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                           )}
                         </div>
 
-                        <div className="space-y-2 md:col-span-10">
-                          <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            TIÊU ĐỀ SẢN PHẨM
+                        <div className="space-y-1.5 md:col-span-10">
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Tiêu đề sản phẩm cụ thể
                           </label>
                           <input
-                            className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
-                            placeholder="Nhập tên sản phẩm cụ thể..."
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm font-semibold outline-none transition-all focus:border-[#004785] focus:bg-white"
+                            placeholder="Nhập tên sản phẩm cụ thể để khách tra cứu kỹ thuật..."
                             type="text"
                             value={activeProduct.title}
-                            onChange={(event) =>
-                              handleSupplyProductChange('title', event.target.value)
-                            }
+                            onChange={(e) => handleSupplyProductChange('title', e.target.value)}
                           />
-                          <p className="text-[11px] text-on-surface-variant">
-                            Tên sản phẩm cụ thể giúp khách hàng dễ dàng tra cứu kỹ thuật.
-                          </p>
                         </div>
                       </div>
 
                       {!isSupplyPost && (
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-on-surface">
-                              Giá sỉ (VNĐ)
-                            </label>
+                          <div className="space-y-1.5">
+                            <label className="text-sm font-bold text-slate-700">Giá sỉ (VNĐ)</label>
                             <input
-                              className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm font-bold text-[#004785]"
                               type="text"
                               value={productWholesalePrice}
-                              onChange={(event) => setProductWholesalePrice(event.target.value)}
+                              onChange={(e) => setProductWholesalePrice(e.target.value)}
                             />
                           </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-on-surface">
-                              Giá lẻ (VNĐ)
-                            </label>
+                          <div className="space-y-1.5">
+                            <label className="text-sm font-bold text-slate-700">Giá lẻ (VNĐ)</label>
                             <input
-                              className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm font-bold text-slate-700"
                               type="text"
                               value={productRetailPrice}
-                              onChange={(event) => setProductRetailPrice(event.target.value)}
+                              onChange={(e) => setProductRetailPrice(e.target.value)}
                             />
                           </div>
                         </div>
                       )}
 
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-12 gap-4 px-2">
+                      {/* Khối danh sách dòng thuộc tính kỹ thuật linh hoạt */}
+                      <div className="space-y-3 pt-2">
+                        <div className="grid grid-cols-12 gap-4 px-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                           <div className="col-span-5">
-                            <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
-                              Tên thông số
-                            </label>
+                            <span>Tên thông số kỹ thuật</span>
                           </div>
                           <div className="col-span-6">
-                            <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
-                              Giá trị / Nội dung
-                            </label>
+                            <span>Giá trị / Nội dung chi tiết</span>
                           </div>
                           <div className="col-span-1" />
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {activeProduct.specs.map((spec) => (
                             <div key={spec.id} className="grid grid-cols-12 items-center gap-4">
                               <div className="col-span-5">
                                 <input
-                                  className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
-                                  placeholder="Ví dụ: Độ phủ lý thuyết"
+                                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-semibold outline-none focus:border-[#004785] focus:bg-white"
+                                  placeholder="Ví dụ: Độ rộng chân bu-lông"
                                   type="text"
                                   value={spec.name}
-                                  onChange={(event) =>
-                                    handleSupplySpecChange(spec.id, 'name', event.target.value)
+                                  onChange={(e) =>
+                                    handleSupplySpecChange(spec.id, 'name', e.target.value)
                                   }
                                 />
                               </div>
                               <div className="col-span-6">
                                 <input
-                                  className="w-full rounded-lg border border-outline-variant bg-surface-bright px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-primary-container"
-                                  placeholder="Ví dụ: 10-12 m²/lít"
+                                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-semibold outline-none focus:border-[#004785] focus:bg-white"
+                                  placeholder="Ví dụ: M24 nhúng kẽm nóng"
                                   type="text"
                                   value={spec.value}
-                                  onChange={(event) =>
-                                    handleSupplySpecChange(spec.id, 'value', event.target.value)
+                                  onChange={(e) =>
+                                    handleSupplySpecChange(spec.id, 'value', e.target.value)
                                   }
                                 />
                               </div>
@@ -967,9 +939,9 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                                 <button
                                   type="button"
                                   onClick={() => handleSupplyRemoveSpec(spec.id)}
-                                  className="text-slate-400 hover:text-error"
+                                  className="rounded-lg p-1 text-slate-400 transition-colors hover:text-red-500"
                                 >
-                                  <MaterialIcon name="delete" />
+                                  <Trash2 size={16} />
                                 </button>
                               </div>
                             </div>
@@ -979,10 +951,10 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                         <button
                           type="button"
                           onClick={handleSupplyAddSpec}
-                          className="mt-1 flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                          className="mt-1 flex items-center gap-1.5 p-1 text-xs font-bold text-[#004785] hover:underline"
                         >
-                          <MaterialIcon name="add" className="text-[18px]" />
-                          Thêm thông số khác
+                          <Plus size={14} />
+                          <span>Thêm thông số kỹ thuật khác</span>
                         </button>
                       </div>
                     </>
@@ -990,19 +962,20 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                 </div>
               )}
 
-              <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+              {/* HỆ THỐNG ACTION BUTTON CHÂN TRANG ĐÃ QUY CHUẨN SANG ROUNDED-XL */}
+              <div className="border-slate-150 flex flex-wrap items-center justify-end gap-3 border-t pt-3">
                 <button
                   type="button"
                   onClick={() => alert('Chế độ xem trước đang được phát triển.')}
-                  className="flex items-center gap-2 rounded-full border-2 border-outline px-6 py-3 text-sm font-semibold text-on-surface-variant transition-all hover:bg-surface-container"
+                  className="group flex items-center gap-1.5 rounded-xl border-2 border-slate-200 px-5 py-2.5 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 active:scale-95"
                 >
-                  <MaterialIcon name="visibility" className="text-[20px]" />
+                  <Eye size={16} />
                   <span>Xem trước</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => alert('Đã lưu nháp (demo).')}
-                  className="rounded-full border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-all hover:bg-primary-fixed"
+                  className="rounded-xl border-2 border-[#004785] px-5 py-2.5 text-xs font-bold text-[#004785] transition-all hover:bg-blue-50/5 active:scale-95"
                 >
                   Lưu nháp
                 </button>
@@ -1010,88 +983,87 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
                   type="button"
                   disabled={loading}
                   onClick={handlePublish}
-                  className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl bg-[#004785] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-900/10 transition-all hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {loading ? 'Đang đăng...' : `Đăng bài ${publishLabel}`}
+                  {loading ? 'Đang đăng tải...' : `Đăng bài ${publishLabel}`}
                 </button>
               </div>
             </section>
 
-            <aside className="space-y-6 xl:col-span-4">
-              <div className="space-y-6 xl:sticky xl:top-4">
-                <div className="flex flex-col items-center rounded-lg border border-outline-variant bg-white p-4 text-center md:p-6">
-                  <h3 className="mb-4 w-full text-left text-sm font-semibold text-on-surface">
-                    Phần trăm hoàn thành
+            {/* ASIDE CỘT PHẢI: TIẾN TRÌNH HOÀN THIỆN VÀ MẸO AI */}
+            <aside className="space-y-4 xl:col-span-4">
+              <div className="space-y-4 xl:sticky xl:top-2">
+                {/* Vòng tròn tiến trình hoàn thiện */}
+                <div className="flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
+                  <h3 className="mb-4 w-full text-left text-xs font-black uppercase tracking-widest text-slate-400">
+                    Tiến độ bài đăng
                   </h3>
-                  <div className="relative mb-4 flex items-center justify-center">
-                    <svg className="h-32 w-32 -rotate-90 transform" viewBox="0 0 128 128">
+                  <div className="relative mb-3 flex items-center justify-center">
+                    <svg className="h-28 w-28 -rotate-90 transform" viewBox="0 0 128 128">
                       <circle
-                        className="text-surface-container"
+                        className="text-slate-100"
+                        cx="64"
+                        cy="64"
+                        r="58"
+                        fill="transparent"
+                        stroke="currentColor"
+                        strokeWidth="6"
+                      />
+                      <circle
+                        className="text-[#004785]"
                         cx="64"
                         cy="64"
                         r="58"
                         fill="transparent"
                         stroke="currentColor"
                         strokeWidth="8"
-                      />
-                      <circle
-                        className="text-primary"
-                        cx="64"
-                        cy="64"
-                        r="58"
-                        fill="transparent"
-                        stroke="currentColor"
-                        strokeWidth="10"
                         strokeLinecap="round"
                         strokeDasharray="364.42"
                         strokeDashoffset={progressOffset}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-bold text-on-surface">
+                      <span className="text-xl font-black text-slate-800">
                         {completionPercent}%
                       </span>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
+                      <span className="mt-0.5 text-[9px] font-black uppercase tracking-wider text-slate-400">
                         Hoàn thiện
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-on-surface-variant md:text-sm">
-                    Hoàn thiện các thông tin còn thiếu để bài đăng uy tín hơn.
+                  <p className="text-xs font-medium leading-relaxed text-slate-400">
+                    Điền thêm các điều kiện sỉ và thông số để tăng 65% độ uy tín B2B.
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-[#b7cae9] bg-[#c9dbf4] p-4 md:p-6">
-                  <div className="mb-4 flex items-center gap-2 text-[#005ea4]">
-                    <MaterialIcon name="lightbulb" className="text-[18px]" />
-                    <h3 className="text-xs font-bold uppercase tracking-[0.12em]">MẸO ĐĂNG BÀI</h3>
+                {/* Hộp cẩm nang mẹo đăng bài */}
+                <div className="shadow-sm/5 rounded-2xl border border-blue-100 bg-blue-50/50 p-5">
+                  <div className="mb-4 flex items-center gap-2 text-[#004785]">
+                    <Lightbulb size={16} className="fill-[#004785]/10" />
+                    <h3 className="text-xs font-black uppercase tracking-widest">
+                      Mẹo đăng bài hiệu quả
+                    </h3>
                   </div>
-                  <ul className="space-y-4 text-left">
-                    <li className="flex gap-3">
-                      <MaterialIcon
-                        name="radio_button_unchecked"
-                        className="text-[14px] text-[#005ea4]"
-                      />
-                      <p className="text-sm leading-5 text-[#123457]">
-                        Tiêu đề chứa tên thương hiệu và địa phương giúp tăng 40% lượt xem.
+                  <ul className="space-y-3 text-left text-xs font-semibold leading-relaxed text-slate-600">
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#004785]" />
+                      <p>
+                        Tiêu đề chứa tên thương hiệu thép/ốc vít cụ thể và khu vực giúp tăng 40%
+                        lượt tìm kiếm đúng đối tượng.
                       </p>
                     </li>
-                    <li className="flex gap-3">
-                      <MaterialIcon
-                        name="radio_button_unchecked"
-                        className="text-[14px] text-[#005ea4]"
-                      />
-                      <p className="text-sm leading-5 text-[#123457]">
-                        Sử dụng hình ảnh thực tế từ kho bãi để tạo niềm tin với khách hàng B2B.
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#004785]" />
+                      <p>
+                        Sử dụng hình ảnh thực tế từ xưởng hoặc kho bãi bốc xếp để tạo niềm tin tuyệt
+                        đối với bạn hàng đại lý.
                       </p>
                     </li>
-                    <li className="flex gap-3">
-                      <MaterialIcon
-                        name="radio_button_unchecked"
-                        className="text-[14px] text-[#005ea4]"
-                      />
-                      <p className="text-sm leading-5 text-[#123457]">
-                        Mô tả chi tiết năng lực cung ứng (sản lượng/tháng) để thu hút đối tác lớn.
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#004785]" />
+                      <p>
+                        Mô tả chi tiết năng lực cung ứng theo tháng hoặc MOQ tối thiểu để thu hút
+                        các đầu buôn sỉ lớn nhảy vào thương thảo.
                       </p>
                     </li>
                   </ul>

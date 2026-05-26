@@ -1,12 +1,11 @@
 /**
- * Trang chủ Diễn đàn - Feed bài viết chính.
- * Hiển thị Hero Banner + Tabs lọc (Nổi bật/Mới nhất/Chưa trả lời) + Danh sách bài viết.
- * Dùng PostListItem + useForumFilters hook.
+ * src/modules/forum/pages/ForumHome.jsx
+ * Trang chủ Diễn đàn - Đã sửa lỗi kết nối để đẩy Right Sidebar lên Layout mẹ.
  */
-import { useNavigate } from 'react-router-dom';
-import ForumLayout from '../components/shared/ForumLayout';
-import ForumHomeRightSidebar from '../components/home/ForumHomeRightSidebar';
+import { useEffect } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import PostListItem from '../components/home/PostListItem';
+import ForumHomeRightSidebar from '../components/home/ForumHomeRightSidebar';
 import { useForumFilters } from '../hooks';
 import {
   homePosts as posts,
@@ -20,20 +19,29 @@ const ForumHome = () => {
   const navigate = useNavigate();
   const { filteredPosts, activeTab, setActiveTab, handleSearchByTag } = useForumFilters(posts);
 
-  return (
-    <ForumLayout
-      activeKey="home"
-      rightSidebar={
+  // Lấy hàm setRightSidebar từ Layout thông qua Outlet Context
+  const { setRightSidebar } = useOutletContext();
+
+  // Bắn cụm Right Sidebar lên Layout mẹ ngay khi Page được render
+  useEffect(() => {
+    if (setRightSidebar) {
+      setRightSidebar(
         <ForumHomeRightSidebar
           trendSearches={trendSearches}
           topicTags={topicTags}
           hotPosts={hotPosts}
           onSearchByTag={handleSearchByTag}
         />
-      }
-    >
+      );
+    }
+    // Clean up xóa sidebar cột phải khi rời khỏi trang chủ sang trang khác
+    return () => setRightSidebar?.(null);
+  }, [setRightSidebar, handleSearchByTag]);
+
+  return (
+    <div className="space-y-4">
       {/* Hero Banner */}
-      <section className="relative mb-4 overflow-hidden rounded-2xl bg-gradient-to-br from-[#004785] to-[#00305e] p-6 text-white shadow-md">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#004785] to-[#00305e] p-6 text-white shadow-md">
         <div className="relative z-10 max-w-lg">
           <h1 className="mb-2 text-xl font-bold leading-tight">
             Cộng đồng kinh doanh kim khí & vật tư xây dựng
@@ -61,24 +69,27 @@ const ForumHome = () => {
       </section>
 
       {/* Tabs + Post List */}
-      <section className="mb-4 rounded-2xl bg-white shadow-sm">
-        <div className="flex items-center overflow-x-auto border-b border-gray-100 px-5">
+      <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="flex items-center overflow-x-auto border-b border-gray-100 bg-white px-5">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-all ${
+              className={`relative whitespace-nowrap px-4 py-4 text-sm font-medium transition-all ${
                 activeTab === tab
-                  ? 'border-b-2 border-[#004785] font-bold text-[#004785]'
+                  ? 'font-bold text-[#004785]'
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               {tab}
+              {activeTab === tab && (
+                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#004785]" />
+              )}
             </button>
           ))}
         </div>
 
-        <div className="space-y-0">
+        <div className="divide-y divide-slate-100">
           {filteredPosts.length === 0 ? (
             <div className="p-8 text-center text-sm text-slate-500">
               Không tìm thấy bài viết phù hợp.
@@ -95,9 +106,8 @@ const ForumHome = () => {
           )}
         </div>
       </section>
-    </ForumLayout>
+    </div>
   );
 };
 
-export { ForumHome };
 export default ForumHome;
