@@ -1,6 +1,91 @@
 /**
- * Mock data cho POS Module
+ * Mock data POS - Danh mục, sản phẩm, giỏ hàng mẫu, phương thức TT, đơn hàng mẫu.
+ * Dữ liệu fallback khi API chưa sẵn sàng.
  */
+export const posCategories = [
+  'Tất cả',
+  'Máy móc',
+  'Dụng cụ cầm tay',
+  'Vật liệu xây dựng',
+  'Sơn & Chống thấm',
+  'Bulong & Ốc vít',
+  'Kim khí tổng hợp',
+];
+
+export const posProducts = [
+  {
+    id: 1,
+    name: 'Máy khoan động lực Bosch GSB 16 RE',
+    price: 1550000,
+    sku: 'BOS-GSB-16RE',
+    stock: 25,
+    category: 'Máy móc',
+    status: 'Còn hàng',
+    image:
+      'https://images.unsplash.com/photo-1504148455328-c376907d081c?q=80&w=900&auto=format&fit=crop',
+  },
+  {
+    id: 2,
+    name: 'Chống thấm cao cấp KOVA CT-11A Plus 20kg',
+    price: 3450000,
+    sku: 'KOV-CT11A-20',
+    stock: 4,
+    category: 'Sơn & Chống thấm',
+    status: 'Sắp hết',
+    image:
+      'https://images.unsplash.com/photo-1597595749882-66556d4a3b55?q=80&w=900&auto=format&fit=crop',
+  },
+  {
+    id: 3,
+    name: 'Kìm bấm cos thủy lực YQK-300',
+    price: 950000,
+    sku: 'KIM-THUY-LUC',
+    stock: 12,
+    category: 'Dụng cụ cầm tay',
+    status: 'Còn hàng',
+    image:
+      'https://images.unsplash.com/photo-1609205807107-e8ec2120f9de?q=80&w=900&auto=format&fit=crop',
+  },
+  {
+    id: 4,
+    name: 'Đá mài sắt Hải Dương 100×6×16mm',
+    price: 5500,
+    sku: 'DAI-MAI-HD',
+    stock: 500,
+    category: 'Kim khí tổng hợp',
+    status: 'Còn hàng',
+    image:
+      'https://images.unsplash.com/photo-1586864387789-628af9feed72?q=80&w=900&auto=format&fit=crop',
+  },
+  {
+    id: 5,
+    name: 'Bộ lục giác Chrome-Vanadium 9 chi tiết',
+    price: 125000,
+    sku: 'LUC-GIAC-CRV',
+    stock: 45,
+    category: 'Dụng cụ cầm tay',
+    status: 'Còn hàng',
+    image:
+      'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?q=80&w=900&auto=format&fit=crop',
+  },
+  {
+    id: 6,
+    name: 'Bulong inox M10 × 50mm hộp 100 chiếc',
+    price: 185000,
+    sku: 'BUL-M10-50',
+    stock: 86,
+    category: 'Bulong & Ốc vít',
+    status: 'Còn hàng',
+    image:
+      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=900&auto=format&fit=crop',
+  },
+];
+
+export const initialCart = [
+  { ...posProducts[0], quantity: 1 },
+  { ...posProducts[1], quantity: 1 },
+  { ...posProducts[2], quantity: 1 },
+];
 
 export const mockPosProducts = [
   {
@@ -69,10 +154,12 @@ export const mockOrders = [
 ];
 
 const mockPosData = {
+  posCategories,
+  posProducts,
+  initialCart,
   mockPosProducts,
   mockCategories,
   mockPaymentMethods,
   mockOrders,
 };
-
 export default mockPosData;

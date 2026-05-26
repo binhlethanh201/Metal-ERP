@@ -1,4 +1,8 @@
 /**
+ * Inventory Service - API calls cho module Tổng kho. Gọi qua apiClient tập trung.
+ * Gồm: Dashboard, Products, Stock, Import/Export, Alerts, Reports.
+ */
+/**
  * Inventory Service - Tất cả API calls cho module Tổng kho
  * Gọi đến apiClient và endpoints tập trung
  */

@@ -2,7 +2,6 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
-import MainLayout from './shared/components/layout/MainLayout';
 import PrivateRoute from './shared/components/layout/PrivateRoute';
 import AdminLayout from './modules/admin/components/layout/AdminLayout';
 
@@ -17,8 +16,9 @@ const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 
 // Inventory Module
+const InventoryLayout = lazy(() => import('./modules/inventory/layouts/InventoryLayout'));
 const InventoryDashboard = lazy(() => import('./modules/inventory/pages/InventoryDashboard'));
-const ProductManagement = lazy(() => import('./modules/inventory/pages/ProductManagement'));
+const InventoryProduct = lazy(() => import('./modules/inventory/pages/InventoryProduct'));
 const StockImport = lazy(() => import('./modules/inventory/pages/StockImport'));
 const StockExport = lazy(() => import('./modules/inventory/pages/StockExport'));
 const InventoryReports = lazy(() => import('./modules/inventory/pages/InventoryReports'));
@@ -87,13 +87,13 @@ function App() {
             </Route>
 
             {/* INVENTORY */}
-            <Route path="/inventory" element={<Navigate to="/inventory/dashboard" replace />} />
-            <Route path="/inventory/dashboard" element={<InventoryDashboard />} />
-            <Route element={<MainLayout />}>
-              <Route path="/inventory/products" element={<ProductManagement />} />
-              <Route path="/inventory/import" element={<StockImport />} />
-              <Route path="/inventory/export" element={<StockExport />} />
-              <Route path="/inventory/reports" element={<InventoryReports />} />
+            <Route path="/inventory" element={<InventoryLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<InventoryDashboard />} />
+              <Route path="products" element={<InventoryProduct />} />
+              <Route path="import" element={<StockImport />} />
+              <Route path="export" element={<StockExport />} />
+              <Route path="reports" element={<InventoryReports />} />
             </Route>
 
             {/* ADMIN */}

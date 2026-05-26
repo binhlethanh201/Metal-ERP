@@ -1,4 +1,10 @@
 /**
+ * Forum Service - Tất cả API calls cho module Diễn đàn.
+ * Import apiClient từ src/services/apiClient.js (tầng HTTP tập trung).
+ * KHÔNG gọi fetch/axios riêng.
+ * Gồm: Categories, Posts, Comments, Votes, Trends  Insights.
+ */
+/**
  * Forum Service - Tất cả API calls cho module Diễn đàn
  * Gọi đến apiClient và endpoints tập trung
  */

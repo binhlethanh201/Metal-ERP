@@ -1,4 +1,8 @@
 /**
+ * Mock data: Danh mục, bài viết mẫu, AI summary, tin tức ngành, thảo luận diễn đàn.
+ * Dùng trong ForumCategory và ForumNews.
+ */
+/**
  * Mock data cho Forum Module
  */
 
