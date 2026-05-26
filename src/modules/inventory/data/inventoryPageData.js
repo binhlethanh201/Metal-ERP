@@ -8,7 +8,7 @@ export const sidebarItems = [
   { label: 'Tổng quan', icon: 'dashboard', path: '/inventory/dashboard' },
   { label: 'Hàng hóa', icon: 'inventory_2', path: '/inventory/products' },
   { label: 'Diễn đàn', icon: 'forum', path: '/forum' },
-  { label: 'Báo cáo', icon: 'analytics', path: '/inventory/reports' },
+  { label: 'Báo cáo', icon: 'assessment', path: '/inventory/reports' },
   { label: 'Quản lý nhân viên', icon: 'badge', path: '/inventory' },
 ];
 

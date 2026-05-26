@@ -1,6 +1,5 @@
 /** Panel giỏ hàng POS - Danh sách item + số lượng + voucher + tạm tính/VAT/tổng + phương thức TT + nút Thanh toán/Lưu nháp. */
-import MaterialIcon from '../../../shared/components/MaterialIcon';
-
+import Icon from '../../../shared/components/Icon';
 const formatCurrency = (v) => `${Math.max(0, v).toLocaleString('vi-VN')}đ`;
 
 const PosCartPanel = ({
@@ -34,7 +33,7 @@ const PosCartPanel = ({
           Giỏ hàng hiện tại
         </h3>
         <button onClick={onClearCart} className="text-slate-400 hover:text-red-600 active:scale-95">
-          <MaterialIcon name="delete_sweep" />
+          <Icon name="delete" />
         </button>
       </div>
 
@@ -69,7 +68,7 @@ const PosCartPanel = ({
               onClick={() => onRemoveItem(item.id)}
               className="ml-2 text-slate-300 hover:text-red-600 active:scale-95"
             >
-              <MaterialIcon name="close" className="text-sm" />
+              <Icon name="close" className="text-sm" />
             </button>
           </div>
         ))}
@@ -130,7 +129,7 @@ const PosCartPanel = ({
               onClick={() => onPaymentMethodChange(method)}
               className={`flex items-center gap-x-2 rounded-lg border p-2 transition-colors active:scale-95 ${paymentMethod === method ? 'border-[#004785] bg-[#004785]/5 text-[#004785]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#004785]'}`}
             >
-              <MaterialIcon name={icon} className="text-sm" />
+              <Icon name={icon} className="text-sm" />
               <span className="text-[10px] font-bold">{method}</span>
             </button>
           ))}

@@ -24,6 +24,7 @@ const StockExport = lazy(() => import('./modules/inventory/pages/StockExport'));
 const InventoryReports = lazy(() => import('./modules/inventory/pages/InventoryReports'));
 
 // POS Module
+const PosLayout = lazy(() => import('./modules/pos/layouts/PosLayout'));
 const PosScreen = lazy(() => import('./modules/pos/pages/POSScreen'));
 const CheckoutPage = lazy(() => import('./modules/pos/pages/CheckoutPage'));
 const OrderHistory = lazy(() => import('./modules/pos/pages/OrderHistory'));
@@ -67,7 +68,7 @@ function App() {
 
           <Route element={<PrivateRoute />}>
             {/* POS */}
-            <Route path="/pos">
+            <Route path="/pos" element={<PosLayout />}>
               <Route index element={<PosScreen />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="orders" element={<OrderHistory />} />

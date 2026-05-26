@@ -19,7 +19,7 @@ const staticIconMap = {
   move_to_inbox: 'Inbox',
   outbox: 'ExternalLink',
   swap_horiz: 'ArrowLeftRight',
-  assignment: 'ClipboardText',
+  assignment: 'ClipboardList',
   inventory: 'Boxes',
   list_alt: 'ListOrdered',
   calculate: 'Calculator',
@@ -52,6 +52,13 @@ const staticIconMap = {
   chat: 'MessageCircle',
   smart_toy: 'Bot',
   more_horiz: 'MoreHorizontal',
+  assessment: 'BarChart3',
+  report: 'BarChart3',
+  add: 'Plus',
+  payments: 'Banknote',
+  account_balance: 'Landmark',
+  qr_code_2: 'QrCode',
+  credit_card: 'CreditCard',
 };
 
 const toPascalCase = (str) => {
