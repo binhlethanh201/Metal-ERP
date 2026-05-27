@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
 import PrivateRoute from './shared/components/layout/PrivateRoute';
-import AdminLayout from './modules/admin/components/layout/AdminLayout';
 
 // Static Pages
 import LandingPage from './pages/LandingPage';
@@ -42,6 +41,7 @@ const ForumSupply = lazy(() => import('./modules/forum/pages/ForumSupply'));
 const ForumDiscussion = lazy(() => import('./modules/forum/pages/ForumDiscussion'));
 
 // Admin
+const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
 const UserManagement = lazy(() => import('./modules/admin/pages/UserManagement'));
 const Moderation = lazy(() => import('./modules/admin/pages/Moderation'));

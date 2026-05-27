@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../../../shared/hooks/useAuth';
-import Icon from '../../../../shared/components/Icon';
-import Logo from '../../../../shared/components/Logo';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import Icon from '../../../shared/components/Icon';
+import Logo from '../../../shared/components/Logo';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
