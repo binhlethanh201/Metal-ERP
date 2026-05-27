@@ -60,15 +60,15 @@ const HubOverlay = ({ isOpen, config, onClose, onSelect }) => {
             </div>
           );
         })}
-
-        <button
-          type="button"
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-pulse text-xs font-medium uppercase tracking-[0.2em] text-white/70"
-          onClick={onClose}
-        >
-          Nhấn vào vùng trống để quay lại
-        </button>
       </div>
+
+      <button
+        type="button"
+        className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 animate-pulse text-xs font-medium uppercase tracking-[0.2em] text-white/70"
+        onClick={onClose}
+      >
+        Nhấn vào vùng trống để quay lại
+      </button>
     </div>
   );
 };
