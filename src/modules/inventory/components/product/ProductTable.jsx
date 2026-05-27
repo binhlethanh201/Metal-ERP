@@ -185,7 +185,11 @@ const ProductTable = ({
             </tr>
             <tr className={isExpanded ? '' : 'hidden'}>
               <td colSpan={12} className="border-b border-blue-200 p-0">
-                <ProductDetailPanel row={row} onEdit={onEdit} onDelete={onDelete} />
+                <ProductDetailPanel
+                  row={row}
+                  onEdit={(r, tab) => onEdit?.(r, tab)}
+                  onDelete={onDelete}
+                />
               </td>
             </tr>
           </Fragment>

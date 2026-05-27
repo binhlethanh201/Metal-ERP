@@ -14,6 +14,7 @@ export const ProductManagement = () => {
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
+  const [initialEditTab, setInitialEditTab] = useState('info');
 
   const { products, apiStatus, handleSaveProduct, handleDeleteProduct } = useProductList();
   const filters = useProductFilters(products);
@@ -169,8 +170,9 @@ export const ProductManagement = () => {
                 onToggleSort={filters.toggleSort}
                 expandedId={expandedId}
                 onToggleExpand={(id) => setExpandedId((prev) => (prev === id ? '' : id))}
-                onEdit={(row) => {
+                onEdit={(row, tab) => {
                   setProductToEdit(row);
+                  setInitialEditTab(tab || 'info');
                   setEditModalOpen(true);
                 }}
                 onDelete={handleDeleteProduct}
@@ -225,6 +227,7 @@ export const ProductManagement = () => {
       {/* Modal Thêm/Sửa hàng hóa */}
       {editModalOpen && (
         <EditProductModal
+          key={productToEdit?.productId || productToEdit?.productCode || productToEdit?.id || 'new'}
           open={editModalOpen}
           onClose={() => {
             setEditModalOpen(false);
@@ -233,6 +236,7 @@ export const ProductManagement = () => {
           product={productToEdit}
           onSave={handleSave}
           productList={products}
+          initialTab={initialEditTab}
           title={productToEdit ? 'Sửa hàng hóa' : 'Thêm hàng hóa'}
         />
       )}

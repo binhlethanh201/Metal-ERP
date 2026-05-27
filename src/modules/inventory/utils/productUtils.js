@@ -85,7 +85,12 @@ export const normalizeProduct = (product, index) => {
     brand: product?.brandName || product?.BrandName || product?.brand || product?.Brand || '',
     brandName: product?.brandName || product?.BrandName || '',
     salePrice: Number(
-      product?.sellPrice ?? product?.SellPrice ?? product?.price ?? product?.Price ?? 0
+      product?.salePrice ??
+        product?.sellPrice ??
+        product?.SellPrice ??
+        product?.price ??
+        product?.Price ??
+        0
     ),
     costPrice: Number(product?.costPrice ?? product?.CostPrice ?? 0),
     stock,

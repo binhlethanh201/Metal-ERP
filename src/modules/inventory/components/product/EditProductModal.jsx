@@ -15,8 +15,16 @@ import {
   AddConversionUnitModal,
 } from './modals/EditProductModals';
 
-const EditProductModal = ({ open, onClose, product, onSave, title, productList = [] }) => {
-  const f = useEditProductForm({ product, onSave, onClose, productList });
+const EditProductModal = ({
+  open,
+  onClose,
+  product,
+  onSave,
+  title,
+  productList = [],
+  initialTab = 'info',
+}) => {
+  const f = useEditProductForm({ product, onSave, onClose, productList, initialTab });
 
   if (!open) return null;
 
@@ -51,7 +59,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title, productList =
 
         <form onSubmit={f.handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <main className="custom-scroll flex-1 space-y-6 overflow-y-auto px-8 py-6 sm:px-6 sm:py-5">
-            {f.activeTab === 'info' ? <ProductInfoTab f={f} /> : <ProductDescriptionTab />}
+            {f.activeTab === 'info' ? <ProductInfoTab f={f} /> : <ProductDescriptionTab f={f} />}
           </main>
 
           <footer className="sticky bottom-0 z-40 flex items-center justify-between border-t border-gray-200 bg-white px-6 py-4">

@@ -171,8 +171,19 @@ const ProductInfoTab = ({ f }) => (
                 className="text-body-lg w-full border-b-2 border-l-0 border-r-0 border-t-0 border-outline-variant bg-transparent py-2 pr-8 text-right font-bold leading-[1.2] text-primary focus:border-primary"
                 type="text"
                 inputMode="numeric"
-                value={f.form[field] ?? ''}
-                onChange={(e) => f.handleChange(field, e.target.value)}
+                value={
+                  f.form[field] != null && f.form[field] !== '' ? f.formatMoney(f.form[field]) : ''
+                }
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\./g, '');
+                  f.handleChange(field, raw);
+                }}
+                onBlur={(e) => {
+                  const raw = e.target.value.replace(/\./g, '');
+                  if (raw !== '' && !Number.isNaN(Number(raw))) {
+                    f.handleChange(field, raw);
+                  }
+                }}
               />
               <span className="text-label-md absolute bottom-2 right-0 font-normal leading-[1.1] text-on-surface-variant">
                 đ

@@ -74,7 +74,13 @@ const mapProductToForm = (source = {}) => {
     image: imageUrl,
     images: imageList,
     costPrice: source.costPrice ?? source.CostPrice ?? '',
-    salePrice: source.sellPrice ?? source.SellPrice ?? source.price ?? source.Price ?? '',
+    salePrice:
+      source.salePrice ??
+      source.sellPrice ??
+      source.SellPrice ??
+      source.price ??
+      source.Price ??
+      '',
     stock: source.actualStock ?? source.ActualStock ?? source.stock ?? source.Stock ?? 0,
     reservedStock: source.reservedStock ?? source.ReservedStock ?? 0,
     availableStock:
@@ -93,7 +99,13 @@ const mapProductToForm = (source = {}) => {
     unit: source.unit || source.Unit || '',
     baseUnit: {
       name: source.unit || source.Unit || '',
-      price: source.sellPrice ?? source.SellPrice ?? source.price ?? source.Price ?? '',
+      price:
+        source.salePrice ??
+        source.sellPrice ??
+        source.SellPrice ??
+        source.price ??
+        source.Price ??
+        '',
       directSale: source.directSale ?? source.DirectSale ?? true,
     },
     weight: source.weight || source.Weight || '',
@@ -105,13 +117,78 @@ const mapProductToForm = (source = {}) => {
     conversionUnits: source.conversionUnits || source.ConversionUnits || [],
     attributes: source.attributes || source.Attributes || [],
     productStatus: source.productStatus || source.ProductStatus || 'active',
+    description: source.description || source.Description || '',
+    notes: source.notes || source.Notes || '',
   };
 };
 
-export const useEditProductForm = ({ product, onSave, onClose, productList = [] }) => {
-  const [activeTab, setActiveTab] = useState('info');
-  const [form, setForm] = useState({});
-  const [images, setImages] = useState([]);
+export const useEditProductForm = ({
+  product,
+  onSave,
+  onClose,
+  productList = [],
+  initialTab = 'info',
+}) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const defaultForm = {
+    id: '',
+    productId: '',
+    productCode: '',
+    barcode: '',
+    name: '',
+    group: '',
+    brand: '',
+    image: '',
+    images: [],
+    costPrice: '',
+    salePrice: '',
+    stock: 0,
+    reservedStock: 0,
+    availableStock: 0,
+    stockMin: 0,
+    minimumStock: 0,
+    stockMax: 0,
+    locations: [],
+    shelfLocation: '',
+    specification: '',
+    unit: '',
+    weight: '',
+    weightUnit: 'g',
+    width: '',
+    length: '',
+    height: '',
+    sizeUnit: '',
+    baseUnit: { name: '', price: '', directSale: true },
+    conversionUnits: [],
+    attributes: [],
+    productStatus: 'active',
+    description: '',
+    notes: '',
+  };
+
+  const initForm = () => {
+    if (product) {
+      const m = mapProductToForm(product);
+      return { ...defaultForm, ...m };
+    }
+    return defaultForm;
+  };
+
+  const initImages = () => {
+    if (!product) return [];
+    const m = mapProductToForm(product);
+    if (m.images?.length) return m.images;
+    if (m.image) {
+      return [
+        { id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-init`, url: m.image },
+      ];
+    }
+    return [];
+  };
+
+  const [form, setForm] = useState(initForm);
+  const [images, setImages] = useState(initImages);
   const fileInputRef = useRef(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
@@ -278,56 +355,6 @@ export const useEditProductForm = ({ product, onSave, onClose, productList = [] 
       images: (images || []).map((it) => ({ id: it.id, url: it.url, file: it.file })),
     }));
   }, [images]);
-
-  // Init form from product
-  useEffect(() => {
-    const defaults = {
-      id: '',
-      productId: '',
-      productCode: '',
-      barcode: '',
-      name: '',
-      group: '',
-      brand: '',
-      image: '',
-      images: [],
-      costPrice: '',
-      salePrice: '',
-      stock: 0,
-      reservedStock: 0,
-      availableStock: 0,
-      stockMin: 0,
-      minimumStock: 0,
-      stockMax: 0,
-      locations: [],
-      shelfLocation: '',
-      specification: '',
-      unit: '',
-      weight: '',
-      weightUnit: 'g',
-      width: '',
-      length: '',
-      height: '',
-      sizeUnit: '',
-      baseUnit: { name: '', price: '', directSale: true },
-      conversionUnits: [],
-      attributes: [],
-      productStatus: 'active',
-    };
-    if (product) {
-      const m = mapProductToForm(product);
-      setForm((c) => ({ ...defaults, ...m }));
-      const imgs = m.images?.length
-        ? m.images
-        : m.image
-          ? [{ id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-init`, url: m.image }]
-          : [];
-      setImages(imgs);
-    } else {
-      setForm(defaults);
-      setImages([]);
-    }
-  }, [product]);
 
   const handleChange = (field, value) => setForm((c) => ({ ...c, [field]: value }));
 
