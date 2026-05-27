@@ -15,8 +15,8 @@ import {
   AddConversionUnitModal,
 } from './modals/EditProductModals';
 
-const EditProductModal = ({ open, onClose, product, onSave, title }) => {
-  const f = useEditProductForm({ product, onSave, onClose });
+const EditProductModal = ({ open, onClose, product, onSave, title, productList = [] }) => {
+  const f = useEditProductForm({ product, onSave, onClose, productList });
 
   if (!open) return null;
 

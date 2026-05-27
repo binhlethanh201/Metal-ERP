@@ -26,8 +26,26 @@ const mapProductToForm = (source = {}) => {
       );
     return '';
   };
+
+  const parseStockLevel = (val) => {
+    if (!val || typeof val !== 'string') return null;
+    const parts = val.split('-').map((s) => Number(s.trim()));
+    if (parts.length === 2 && parts.every((n) => !Number.isNaN(n))) {
+      return { min: parts[0], max: parts[1] };
+    }
+    return null;
+  };
+
+  const resolveLocations = (source) => {
+    if (Array.isArray(source.locations) && source.locations.length) return source.locations;
+    if (Array.isArray(source.Locations) && source.Locations.length) return source.Locations;
+    const loc =
+      source.shelfLocation || source.ShelfLocation || source.location || source.Location || '';
+    return loc ? [loc] : [];
+  };
   const productId = source.productId || source.ProductId || source.id || source.Id || '';
   const productCode = source.productCode || source.ProductCode || source.code || source.Code || '';
+  const stockLevelParsed = parseStockLevel(source.stockLevel || source.StockLevel);
   const imageUrl =
     resolveImageUrl(source.image) ||
     resolveImageUrl(source.ImageUrl) ||
@@ -65,10 +83,10 @@ const mapProductToForm = (source = {}) => {
       source.actualStock ??
       source.ActualStock ??
       0,
-    stockMin: source.minimumStock ?? source.MinimumStock ?? 0,
-    minimumStock: source.minimumStock ?? source.MinimumStock ?? 0,
-    stockMax: source.maximumStock ?? source.MaximumStock ?? 0,
-    locations: source.locations || source.Locations || [],
+    stockMin: source.minimumStock ?? source.MinimumStock ?? stockLevelParsed?.min ?? 0,
+    minimumStock: source.minimumStock ?? source.MinimumStock ?? stockLevelParsed?.min ?? 0,
+    stockMax: source.maximumStock ?? source.MaximumStock ?? stockLevelParsed?.max ?? 0,
+    locations: resolveLocations(source),
     shelfLocation:
       source.shelfLocation || source.ShelfLocation || source.location || source.Location || '',
     specification: source.specification || source.Specification || '',
@@ -90,7 +108,7 @@ const mapProductToForm = (source = {}) => {
   };
 };
 
-export const useEditProductForm = ({ product, onSave, onClose }) => {
+export const useEditProductForm = ({ product, onSave, onClose, productList = [] }) => {
   const [activeTab, setActiveTab] = useState('info');
   const [form, setForm] = useState({});
   const [images, setImages] = useState([]);
@@ -109,10 +127,34 @@ export const useEditProductForm = ({ product, onSave, onClose }) => {
   const [availableAttributes, setAvailableAttributes] = useState(() =>
     ls('availableAttributes', ['HÃNG', 'MAQUF'])
   );
-  const [groups, setGroups] = useState(() =>
-    ls('productGroups', ['Vật liệu thô', 'Sơn và Hóa chất', 'Kim khí'])
-  );
-  const [brands, setBrands] = useState(() => ls('productBrands', ['Hòa Phát', 'Viettel']));
+  const [groups, setGroups] = useState(() => {
+    const stored = ls('productGroups', null);
+    const fromProducts = productList
+      .map((p) => p.group || p.categoryName || p.CategoryName || '')
+      .filter(Boolean);
+    const unique = [
+      ...new Set([...(stored || ['Vật liệu thô', 'Sơn và Hóa chất', 'Kim khí']), ...fromProducts]),
+    ];
+    if (!stored) {
+      try {
+        localStorage.setItem('productGroups', JSON.stringify(unique));
+      } catch {}
+    }
+    return unique;
+  });
+  const [brands, setBrands] = useState(() => {
+    const stored = ls('productBrands', null);
+    const fromProducts = productList
+      .map((p) => p.brand || p.brandName || p.BrandName || p.Brand || '')
+      .filter(Boolean);
+    const unique = [...new Set([...(stored || ['Hòa Phát', 'Viettel']), ...fromProducts])];
+    if (!stored) {
+      try {
+        localStorage.setItem('productBrands', JSON.stringify(unique));
+      } catch {}
+    }
+    return unique;
+  });
   const [locations, setLocations] = useState(() => ls('productLocations', ['Kệ A1', 'Kệ B2']));
 
   // Modal toggles

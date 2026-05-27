@@ -1,8 +1,9 @@
 /**
- * Trang Bán hàng chính - Container: PosSidebar + PosHeader + CategoryTabs + ProductGrid +
- * PosCartPanel + PosFooter. Kết nối usePosCart (giỏ hàng) + usePosProducts (lọc sản phẩm).
+ * Trang Ban hang chinh - Container: PosSidebar + PosHeader + CategoryTabs + ProductGrid +
+ * PosCartPanel + PosFooter. Ket noi usePosCart (gio hang) + usePosProducts (loc san pham).
+ * Du lieu san pham lay tu kho hang (inventory).
  */
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import PosSidebar from '../components/PosSidebar';
 import PosHeader from '../components/PosHeader';
 import PosCartPanel from '../components/PosCartPanel';
@@ -11,7 +12,8 @@ import CategoryTabs from '../components/CategoryTabs';
 import ProductGrid from '../components/ProductGrid';
 import { usePosCart } from '../hooks/usePosCart';
 import { usePosProducts } from '../hooks/usePosProducts';
-import { posCategories, posProducts, initialCart } from '../data/posMockData';
+import { useProductList } from '../../inventory/hooks/useProductList';
+import { initialCart } from '../data/posMockData';
 
 const WAREHOUSE = '/inventory/dashboard';
 
@@ -20,9 +22,20 @@ const safeNavigate = (path) => {
   window.dispatchEvent(new Event('popstate'));
 };
 
+const mapToPosProduct = (p) => ({
+  id: p.productCode || p.id || '',
+  name: p.name || '',
+  price: p.salePrice ?? p.price ?? 0,
+  sku: p.productCode || p.barcode || p.id || '',
+  stock: p.stock ?? 0,
+  category: p.group || p.category || '',
+  status: p.status || (p.stock > 0 ? 'Còn hàng' : 'Hết hàng'),
+  image: p.image || '',
+});
+
 const POSScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
-  const [activeMenu, setActiveMenu] = useState('Bán hàng');
+  const [activeMenu, setActiveMenu] = useState('Ban hang');
   const [search, setSearch] = useState('');
   const [notice, setNotice] = useState('');
   const noticeTimer = useRef(null);
@@ -32,6 +45,14 @@ const POSScreen = () => {
     clearTimeout(noticeTimer.current);
     noticeTimer.current = setTimeout(() => setNotice(''), 2200);
   }, []);
+
+  const { products: inventoryProducts } = useProductList();
+  const posProducts = useMemo(() => inventoryProducts.map(mapToPosProduct), [inventoryProducts]);
+
+  const categories = useMemo(() => {
+    const groups = [...new Set(posProducts.map((p) => p.category).filter(Boolean))];
+    return ['Tất cả', ...groups.sort()];
+  }, [posProducts]);
 
   const cart = usePosCart(initialCart);
   const { filteredProducts } = usePosProducts(posProducts, selectedCategory, search);
@@ -96,7 +117,7 @@ const POSScreen = () => {
 
       <main className="fixed bottom-12 left-[260px] right-[400px] top-16 flex flex-col overflow-hidden bg-[#f7f9fc] p-6">
         <CategoryTabs
-          categories={posCategories}
+          categories={categories}
           selected={selectedCategory}
           onSelect={setSelectedCategory}
         />

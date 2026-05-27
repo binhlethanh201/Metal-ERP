@@ -227,6 +227,7 @@ export const ProductManagement = () => {
           }}
           product={productToEdit}
           onSave={handleSave}
+          productList={products}
           title={productToEdit ? 'Sửa hàng hóa' : 'Thêm hàng hóa'}
         />
       )}

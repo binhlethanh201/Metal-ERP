@@ -19,7 +19,7 @@ const ProductTable = ({
   onEdit,
   onDelete,
 }) => (
-  <table className="w-full min-w-[1150px] border-collapse text-left">
+  <table className="w-full min-w-[1250px] border-collapse text-left">
     <thead className="border-b border-slate-200 bg-[#e8f0fe]">
       <tr className="text-[11px] font-bold uppercase text-slate-600">
         <th className="w-10 px-4 py-3 text-center">
@@ -34,6 +34,7 @@ const ProductTable = ({
         {[
           ['Mã hàng', 'id'],
           ['Tên hàng', 'name'],
+          ['Nhóm hàng', null],
           ['Đơn vị', null],
           ['Thương hiệu', null],
           ['Giá bán', 'salePrice'],
@@ -94,6 +95,7 @@ const ProductTable = ({
                 </div>
               </td>
               <td className="px-4 py-3 text-slate-700">{row.name}</td>
+              <td className="px-4 py-3">{row.group || '-'}</td>
               <td className="px-4 py-3">{row.unit}</td>
               <td className="px-4 py-3">{row.brand}</td>
               <td className="px-4 py-3 text-right font-medium">{formatMoney(row.salePrice)}</td>
@@ -110,7 +112,7 @@ const ProductTable = ({
               <td className="px-4 py-3 text-slate-500">{row.createdAt}</td>
             </tr>
             <tr className={isExpanded ? '' : 'hidden'}>
-              <td colSpan={12} className="border-b border-blue-200 p-0">
+              <td colSpan={13} className="border-b border-blue-200 p-0">
                 <ProductDetailPanel row={row} onEdit={onEdit} onDelete={onDelete} />
               </td>
             </tr>
