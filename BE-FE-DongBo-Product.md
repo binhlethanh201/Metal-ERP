@@ -196,6 +196,86 @@ if (form.specification) return form.specification;  // Uu tien chuoi cu
 
 ---
 
+## 4B. PHAN TICH: TON KHO CHUA HOAT DONG
+
+### 4B.1. Hien trang
+
+- **Bang san pham**: Cot "Ton kho" hien thi `ActualStock` - OK (hien thi duoc)
+- **Detail Panel**: Field "Ton kho" hien thi `row.stock` - OK (hien thi duoc)
+- **POS**: Product card hien thi `product.stock` - OK (hien thi duoc)
+- **Form Sua**: Input "Ton kho hien tai" cho phep nhap - OK (UI co)
+- **LUU khong hieu qua**: Sau khi sua stock va Lưu, gia tri ton kho khong thay doi
+
+### 4B.2. Nguyen nhan
+
+#### A. BE khong cho phep cap nhat `ActualStock` qua API sua san pham
+
+Day la **nguyen nhan chinh**. Trong he thong ERP chuan:
+
+```
+ActualStock = Tong nhap kho - Tong xuat kho + Dieu chinh
+```
+
+`ActualStock` duoc tinh tu cac **phieu giao dich kho** (StockTransaction), khong phai la field sua tay.
+
+API `PUT /api/products/{id}` thuong:
+- **Nhan** `ActualStock` trong payload nhung **bo qua** (khong xu ly)
+- Hoac **tu choi** field `ActualStock` (tra ve loi validation)
+- Hoac **chap nhan** nhung ghi de len 1 bang khac (khong dong bo voi bang giao dich)
+
+**Bang chung:** Tat ca san pham trong BE deu co `ActualStock: 0` → BE khong luu gia tri FE gui len.
+
+#### B. FE gui sai payload?
+
+**Khong.** Payload FE gui len BE:
+
+```json
+{
+  "ActualStock": 50,
+  "ReservedStock": 0,
+  "AvailableStock": 50,
+  ...
+}
+```
+
+Field `ActualStock` co trong payload, dung dinh dang, gui dung API endpoint.
+
+#### C. FE khong map dung field?
+
+**Khong.** Chuoi map hoan chinh:
+
+```
+BE: ActualStock → normalizeProduct → row.stock → mapProductToForm → f.form.stock
+                                                         ↓
+                                              onChange → handleChange('stock', value)
+                                                         ↓
+                                              Payload: ActualStock: Number(form.stock || 0)
+```
+
+Khong co typo hay sai lech field name (khac voi vu `salePrice`/`sellPrice`).
+
+#### D. FE bi fallback mock data sau khi save?
+
+**Kha nang thap.** Mock data `inventoryRows` co `stock: 250`, `stock: 45`,... khac 0.
+Neu BE tra ve loi 401/500, FE fallback ve mock data → stock se la gia tri mock (khac 0).
+Nhung neu user thay stock = 0 → chung to FE van dang dung du lieu BE (khong fallback).
+
+### 4B.3. Giai phap
+
+| Giai phap | Mo ta | Do kho |
+|-----------|-------|--------|
+| **A. API nhap/xuat kho** | BE cung cap API `POST /api/inventory/import` va `POST /api/inventory/export` de ghi nhan giao dich kho. `ActualStock` tu dong tinh lai sau moi giao dich. | Trung binh |
+| **B. API dieu chinh ton kho** | BE cung cap API `POST /api/inventory/adjust-stock` cho phep dieu chinh ton kho (co ly do). Day la cach an toan de dong bo ton kho. | Thap |
+| **C. FE an field "Ton kho hien tai"** | Neu BE khong ho tro cap nhat stock, FE nen an input "Ton kho hien tai" trong form sua, chi hien thi read-only. Tranh nguoi dung nhap nhung khong duoc luu. | Thap (FE) |
+| **D. BE chap nhan ActualStock** | BE cap nhat truc tiep `ActualStock` tu API PUT product. Khong khuyen nghi vi mat kha nang kiem toan, de gay lech ton kho. | Thap nhung rui ro cao |
+
+### 4B.4. Khuyen nghi
+
+1. **Truoc mat:** An input "Ton kho hien tai" trong form sua, chuyen thanh read-only. Them tooltip "Ton kho duoc quan ly qua phieu nhap/xuat kho".
+2. **Lau dai:** Xay dung module "Quan ly kho" rieng voi day du chuc nang: Nhap kho, Xuat kho, Kiem kho, Dieu chinh, Lich su giao dich.
+
+---
+
 ## 5. TONG KET
 
 ### BE hien tai: 18 field

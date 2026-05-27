@@ -35,7 +35,7 @@ export const inventoryMenuGroups = [
 
 /* ========== Top Tabs / Navigation ========== */
 export const horizontalNav = [
-  { key: 'inventory', label: 'Kho hàng', icon: 'inventory_2', path: '/inventory/dashboard' },
+  { key: 'inventory', label: 'Kho hàng', icon: 'inventory_2' },
   { key: 'orders', label: 'Đơn hàng', icon: 'shopping_cart' },
   { key: 'suppliers', label: 'Nhà cung cấp', icon: 'groups' },
   { key: 'promotions', label: 'Chiết khấu', icon: 'sell' },
