@@ -2,6 +2,7 @@ import React from 'react';
 import * as LucideIcons from 'lucide-react';
 
 const staticIconMap = {
+  // --- Icon hệ thống cốt lõi ---
   dashboard: 'LayoutDashboard',
   tune: 'SlidersHorizontal',
   filter_list: 'Filter',
@@ -18,7 +19,6 @@ const staticIconMap = {
   inventory_2: 'Package',
   move_to_inbox: 'Inbox',
   outbox: 'ExternalLink',
-  swap_horiz: 'ArrowLeftRight',
   assignment: 'ClipboardList',
   inventory: 'Boxes',
   list_alt: 'ListOrdered',
@@ -40,7 +40,6 @@ const staticIconMap = {
   card_giftcard: 'Gift',
   account_balance_wallet: 'Wallet',
   south_west: 'ArrowDownLeft',
-  north_east: 'ArrowUpRight',
   menu_book: 'BookOpen',
   balance: 'Scale',
   assignment_add: 'ClipboardPlus',
@@ -59,9 +58,38 @@ const staticIconMap = {
   account_balance: 'Landmark',
   qr_code_2: 'QrCode',
   credit_card: 'CreditCard',
-  gpp_maybe: 'ShieldAlert',
   check_circle: 'CheckCircle2',
   chat_bubble: 'MessageSquare',
+
+  arrow_drop_down: 'ChevronDown',
+  arrow_drop_up: 'ChevronUp',
+  gpp_maybe: 'ShieldAlert',
+  error: 'AlertOctagon',
+  warning: 'AlertTriangle',
+  dangerous: 'XCircle',
+  history: 'History',
+  check: 'Check',
+  north_east: 'ArrowUpRight',
+  swap_horiz: 'ArrowLeftRight',
+  barcode_scanner: 'ScanBarcode',
+  createdTime: 'Clock',
+  estimatedStockOut: 'CalendarClock',
+  upload_file: 'UploadCloud',
+  info: 'Info',
+  location_on: 'MapPin',
+  request_quote: 'FileSignature',
+  star: 'Star',
+  store: 'Store',
+  unfold_more: 'ChevronsUpDown',
+  chevron_down: 'ChevronDown',
+  more_horizontal: 'MoreHorizontal',
+  copy: 'Copy',
+  download: 'Download',
+  edit: 'Pencil',
+  image: 'Image',
+  search: 'Search',
+  send: 'Send',
+  swap_vert: 'ChevronsUpDown',
 };
 
 const toPascalCase = (str) => {
@@ -77,12 +105,14 @@ const Icon = ({ name, className = '', size = 20, strokeWidth = 2, ...props }) =>
 
   let lucideName = staticIconMap[name];
 
+  // Nếu không tìm thấy trong static map, thử convert PascalCase tự động
   if (!lucideName) {
     lucideName = toPascalCase(name);
   }
 
   let SelectedIcon = LucideIcons[lucideName];
 
+  // Hỗ trợ loại bỏ hậu tố đuôi nếu có lỗi chuỗi
   if (!SelectedIcon) {
     const simplifiedName = toPascalCase(name.replace('_file', ''));
     SelectedIcon = LucideIcons[simplifiedName] || LucideIcons['HelpCircle'];

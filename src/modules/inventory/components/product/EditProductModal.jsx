@@ -68,9 +68,7 @@ const EditProductModal = ({ open, onClose, product, onSave, title, productList =
                 htmlFor="footer-sell-direct"
               >
                 Bán trực tiếp
-                <span className="material-symbols-outlined ml-2 text-[18px] text-gray-400">
-                  info
-                </span>
+                <Icon name="info" className="ml-2 text-gray-400" size={18} />
               </label>
             </div>
             <div className="flex space-x-3">

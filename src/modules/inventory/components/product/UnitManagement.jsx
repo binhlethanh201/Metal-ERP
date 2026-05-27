@@ -1,4 +1,5 @@
 /** Quản lý đơn vị tính + quy đổi - Base unit, conversion units, giá tự tính theo công thức. */
+import Icon from '../../../../shared/components/Icon';
 const UnitManagement = ({ f }) => (
   <div className="mb-8">
     <h4 className="text-label-md mb-1 font-bold text-on-surface">Đơn vị tính</h4>
@@ -106,7 +107,7 @@ const UnitManagement = ({ f }) => (
               onClick={() => f.removeConversionUnit(unit.id)}
               className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
             >
-              <span className="material-symbols-outlined text-[18px]">delete</span>
+              <Icon name="delete" size={18} />
             </button>
           </div>
         ))}
@@ -118,7 +119,8 @@ const UnitManagement = ({ f }) => (
       onClick={() => f.setAddConversionUnitModal(true)}
       className="text-body-md flex items-center font-semibold text-[#1E6BB8] hover:underline"
     >
-      <span className="material-symbols-outlined mr-1">add</span>Thêm đơn vị
+      <Icon name="add" size={18} />
+      <span>Thêm đơn vị</span>
     </button>
   </div>
 );

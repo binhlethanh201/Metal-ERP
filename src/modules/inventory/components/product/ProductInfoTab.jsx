@@ -1,12 +1,12 @@
 /**
  * Tab "Thông tin" trong modal sản phẩm - Form đầy đủ: mã hàng, tên, nhóm, thương hiệu,
  * upload ảnh, tồn kho, giá, vị trí/kích thước, đơn vị tính + thuộc tính.
- * Nhận toàn bộ hook result `f` từ useEditProductForm qua prop.
  */
 import Section from './Section';
 import ImageUploader from './ImageUploader';
 import UnitManagement from './UnitManagement';
 import AttributeEditor from './AttributeEditor';
+import Icon from '../../../../shared/components/Icon';
 
 const ProductInfoTab = ({ f }) => (
   <>
@@ -269,7 +269,7 @@ const ProductInfoTab = ({ f }) => (
                 <option value="m">m</option>
               </select>
               <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
-                <span className="material-symbols-outlined text-base">expand_more</span>
+                <Icon name="expand_more" size={16} />
               </span>
             </div>
           </div>

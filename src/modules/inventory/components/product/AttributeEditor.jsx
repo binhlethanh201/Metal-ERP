@@ -1,4 +1,6 @@
 /** Quản lý thuộc tính sản phẩm - Dropdown chọn + input giá trị + thêm/sửa/xóa thuộc tính. */
+import Icon from '../../../../shared/components/Icon'; // Thêm dòng import này ở đầu file
+
 const AttributeEditor = ({ f }) => (
   <>
     <h4 className="mb-1 text-[18px] font-semibold text-gray-800">Thuộc tính</h4>
@@ -24,7 +26,8 @@ const AttributeEditor = ({ f }) => (
               <span className={`truncate ${attr.name ? 'text-gray-800' : 'text-gray-500'}`}>
                 {attr.name || 'Chọn thuộc tính'}
               </span>
-              <span className="material-symbols-outlined text-gray-500">expand_more</span>
+              {/* ĐÃ SỬA: Thay expand_more thô bằng Icon Lucide */}
+              <Icon name="expand_more" size={16} className="text-gray-500" />
             </button>
             {f.openDropdownId === attr.id && (
               <div
@@ -52,7 +55,8 @@ const AttributeEditor = ({ f }) => (
                       }}
                       className="ml-2 text-gray-400 hover:text-gray-600"
                     >
-                      <span className="material-symbols-outlined">edit</span>
+                      {/* ĐÃ SỬA: Thay icon edit thô bằng Icon Lucide */}
+                      <Icon name="edit" size={16} />
                     </button>
                   </div>
                 ))}
@@ -80,11 +84,10 @@ const AttributeEditor = ({ f }) => (
           <button
             type="button"
             onClick={() => f.removeAttr(attr.id)}
-            className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#d1d5db] bg-white hover:bg-red-50"
-            onMouseEnter={(e) => e.currentTarget.classList.add('border-red-500')}
-            onMouseLeave={(e) => e.currentTarget.classList.remove('border-red-500')}
+            className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#d1d5db] bg-white text-gray-600 hover:border-red-500 hover:bg-red-50 hover:text-red-600"
           >
-            <span className="material-symbols-outlined text-gray-600">delete</span>
+            {/* ĐÃ SỬA: Thay delete thô bằng Icon Lucide và dọn bớt JS hover không cần thiết */}
+            <Icon name="delete" size={18} />
           </button>
         </div>
       ))}
@@ -95,9 +98,11 @@ const AttributeEditor = ({ f }) => (
             e.stopPropagation();
             f.addAttrRow();
           }}
-          className="mt-2 text-[18px] font-medium text-blue-600 hover:underline"
+          className="mt-2 flex items-center gap-1 text-[18px] font-medium text-blue-600 hover:underline"
         >
-          + Thêm thuộc tính
+          {/* ĐÃ SỬA: Thêm icon cộng Lucide cho nút thêm thuộc tính đồng bộ giao diện */}
+          <Icon name="add" size={18} />
+          <span>Thêm thuộc tính</span>
         </button>
       </div>
     </div>

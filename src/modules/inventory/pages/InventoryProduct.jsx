@@ -87,9 +87,10 @@ export const ProductManagement = () => {
   };
 
   return (
-    <div className="space-y-4">
+    // FIX 1: Thay đổi `w-full overflow-hidden` thành `w-full text-slate-800` để component thoải mái dàn trải chiều ngang nếu màn hình rộng
+    <div className="w-full space-y-4">
       {/* Thanh trạng thái API đồng bộ */}
-      <div className="flex max-w-[1600px]">
+      <div className="flex w-full">
         <div
           className={`rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${
             apiStatus.error
@@ -104,17 +105,19 @@ export const ProductManagement = () => {
       </div>
 
       {/* Khu vực xử lý nghiệp vụ chính: Sidebar lọc + Bảng dữ liệu */}
-      <div className="relative flex max-w-[1600px] gap-6 pb-6 pt-2">
+      {/* FIX 2: Bỏ hoàn toàn `max-w-[1600px]` ở đây để không bóp nghẹt diện tích khi bật sidebar */}
+      <div className="relative flex w-full min-w-0 items-start gap-6 pb-6 pt-2">
         <ProductFilterSidebar
           isCollapsed={isFilterCollapsed}
           onToggleCollapse={setIsFilterCollapsed}
           filters={filters}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
+        {/* Khối bên phải chứa bộ lọc tìm kiếm và bảng dữ liệu */}
+        <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
           {/* Thanh Search nội bộ & Nhóm nút Thao tác nhanh */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex max-w-lg flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
+            <div className="flex min-w-[240px] max-w-lg flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
               <Icon name="search" className="mr-2 text-slate-400" />
               <input
                 className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
@@ -155,8 +158,10 @@ export const ProductManagement = () => {
           </div>
 
           {/* Bảng dữ liệu hàng hóa & Phân trang */}
-          <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
+          {/* FIX 3: Container này quản lý cấu trúc dọc của table + pagination footer */}
+          <div className="flex w-full min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            {/* FIX 4: Thẻ DIV trực tiếp bọc ProductTable phải có thuộc tính `overflow-x-auto` độc lập */}
+            <div className="w-full overflow-x-auto">
               <ProductTable
                 rows={displayedRows}
                 sortConfig={filters.sortConfig}
@@ -173,7 +178,7 @@ export const ProductManagement = () => {
             </div>
 
             {/* Footer phân trang */}
-            <div className="mt-auto flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3">
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3">
               <div className="flex items-center gap-4 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                   <span>Hiển thị</span>
