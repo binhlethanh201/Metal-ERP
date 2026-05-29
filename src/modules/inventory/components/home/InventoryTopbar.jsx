@@ -14,7 +14,9 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
 
   // Hiển thị Tầng 2 ở trang Dashboard và Products
   const shouldShowSecondaryNav =
-    location.pathname === '/inventory/dashboard' || location.pathname === '/inventory/products';
+    location.pathname === '/inventory/dashboard' ||
+    location.pathname === '/inventory/products' ||
+    location.pathname.startsWith('/inventory/goods-issue');
 
   // Hàm xử lý hiệu ứng chuyển vùng sang POS
   const handleSwitchToPos = () => {
@@ -57,13 +59,6 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
-              <button
-                type="button"
-                onClick={() => navigate('/inventory/export')}
-                className="rounded-lg border border-[#F59E0B] px-4 py-2 text-sm font-bold text-[#F59E0B] transition-all active:scale-95"
-              >
-                Xuất kho
-              </button>
               <button
                 type="button"
                 onClick={handleSwitchToPos}

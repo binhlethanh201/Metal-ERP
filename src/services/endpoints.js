@@ -113,6 +113,29 @@ export const ENDPOINTS = {
     UPDATE_PROFILE: '/api/auth/profile',
   },
 
+  // ============ GOODS ISSUE (Xuất Kho) ============
+  GOODS_ISSUE: {
+    // Danh sách & CRUD phiếu xuất
+    GET_LIST: '/goods-issue',
+    GET_DETAIL: (id) => `/goods-issue/${id}`,
+    CREATE: '/goods-issue',
+    UPDATE: (id) => `/goods-issue/${id}`,
+    DELETE: (id) => `/goods-issue/${id}`,
+
+    // Tra cứu sản phẩm
+    SEARCH_PRODUCTS: '/goods-issue/products/search',
+
+    // Khách hàng
+    GET_CUSTOMERS: '/goods-issue/customers',
+    CREATE_CUSTOMER: '/goods-issue/customers',
+
+    // Kho
+    GET_WAREHOUSES: '/goods-issue/warehouses',
+
+    // File đính kèm
+    UPLOAD_ATTACHMENT: (id) => `/goods-issue/${id}/attachments`,
+  },
+
   // ============ COMMON (Chung) ============
   COMMON: {
     HEALTH: '/health',

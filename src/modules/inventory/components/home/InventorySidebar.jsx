@@ -16,6 +16,9 @@ const InventorySidebar = () => {
   // Hàm check xem item nào đang active dựa trên URL hiện tại
   const isItemActive = (path) => {
     if (!path) return false;
+    if (path === '/inventory/dashboard')
+      return location.pathname.startsWith('/inventory/dashboard');
+    if (path === '/inventory/reports') return location.pathname.startsWith('/inventory/reports');
     return location.pathname === path;
   };
 

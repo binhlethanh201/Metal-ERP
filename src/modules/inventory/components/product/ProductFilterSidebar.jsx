@@ -203,6 +203,32 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
           <Icon name="chevron_left" className="text-[18px]" />
         </button>
 
+        {/* Header Bộ lọc + Reset */}
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 className="text-sm font-bold uppercase tracking-tight text-slate-700">Bộ lọc</h3>
+          <button
+            type="button"
+            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            onClick={() => {
+              setGroupKeyword('');
+              setStockFilter('all');
+              setEstimatedStockOutFilter('allTime');
+              setEstimatedSelectedLabel('Toàn thời gian');
+              setCreatedTimeFilter('allTime');
+              setCreatedSelectedLabel('Toàn thời gian');
+              setSupplierKeyword('');
+              setLocationKeyword('');
+              setItemTypeKeyword('');
+              setDirectSaleFilter('all');
+              setSalesChannelFilter('all');
+              setProductStatusFilter('all');
+            }}
+            title="Xóa bộ lọc"
+          >
+            <Icon name="cached" size={16} />
+          </button>
+        </div>
+
         <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-2">
           <h3 className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhóm hàng</h3>
           <button type="button" className="text-xs font-bold text-blue-900 hover:underline">
