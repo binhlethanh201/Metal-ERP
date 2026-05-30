@@ -16,7 +16,8 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
   const shouldShowSecondaryNav =
     location.pathname === '/inventory/dashboard' ||
     location.pathname === '/inventory/products' ||
-    location.pathname.startsWith('/inventory/goods-issue');
+    location.pathname.startsWith('/inventory/goods-issue') ||
+    location.pathname.startsWith('/inventory/inventory-summary');
 
   // Hàm xử lý hiệu ứng chuyển vùng sang POS
   const handleSwitchToPos = () => {

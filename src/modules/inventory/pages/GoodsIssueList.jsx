@@ -109,7 +109,13 @@ const GoodsIssueList = () => {
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="mt-12 w-full space-y-4">
+      {/* Tiêu đề */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Xuất kho</h1>
+        <p className="mt-1 text-gray-600">Quản lý phiếu xuất kho và theo dõi hàng hóa xuất</p>
+      </div>
+
       {/* API Status Banner */}
       <div className="flex w-full">
         <div

@@ -89,7 +89,13 @@ export const ProductManagement = () => {
 
   return (
     // FIX 1: Thay đổi `w-full overflow-hidden` thành `w-full text-slate-800` để component thoải mái dàn trải chiều ngang nếu màn hình rộng
-    <div className="w-full space-y-4">
+    <div className="mt-2 w-full space-y-4">
+      {/* Tiêu đề */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Hàng hóa</h1>
+        <p className="mt-1 text-gray-600">Quản lý danh sách hàng hóa và tồn kho</p>
+      </div>
+
       {/* Thanh trạng thái API đồng bộ */}
       <div className="flex w-full">
         <div
