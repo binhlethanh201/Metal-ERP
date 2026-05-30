@@ -18,14 +18,12 @@ const GoodsIssueCreate = () => {
   const navigate = useNavigate();
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [showQuickAddCustomer, setShowQuickAddCustomer] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null); // 'close' | 'cancel'
 
   const form = useGoodsIssueForm();
   const autocomplete = useProductAutocomplete();
 
   const handleClose = () => {
     if (form.isDirty) {
-      setPendingAction('close');
       setShowUnsavedModal(true);
       return;
     }
@@ -34,7 +32,6 @@ const GoodsIssueCreate = () => {
 
   const handleCancel = () => {
     if (form.isDirty) {
-      setPendingAction('cancel');
       setShowUnsavedModal(true);
       return;
     }
@@ -43,7 +40,6 @@ const GoodsIssueCreate = () => {
 
   const handleUnsavedCancel = () => {
     setShowUnsavedModal(false);
-    setPendingAction(null);
   };
 
   const handleUnsavedDiscard = () => {

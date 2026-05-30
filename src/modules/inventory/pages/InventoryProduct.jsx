@@ -8,8 +8,6 @@ import { useProductFilters } from '../hooks/useProductFilters';
 import { useProductList } from '../hooks/useProductList';
 
 export const ProductManagement = () => {
-  // const { setActiveHubKey } = useOutletContext();
-
   const [expandedId, setExpandedId] = useState('SP34405804');
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);

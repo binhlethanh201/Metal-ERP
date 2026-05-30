@@ -24,6 +24,7 @@ const InventoryReports = lazy(() => import('./modules/inventory/pages/InventoryR
 const InventorySummaryReport = lazy(
   () => import('./modules/inventory/pages/InventorySummaryReport')
 );
+const InventoryCountList = lazy(() => import('./modules/inventory/pages/InventoryCountList'));
 
 // POS Module
 const PosLayout = lazy(() => import('./modules/pos/layouts/PosLayout'));
@@ -104,6 +105,7 @@ function App() {
               <Route path="export" element={<StockExport />} />
               <Route path="reports" element={<InventoryReports />} />
               <Route path="inventory-summary" element={<InventorySummaryReport />} />
+              <Route path="inventory-count" element={<InventoryCountList />} />
               <Route path="goods-issue" element={<GoodsIssueList />} />
               <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
             </Route>

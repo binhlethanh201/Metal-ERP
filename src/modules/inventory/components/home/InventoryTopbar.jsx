@@ -17,7 +17,9 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
     location.pathname === '/inventory/dashboard' ||
     location.pathname === '/inventory/products' ||
     location.pathname.startsWith('/inventory/goods-issue') ||
-    location.pathname.startsWith('/inventory/inventory-summary');
+    location.pathname.startsWith('/inventory/inventory-summary') ||
+    location.pathname.startsWith('/inventory/import') ||
+    location.pathname.startsWith('/inventory/inventory-count');
 
   // Hàm xử lý hiệu ứng chuyển vùng sang POS
   const handleSwitchToPos = () => {
