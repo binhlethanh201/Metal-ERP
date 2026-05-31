@@ -1,10 +1,12 @@
-/** Quản lý thuộc tính sản phẩm - Dropdown chọn + input giá trị + thêm/sửa/xóa thuộc tính. */
-import Icon from '../../../../shared/components/Icon'; // Thêm dòng import này ở đầu file
+/** Quáº£n lÃ½ thuá»™c tÃ­nh sáº£n pháº©m - Dropdown chá»n + input giÃ¡ trá»‹ + thÃªm/sá»­a/xÃ³a thuá»™c tÃ­nh. */
+import Icon from '../../../../../shared/components/Icon'; // ThÃªm dÃ²ng import nÃ y á»Ÿ Ä‘áº§u file
 
 const AttributeEditor = ({ f }) => (
   <>
-    <h4 className="mb-1 text-[18px] font-semibold text-gray-800">Thuộc tính</h4>
-    <p className="mb-5 text-[14px] text-gray-500">Thêm đặc điểm như hương vị, dung tích, màu sắc</p>
+    <h4 className="mb-1 text-[18px] font-semibold text-gray-800">Thuá»™c tÃ­nh</h4>
+    <p className="mb-5 text-[14px] text-gray-500">
+      ThÃªm Ä‘áº·c Ä‘iá»ƒm nhÆ° hÆ°Æ¡ng vá»‹, dung tÃ­ch, mÃ u sáº¯c
+    </p>
 
     <div className="space-y-3">
       {(f.form.attributes || []).map((attr) => (
@@ -24,9 +26,9 @@ const AttributeEditor = ({ f }) => (
               className={`h-12 w-full border bg-white px-4 text-left ${f.openDropdownId === attr.id ? 'border-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.1)]' : 'border-[#d1d5db]'} flex items-center justify-between rounded-[10px] text-[16px]`}
             >
               <span className={`truncate ${attr.name ? 'text-gray-800' : 'text-gray-500'}`}>
-                {attr.name || 'Chọn thuộc tính'}
+                {attr.name || 'Chá»n thuá»™c tÃ­nh'}
               </span>
-              {/* ĐÃ SỬA: Thay expand_more thô bằng Icon Lucide */}
+              {/* ÄÃƒ Sá»¬A: Thay expand_more thÃ´ báº±ng Icon Lucide */}
               <Icon name="expand_more" size={16} className="text-gray-500" />
             </button>
             {f.openDropdownId === attr.id && (
@@ -55,7 +57,7 @@ const AttributeEditor = ({ f }) => (
                       }}
                       className="ml-2 text-gray-400 hover:text-gray-600"
                     >
-                      {/* ĐÃ SỬA: Thay icon edit thô bằng Icon Lucide */}
+                      {/* ÄÃƒ Sá»¬A: Thay icon edit thÃ´ báº±ng Icon Lucide */}
                       <Icon name="edit" size={16} />
                     </button>
                   </div>
@@ -69,14 +71,14 @@ const AttributeEditor = ({ f }) => (
                   }}
                   className="flex h-11 cursor-pointer items-center px-4 hover:bg-gray-100"
                 >
-                  <span className="font-medium text-blue-600">+ Tạo thuộc tính mới</span>
+                  <span className="font-medium text-blue-600">+ Táº¡o thuá»™c tÃ­nh má»›i</span>
                 </div>
               </div>
             )}
           </div>
           <input
             type="text"
-            placeholder="Nhập giá trị thuộc tính"
+            placeholder="Nháº­p giÃ¡ trá»‹ thuá»™c tÃ­nh"
             value={attr.value || ''}
             onChange={(e) => f.updateAttr(attr.id, 'value', e.target.value)}
             className="h-12 rounded-[10px] bg-[#f3f4f6] px-4 text-[16px] placeholder-gray-400 focus:border focus:border-blue-600 focus:bg-white focus:outline-none"
@@ -86,7 +88,7 @@ const AttributeEditor = ({ f }) => (
             onClick={() => f.removeAttr(attr.id)}
             className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#d1d5db] bg-white text-gray-600 hover:border-red-500 hover:bg-red-50 hover:text-red-600"
           >
-            {/* ĐÃ SỬA: Thay delete thô bằng Icon Lucide và dọn bớt JS hover không cần thiết */}
+            {/* ÄÃƒ Sá»¬A: Thay delete thÃ´ báº±ng Icon Lucide vÃ  dá»n bá»›t JS hover khÃ´ng cáº§n thiáº¿t */}
             <Icon name="delete" size={18} />
           </button>
         </div>
@@ -100,9 +102,9 @@ const AttributeEditor = ({ f }) => (
           }}
           className="mt-2 flex items-center gap-1 text-[18px] font-medium text-blue-600 hover:underline"
         >
-          {/* ĐÃ SỬA: Thêm icon cộng Lucide cho nút thêm thuộc tính đồng bộ giao diện */}
+          {/* ÄÃƒ Sá»¬A: ThÃªm icon cá»™ng Lucide cho nÃºt thÃªm thuá»™c tÃ­nh Ä‘á»“ng bá»™ giao diá»‡n */}
           <Icon name="add" size={18} />
-          <span>Thêm thuộc tính</span>
+          <span>ThÃªm thuá»™c tÃ­nh</span>
         </button>
       </div>
     </div>

@@ -1,10 +1,10 @@
 /**
- * Section - Khối form có thể đóng/mở (accordion).
- * Dùng trong EditProductModal để nhóm các trường form.
+ * Section - Khá»‘i form cÃ³ thá»ƒ Ä‘Ã³ng/má»Ÿ (accordion).
+ * DÃ¹ng trong EditProductModal Ä‘á»ƒ nhÃ³m cÃ¡c trÆ°á»ng form.
  * Props: title, subtitle, defaultOpen, children.
  */
 import { useState } from 'react';
-import Icon from '../../../../shared/components/Icon';
+import Icon from '../../../../../shared/components/Icon';
 
 const Section = ({ title, subtitle, defaultOpen = true, children }) => {
   const [open, setOpen] = useState(!!defaultOpen);

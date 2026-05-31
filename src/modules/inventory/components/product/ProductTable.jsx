@@ -1,10 +1,10 @@
-/**
+﻿/**
  * Bảng sản phẩm - Định dạng lại cột thời gian (HH:mm:ss DD/MM/YYYY)
  * Sửa lỗi lệch hàng dữ liệu và giữ nguyên độ rộng cố định (table-fixed).
  */
 import { Fragment } from 'react';
 import Icon from '../../../../shared/components/Icon';
-import ProductDetailPanel from './ProductDetailPanel';
+import ProductDetailPanel from './tabs/ProductDetailPanel';
 import { toneClass } from '../../utils/productUtils';
 
 // Hàm định dạng tiền tệ Việt Nam

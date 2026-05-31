@@ -21,17 +21,13 @@ const emptyLine = () => ({
   unit: '',
   lotNumber: '',
   expiryDate: '',
+  serialImei: '',
   warehouseId: 'KHO_CHINH',
   warehouseName: 'Kho Chính',
-  locationId: '',
-  locationName: '',
   quantity: 1,
   unitPrice: 0,
   amount: 0,
-  discountPercent: 0,
-  discountAmount: 0,
-  vatPercent: 10,
-  vatAmount: 0,
+  notes: '',
   isDirty: false,
 });
 
@@ -74,6 +70,7 @@ export const useGoodsReceiptPopup = (onClose) => {
   const autoRef = useRef(null);
   const barcodeRef = useRef(null);
   const qtyRefs = useRef({});
+  const targetLineRef = useRef(null);
 
   const markDirty = useCallback(() => setIsDirty(true), []);
 
@@ -249,6 +246,44 @@ export const useGoodsReceiptPopup = (onClose) => {
     [markDirty, ensureTrailing, closeAuto]
   );
 
+  const handleApplyNewProduct = useCallback(
+    (prod) => {
+      setLines((prev) => {
+        const emptyLine = prev.find((l) => !l.isDirty);
+        if (!emptyLine) return prev;
+        targetLineRef.current = emptyLine.id;
+        const n = prev.map((l) =>
+          l.id === emptyLine.id
+            ? {
+                ...l,
+                productId: prod.id,
+                productCode: prod.code || prod.sku || '',
+                productName: prod.name,
+                unit: prod.unit,
+                unitPrice: prod.price || prod.purchasePrice || 0,
+                amount: (l.quantity || 1) * (prod.price || prod.purchasePrice || 0),
+                isDirty: true,
+              }
+            : l
+        );
+        return ensureTrailing(n);
+      });
+      markDirty();
+      setTimeout(() => {
+        const id = targetLineRef.current;
+        if (id) {
+          const el = qtyRefs.current[`q_${id}`];
+          if (el) {
+            el.focus();
+            el.select();
+          }
+          targetLineRef.current = null;
+        }
+      }, 150);
+    },
+    [markDirty, ensureTrailing]
+  );
+
   const handleAutoKey = useCallback(
     (e) => {
       if (e.key === 'ArrowDown') {
@@ -265,7 +300,7 @@ export const useGoodsReceiptPopup = (onClose) => {
     [autoResults, autoIdx, autoOpenId, handleProductSelect, closeAuto]
   );
 
-  // --- Quantity / Price / Discount / VAT ---
+  // --- Quantity / Price ---
   const recalcLine = useCallback(
     (id, field, raw) => {
       setLines((p) => {
@@ -275,17 +310,9 @@ export const useGoodsReceiptPopup = (onClose) => {
           const qty = field === 'quantity' ? updated.quantity : l.quantity;
           const price = field === 'unitPrice' ? updated.unitPrice : l.unitPrice;
           const amt = Math.round(qty * price);
-          const discPct = field === 'discountPercent' ? updated.discountPercent : l.discountPercent;
-          const discAmt = Math.round((amt * discPct) / 100);
-          const vatPct = field === 'vatPercent' ? updated.vatPercent : l.vatPercent;
-          const vatAmt = Math.round(((amt - discAmt) * vatPct) / 100);
           return {
             ...updated,
             amount: amt,
-            discountPercent: discPct,
-            discountAmount: discAmt,
-            vatPercent: vatPct,
-            vatAmount: vatAmt,
             quantity: qty,
             unitPrice: price,
           };
@@ -301,8 +328,8 @@ export const useGoodsReceiptPopup = (onClose) => {
     (id) => {
       setLines((p) => {
         const d = p.filter((l) => l.isDirty);
-        if (d.length <= 1) return p;
-        return p.filter((l) => l.id !== id);
+        if (d.length <= 1) return [emptyLine()];
+        return p.map((l) => (l.id === id ? emptyLine() : l));
       });
       markDirty();
     },
@@ -331,12 +358,7 @@ export const useGoodsReceiptPopup = (onClose) => {
   // --- Computed ---
   const dirtyLines = useMemo(() => lines.filter((l) => l.isDirty), [lines]);
   const totalAmount = useMemo(() => dirtyLines.reduce((s, l) => s + l.amount, 0), [dirtyLines]);
-  const totalDiscount = useMemo(
-    () => dirtyLines.reduce((s, l) => s + l.discountAmount, 0),
-    [dirtyLines]
-  );
-  const totalTax = useMemo(() => dirtyLines.reduce((s, l) => s + l.vatAmount, 0), [dirtyLines]);
-  const totalPayment = totalAmount - totalDiscount + totalTax;
+  const totalPayment = totalAmount;
 
   const isValid = useMemo(() => {
     if (isPurchase) {
@@ -389,15 +411,12 @@ export const useGoodsReceiptPopup = (onClose) => {
           unit: l.unit,
           lotNumber: l.lotNumber,
           expiryDate: l.expiryDate,
+          serialImei: l.serialImei,
           warehouseId: l.warehouseId,
-          locationId: l.locationId,
           quantity: l.quantity,
           unitPrice: l.unitPrice,
           amount: l.amount,
-          discountPercent: l.discountPercent,
-          discountAmount: l.discountAmount,
-          vatPercent: l.vatPercent,
-          vatAmount: l.vatAmount,
+          notes: l.notes,
         })),
         attachments: attachments.map((a) => a.name),
       };
@@ -432,6 +451,7 @@ export const useGoodsReceiptPopup = (onClose) => {
     closeAuto,
     handleAutoKey,
     handleProductSelect,
+    handleApplyNewProduct,
     barcodeMode,
     setBarcodeMode,
     barcodeRef,
@@ -444,8 +464,6 @@ export const useGoodsReceiptPopup = (onClose) => {
     showConfirmClose,
     setShowConfirmClose,
     totalAmount,
-    totalDiscount,
-    totalTax,
     totalPayment,
     isValid,
     handleSubmit,

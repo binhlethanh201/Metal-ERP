@@ -1,8 +1,8 @@
 /**
- * Upload ảnh sản phẩm - Main preview + thumbnail list + thao tác ghim/xóa ảnh.
- * Đã đồng bộ bộ icon Lucide mới.
+ * Upload áº£nh sáº£n pháº©m - Main preview + thumbnail list + thao tÃ¡c ghim/xÃ³a áº£nh.
+ * ÄÃ£ Ä‘á»“ng bá»™ bá»™ icon Lucide má»›i.
  */
-import Icon from '../../../../shared/components/Icon';
+import Icon from '../../../../../shared/components/Icon';
 
 const ImageUploader = ({
   images,
@@ -77,7 +77,7 @@ const ImageUploader = ({
               type="button"
               onClick={() => onPinImage(idx)}
               className="absolute left-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-md border border-[#e5e7eb] bg-white/90 shadow-sm"
-              title={idx === 0 ? 'Ảnh đại diện' : 'Đặt làm ảnh đại diện'}
+              title={idx === 0 ? 'áº¢nh Ä‘áº¡i diá»‡n' : 'Äáº·t lÃ m áº£nh Ä‘áº¡i diá»‡n'}
             >
               <Icon
                 name="push_pin"
@@ -89,7 +89,7 @@ const ImageUploader = ({
               type="button"
               onClick={() => onRemoveImage(idx)}
               className="absolute bottom-1 right-1 z-10 flex h-7 w-7 items-center justify-center rounded-md border border-[#e5e7eb] bg-white/90 shadow-sm"
-              title="Xóa ảnh"
+              title="XÃ³a áº£nh"
             >
               <Icon name="delete" className="text-red-500" size={14} />
             </button>

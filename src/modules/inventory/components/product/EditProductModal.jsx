@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Modal Thêm/Sửa sản phẩm - Container: kết nối useEditProductForm hook, lắp ghép
  * ProductInfoTab | ProductDescriptionTab + 6 modal con (thuộc tính, nhóm, thương hiệu, vị trí, đơn vị).
  */
 import Icon from '../../../../shared/components/Icon';
 import { useEditProductForm } from '../../hooks/useEditProductForm';
-import ProductInfoTab from './ProductInfoTab';
-import ProductDescriptionTab from './ProductDescriptionTab';
+import ProductInfoTab from './tabs/ProductInfoTab';
+import ProductDescriptionTab from './tabs/ProductDescriptionTab';
 import {
   CreateGroupModal,
   CreateBrandModal,

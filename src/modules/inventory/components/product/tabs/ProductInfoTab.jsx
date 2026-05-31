@@ -2,11 +2,11 @@
  * Tab "Thông tin" trong modal sản phẩm - Form đầy đủ: mã hàng, tên, nhóm, thương hiệu,
  * upload ảnh, tồn kho, giá, vị trí/kích thước, đơn vị tính + thuộc tính.
  */
-import Section from './Section';
-import ImageUploader from './ImageUploader';
-import UnitManagement from './UnitManagement';
-import AttributeEditor from './AttributeEditor';
-import Icon from '../../../../shared/components/Icon';
+import Section from '../form/Section';
+import ImageUploader from '../form/ImageUploader';
+import UnitManagement from '../form/UnitManagement';
+import AttributeEditor from '../form/AttributeEditor';
+import Icon from '../../../../../shared/components/Icon';
 
 const ProductInfoTab = ({ f }) => (
   <>
