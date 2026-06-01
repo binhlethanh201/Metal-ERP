@@ -1,6 +1,6 @@
 /**
- * Panel chi tiet san pham - Tabbed interface: Thong tin, Mo ta ghi chu, The kho, Ton kho.
- * Gom: summary bar, 4 tabs, bottom toolbar co dinh. Ho tro responsive.
+ * Panel chi tiết sản phẩm - Tabbed interface: Thông tin, Mô tả ghi chú, Thẻ kho, Tồn kho.
+ * Gồm: summary bar, 4 tabs, bottom toolbar cố định. Hỗ trợ responsive.
  */
 import { useState } from 'react';
 import Icon from '../../../../../shared/components/Icon';
@@ -12,21 +12,21 @@ const formatMoney = (v) => {
 };
 
 const TABS = [
-  { key: 'info', label: 'ThÃ´ng tin' },
-  { key: 'desc', label: 'MÃ´ táº£, ghi chÃº' },
-  { key: 'stock-card', label: 'Tháº» kho' },
-  { key: 'inventory', label: 'Tá»“n kho' },
+  { key: 'info', label: 'Thông tin' },
+  { key: 'desc', label: 'Mô tả, ghi chú' },
+  { key: 'stock-card', label: 'Thẻ kho' },
+  { key: 'inventory', label: 'Tồn kho' },
 ];
 
 /* ---------- Summary Bar ---------- */
 const SummaryBar = ({ row }) => {
   const items = [
-    { label: 'MÃ£ SP', value: row.productCode || row.id },
-    { label: 'TÃªn SP', value: row.name },
-    { label: 'GiÃ¡ bÃ¡n', value: `${formatMoney(row.salePrice)} Ä‘` },
-    { label: 'GiÃ¡ vá»‘n', value: `${formatMoney(row.costPrice)} Ä‘` },
-    { label: 'Tá»“n kho', value: row.stock },
-    { label: 'NgÃ y táº¡o', value: row.createdAt },
+    { label: 'Mã SP', value: row.productCode || row.id },
+    { label: 'Tên SP', value: row.name },
+    { label: 'Giá bán', value: `${formatMoney(row.salePrice)} đ` },
+    { label: 'Giá vốn', value: `${formatMoney(row.costPrice)} đ` },
+    { label: 'Tồn kho', value: row.stock },
+    { label: 'Ngày tạo', value: row.createdAt },
   ];
   return (
     <div className="flex flex-wrap gap-x-8 gap-y-2 border-b border-slate-200 pb-4">
@@ -40,7 +40,7 @@ const SummaryBar = ({ row }) => {
   );
 };
 
-/* ---------- Tab Thong tin ---------- */
+/* ---------- Tab Thông tin ---------- */
 const InfoTab = ({ row }) => (
   <div>
     <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:gap-8">
@@ -57,18 +57,18 @@ const InfoTab = ({ row }) => (
       <div className="flex-1">
         <h3 className="mb-1 text-xl font-bold text-slate-900">{row.name}</h3>
         <p className="mb-3 text-xs text-slate-500">
-          NhÃ³m hÃ ng:{' '}
-          <span className="font-bold uppercase text-slate-700">{row.group || 'ChÆ°a cÃ³'}</span>
+          Nhóm hàng:{' '}
+          <span className="font-bold uppercase text-slate-700">{row.group || 'Chưa có'}</span>
         </p>
         <div className="flex flex-wrap gap-2">
           <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
-            HÃ ng hÃ³a thÆ°á»ng
+            Hàng hóa thường
           </span>
           <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
-            {row.directSale ? 'BÃ¡n trá»±c tiáº¿p' : 'KhÃ´ng bÃ¡n trá»±c tiáº¿p'}
+            {row.directSale ? 'Bán trực tiếp' : 'Không bán trực tiếp'}
           </span>
           <span className="rounded border border-orange-100 bg-orange-50 px-2 py-1 text-[10px] font-bold text-orange-600">
-            KhÃ´ng tÃ­ch Ä‘iá»ƒm
+            Không tích điểm
           </span>
         </div>
       </div>
@@ -76,21 +76,21 @@ const InfoTab = ({ row }) => (
 
     <div className="mb-6 grid grid-cols-1 gap-x-12 gap-y-6 sm:grid-cols-2 xl:grid-cols-4">
       {[
-        ['MÃ£ hÃ ng', row.productCode || row.id],
-        ['MÃ£ váº¡ch', row.barcode],
-        ['Tá»“n kho', row.stock],
-        ['Äá»‹nh má»©c tá»“n', row.stockLevel],
-        ['GiÃ¡ vá»‘n', `${formatMoney(row.costPrice)} Ä‘`],
-        ['GiÃ¡ bÃ¡n', `${formatMoney(row.salePrice)} Ä‘`],
-        ['ThÆ°Æ¡ng hiá»‡u', row.brand || 'ChÆ°a cÃ³'],
-        ['Vá»‹ trÃ­', row.location || 'ChÆ°a cÃ³'],
-        ['Trá»ng lÆ°á»£ng', row.weight || 'ChÆ°a cÃ³'],
-        ['KÃ­ch thÆ°á»›c', row.dimension || 'ChÆ°a cÃ³'],
+        ['Mã hàng', row.productCode || row.id],
+        ['Mã vạch', row.barcode],
+        ['Tồn kho', row.stock],
+        ['Định mức tồn', row.stockLevel],
+        ['Giá vốn', `${formatMoney(row.costPrice)} đ`],
+        ['Giá bán', `${formatMoney(row.salePrice)} đ`],
+        ['Thương hiệu', row.brand || 'Chưa có'],
+        ['Vị trí', row.location || 'Chưa có'],
+        ['Trọng lượng', row.weight || 'Chưa có'],
+        ['Kích thước', row.dimension || 'Chưa có'],
       ].map(([label, value]) => (
         <div key={label} className="space-y-1 border-b border-slate-100 pb-3">
           <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">{label}</p>
           <p
-            className={`text-sm font-bold ${value === 'ChÆ°a cÃ³' ? 'text-slate-400' : 'text-slate-800'}`}
+            className={`text-sm font-bold ${value === 'Chưa có' ? 'text-slate-400' : 'text-slate-800'}`}
           >
             {value}
           </p>
@@ -100,21 +100,21 @@ const InfoTab = ({ row }) => (
   </div>
 );
 
-/* ---------- Tab Mo ta, ghi chu ---------- */
+/* ---------- Tab Mô tả, ghi chú ---------- */
 const DescTab = ({ row, onEdit }) => (
   <div className="space-y-6">
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">MÃ´ táº£</h4>
+      <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">Mô tả</h4>
       <div className="flex min-h-[120px] items-center justify-center text-sm text-slate-400">
-        {row.description || 'ChÆ°a cÃ³ mÃ´ táº£'}
+        {row.description || 'Chưa có mô tả'}
       </div>
     </div>
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">
-        Ghi chÃº Ä‘áº·t hÃ ng
+        Ghi chú đặt hàng
       </h4>
       <div className="flex min-h-[120px] items-center justify-center text-sm text-slate-400">
-        {row.notes || 'ChÆ°a cÃ³ ghi chÃº'}
+        {row.notes || 'Chưa có ghi chú'}
       </div>
     </div>
     <div className="flex justify-end">
@@ -124,7 +124,7 @@ const DescTab = ({ row, onEdit }) => (
         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
       >
         <Icon name="edit" size={16} />
-        Chá»‰nh sá»­a
+        Chỉnh sửa
       </button>
     </div>
   </div>
@@ -133,11 +133,11 @@ const DescTab = ({ row, onEdit }) => (
 /* ---------- Placeholder Tabs ---------- */
 const PlaceholderTab = ({ title }) => (
   <div className="flex min-h-[200px] items-center justify-center text-sm text-slate-400">
-    {title} - Äang phÃ¡t triá»ƒn
+    {title} - Đang phát triển
   </div>
 );
 
-/* ---------- Popup Xac nhan Ngung kinh doanh ---------- */
+/* ---------- Popup Xác nhận Ngừng kinh doanh ---------- */
 const StopBusinessModal = ({ open, onClose, onConfirm, productName }) => {
   if (!open) return null;
 
@@ -148,7 +148,7 @@ const StopBusinessModal = ({ open, onClose, onConfirm, productName }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h3 className="text-lg font-bold text-slate-800">Ngung kinh doanh san pham</h3>
+          <h3 className="text-lg font-bold text-slate-800">Ngừng kinh doanh sản phẩm</h3>
           <button
             type="button"
             onClick={onClose}
@@ -165,22 +165,22 @@ const StopBusinessModal = ({ open, onClose, onConfirm, productName }) => {
                 <Icon name="warning" size={22} />
               </span>
               <div className="text-sm text-amber-800">
-                <p className="font-bold">Ban co chac chan muon ngung kinh doanh san pham nay?</p>
-                <p className="mt-1">{productName || 'San pham'}</p>
+                <p className="font-bold">Bạn có chắc chắn muốn ngừng kinh doanh sản phẩm này?</p>
+                <p className="mt-1">{productName || 'Sản phẩm'}</p>
               </div>
             </div>
           </div>
 
           <div className="rounded-lg bg-blue-50 p-4 text-[13px] leading-relaxed text-blue-800">
-            <p className="mb-2 font-bold">Luu y:</p>
+            <p className="mb-2 font-bold">Lưu ý:</p>
             <ul className="list-inside list-disc space-y-1">
               <li>
-                Thong tin <strong>ton kho</strong> va <strong>lich su giao dich</strong> van duoc
-                giu nguyen.
+                Thông tin <strong>tồn kho</strong> và <strong>lịch sử giao dịch</strong> vẫn được
+                giữ nguyên.
               </li>
-              <li>San pham se bi an khoi kenh ban, khong the ban hang.</li>
+              <li>Sản phẩm sẽ bị ẩn khỏi kênh bán, không thể bán hàng.</li>
               <li>
-                Cac <strong>hang hoa quy doi</strong> lien quan cung se ngung kinh doanh.
+                Các <strong>hàng hóa quy đổi</strong> liên quan cũng sẽ ngừng kinh doanh.
               </li>
             </ul>
           </div>
@@ -192,7 +192,7 @@ const StopBusinessModal = ({ open, onClose, onConfirm, productName }) => {
             onClick={onClose}
             className="h-[40px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
-            Huy
+            Hủy
           </button>
           <button
             type="button"
@@ -202,7 +202,7 @@ const StopBusinessModal = ({ open, onClose, onConfirm, productName }) => {
             }}
             className="h-[40px] rounded-lg bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700"
           >
-            Xac nhan ngung kinh doanh
+            Xác nhận ngừng kinh doanh
           </button>
         </div>
       </div>
@@ -227,14 +227,14 @@ const BottomToolbar = ({ row, onEdit, onDelete }) => {
           className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-red-600"
         >
           <Icon name="delete" size={18} />
-          XÃ³a
+          Xóa
         </button>
         <button
           type="button"
           className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-blue-600"
         >
           <Icon name="copy" size={18} />
-          Sao chÃ©p
+          Sao chép
         </button>
       </div>
 
@@ -248,7 +248,7 @@ const BottomToolbar = ({ row, onEdit, onDelete }) => {
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700"
         >
           <Icon name="edit" size={18} />
-          Chá»‰nh sá»­a
+          Chỉnh sửa
         </button>
 
         <button
@@ -256,7 +256,7 @@ const BottomToolbar = ({ row, onEdit, onDelete }) => {
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
         >
           <Icon name="barcode_scanner" size={18} />
-          In tem mÃ£
+          In tem mã
         </button>
 
         <div className="relative">
@@ -277,7 +277,7 @@ const BottomToolbar = ({ row, onEdit, onDelete }) => {
                 className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                 onClick={() => setMenuOpen(false)}
               >
-                Nháº­p hÃ ng
+                Nhập hàng
               </button>
               <button
                 type="button"
@@ -287,7 +287,7 @@ const BottomToolbar = ({ row, onEdit, onDelete }) => {
                   setStopModalOpen(true);
                 }}
               >
-                Ngá»«ng kinh doanh
+                Ngừng kinh doanh
               </button>
             </div>
           )}
@@ -334,8 +334,8 @@ const ProductDetailPanel = ({ row, onEdit, onDelete }) => {
       <div className="mt-6">
         {activeTab === 'info' && <InfoTab row={row} />}
         {activeTab === 'desc' && <DescTab row={row} onEdit={onEdit} />}
-        {activeTab === 'stock-card' && <PlaceholderTab title="The kho" />}
-        {activeTab === 'inventory' && <PlaceholderTab title="Ton kho" />}
+        {activeTab === 'stock-card' && <PlaceholderTab title="Thẻ kho" />}
+        {activeTab === 'inventory' && <PlaceholderTab title="Tồn kho" />}
       </div>
 
       {activeTab === 'info' && <BottomToolbar row={row} onEdit={onEdit} onDelete={onDelete} />}

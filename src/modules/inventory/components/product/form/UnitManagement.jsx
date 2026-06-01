@@ -1,19 +1,19 @@
-/** Quáº£n lÃ½ Ä‘Æ¡n vá»‹ tÃ­nh + quy Ä‘á»•i - Base unit, conversion units, giÃ¡ tá»± tÃ­nh theo cÃ´ng thá»©c. */
+/** Quản lý đơn vị tính + quy đổi - Base unit, conversion units, giá tự tính theo công thức. */
 import Icon from '../../../../../shared/components/Icon';
 const UnitManagement = ({ f }) => (
   <div className="mb-8">
-    <h4 className="text-label-md mb-1 font-bold text-on-surface">ÄÆ¡n vá»‹ tÃ­nh</h4>
+    <h4 className="text-label-md mb-1 font-bold text-on-surface">Đơn vị tính</h4>
     <p className="text-body-md mb-6 leading-relaxed text-on-surface-variant">
-      ThÃªm Ä‘Æ¡n vá»‹ bÃ¡n hoáº·c nháº­p nhÆ° chai, lá»‘c, thÃ¹ng. Äáº·t cÃ´ng thá»©c quy Ä‘á»•i
-      Ä‘á»ƒ tÃ­nh nhanh giÃ¡ vÃ  tá»“n kho. VÃ­ dá»¥: 1 lá»‘c = 4 chai, 1 thÃ¹ng = 20 lá»‘c.
+      Thêm đơn vị bán hoặc nhập như chai, lốc, thùng. Đặt công thức quy đổi để tính nhanh giá và tồn
+      kho. Ví dụ: 1 lốc = 4 chai, 1 thùng = 20 lốc.
     </p>
 
     <div className="mb-6 flex flex-wrap items-end gap-5">
       <div className="min-w-[200px] flex-1 space-y-2">
-        <label className="text-label-md text-on-surface-variant">TÃªn Ä‘Æ¡n vá»‹ cÆ¡ báº£n</label>
+        <label className="text-label-md text-on-surface-variant">Tên đơn vị cơ bản</label>
         <input
           className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 focus:ring-0"
-          placeholder="VÃ­ dá»¥: chai"
+          placeholder="Ví dụ: chai"
           type="text"
           value={f.form.baseUnit?.name || ''}
           onChange={(e) =>
@@ -22,7 +22,7 @@ const UnitManagement = ({ f }) => (
         />
       </div>
       <div className="w-40 space-y-2">
-        <label className="text-label-md text-on-surface-variant">GiÃ¡ bÃ¡n</label>
+        <label className="text-label-md text-on-surface-variant">Giá bán</label>
         <input
           className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 text-right focus:ring-0"
           type="text"
@@ -46,7 +46,7 @@ const UnitManagement = ({ f }) => (
           }
         />
         <label className="cursor-pointer text-[15px] leading-[1.35]" htmlFor="direct-sell-main">
-          BÃ¡n trá»±c tiáº¿p
+          Bán trực tiếp
         </label>
       </div>
     </div>
@@ -55,7 +55,7 @@ const UnitManagement = ({ f }) => (
 
     {(f.form.conversionUnits || []).length > 0 && (
       <div className="mb-6 space-y-3">
-        <h5 className="text-[14px] font-semibold text-gray-700">ÄÆ¡n vá»‹ quy Ä‘á»•i</h5>
+        <h5 className="text-[14px] font-semibold text-gray-700">Đơn vị quy đổi</h5>
         {(f.form.conversionUnits || []).map((unit) => (
           <div
             key={unit.id}
@@ -100,7 +100,7 @@ const UnitManagement = ({ f }) => (
                 onChange={(e) => f.updateConversionUnit(unit.id, 'directSale', e.target.checked)}
                 className="h-4 w-4 rounded border-outline-variant text-[#1E6BB8]"
               />
-              <span className="text-[14px] text-gray-600">BÃ¡n</span>
+              <span className="text-[14px] text-gray-600">Bán</span>
             </div>
             <button
               type="button"
@@ -120,7 +120,7 @@ const UnitManagement = ({ f }) => (
       className="text-body-md flex items-center font-semibold text-[#1E6BB8] hover:underline"
     >
       <Icon name="add" size={18} />
-      <span>ThÃªm Ä‘Æ¡n vá»‹</span>
+      <span>Thêm đơn vị</span>
     </button>
   </div>
 );
