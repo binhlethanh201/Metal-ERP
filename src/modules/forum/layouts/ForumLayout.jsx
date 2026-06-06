@@ -24,6 +24,7 @@ const ForumLayout = () => {
     if (path.includes('/trends')) return 'trend';
     if (path.includes('/source')) return 'source';
     if (path.includes('/my-posts')) return 'my-posts';
+    if (path.includes('/saved')) return 'saved';
     return 'home';
   };
 

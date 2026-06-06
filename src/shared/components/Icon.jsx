@@ -92,6 +92,7 @@ const staticIconMap = {
   swap_vert: 'ChevronsUpDown',
   visibility: 'Eye',
   visibility_off: 'EyeOff',
+  bookmark: 'Bookmark',
   schedule: 'Clock',
   description: 'FileText',
 };

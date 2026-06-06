@@ -477,3 +477,102 @@ export const myPosts = [
       'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
   },
 ];
+
+/* ========== Saved Posts ========== */
+export const savedPosts = [
+  {
+    id: 201,
+    author: 'Minh Nguyễn',
+    role: 'Chuyên gia',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: 'Đã lưu 2 giờ trước',
+    category: 'Bán sỉ',
+    title: 'Có nên nhập thêm sơn chống thấm KOVA cho mùa mưa năm nay?',
+    description:
+      'Tôi đang cân nhắc việc tăng 30% lượng tồn kho cho dòng KOVA CT-11A Gold. Theo dự báo thời tiết thì mùa mưa năm nay kéo dài.',
+    tags: ['#kim_khi', '#son_chong_tham'],
+    comments: 24,
+    views: '1.2k',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBZWykIdoBcv3hsnrKrDb3I7RuCyGP1qMnHJzwNnpJqntdhAzj56h6-hgnP0JTtExf8a2WnsZH5IS-kdCNnP-XwjuWJrxhCGBnFSDLwFurTw2WyvXX7gUYnYAMIt-_G4km8LP68TP9n14ZRtnurgMrgJln-DtPJvZZ0bU-ocmMejXjNuVvnOcVouGnokgdNy4bHi5CDv_c8hIi3jbRioAowGvaIPhwEMr4vUE7Sy9gjTw15nDdRPttPFXdhN_f6NjszHkYucdmZAqCY',
+  },
+  {
+    id: 202,
+    author: 'Hoàng Nam',
+    role: 'Thành viên',
+    roleClass: 'bg-slate-100 text-slate-600',
+    time: 'Đã lưu 5 giờ trước',
+    category: 'Thảo luận',
+    title: 'Chia sẻ kinh nghiệm quản lý kho hơn 1500 mã hàng vật tư',
+    description:
+      'Việc quản lý nhiều mã hàng nhỏ như ốc vít, long đền thường gây thất thoát. Tôi xin chia sẻ quy trình 5 bước áp dụng mã vạch.',
+    tags: ['#quan_ly_kho', '#kinh_nghiem'],
+    comments: 32,
+    views: '2.1k',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAjYqYBGkR_Iadb7O3sIeQNtpWqJ9ThFzKm9BOnEoOjeAE90A3wKJFFf_2bunkuTYMCqxG-rZhI2sPranFao-yWEOh0ApqhjfAAZbuje4uAJVypcId7wA_hljomIOwQcSCCah1Fy-OvCW8q4Fu_GOKEK8rcUHnVgFEuCEYDJGKLI7qI0pVrjInnAhtDOJTjOxgm3_qIjxQV1OQT-PS9-tSwqZFR6TBj4W3czn_RYk-psKet5iM85xrN2qNW9iI1H_BG-KYPwDIYPCHf',
+  },
+  {
+    id: 203,
+    author: 'Cty VLXD Thăng Long',
+    role: 'Tổng đại lý',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: 'Đã lưu 1 ngày trước',
+    category: 'Bán sỉ',
+    title: 'Có sẵn sơn chống thấm KOVA giá sỉ tại Hà Nội',
+    description:
+      'Sơn KOVA là dòng sơn chống thấm cao cấp số 1 Việt Nam. Chống thấm tuyệt đối, ngăn nấm mốc, bền màu với thời gian.',
+    tags: ['#son_chong_tham', '#gia_si'],
+    comments: 18,
+    views: '856',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
+  },
+  {
+    id: 204,
+    author: 'Văn Hùng',
+    role: 'Cảnh báo',
+    roleClass: 'bg-red-50 text-red-600',
+    time: 'Đã lưu 3 ngày trước',
+    category: 'Tìm nguồn hàng',
+    title: 'Cảnh báo lô hàng máy khoan giả Makita tràn lan thị trường',
+    description:
+      'Hiện nay khu vực miền Bắc đang xuất hiện nhiều lô hàng máy khoan pin giả tem mác Makita với giá chỉ bằng 1/3 hàng thật.',
+    tags: ['#canh_bao', '#dung_cu_dien'],
+    comments: 112,
+    views: '5.4k',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBZWykIdoBcv3hsnrKrDb3I7RuCyGP1qMnHJzwNnpJqntdhAzj56h6-hgnP0JTtExf8a2WnsZH5IS-kdCNnP-XwjuWJrxhCGBnFSDLwFurTw2WyvXX7gUYnYAMIt-_G4km8LP68TP9n14ZRtnurgMrgJln-DtPJvZZ0bU-ocmMejXjNuVvnOcVouGnokgdNy4bHi5CDv_c8hIi3jbRioAowGvaIPhwEMr4vUE7Sy9gjTw15nDdRPttPFXdhN_f6NjszHkYucdmZAqCY',
+  },
+  {
+    id: 205,
+    author: 'Quốc Mạnh Hardware',
+    role: 'Đại lý',
+    roleClass: 'bg-slate-100 text-slate-600',
+    time: 'Đã lưu 1 tuần trước',
+    category: 'Mua chung',
+    title: 'Dự báo giá thép và phụ kiện kim khí',
+    description:
+      'Tình hình biến động giá nguyên liệu đang khá phức tạp. Liệu giá sẽ còn giảm sâu nữa hay sẽ bật tăng trở lại?',
+    tags: ['#gia_thep', '#thi_truong'],
+    comments: 56,
+    views: '3.5k',
+    avatarInitials: 'QM',
+  },
+  {
+    id: 206,
+    author: 'Kim Khí Hòa Phát',
+    role: 'Nhà cung cấp',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: 'Đã lưu 2 tuần trước',
+    category: 'Thanh lý kho',
+    title: 'Bảng giá bulong ốc vít tháng 6/2026',
+    description:
+      'Cập nhật bảng giá mới nhất các dòng bulong inox 304, ốc vít mạ kẽm, long đền đệm. Ưu đãi đặc biệt cho đơn hàng trên 50 triệu.',
+    tags: ['#bulong', '#oc_vit'],
+    comments: 15,
+    views: '720',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuARQdi4aUjEhq51ggqlTnuIcc0VpZNbVIyHq4o-nUM6ns5h_jkW35Ra6TTnsOx3cehJ3sFf30Lp9e4PaJnKStpqcBTntpjUcjwVxXEoI6Vz0On3t1TGWljo1rJiq5cYi0UZ6oIakFojxDUFOJtMOTeSXTJXpmBo3by3LDxJRP0E6-wjhBjR9v9YY7_piKxZSNoFajlnkWeMP_VWpDxElb6Z2H-yZAS-xyw2XwCdkRlxsGdsxrTwmMqijimScpWn8O6nKEoXuN1WrMPx',
+  },
+];
