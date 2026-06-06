@@ -1,345 +1,215 @@
-/**
- * src/modules/forum/pages/PostDetail.jsx
- * Trang Chi tiết bài viết - Đã bóc tách lỗi trùng lặp Layout và đồng bộ hóa toàn diện
- * hệ thống nút bấm khối, bo góc rounded-xl theo chuẩn POS/Inventory.
- */
-import { useMemo, useState, useEffect } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import PostDetailRightSidebar from '../components/postDetail/PostDetailRightSidebar';
-import Avatar from '../components/shared/Avatar';
-import Icon from '../../../shared/components/Icon';
+import PostDetailSellerCard from '../components/postDetail/PostDetailSellerCard';
+import PostDetailGallery from '../components/postDetail/PostDetailGallery';
+import PostDetailActions from '../components/postDetail/PostDetailActions';
+import PostDetailComments from '../components/postDetail/PostDetailComments';
+import PostDetailInfoBar from '../components/postDetail/PostDetailInfoBar';
+import PostDetailTabsSection from '../components/postDetail/PostDetailTabsSection';
+import PostDetailProductIndicator from '../components/postDetail/PostDetailProductIndicator';
 import postDetailMockData from '../data/postDetailMockData';
+import Icon from '../../../shared/components/Icon';
 
-const ProductThumbnail = ({ name }) => (
-  <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-xl border border-blue-100 bg-slate-50 px-2 text-center">
-    <Icon name="package" className="mb-1 text-slate-400" size={20} />
-    <span className="line-clamp-2 text-[10px] font-bold leading-tight text-slate-500">{name}</span>
-  </div>
-);
+const TYPE_ALIAS = { trend: 'clearance', trusted: 'groupBuy', quote: 'supply' };
 
-export const PostDetail = () => {
-  const navigate = useNavigate();
-  const [commentText, setCommentText] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
-  const [isVoted, setIsVoted] = useState(false);
-  const [voteCount, setVoteCount] = useState(124);
-  const [sortBy, setSortBy] = useState('newest');
-  const [commentCount, setCommentCount] = useState(46);
+const TYPE_LABELS = {
+  wholesale: 'Đăng bán sỉ',
+  supply: 'Tìm nguồn hàng',
+  clearance: 'Thanh lý kho',
+  groupBuy: 'Mua chung',
+};
 
-  const post = postDetailMockData.post;
-  const [comments, setComments] = useState(postDetailMockData.comments);
-  const relatedPosts = postDetailMockData.relatedPosts;
-  const trends = postDetailMockData.trends;
+const PostDetail = () => {
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState('description');
+  const [productIdx, setProductIdx] = useState(0);
+
+  const rawType = searchParams.get('type') || 'wholesale';
+  const type = TYPE_ALIAS[rawType] || rawType;
+  const validType = postDetailMockData[type] ? type : 'wholesale';
+  const data = postDetailMockData[validType];
+  const { post, comments, relatedPosts, trends, tags } = data;
 
   const { setRightSidebar } = useOutletContext();
 
-  // Bắn cụm Right Sidebar lên Layout mẹ tập trung ở rễ
+  const products = post.products || [];
+  const hasProducts = products.length > 0;
+  const totalProducts = products.length;
+  const currentProduct = hasProducts ? products[productIdx] : null;
+
+  useEffect(() => {
+    setProductIdx(0);
+  }, [validType]);
+
   useEffect(() => {
     if (setRightSidebar) {
       setRightSidebar(
-        <PostDetailRightSidebar
-          trends={trends}
-          relatedPosts={relatedPosts}
-          tags={postDetailMockData.tags}
-        />
+        <PostDetailRightSidebar trends={trends} relatedPosts={relatedPosts} tags={tags} />
       );
     }
     return () => setRightSidebar?.(null);
-  }, [setRightSidebar, trends, relatedPosts]);
+  }, [setRightSidebar, trends, relatedPosts, tags]);
 
-  const sortedComments = useMemo(() => {
-    const ordered = [...comments];
-    if (sortBy === 'oldest') return ordered.reverse();
-    return ordered;
-  }, [comments, sortBy]);
+  const goPrev = useCallback(() => {
+    setProductIdx((p) => (p === 0 ? totalProducts - 1 : p - 1));
+  }, [totalProducts]);
 
-  const handleAddComment = () => {
-    if (!commentText.trim()) return;
-    setComments((prev) => [
-      {
-        id: Date.now(),
-        author: 'Bạn',
-        role: null,
-        time: 'Vừa xong',
-        content: commentText.trim(),
-        likes: 0,
-        isBest: false,
-        replies: [],
-      },
-      ...prev,
-    ]);
-    setCommentCount((c) => c + 1);
-    setCommentText('');
-  };
-
-  // Đồng bộ hoàn toàn style nút bấm vuông bo mềm mại chuẩn ERP
-  const btnPrimary = 'bg-[#004785] text-white hover:bg-black font-bold';
-  const btnSecondary = 'bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold';
-  const btnGhost = 'text-slate-600 hover:bg-slate-100 font-semibold';
+  const goNext = useCallback(() => {
+    setProductIdx((p) => (p === totalProducts - 1 ? 0 : p + 1));
+  }, [totalProducts]);
 
   return (
-    <div className="space-y-4">
-      {/* Breadcrumb điều hướng quay lại */}
-      <nav className="mb-2 flex items-center gap-1 px-1 text-xs text-slate-400">
+    <div className="space-y-5 pb-8">
+      <nav className="flex items-center gap-1 px-1 text-xs text-slate-400">
         <button
           type="button"
-          onClick={() => navigate('/forum')}
+          onClick={() => window.history.back()}
           className="transition-colors hover:text-[#004785]"
         >
           Diễn đàn
         </button>
         <Icon name="chevron_right" size={12} />
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
+          {TYPE_LABELS[validType]}
+        </span>
+        <Icon name="chevron_right" size={12} />
         <span className="font-medium text-[#004785]">Chi tiết bài viết</span>
       </nav>
 
-      <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        {/* HEADER BÀI ĐĂNG CHI TIẾT */}
-        <header className="flex items-center justify-between border-b border-slate-100 bg-slate-50/40 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <Avatar name={post.author} size="lg" />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900">{post.author}</span>
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#004785]">
-                  {post.authorRole || 'Thành viên'}
-                </span>
-              </div>
-              <span className="mt-0.5 block text-xs font-medium text-slate-400">
-                Đã đăng {post.date} • {post.views.toLocaleString()} lượt xem
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {post.tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </header>
+      <PostDetailSellerCard post={post} type={validType} />
 
-        {/* NỘI DUNG CHI TIẾT BÀI ĐĂNG */}
-        <div className="p-5">
-          <h1 className="mb-3 text-xl font-bold leading-tight text-gray-900">{post.title}</h1>
-
-          <div className="mb-5 flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs font-semibold">
-            <div className="flex items-center gap-1.5 text-orange-600">
-              <Icon name="trending_up" size={14} />
-              <span>{post.trend}</span>
-            </div>
-            <div className="h-4 w-[1px] bg-slate-200" />
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <Icon name="location_on" size={14} />
-              <span>{post.location}</span>
-            </div>
-          </div>
-
-          <div className="mb-6 space-y-4 text-[15px] font-medium leading-relaxed text-slate-600">
-            <p>{post.content}</p>
-            <p>{post.content2}</p>
-          </div>
-
-          {/* SẢN PHẨM SỈ ĐÍNH KÈM CHUẨN KHỐI ERP */}
-          <div className="group mb-4 flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-[#004785]/30">
-            <ProductThumbnail name={post.product.name} />
-            <div className="min-w-0 flex-1">
-              <h4 className="truncate text-base font-bold text-slate-800">{post.product.name}</h4>
-              <div className="mt-1 flex items-center gap-3">
-                <span className="text-lg font-black text-[#004785]">{post.product.price}</span>
-                <span className="flex items-center rounded-md bg-green-50 px-1.5 py-0.5 text-xs font-bold text-green-600">
-                  <Icon name="arrow_upward" size={12} className="mr-0.5" />
-                  {post.product.trend}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-xs transition-all active:scale-95 ${btnPrimary}`}
+      <div className="space-y-3">
+        <h1 className="text-2xl font-bold leading-tight text-slate-900">{post.title}</h1>
+        <div className="flex flex-wrap gap-2">
+          {post.tags.map((tag, idx) => (
+            <span
+              key={idx}
+              className="cursor-pointer rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#004785] transition-colors hover:bg-[#004785] hover:text-white"
             >
-              <Icon name="add" size={14} />
-              <span>Thêm vào kho</span>
-            </button>
-          </div>
-        </div>
-
-        {/* CHÂN ĐẾ TƯƠNG TÁC TẬP TRUNG BUTTON ROUNDED-XL */}
-        <footer className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-0.5 rounded-xl bg-slate-100 p-0.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsVoted(!isVoted);
-                  setVoteCount(isVoted ? voteCount - 1 : voteCount + 1);
-                }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${isVoted ? 'bg-white text-[#004785] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-              >
-                <Icon name="thumb_up" size={14} />
-                <span>{voteCount}</span>
-              </button>
-              <div className="h-4 w-[1px] bg-slate-300/60" />
-              <button
-                type="button"
-                className="flex items-center rounded-lg px-2 py-1.5 text-slate-500 hover:bg-white/50 hover:text-slate-800"
-              >
-                <Icon name="thumb_down" size={14} />
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsSaved(!isSaved)}
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs transition-colors ${btnGhost}`}
-            >
-              <Icon name="bookmark" size={15} />
-              <span>Lưu</span>
-            </button>
-            <button
-              type="button"
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs transition-colors ${btnGhost}`}
-            >
-              <Icon name="share" size={15} />
-              <span>Chia sẻ</span>
-            </button>
-          </div>
-          <button
-            type="button"
-            className="flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-bold text-red-500 transition-all hover:bg-red-50"
-          >
-            <Icon name="report" size={14} />
-            <span>Báo cáo</span>
-          </button>
-        </footer>
-      </article>
-
-      {/* 📊 PHÂN PHÂN PHÂN PHÂN HỆ BÌNH LUẬN CAO CẤP */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-6 flex items-center justify-between px-1">
-          <h3 className="text-base font-bold text-slate-800">Bình luận ({commentCount})</h3>
-          <div className="flex items-center gap-2 font-medium text-slate-400">
-            <span className="text-xs">Sắp xếp:</span>
-            <button
-              type="button"
-              onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
-              className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs transition-colors ${btnSecondary}`}
-            >
-              <span>{sortBy === 'newest' ? 'Mới nhất' : 'Cũ nhất'}</span>
-              <Icon name="chevron_down" size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* Khối khung Viết bình luận mới */}
-        <div className="mb-6 flex items-start gap-4">
-          <Avatar name="Current user" size="md" />
-          <div className="flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 focus-within:border-slate-300">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="min-h-[96px] w-full resize-none border-none bg-white p-3.5 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:ring-0"
-              placeholder="Chia sẻ ý kiến chuyên môn của bạn..."
-            />
-            <div className="flex justify-end border-t border-slate-100 bg-slate-50/50 p-2">
-              <button
-                type="button"
-                onClick={handleAddComment}
-                className={`rounded-xl px-4 py-2 text-xs shadow-sm transition-all active:scale-95 ${btnPrimary}`}
-              >
-                Gửi bình luận
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Khối cây danh sách Bình luận */}
-        <div className="space-y-4">
-          {sortedComments.map((comment) => (
-            <div
-              key={comment.id}
-              className="shadow-sm/5 relative rounded-xl border border-slate-100 bg-white p-4"
-            >
-              {comment.isBest && (
-                <div className="absolute -top-3 left-4 flex items-center gap-1 rounded-full bg-[#004785] px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm">
-                  <Icon name="check_circle" size={10} />
-                  <span>Hữu ích nhất</span>
-                </div>
-              )}
-              <div className="flex gap-4">
-                <Avatar name={comment.author} size="md" />
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex flex-wrap items-center gap-2 font-medium">
-                    <span className="text-sm font-bold text-slate-800">{comment.author}</span>
-                    {comment.role && (
-                      <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] font-bold uppercase text-[#004785]">
-                        {comment.role}
-                      </span>
-                    )}
-                    <span className="text-xs text-slate-400">{comment.time}</span>
-                  </div>
-                  <p className="mb-3 text-sm font-medium leading-relaxed text-slate-600">
-                    {comment.content}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs font-bold">
-                    <button
-                      type="button"
-                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 ${btnSecondary}`}
-                    >
-                      <Icon name="thumb_up" size={12} />
-                      <span>{comment.likes}</span>
-                    </button>
-                    <button type="button" className="text-[#004785] hover:underline">
-                      Trả lời
-                    </button>
-                  </div>
-
-                  {/* Nhánh con replies câu trả lời đệm */}
-                  {comment.replies && comment.replies.length > 0 && (
-                    <div className="mt-4 space-y-4 border-l-2 border-slate-100 pl-4">
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-3">
-                          <Avatar name={reply.author} size="sm" />
-                          <div className="min-w-0 flex-1">
-                            <div className="mb-0.5 flex flex-wrap items-center gap-2 font-medium">
-                              <span className="text-sm font-bold text-slate-800">
-                                {reply.author}
-                              </span>
-                              {reply.role && (
-                                <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] font-bold uppercase text-[#004785]">
-                                  {reply.role}
-                                </span>
-                              )}
-                              <span className="text-xs text-slate-400">{reply.time}</span>
-                            </div>
-                            <p className="mb-2 text-sm font-medium leading-relaxed text-slate-600">
-                              {reply.content}
-                            </p>
-                            <button
-                              type="button"
-                              className="text-xs font-bold text-[#004785] hover:underline"
-                            >
-                              Trả lời
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+              {tag}
+            </span>
           ))}
-
-          <button
-            type="button"
-            className={`mt-2 w-full rounded-xl border py-2.5 text-xs font-bold transition-colors ${btnSecondary} border-slate-200`}
-          >
-            Xem thêm bình luận
-          </button>
         </div>
-      </section>
+      </div>
+
+      <PostDetailGallery key={productIdx} images={post.images || []} type={validType} />
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
+          <Icon name="description" size={20} className="text-slate-500" />
+          Mô tả sản phẩm
+        </h3>
+        <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+          {post.description}
+        </p>
+      </div>
+
+      {validType !== 'wholesale' && (
+        <PostDetailInfoBar post={post} product={currentProduct} type={validType} />
+      )}
+
+      <PostDetailActions type={validType} />
+
+      <PostDetailTabsSection
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        validType={validType}
+        hasProducts={hasProducts}
+        totalProducts={totalProducts}
+        productIdx={productIdx}
+        onPrev={goPrev}
+        onNext={goNext}
+        detailImages={currentProduct?.detailImages || []}
+        productName={currentProduct?.name || ''}
+        postDescription={post.description}
+        currentProduct={currentProduct}
+      />
+
+      {hasProducts && totalProducts > 1 && (
+        <PostDetailProductIndicator
+          products={products}
+          productIdx={productIdx}
+          total={totalProducts}
+          onPrev={goPrev}
+          onNext={goNext}
+          onSelect={setProductIdx}
+        />
+      )}
+
+      {validType === 'groupBuy' && post.priceTiers && (
+        <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-purple-700">
+            <Icon name="sell" size={16} />
+            Bảng giá theo số lượng người tham gia
+          </h4>
+          <div className="overflow-hidden rounded-xl border border-purple-100">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-purple-50/50">
+                  <th className="px-4 py-2.5 text-left text-xs font-bold uppercase text-purple-600">
+                    Số người
+                  </th>
+                  <th className="px-4 py-2.5 text-right text-xs font-bold uppercase text-purple-600">
+                    Đơn giá
+                  </th>
+                  <th className="hidden px-4 py-2.5 text-right text-xs font-bold uppercase text-purple-600 md:table-cell">
+                    Ghi chú
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-purple-50">
+                {post.priceTiers.map((tier, idx) => {
+                  const isTarget = tier.qty === post.priceTiers[post.priceTiers.length - 1].qty;
+                  return (
+                    <tr
+                      key={idx}
+                      className={isTarget ? 'bg-purple-50 font-bold' : 'hover:bg-slate-50'}
+                    >
+                      <td className="px-4 py-3">
+                        <span className={isTarget ? 'text-purple-700' : 'text-slate-700'}>
+                          {tier.qty}
+                        </span>
+                        {isTarget && (
+                          <span className="ml-2 rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            MỤC TIÊU
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right font-bold ${isTarget ? 'text-lg text-purple-700' : 'text-slate-800'}`}
+                      >
+                        {tier.price}
+                      </td>
+                      <td className="hidden px-4 py-3 text-right text-xs text-slate-500 md:table-cell">
+                        {tier.note}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4">
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="font-bold text-purple-600">
+                {post.participants}/{post.targetParticipants} người đã tham gia
+              </span>
+              <span className="text-slate-400">{post.deadline}</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-purple-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all"
+                style={{
+                  width: `${Math.min(100, Math.round((post.participants / post.targetParticipants) * 100))}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PostDetailComments comments={comments} />
     </div>
   );
 };
