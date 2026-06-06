@@ -123,60 +123,41 @@ const SupplyPostCard = ({ post }) => {
 
         {/* CHÂN ĐẾ CHỨA TIỆN ÍCH TƯƠNG TÁC & BUTTON CHUẨN ROUNDED-XL */}
         <footer className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
-          {'stats' in post ? (
-            <div className="flex items-center gap-1">
-              {post.stats.map((item) => (
-                <button
-                  key={item.icon}
-                  type="button"
-                  className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-500 transition-colors hover:bg-slate-50"
-                >
-                  <Icon name={item.icon === 'forum' ? 'chat_bubble' : item.icon} size={16} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center gap-5 font-semibold text-slate-400">
-              {post.meta.map((item) => (
-                <span key={item.label} className="flex items-center gap-1.5 text-xs">
-                  <Icon
-                    name={item.icon === 'visibility' ? 'visibility' : 'chat_bubble'}
-                    size={14}
-                  />
-                  {item.label}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="flex items-center gap-4 text-slate-400">
+            <span className="flex items-center gap-1 text-xs">
+              <Icon name="visibility" size={14} /> {post.views || 0}
+            </span>
+            <span className="flex items-center gap-1 text-xs">
+              <Icon name="thumb_up" size={14} /> {post.likes ?? 0}
+            </span>
+            <span className="flex items-center gap-1 text-xs">
+              <Icon name="chat_bubble" size={14} /> {post.comments || 0}
+            </span>
+          </div>
 
           {/* NHÓM ACTION CHUYỂN HOÀN TOÀN SANG ROUNDED-XL ĐỒNG BỘ POS */}
           <div className="flex items-center gap-2">
-            {post.id === 1 ? (
-              <>
-                <button
-                  type="button"
-                  className="rounded-xl border-[2px] border-[#004785] px-4 py-2 text-xs font-bold text-[#004785] transition-all hover:bg-[#004785]/5 active:scale-95"
-                >
-                  Nhắn tin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/forum/post/${post.id}?type=${postType}`)}
-                  className="rounded-xl bg-[#004785] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-black active:scale-95"
-                >
-                  Xem chi tiết
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => navigate(`/forum/post/${post.id}?type=${postType}`)}
-                className="rounded-xl bg-[#004785] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-black active:scale-95"
-              >
-                Báo giá ngay
-              </button>
-            )}
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-500"
+              onClick={(e) => e.stopPropagation()}
+              title="Lưu bài viết"
+            >
+              <Icon name="bookmark" size={14} />
+            </button>
+            <button
+              type="button"
+              className="rounded-xl border-[2px] border-[#004785] px-4 py-2 text-xs font-bold text-[#004785] transition-all hover:bg-[#004785]/5 active:scale-95"
+            >
+              Nhắn tin
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/forum/post/${post.id}?type=${postType}`)}
+              className="rounded-xl bg-[#004785] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-black active:scale-95"
+            >
+              Xem chi tiết
+            </button>
           </div>
         </footer>
       </div>

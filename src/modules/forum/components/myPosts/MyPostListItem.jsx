@@ -45,10 +45,13 @@ const MyPostListItem = ({ post, onClick, onEdit, onToggleVisibility, onDelete })
       <div className="flex items-center gap-1">
         {/* Stats */}
         <span className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-400">
-          <Icon name="chat_bubble" size={14} /> {post.comments}
+          <Icon name="visibility" size={14} /> {post.views || 0}
         </span>
         <span className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-400">
-          <Icon name="visibility" size={14} /> {post.views}
+          <Icon name="thumb_up" size={14} /> {post.likes ?? 0}
+        </span>
+        <span className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-400">
+          <Icon name="chat_bubble" size={14} /> {post.comments}
         </span>
 
         <span className="mx-1 h-4 w-px bg-slate-200" />

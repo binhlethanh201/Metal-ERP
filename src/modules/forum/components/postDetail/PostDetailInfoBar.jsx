@@ -124,7 +124,8 @@ const GroupBuyBar = ({ post }) => {
 };
 
 const PostDetailInfoBar = ({ post, product, type }) => {
-  if (type === 'supply') return <SupplyBar post={post} />;
+  // Hide the supply info bar (Cần mua / Deadline / KV) as requested.
+  if (type === 'supply') return null;
   if (type === 'clearance') return <ClearanceBar product={product} />;
   if (type === 'groupBuy') return <GroupBuyBar post={post} />;
   return <WholesaleBar product={product} />;

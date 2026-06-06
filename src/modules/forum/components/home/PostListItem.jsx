@@ -48,11 +48,22 @@ const PostListItem = ({ post, onClick, onTagClick }) => (
       </div>
       <div className="flex items-center gap-3 text-slate-400">
         <span className="flex items-center gap-1 text-xs">
-          <Icon name="chat_bubble" size={14} /> {post.comments}
+          <Icon name="visibility" size={14} /> {post.views || 0}
         </span>
         <span className="flex items-center gap-1 text-xs">
-          <Icon name="visibility" size={14} /> {post.views}
+          <Icon name="thumb_up" size={14} /> {post.likes ?? 0}
         </span>
+        <span className="flex items-center gap-1 text-xs">
+          <Icon name="chat_bubble" size={14} /> {post.comments}
+        </span>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-amber-500"
+          title="Lưu bài viết"
+        >
+          <Icon name="bookmark" size={14} />
+        </button>
       </div>
     </div>
   </article>

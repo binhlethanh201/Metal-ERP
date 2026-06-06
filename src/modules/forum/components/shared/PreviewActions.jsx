@@ -14,10 +14,10 @@ const actionConfig = {
     },
   },
   supply: {
-    primary: { label: 'Gửi báo giá', icon: 'send', className: 'bg-[#004785] text-white' },
+    primary: { label: 'Nhắn tin', icon: 'chat', className: 'bg-[#004785] text-white' },
     secondary: {
-      label: 'Đề xuất nguồn hàng',
-      icon: 'lightbulb',
+      label: 'Thêm vào kho',
+      icon: 'inventory_2',
       className: 'border-2 border-[#004785] text-[#004785]',
     },
   },

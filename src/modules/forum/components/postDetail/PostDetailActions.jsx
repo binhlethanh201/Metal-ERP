@@ -18,17 +18,17 @@ const actionConfig = {
   },
   supply: {
     primary: {
-      label: 'Gửi báo giá',
-      icon: 'send',
+      label: 'Nhắn tin',
+      icon: 'chat',
       className: 'bg-[#004785] text-white hover:bg-[#003560] shadow-lg',
     },
     secondary: {
-      label: 'Đề xuất nguồn hàng',
-      icon: 'lightbulb',
+      label: 'Thêm vào kho',
+      icon: 'inventory_2',
       className: 'border-2 border-[#004785] text-[#004785] hover:bg-blue-50',
     },
-    onPrimary: () => alert('Form gửi báo giá (demo)'),
-    onSecondary: () => alert('Đề xuất nguồn hàng (demo)'),
+    onPrimary: () => alert('Mở chat với người bán (demo)'),
+    onSecondary: () => alert('Đã thêm vào kho (demo)'),
   },
   clearance: {
     primary: {
