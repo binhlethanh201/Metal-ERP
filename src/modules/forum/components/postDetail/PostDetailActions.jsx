@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const actionConfig = {
@@ -67,7 +67,6 @@ const actionConfig = {
 };
 
 const PostDetailActions = ({ type = 'wholesale' }) => {
-  const [secondaryClicked, setSecondaryClicked] = useState(false);
   const cfg = actionConfig[type] || actionConfig.wholesale;
 
   return (
@@ -82,10 +81,7 @@ const PostDetailActions = ({ type = 'wholesale' }) => {
       </button>
       <button
         type="button"
-        onClick={() => {
-          cfg.onSecondary();
-          setSecondaryClicked(true);
-        }}
+        onClick={cfg.onSecondary}
         className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-base font-bold transition-colors active:scale-[0.98] ${cfg.secondary.className}`}
       >
         <Icon name={cfg.secondary.icon} size={20} />

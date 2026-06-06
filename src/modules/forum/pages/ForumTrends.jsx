@@ -3,8 +3,8 @@
  * Trang Xu hướng kim khí - Đã sửa lỗi trùng lặp Layout, tinh chỉnh cỡ chữ,
  * và đồng bộ thanh lọc sang dạng Hộp Box Pills Segmented trẻ trung.
  */
-import { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useEffect, useState, useMemo } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import ForumTrendsRightSidebar from '../components/trends/ForumTrendsRightSidebar';
 import Icon from '../../../shared/components/Icon';
 import {
@@ -14,8 +14,57 @@ import {
   trendsPopularTags as popularTags,
 } from '../data/forumPageData';
 
+const getAccent = (percent) => {
+  const n = parseInt(percent);
+  if (n >= 50)
+    return {
+      border: 'border-red-500',
+      text: 'text-red-600',
+      bar: 'bg-red-500',
+      barM: 'bg-red-500/60',
+      barL: 'bg-red-500/30',
+      badge: 'bg-red-50 text-red-700',
+      label: 'Bùng nổ',
+    };
+  if (n >= 35)
+    return {
+      border: 'border-[#004785]',
+      text: 'text-[#004785]',
+      bar: 'bg-[#004785]',
+      barM: 'bg-[#004785]/60',
+      barL: 'bg-[#004785]/30',
+      badge: 'bg-blue-50 text-[#004785]',
+      label: 'Tăng mạnh',
+    };
+  if (n >= 25)
+    return {
+      border: 'border-orange-500',
+      text: 'text-orange-600',
+      bar: 'bg-orange-500',
+      barM: 'bg-orange-500/60',
+      barL: 'bg-orange-500/30',
+      badge: 'bg-orange-50 text-orange-700',
+      label: 'Tăng khá',
+    };
+  return {
+    border: 'border-emerald-500',
+    text: 'text-emerald-600',
+    bar: 'bg-emerald-500',
+    barM: 'bg-emerald-500/60',
+    barL: 'bg-emerald-500/30',
+    badge: 'bg-emerald-50 text-emerald-700',
+    label: 'Ổn định',
+  };
+};
+
 const ForumTrends = () => {
   const [activeTime, setActiveTime] = useState('30 ngày');
+  const navigate = useNavigate();
+
+  const top2 = useMemo(
+    () => [...topProducts].sort((a, b) => parseInt(b.percent) - parseInt(a.percent)).slice(0, 2),
+    []
+  );
 
   // Hứng hàm cập nhật sidebar từ rễ ForumLayout.jsx xuống
   const { setRightSidebar } = useOutletContext();
@@ -71,69 +120,68 @@ const ForumTrends = () => {
           <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
             <span className="h-4 w-1.5 rounded-full bg-orange-500" /> Top sản phẩm tăng trưởng nóng
           </h3>
-          <button type="button" className="text-xs font-bold text-[#004785] hover:underline">
+          <button
+            type="button"
+            onClick={() => navigate('/forum/top-products')}
+            className="text-xs font-bold text-[#004785] hover:underline"
+          >
             Xem tất cả
           </button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {topProducts.map((item) => (
-            <article
-              key={item.title}
-              className={`flex flex-col rounded-2xl border-l-4 bg-white p-5 shadow-sm transition-all hover:shadow-md ${
-                item.accent === 'secondary' ? 'border-orange-500' : 'border-[#004785]'
-              }`}
-            >
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <h4 className="text-base font-bold text-slate-800">{item.title}</h4>
-                  <p className="mt-0.5 text-[11px] font-medium text-slate-400">{item.market}</p>
+          {top2.map((item) => {
+            const c = getAccent(item.percent);
+            return (
+              <article
+                key={item.title}
+                className={`flex flex-col rounded-2xl border-l-4 bg-white p-5 shadow-sm transition-all hover:shadow-md ${c.border}`}
+              >
+                <div className="mb-3 flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-base font-bold text-slate-800">{item.title}</h4>
+                      <span
+                        className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase ${c.badge}`}
+                      >
+                        {c.label}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] font-medium text-slate-400">{item.market}</p>
+                  </div>
+                  <span className={`text-xl font-black ${c.text}`}>{item.percent}</span>
                 </div>
-                <span
-                  className={`text-xl font-black ${item.accent === 'secondary' ? 'text-orange-500' : 'text-[#004785]'}`}
-                >
-                  {item.percent}
-                </span>
-              </div>
 
-              <div className="mb-4 mt-1 space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  <span>Nhu cầu {item.demand}%</span>
-                  <span>Mùa vụ {item.season}%</span>
-                  <span>Giá {item.priceShare}%</span>
+                <div className="mb-4 mt-1 space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <span>Nhu cầu {item.demand}%</span>
+                    <span>Mùa vụ {item.season}%</span>
+                    <span>Giá {item.priceShare}%</span>
+                  </div>
+                  <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div className={`h-full ${c.bar}`} style={{ width: `${item.demand}%` }} />
+                    <div className={`h-full ${c.barM}`} style={{ width: `${item.season}%` }} />
+                    <div className={`h-full ${c.barL}`} style={{ width: `${item.priceShare}%` }} />
+                  </div>
                 </div>
-                <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className={`h-full ${item.accent === 'secondary' ? 'bg-orange-500' : 'bg-[#004785]'}`}
-                    style={{ width: `${item.demand}%` }}
-                  />
-                  <div
-                    className={`h-full ${item.accent === 'secondary' ? 'bg-orange-500/60' : 'bg-[#004785]/60'}`}
-                    style={{ width: `${item.season}%` }}
-                  />
-                  <div
-                    className={`h-full ${item.accent === 'secondary' ? 'bg-orange-500/30' : 'bg-[#004785]/30'}`}
-                    style={{ width: `${item.priceShare}%` }}
-                  />
-                </div>
-              </div>
 
-              <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-50 pt-2">
-                <div className="flex items-center gap-1.5">
-                  <Icon name="lightbulb" className="fill-amber-500 text-amber-500" size={16} />
-                  <span className="line-clamp-1 text-xs font-semibold text-slate-600">
-                    {item.tip}
-                  </span>
+                <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-50 pt-2">
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="lightbulb" className="fill-amber-500 text-amber-500" size={16} />
+                    <span className="line-clamp-1 text-xs font-semibold text-slate-600">
+                      {item.tip}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-xl bg-[#004785] px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
+                  >
+                    Nhập POS
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="shrink-0 rounded-xl bg-[#004785] px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
-                >
-                  Nhập POS
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </section>
 
