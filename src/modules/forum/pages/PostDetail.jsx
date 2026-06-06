@@ -244,10 +244,6 @@ const PostDetail = () => {
 
       {/* Description */}
       <div className="rounded-2xl border-2 border-slate-200 bg-white p-6">
-        <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
-          <Icon name="description" size={20} className="text-slate-500" />
-          Mô tả sản phẩm
-        </h3>
         {isEditing ? (
           <textarea
             className="min-h-[200px] w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 outline-none focus:border-[#004785] focus:ring-0"

@@ -27,6 +27,7 @@ const ForumLayout = () => {
     if (path.includes('/saved')) return 'saved';
     if (path.includes('/top-products')) return 'top';
     if (path.includes('/new-products')) return 'new';
+    if (path.includes('/import-suggest')) return 'recommend';
     return 'home';
   };
 

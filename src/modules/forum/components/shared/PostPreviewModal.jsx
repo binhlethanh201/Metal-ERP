@@ -64,10 +64,6 @@ const PostPreviewModal = ({ isOpen, onClose, p }) => {
 
           {/* Mô tả bài viết */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
-              <Icon name="description" size={20} className="text-slate-500" />
-              Mô tả sản phẩm
-            </h3>
             <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
               {formData?.content || 'Chưa có nội dung mô tả.'}
             </p>

@@ -99,12 +99,6 @@ const ForumLeftSidebar = ({ activeKey = 'home', onTriggerSwitch }) => {
               active={activeKey === 'new'}
               onClick={() => navigate('/forum/new-products')}
             />
-            <SidebarButton
-              icon="show_chart"
-              label="Biến động giá"
-              active={activeKey === 'price'}
-              onClick={() => navigate('/forum/price-trend')}
-            />
           </div>
         </div>
 
