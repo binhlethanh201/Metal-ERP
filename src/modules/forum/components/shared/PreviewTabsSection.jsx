@@ -128,7 +128,7 @@ const PreviewTabsSection = ({ p }) => {
       {/* Price grid cho wholesale/trusted */}
       {(p.postType === 'wholesale' || p.postType === 'trusted') && specs.length > 0 && (
         <div className="mt-0 overflow-hidden rounded-b-2xl border border-t-0 border-slate-200 bg-white">
-          <div className="grid grid-cols-1 divide-x divide-slate-100 md:grid-cols-3">
+          <div className="grid grid-cols-1 divide-x divide-slate-100 md:grid-cols-2">
             <PriceCard
               label="Giá sỉ"
               value={p.productWholesalePrice ? `${p.productWholesalePrice}đ` : 'Liên hệ'}
@@ -142,13 +142,6 @@ const PreviewTabsSection = ({ p }) => {
               note="/ Đơn vị"
               tone="text-slate-900"
               bg="bg-white"
-            />
-            <PriceCard
-              label="Tối thiểu (MOQ)"
-              value={p.formData?.moq || '-'}
-              note="Đóng gói: Tiêu chuẩn"
-              tone="text-slate-900"
-              bg="bg-slate-50/50"
             />
           </div>
         </div>

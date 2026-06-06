@@ -90,6 +90,10 @@ const staticIconMap = {
   search: 'Search',
   send: 'Send',
   swap_vert: 'ChevronsUpDown',
+  visibility: 'Eye',
+  visibility_off: 'EyeOff',
+  schedule: 'Clock',
+  description: 'FileText',
 };
 
 const toPascalCase = (str) => {

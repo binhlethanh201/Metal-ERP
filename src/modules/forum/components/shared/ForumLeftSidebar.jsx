@@ -120,12 +120,6 @@ const ForumLeftSidebar = ({ activeKey = 'home', onTriggerSwitch }) => {
               active={activeKey === 'source'}
               onClick={() => navigate('/forum/source')}
             />
-            <SidebarButton
-              icon="sell"
-              label="Đăng bán giá sỉ"
-              active={activeKey === 'wholesale'}
-              onClick={() => navigate('/forum/wholesale')}
-            />
           </div>
         </div>
 

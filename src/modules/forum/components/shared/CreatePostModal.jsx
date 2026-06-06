@@ -28,7 +28,7 @@ import {
 const POST_TYPES = [
   { key: 'wholesale', icon: Store, label: 'Đăng bán sỉ' },
   { key: 'supply', icon: SearchCode, label: 'Tìm nguồn hàng' },
-  { key: 'quote', icon: FileText, label: 'Hỏi giá' },
+  { key: 'quote', icon: FileText, label: 'Thảo luận' },
   { key: 'trend', icon: TrendingUp, label: 'Thanh lý kho' },
   { key: 'trusted', icon: CheckCircle, label: 'Mua chung' },
 ];
@@ -40,7 +40,7 @@ export const CreatePostModal = ({ isOpen = false, onClose = () => {} }) => {
   const modalTitleMap = {
     wholesale: 'Đăng bán sỉ',
     supply: 'Tìm nguồn hàng',
-    quote: 'Hỏi giá',
+    quote: 'Thảo luận',
     trend: 'Thanh lý kho',
     trusted: 'Đăng Mua chung',
   };

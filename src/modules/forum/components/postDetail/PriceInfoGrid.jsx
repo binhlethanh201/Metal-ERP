@@ -20,13 +20,6 @@ const wholesalePrices = (product) => [
     tone: 'text-slate-900',
     bg: 'bg-white',
   },
-  {
-    label: 'Tối thiểu (MOQ)',
-    value: product.moq || '-',
-    note: 'Đóng gói: 20kg',
-    tone: 'text-slate-900',
-    bg: 'bg-slate-50/50',
-  },
 ];
 
 const clearancePrices = (product) => [
@@ -77,7 +70,7 @@ const PriceInfoGrid = ({ type, product }) => {
 
   return (
     <div className="mt-0 overflow-hidden rounded-b-2xl border border-t-0 border-slate-200 bg-white">
-      <div className="grid grid-cols-1 divide-x divide-slate-100 md:grid-cols-3">
+      <div className="grid grid-cols-1 divide-x divide-slate-100 md:grid-cols-2">
         {items.map((item, i) => (
           <PriceCard key={i} {...item} />
         ))}

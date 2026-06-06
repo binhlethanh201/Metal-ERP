@@ -8,6 +8,7 @@ import PostDetailComments from '../components/postDetail/PostDetailComments';
 import PostDetailInfoBar from '../components/postDetail/PostDetailInfoBar';
 import PostDetailTabsSection from '../components/postDetail/PostDetailTabsSection';
 import PostDetailProductIndicator from '../components/postDetail/PostDetailProductIndicator';
+import PostDetailEditBar from '../components/postDetail/PostDetailEditBar';
 import postDetailMockData from '../data/postDetailMockData';
 import Icon from '../../../shared/components/Icon';
 
@@ -24,12 +25,16 @@ const PostDetail = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('description');
   const [productIdx, setProductIdx] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   const rawType = searchParams.get('type') || 'wholesale';
+  const isEditing = searchParams.get('edit') === 'true';
   const type = TYPE_ALIAS[rawType] || rawType;
   const validType = postDetailMockData[type] ? type : 'wholesale';
   const data = postDetailMockData[validType];
-  const { post, comments, relatedPosts, trends, tags } = data;
+  const { post: initialPost, comments, relatedPosts, trends, tags } = data;
+
+  const [post, setPost] = useState(initialPost);
 
   const { setRightSidebar } = useOutletContext();
 
@@ -43,24 +48,94 @@ const PostDetail = () => {
   }, [validType]);
 
   useEffect(() => {
-    if (setRightSidebar) {
+    if (setRightSidebar && !isEditing) {
       setRightSidebar(
         <PostDetailRightSidebar trends={trends} relatedPosts={relatedPosts} tags={tags} />
       );
     }
+    if (isEditing) setRightSidebar?.(null);
     return () => setRightSidebar?.(null);
-  }, [setRightSidebar, trends, relatedPosts, tags]);
+  }, [setRightSidebar, trends, relatedPosts, tags, isEditing]);
 
-  const goPrev = useCallback(() => {
-    setProductIdx((p) => (p === 0 ? totalProducts - 1 : p - 1));
-  }, [totalProducts]);
+  const goPrev = useCallback(
+    () => setProductIdx((p) => (p === 0 ? totalProducts - 1 : p - 1)),
+    [totalProducts]
+  );
+  const goNext = useCallback(
+    () => setProductIdx((p) => (p === totalProducts - 1 ? 0 : p + 1)),
+    [totalProducts]
+  );
 
-  const goNext = useCallback(() => {
-    setProductIdx((p) => (p === totalProducts - 1 ? 0 : p + 1));
-  }, [totalProducts]);
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => {
+      setSaving(false);
+      alert('Đã lưu thay đổi (demo).');
+    }, 800);
+  };
+
+  const handleCancel = () => {
+    if (window.confirm('Hủy chỉnh sửa? Các thay đổi sẽ không được lưu.')) {
+      window.history.replaceState(null, '', window.location.pathname + `?type=${rawType}`);
+      setPost(initialPost);
+    }
+  };
+
+  const updatePost = (field, value) => setPost((prev) => ({ ...prev, [field]: value }));
+
+  const updateProduct = (field, value) => {
+    setPost((prev) => {
+      const products = [...(prev.products || [])];
+      if (products[productIdx]) products[productIdx] = { ...products[productIdx], [field]: value };
+      return { ...prev, products };
+    });
+  };
+
+  const handleUpdateSpec = (pIdx, sIdx, field, value) => {
+    setPost((prev) => {
+      const products = [...(prev.products || [])];
+      if (products[pIdx]) {
+        const specs = [...(products[pIdx].specs || [])];
+        if (specs[sIdx]) specs[sIdx] = { ...specs[sIdx], [field]: value };
+        products[pIdx] = { ...products[pIdx], specs };
+      }
+      return { ...prev, products };
+    });
+  };
+
+  const handleAddSpec = (pIdx) => {
+    setPost((prev) => {
+      const products = [...(prev.products || [])];
+      if (products[pIdx]) {
+        products[pIdx] = {
+          ...products[pIdx],
+          specs: [...(products[pIdx].specs || []), { name: '', value: '' }],
+        };
+      }
+      return { ...prev, products };
+    });
+  };
+
+  const handleRemoveSpec = (pIdx, sIdx) => {
+    setPost((prev) => {
+      const products = [...(prev.products || [])];
+      if (products[pIdx]?.specs?.length > 1) {
+        products[pIdx] = {
+          ...products[pIdx],
+          specs: products[pIdx].specs.filter((_, i) => i !== sIdx),
+        };
+      }
+      return { ...prev, products };
+    });
+  };
 
   return (
     <div className="space-y-5 pb-8">
+      {/* Edit bar */}
+      {isEditing && (
+        <PostDetailEditBar onSave={handleSave} onCancel={handleCancel} saving={saving} />
+      )}
+
       <nav className="flex items-center gap-1 px-1 text-xs text-slate-400">
         <button
           type="button"
@@ -74,35 +149,116 @@ const PostDetail = () => {
           {TYPE_LABELS[validType]}
         </span>
         <Icon name="chevron_right" size={12} />
-        <span className="font-medium text-[#004785]">Chi tiết bài viết</span>
+        <span className="font-medium text-[#004785]">
+          {isEditing ? 'Chỉnh sửa' : 'Chi tiết bài viết'}
+        </span>
       </nav>
 
       <PostDetailSellerCard post={post} type={validType} />
 
+      {/* Title + Tags (editable in edit mode) */}
       <div className="space-y-3">
-        <h1 className="text-2xl font-bold leading-tight text-slate-900">{post.title}</h1>
-        <div className="flex flex-wrap gap-2">
-          {post.tags.map((tag, idx) => (
-            <span
-              key={idx}
-              className="cursor-pointer rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#004785] transition-colors hover:bg-[#004785] hover:text-white"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {isEditing ? (
+          <input
+            className="w-full rounded-xl border-2 border-[#004785] bg-blue-50/30 px-4 py-3 text-2xl font-bold text-slate-900 outline-none focus:ring-0"
+            value={post.title}
+            onChange={(e) => updatePost('title', e.target.value)}
+          />
+        ) : (
+          <h1 className="text-2xl font-bold leading-tight text-slate-900">{post.title}</h1>
+        )}
+
+        {isEditing ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/20 p-3">
+            {post.tags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-[#004785]"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updatePost(
+                      'tags',
+                      post.tags.filter((_, i) => i !== idx)
+                    )
+                  }
+                  className="text-blue-400 hover:text-red-500"
+                >
+                  <Icon name="close" size={12} />
+                </button>
+              </span>
+            ))}
+            <input
+              className="min-w-[140px] flex-1 border-none bg-transparent p-0 text-sm font-semibold outline-none placeholder:text-slate-400"
+              placeholder="+ Thêm tag..."
+              type="text"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  updatePost('tags', [...post.tags, e.target.value.trim()]);
+                  e.target.value = '';
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {post.tags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#004785]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      <PostDetailGallery key={productIdx} images={post.images || []} type={validType} />
+      {/* Gallery */}
+      {isEditing ? (
+        <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/20 p-6 text-center">
+          <Icon name="image" size={32} className="mx-auto mb-2 text-blue-300" />
+          <p className="text-sm font-bold text-slate-600">Kéo thả hoặc nhấn để thay đổi ảnh</p>
+          <p className="mt-1 text-xs text-slate-400">Hỗ trợ tối đa 6 ảnh, định dạng JPG/PNG</p>
+          {post.images?.length > 0 && (
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {post.images.map((img, i) => (
+                <div
+                  key={i}
+                  className="group relative h-24 w-24 overflow-hidden rounded-xl border border-slate-200"
+                >
+                  <img src={img} alt="" className="h-full w-full object-cover" />
+                  <button className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <Icon name="close" size={10} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <PostDetailGallery key={productIdx} images={post.images || []} type={validType} />
+      )}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      {/* Description */}
+      <div className="rounded-2xl border-2 border-slate-200 bg-white p-6">
         <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
           <Icon name="description" size={20} className="text-slate-500" />
           Mô tả sản phẩm
         </h3>
-        <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
-          {post.description}
-        </p>
+        {isEditing ? (
+          <textarea
+            className="min-h-[200px] w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 outline-none focus:border-[#004785] focus:ring-0"
+            value={post.description}
+            onChange={(e) => updatePost('description', e.target.value)}
+          />
+        ) : (
+          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+            {post.description}
+          </p>
+        )}
       </div>
 
       {validType !== 'wholesale' && (
@@ -124,6 +280,11 @@ const PostDetail = () => {
         productName={currentProduct?.name || ''}
         postDescription={post.description}
         currentProduct={currentProduct}
+        isEditing={isEditing}
+        onUpdateProduct={updateProduct}
+        onUpdateSpec={handleUpdateSpec}
+        onAddSpec={handleAddSpec}
+        onRemoveSpec={handleRemoveSpec}
       />
 
       {hasProducts && totalProducts > 1 && (
@@ -189,22 +350,6 @@ const PostDetail = () => {
                 })}
               </tbody>
             </table>
-          </div>
-          <div className="mt-4">
-            <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="font-bold text-purple-600">
-                {post.participants}/{post.targetParticipants} người đã tham gia
-              </span>
-              <span className="text-slate-400">{post.deadline}</span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-purple-100">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all"
-                style={{
-                  width: `${Math.min(100, Math.round((post.participants / post.targetParticipants) * 100))}%`,
-                }}
-              />
-            </div>
           </div>
         </div>
       )}

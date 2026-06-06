@@ -363,3 +363,117 @@ export const createPostQuoteProduct = {
   sku: 'BOS-GSB-13',
   supplier: 'Bosch Vietnam',
 };
+
+/* ========== My Posts ========== */
+export const myPostsTabs = ['Đã đăng', 'Chờ duyệt', 'Nháp', 'Đã ẩn'];
+
+export const myPosts = [
+  {
+    id: 101,
+    author: 'Nguyễn Văn An',
+    role: 'Nhà phân phối',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: '2 giờ trước',
+    status: 'Đã đăng',
+    statusClass: 'bg-green-50 text-green-700',
+    tab: 'Đã đăng',
+    title: 'Cung cấp thép xây dựng Hòa Phát số lượng lớn tại TP.HCM',
+    description:
+      'Chúng tôi chuyên cung cấp các dòng thép cuộn, thép cây thương hiệu Hòa Phát với đầy đủ chứng chỉ CO/CQ. Năng lực cung ứng lên đến 1000 tấn/tháng, giao hàng tận nơi trong vòng 24h.',
+    tags: ['#kim_khi', '#son_chong_tham', '#gia_si'],
+    comments: 24,
+    views: '1.2k',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
+  },
+  {
+    id: 102,
+    author: 'Nguyễn Văn An',
+    role: 'Nhà phân phối',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: '5 giờ trước',
+    status: 'Đã đăng',
+    statusClass: 'bg-green-50 text-green-700',
+    tab: 'Đã đăng',
+    title: 'Sơn chống thấm KOVA CT-11A Gold - Hàng có sẵn giá sỉ cực tốt',
+    description:
+      'Sơn KOVA là dòng sơn chống thấm cao cấp số 1 Việt Nam hiện nay. Với ưu điểm chống thấm tuyệt đối, ngăn chặn nấm mốc, bền màu với thời gian.',
+    tags: ['#son_chong_tham', '#gia_si'],
+    comments: 18,
+    views: '856',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
+  },
+  {
+    id: 103,
+    author: 'Nguyễn Văn An',
+    role: 'Nhà phân phối',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: '1 ngày trước',
+    status: 'Đã đăng',
+    statusClass: 'bg-green-50 text-green-700',
+    tab: 'Đã đăng',
+    title: 'Cần tìm nguồn hàng ống thép mạ kẽm - số lượng lớn giao Hà Nội',
+    description:
+      'Cửa hàng mình đang cần tìm nguồn ống thép mạ kẽm các loại, số lượng đặt hàng 50 tấn/tháng. Yêu cầu có CO/CQ đầy đủ, giá cạnh tranh.',
+    tags: ['#ong_thep', '#ma_kem', '#tim_nguon'],
+    comments: 12,
+    views: '640',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
+  },
+  {
+    id: 104,
+    author: 'Nguyễn Văn An',
+    role: 'Nhà phân phối',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: '2 phút trước',
+    status: 'Chờ duyệt',
+    statusClass: 'bg-amber-50 text-amber-700',
+    tab: 'Chờ duyệt',
+    title: 'Thanh lý lô bulong neo M24 - hàng tồn kho giá rẻ bất ngờ',
+    description:
+      'Cần thanh lý gấp lô bulong neo M24 nhúng kẽm nóng, số lượng 5000 con. Giá thanh lý chỉ bằng 60% giá thị trường.',
+    tags: ['#bulong', '#thanh_ly', '#gia_soc'],
+    comments: 0,
+    views: '0',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
+  },
+  {
+    id: 105,
+    author: 'Nguyễn Văn An',
+    role: 'Nhà phân phối',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: '3 ngày trước',
+    status: 'Nháp',
+    statusClass: 'bg-slate-100 text-slate-600',
+    tab: 'Nháp',
+    title: '[Nháp] Cung cấp phụ kiện điện công nghiệp Schneider Electric',
+    description:
+      'Bảng giá mới nhất tháng 6/2026 cho các dòng MCCB, MCB, Contactor Schneider. Hàng chính hãng nhập khẩu trực tiếp.',
+    tags: ['#dien_cong_nghiep', '#Schneider', '#phu_kien'],
+    comments: 0,
+    views: '12',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
+  },
+  {
+    id: 106,
+    author: 'Nguyễn Văn An',
+    role: 'Nhà phân phối',
+    roleClass: 'bg-blue-100 text-[#004785]',
+    time: '1 tuần trước',
+    status: 'Đã ẩn',
+    statusClass: 'bg-red-50 text-red-600',
+    tab: 'Đã ẩn',
+    title: '[Đã ẩn] Tuyển đại lý phân phối sơn epoxy tại khu vực miền Nam',
+    description:
+      'Bài viết này đã bị ẩn khỏi danh sách công khai. Bạn có thể chỉnh sửa và đăng lại.',
+    tags: ['#son_epoxy', '#dai_ly'],
+    comments: 8,
+    views: '230',
+    avatar:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD4I6w_ItLfuYmY_1AfuhlHvLjjxOGbzBCUPzNC0NMjVqIJ2rL752szrVKiipMNHjUpYrtvuNViqdd0hHjkOeeQUq_uwN61EpST_-wKJU4xa7zcDpdJmrS4kQKXyn7Q8BxwbWTegPTH7QS9-bn4SONcdseIhWos53ZtwU0h8UG5xF4klqJktolGinrB26apa8551CH8P6ahSuw0tjpEk9Mc1QOmfy-PrhzzlZJPoE86Y7Y_zZF0RYvokngEIVX3R1fAfS_0NJenw_HV',
+  },
+];

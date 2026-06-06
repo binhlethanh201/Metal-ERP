@@ -33,7 +33,7 @@ const CreatePost = () => {
   }, [setRightSidebar]);
 
   return (
-    <div className="w-full pb-12 pt-2">
+    <div className="w-full pb-12">
       <PostHeader postType={form.postType} />
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">

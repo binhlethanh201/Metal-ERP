@@ -13,14 +13,7 @@ const InfoItem = ({ icon, iconTone, label, value, tone = 'text-slate-700' }) => 
 );
 
 const PreviewInfoBar = ({ p }) => {
-  const {
-    postType,
-    formData,
-    attachedWholesalePrice,
-    attachedRetailPrice,
-    retailPrice,
-    clearancePrice,
-  } = p;
+  const { postType, formData, attachedWholesalePrice, retailPrice, clearancePrice } = p;
 
   if (postType === 'wholesale' || postType === 'trusted') {
     return (
@@ -31,8 +24,6 @@ const PreviewInfoBar = ({ p }) => {
           value={attachedWholesalePrice ? `${attachedWholesalePrice}đ` : 'Liên hệ'}
           tone="text-[#004785]"
         />
-        <span className="h-5 w-px bg-emerald-200" />
-        <InfoItem icon="inventory_2" label="MOQ:" value={formData.moq || 'Liên hệ'} />
         <span className="h-5 w-px bg-emerald-200" />
         <span className="flex items-center gap-1.5 rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
           <span className="h-1.5 w-1.5 rounded-full bg-green-500" />

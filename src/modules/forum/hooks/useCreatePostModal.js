@@ -59,7 +59,7 @@ export const useCreatePostModal = ({ onClose }) => {
     {
       id: 1,
       title: 'Thép cuộn CB300-V Hòa Phát',
-      image: quoteProduct.image,
+      images: [quoteProduct.image],
       specDetail: '',
       specs: [
         { id: 1, name: 'Độ phủ lý thuyết', value: '' },
@@ -163,7 +163,7 @@ export const useCreatePostModal = ({ onClose }) => {
     const nextId = Math.max(...supplyProducts.map((p) => p.id), 0) + 1;
     setSupplyProducts((prev) => [
       ...prev,
-      { id: nextId, title: '', image: null, specs: [{ id: 1, name: '', value: '' }] },
+      { id: nextId, title: '', images: [], specs: [{ id: 1, name: '', value: '' }] },
     ]);
     setCurrentProductIndex(supplyProducts.length);
   };
@@ -181,9 +181,22 @@ export const useCreatePostModal = ({ onClose }) => {
     const reader = new FileReader();
     reader.onload = (re) =>
       setSupplyProducts((prev) =>
-        prev.map((p, i) => (i === currentProductIndex ? { ...p, image: re.target?.result } : p))
+        prev.map((p, i) =>
+          i === currentProductIndex
+            ? { ...p, images: [...(p.images || []), re.target?.result].slice(0, 3) }
+            : p
+        )
       );
     reader.readAsDataURL(file);
+  };
+  const handleSpecImageRemove = (imgIdx) => {
+    setSupplyProducts((prev) =>
+      prev.map((p, i) =>
+        i === currentProductIndex
+          ? { ...p, images: (p.images || []).filter((_, idx) => idx !== imgIdx) }
+          : p
+      )
+    );
   };
 
   const handlePostTypeChange = (nextType) => {
@@ -208,7 +221,7 @@ export const useCreatePostModal = ({ onClose }) => {
       {
         id: 1,
         title: 'Thép cuộn CB300-V Hòa Phát',
-        image: quoteProduct.image,
+        images: [quoteProduct.image],
         specs: [
           { id: 1, name: 'Độ phủ lý thuyết', value: '' },
           { id: 2, name: 'Thời gian khô', value: '' },
@@ -294,6 +307,7 @@ export const useCreatePostModal = ({ onClose }) => {
     handleSupplyAddProduct,
     handleSupplyRemoveProduct,
     handleSpecImageUpload,
+    handleSpecImageRemove,
   };
 
   return {

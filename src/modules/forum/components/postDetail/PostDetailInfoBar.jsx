@@ -11,12 +11,6 @@ const WholesaleBar = ({ product }) => {
         <span className="text-sm font-bold text-[#004785]">{product.priceRange || 'Liên hệ'}</span>
       </div>
       <span className="h-5 w-px bg-emerald-200" />
-      <div className="flex items-center gap-2">
-        <Icon name="inventory_2" size={16} className="text-slate-400" />
-        <span className="text-xs font-semibold text-slate-500">MOQ:</span>
-        <span className="text-sm font-bold text-slate-700">{product.moq || '-'}</span>
-      </div>
-      <span className="h-5 w-px bg-emerald-200" />
       <span
         className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold ${
           product.stock === 'Sắp hết hàng'

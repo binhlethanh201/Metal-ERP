@@ -5,7 +5,7 @@ import React from 'react';
 import { Settings, Plus, X } from 'lucide-react';
 import Toggle from '../../../../shared/components/Toggle';
 import ProductNavBar from './ProductNavBar';
-import ProductImageField from './ProductImageField';
+import Icon from '../../../../shared/components/Icon';
 
 const TechSpecsSection = ({ form, quoteProduct }) => {
   const currentProduct = form.supplyProducts[form.currentProductIndex];
@@ -18,7 +18,10 @@ const TechSpecsSection = ({ form, quoteProduct }) => {
     r.onload = (ev) =>
       form.setSupplyProducts((prev) => {
         const u = [...prev];
-        u[form.currentProductIndex].image = ev.target.result;
+        u[form.currentProductIndex].images = [
+          ...(u[form.currentProductIndex].images || []),
+          ev.target.result,
+        ].slice(0, 3);
         return u;
       });
     r.readAsDataURL(f);
@@ -54,20 +57,37 @@ const TechSpecsSection = ({ form, quoteProduct }) => {
         <div className="flex flex-col items-start gap-4 md:flex-row">
           <div className="w-full md:w-auto md:flex-shrink-0">
             <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-              Ảnh SP
+              Ảnh SP (tối đa 3)
             </label>
-            <ProductImageField
-              image={currentProduct.image}
-              defaultImage={quoteProduct.image}
-              onRemove={() =>
-                form.setSupplyProducts((prev) => {
-                  const u = [...prev];
-                  u[form.currentProductIndex].image = quoteProduct.image;
-                  return u;
-                })
-              }
-              onUpload={handleImageUpload}
-            />
+            <div className="flex flex-wrap gap-2">
+              {(currentProduct.images || []).map((img, idx) => (
+                <div
+                  key={idx}
+                  className="group relative h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+                >
+                  <img src={img} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => form.handleSupplyRemoveImage?.(idx)}
+                    className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              {(currentProduct.images || []).length < 3 && (
+                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-[#004785] hover:text-[#004785]">
+                  <Icon name="image" size={16} />
+                  <span className="text-[8px] font-black uppercase tracking-wider">Thêm</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              )}
+            </div>
           </div>
           <div className="w-full flex-1 space-y-1.5">
             <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">

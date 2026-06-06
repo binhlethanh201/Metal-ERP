@@ -7,6 +7,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import ForumHeader from '../components/shared/ForumHeader';
 import ForumLeftSidebar from '../components/shared/ForumLeftSidebar';
 import CreatePostModal from '../components/shared/CreatePostModal';
+import ForumGuidelines from '../components/shared/ForumGuidelines';
 import Icon from '../../../shared/components/Icon';
 
 const ForumLayout = () => {
@@ -22,6 +23,7 @@ const ForumLayout = () => {
     if (path.includes('/discussion')) return 'discussion';
     if (path.includes('/trends')) return 'trend';
     if (path.includes('/source')) return 'source';
+    if (path.includes('/my-posts')) return 'my-posts';
     return 'home';
   };
 
@@ -42,9 +44,9 @@ const ForumLayout = () => {
       <ForumHeader onCreatePostClick={() => setIsCreatePostOpen(true)} />
 
       {/* Khung Giao diện chính 3 cột Fluid */}
-      <div className="mx-auto flex max-w-[1650px] justify-between gap-6 px-6 py-5">
+      <div className="mx-auto flex max-w-[1650px] justify-start gap-6 px-6 py-5">
         {/* CỘT TRÁI */}
-        <aside className="sticky top-[76px] hidden h-[calc(100vh-96px)] w-[260px] shrink-0 overflow-y-auto pr-1 lg:block">
+        <aside className="sticky top-[84px] hidden h-[calc(100vh-104px)] w-[260px] shrink-0 overflow-y-auto pr-1 lg:block">
           <ForumLeftSidebar
             activeKey={getActiveKey()}
             onTriggerSwitch={() => setIsSwitching(true)}
@@ -57,11 +59,9 @@ const ForumLayout = () => {
         </main>
 
         {/* CỘT PHẢI */}
-        {rightSidebar && (
-          <aside className="sticky top-[76px] hidden h-[calc(100vh-96px)] w-[320px] shrink-0 space-y-4 overflow-y-auto xl:block">
-            {rightSidebar}
-          </aside>
-        )}
+        <aside className="sticky top-[84px] hidden h-[calc(100vh-104px)] w-[320px] shrink-0 space-y-4 overflow-y-auto xl:block">
+          {rightSidebar || <ForumGuidelines />}
+        </aside>
       </div>
 
       <CreatePostModal isOpen={isCreatePostOpen} onClose={() => setIsCreatePostOpen(false)} />

@@ -43,7 +43,7 @@ export const useCreatePostForm = () => {
     {
       id: 1,
       title: 'Máy khoan bê tông chuyên dụng',
-      image: quoteProduct.image,
+      images: [quoteProduct.image],
       specs: [
         { id: 1, name: 'Độ phủ lý thuyết', value: '' },
         { id: 2, name: 'Thời gian khô', value: '' },
@@ -182,11 +182,19 @@ export const useCreatePostForm = () => {
           : p
       )
     );
+  const handleSupplyRemoveImage = (imgIdx) =>
+    setSupplyProducts((prev) =>
+      prev.map((p, i) =>
+        i === currentProductIndex
+          ? { ...p, images: (p.images || []).filter((_, idx) => idx !== imgIdx) }
+          : p
+      )
+    );
   const handleSupplyAddProduct = () => {
     const nextId = Math.max(...supplyProducts.map((p) => p.id), 0) + 1;
     setSupplyProducts((prev) => [
       ...prev,
-      { id: nextId, title: '', image: null, specs: [{ id: 1, name: '', value: '' }] },
+      { id: nextId, title: '', images: null, specs: [{ id: 1, name: '', value: '' }] },
     ]);
     setCurrentProductIndex(supplyProducts.length);
   };
@@ -275,6 +283,7 @@ export const useCreatePostForm = () => {
     handleSupplySpecChange,
     handleSupplyAddSpec,
     handleSupplyRemoveSpec,
+    handleSupplyRemoveImage,
     handleSupplyAddProduct,
     handleSupplyRemoveProduct,
     handleSupplyPrevProduct,
