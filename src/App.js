@@ -47,6 +47,7 @@ const ForumSaved = lazy(() => import('./modules/forum/pages/ForumSaved'));
 const ForumTopProducts = lazy(() => import('./modules/forum/pages/ForumTopProducts'));
 const ForumNewProducts = lazy(() => import('./modules/forum/pages/ForumNewProducts'));
 const ForumImportSuggest = lazy(() => import('./modules/forum/pages/ForumImportSuggest'));
+const ForumProfile = lazy(() => import('./modules/forum/pages/ForumProfile'));
 const ForumDiscussion = lazy(() => import('./modules/forum/pages/ForumDiscussion'));
 
 // Goods Issue (Xuat Kho) - now part of Inventory module
@@ -104,6 +105,7 @@ function App() {
               <Route path="top-products" element={<ForumTopProducts />} />
               <Route path="new-products" element={<ForumNewProducts />} />
               <Route path="import-suggest" element={<ForumImportSuggest />} />
+              <Route path="profile" element={<ForumProfile />} />
             </Route>
 
             {/* INVENTORY */}
