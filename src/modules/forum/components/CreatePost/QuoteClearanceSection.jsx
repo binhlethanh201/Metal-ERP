@@ -2,22 +2,11 @@
  * QuoteClearanceSection - cho dạng Hỏi giá / Thanh lý kho
  */
 import React from 'react';
-import { Package, Search, Trash2 } from 'lucide-react'; // Import trực tiếp từ thư viện lucide-react
-
-// Thành phần dòng Toggle chuyển đổi trạng thái bo góc rounded-xl
-const ToggleRow = ({ label, checked, onChange }) => (
-  <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5 text-xs font-semibold text-slate-600">
-    <span>{label}</span>
-    <label className="relative inline-flex scale-75 cursor-pointer items-center">
-      <input className="peer sr-only" type="checkbox" checked={checked} onChange={onChange} />
-      <span className="h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
-    </label>
-  </div>
-);
+import { Package, Search, Trash2 } from 'lucide-react';
+import Toggle from '../../../../shared/components/Toggle';
 
 const QuoteClearanceSection = ({ form, quoteProduct }) => (
   <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
-    {/* TIÊU ĐỀ PHÂN HỆ VÀ NUT SWITCH GẮN SẢN PHẨM */}
     <div className="flex items-center justify-between gap-4 border-b border-slate-50 pb-3">
       <div className="flex items-center gap-2">
         <Package className="text-[#004785]" size={18} />
@@ -27,24 +16,15 @@ const QuoteClearanceSection = ({ form, quoteProduct }) => (
       </div>
       <div className="flex items-center gap-3">
         <span className="text-xs font-semibold text-slate-400">Gắn sản phẩm vào bài viết</span>
-        <label className="relative inline-flex cursor-pointer items-center">
-          <input
-            className="peer sr-only"
-            type="checkbox"
-            checked={form.quoteOptions.attachProduct}
-            onChange={(e) =>
-              form.setQuoteOptions((prev) => ({ ...prev, attachProduct: e.target.checked }))
-            }
-          />
-          <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
-        </label>
+        <Toggle
+          checked={form.quoteOptions.attachProduct}
+          onChange={(v) => form.setQuoteOptions((prev) => ({ ...prev, attachProduct: v }))}
+        />
       </div>
     </div>
 
-    {/* KHUNG HIỂN THỊ CHI TIẾT KHI BẬT ATTACH PRODUCT */}
     {form.quoteOptions.attachProduct && (
       <div className="space-y-4">
-        {/* Thanh tìm kiếm sản phẩm nội khu */}
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
@@ -54,7 +34,6 @@ const QuoteClearanceSection = ({ form, quoteProduct }) => (
           />
         </div>
 
-        {/* Khối hiển thị thông tin sản phẩm sỉ đính kèm */}
         <div className="space-y-2">
           <p className="pl-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
             SẢN PHẨM ĐÃ CHỌN
@@ -76,7 +55,6 @@ const QuoteClearanceSection = ({ form, quoteProduct }) => (
                   <span>NSX: {quoteProduct.supplier}</span>
                 </div>
 
-                {/* Section riêng biệt của dạng Trusted post mua chung */}
                 {form.isTrustedPost && (
                   <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
@@ -106,7 +84,6 @@ const QuoteClearanceSection = ({ form, quoteProduct }) => (
                   </div>
                 )}
 
-                {/* Section riêng biệt của dạng Thanh lý kho */}
                 {form.isClearancePost && (
                   <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
@@ -147,42 +124,34 @@ const QuoteClearanceSection = ({ form, quoteProduct }) => (
                 )}
               </div>
 
-              {/* Nút xóa sản phẩm khỏi khung */}
               <button
                 type="button"
                 className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl p-1 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
-                onClick={() => {
-                  form.setQuoteOptions((prev) => ({ ...prev, attachProduct: false }));
-                }}
+                onClick={() => form.setQuoteOptions((prev) => ({ ...prev, attachProduct: false }))}
               >
                 <Trash2 size={16} />
                 <span className="text-[9px] font-black uppercase tracking-wider">Xóa khỏi bài</span>
               </button>
             </div>
 
-            {/* Khối quản lý điều kiện ẩn/hiển thị thông số */}
             <div className="grid grid-cols-1 gap-2 border-t border-slate-100 pt-3 md:grid-cols-3">
-              <ToggleRow
-                label="Hiển thị giá"
-                checked={form.quoteOptions.showPrice}
-                onChange={(e) =>
-                  form.setQuoteOptions((prev) => ({ ...prev, showPrice: e.target.checked }))
-                }
-              />
-              <ToggleRow
-                label="Hiển thị tồn kho"
-                checked={form.quoteOptions.showStock}
-                onChange={(e) =>
-                  form.setQuoteOptions((prev) => ({ ...prev, showStock: e.target.checked }))
-                }
-              />
-              <ToggleRow
-                label="Hiển thị nhà cung cấp"
-                checked={form.quoteOptions.showSupplier}
-                onChange={(e) =>
-                  form.setQuoteOptions((prev) => ({ ...prev, showSupplier: e.target.checked }))
-                }
-              />
+              {[
+                ['Hiển thị giá', 'showPrice'],
+                ['Hiển thị tồn kho', 'showStock'],
+                ['Hiển thị nhà cung cấp', 'showSupplier'],
+              ].map(([label, key]) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5 text-xs font-semibold text-slate-600"
+                >
+                  <span>{label}</span>
+                  <Toggle
+                    size="sm"
+                    checked={form.quoteOptions[key]}
+                    onChange={(v) => form.setQuoteOptions((prev) => ({ ...prev, [key]: v }))}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>

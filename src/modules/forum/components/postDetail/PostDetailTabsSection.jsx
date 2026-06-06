@@ -1,6 +1,7 @@
 import React from 'react';
 import PostDetailSpecsTable from './PostDetailSpecsTable';
 import ProductImageCarousel from './ProductImageCarousel';
+import PriceInfoGrid from './PriceInfoGrid';
 import Icon from '../../../../shared/components/Icon';
 
 const PostDetailTabsSection = ({
@@ -43,20 +44,20 @@ const PostDetailTabsSection = ({
 
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <nav className="flex border-b border-slate-100">
-        <button
-          type="button"
-          onClick={() => setActiveTab('description')}
-          className={`px-8 py-4 text-sm font-bold transition-colors ${activeTab === 'description' ? 'border-b-2 border-[#004785] text-[#004785]' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-          Mô tả sản phẩm
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('specs')}
-          className={`px-8 py-4 text-sm font-bold transition-colors ${activeTab === 'specs' ? 'border-b-2 border-[#004785] text-[#004785]' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-          Thông số kỹ thuật
-        </button>
+        {['Mô tả sản phẩm', 'Thông số kỹ thuật'].map((tab, i) => {
+          const key = i === 0 ? 'description' : 'specs';
+          const active = activeTab === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`px-8 py-4 text-sm font-bold transition-colors ${active ? 'border-b-2 border-[#004785] text-[#004785]' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </nav>
 
       <div className="p-8">
@@ -91,82 +92,8 @@ const PostDetailTabsSection = ({
       </div>
     </div>
 
-    {validType === 'wholesale' && currentProduct && (
-      <div className="mt-0 overflow-hidden rounded-b-2xl border border-t-0 border-slate-200 bg-white">
-        <div className="grid grid-cols-1 divide-x divide-slate-100 md:grid-cols-3">
-          <div className="flex flex-col justify-between bg-slate-50/50 p-6">
-            <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Giá sỉ
-              </p>
-              <p className="text-2xl font-bold text-[#004785]">
-                {currentProduct.priceRange?.split(' - ')[1] ||
-                  currentProduct.priceRange ||
-                  'Liên hệ'}
-              </p>
-            </div>
-            <p className="mt-1 text-xs italic text-slate-400">/ Thùng</p>
-          </div>
-          <div className="flex flex-col justify-between bg-white p-6">
-            <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Giá lẻ
-              </p>
-              <p className="text-2xl font-bold text-slate-900">
-                {currentProduct.priceRange
-                  ? `${(parseInt(currentProduct.priceRange.replace(/[^0-9]/g, '').slice(0, 7)) + 150000).toLocaleString('vi-VN')}đ`
-                  : 'Liên hệ'}
-              </p>
-            </div>
-            <p className="mt-1 text-xs italic text-slate-400">/ Thùng</p>
-          </div>
-          <div className="flex flex-col justify-between bg-slate-50/50 p-6">
-            <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Tối thiểu (MOQ)
-              </p>
-              <p className="text-2xl font-bold text-slate-900">{currentProduct.moq || '-'}</p>
-            </div>
-            <p className="mt-1 text-xs italic text-slate-400">Đóng gói: 20kg</p>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {validType === 'clearance' && currentProduct && (
-      <div className="mt-0 overflow-hidden rounded-b-2xl border border-t-0 border-slate-200 bg-white">
-        <div className="grid grid-cols-1 divide-x divide-slate-100 md:grid-cols-3">
-          <div className="flex flex-col justify-between bg-red-50/30 p-6">
-            <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-red-500">
-                Giá thanh lý
-              </p>
-              <p className="text-2xl font-bold text-red-600">{currentProduct.clearancePrice}</p>
-            </div>
-            <p className="mt-1 text-xs italic text-red-400">{currentProduct.discount} giảm</p>
-          </div>
-          <div className="flex flex-col justify-between bg-white p-6">
-            <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Giá gốc
-              </p>
-              <p className="text-2xl font-bold text-slate-400 line-through">
-                {currentProduct.originalPrice}
-              </p>
-            </div>
-            <p className="mt-1 text-xs italic text-slate-400">/ kg</p>
-          </div>
-          <div className="flex flex-col justify-between bg-slate-50/50 p-6">
-            <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Tồn kho còn lại
-              </p>
-              <p className="text-2xl font-bold text-slate-900">{currentProduct.remaining}</p>
-            </div>
-            <p className="mt-1 text-xs italic text-slate-400">KV: {currentProduct.area}</p>
-          </div>
-        </div>
-      </div>
+    {(validType === 'wholesale' || validType === 'clearance') && currentProduct && (
+      <PriceInfoGrid type={validType} product={currentProduct} />
     )}
   </div>
 );

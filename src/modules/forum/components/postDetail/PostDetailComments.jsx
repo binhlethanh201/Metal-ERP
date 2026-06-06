@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Avatar from '../shared/Avatar';
 import Icon from '../../../../shared/components/Icon';
+import CommentItem from './CommentItem';
 
 const PostDetailComments = ({ comments: initialComments = [] }) => {
   const [commentText, setCommentText] = useState('');
@@ -36,77 +37,6 @@ const PostDetailComments = ({ comments: initialComments = [] }) => {
     setCommentCount((c) => c + 1);
     setCommentText('');
   };
-
-  const renderComment = (comment, isReply = false) => (
-    <div
-      key={comment.id}
-      className={`relative rounded-xl border bg-white p-4 shadow-sm ${
-        comment.isBest ? 'border-2 border-[#004785]' : 'border-slate-100'
-      } ${isReply ? '' : ''}`}
-    >
-      {comment.isBest && !isReply && (
-        <div className="absolute -top-3 left-4 flex items-center gap-1 rounded-full bg-[#004785] px-3 py-0.5 text-[10px] font-bold text-white">
-          <Icon name="check_circle" size={12} />
-          CÂU TRẢ LỜI HỮU ÍCH NHẤT
-        </div>
-      )}
-      <div className="flex gap-4">
-        <Avatar name={comment.author} src={comment.avatar} size={isReply ? 'sm' : 'md'} />
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span className="text-sm font-bold text-slate-800">{comment.author}</span>
-            {comment.role && (
-              <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-[#004785]">
-                {comment.role}
-              </span>
-            )}
-            <span className="text-xs text-slate-400">{comment.time}</span>
-          </div>
-          <p className="mb-3 text-sm leading-relaxed text-slate-600">{comment.content}</p>
-          <div className="flex items-center gap-6">
-            <button
-              type="button"
-              className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200"
-            >
-              <Icon name="thumb_up" size={14} />
-              <span>{comment.likes}</span>
-            </button>
-            <button type="button" className="text-xs font-bold text-[#004785] hover:underline">
-              Trả lời
-            </button>
-          </div>
-
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-4 space-y-4 border-l-2 border-slate-100 pl-6">
-              {comment.replies.map((reply) => (
-                <div key={reply.id} className="flex gap-3">
-                  <Avatar name={reply.author} src={reply.avatar} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-0.5 flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-bold text-slate-800">{reply.author}</span>
-                      {reply.role && (
-                        <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-[#004785]">
-                          {reply.role}
-                        </span>
-                      )}
-                      <span className="text-xs text-slate-400">{reply.time}</span>
-                    </div>
-                    <p className="mb-2 text-sm leading-relaxed text-slate-600">{reply.content}</p>
-                    <button
-                      type="button"
-                      className="text-xs font-bold text-[#004785] hover:underline"
-                    >
-                      Trả lời
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -151,7 +81,9 @@ const PostDetailComments = ({ comments: initialComments = [] }) => {
       </div>
 
       <div className="space-y-4">
-        {visibleComments.map((c) => renderComment(c))}
+        {visibleComments.map((c) => (
+          <CommentItem key={c.id} comment={c} />
+        ))}
 
         {hasMore && (
           <button

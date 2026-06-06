@@ -1,12 +1,11 @@
 /**
- * useEditProductForm - Quản lý TOÀN BỘ state + handlers của modal sửa/thêm sản phẩm.
+ * useEditProductForm - Quản lý state + handlers của modal thêm/sửa sản phẩm.
  * Output: object chứa tất cả state + handlers để truyền xuống tab component.
  */
-/**
- * Hook quản lý toàn bộ state + handlers của modal thêm/sửa sản phẩm.
- * Output: object chứa form state, image handlers, attribute/conversion unit handlers, modal toggles.
- */
 import { useEffect, useState, useRef } from 'react';
+import { useLocalStorage } from './useLocalStorage';
+import { useConversionUnits } from './useConversionUnits';
+import { useProductAttributes } from './useProductAttributes';
 
 const formatMoney = (value) => {
   const n = Number(value);
@@ -30,9 +29,8 @@ const mapProductToForm = (source = {}) => {
   const parseStockLevel = (val) => {
     if (!val || typeof val !== 'string') return null;
     const parts = val.split('-').map((s) => Number(s.trim()));
-    if (parts.length === 2 && parts.every((n) => !Number.isNaN(n))) {
+    if (parts.length === 2 && parts.every((n) => !Number.isNaN(n)))
       return { min: parts[0], max: parts[1] };
-    }
     return null;
   };
 
@@ -43,6 +41,7 @@ const mapProductToForm = (source = {}) => {
       source.shelfLocation || source.ShelfLocation || source.location || source.Location || '';
     return loc ? [loc] : [];
   };
+
   const productId = source.productId || source.ProductId || source.id || source.Id || '';
   const productCode = source.productCode || source.ProductCode || source.code || source.Code || '';
   const stockLevelParsed = parseStockLevel(source.stockLevel || source.StockLevel);
@@ -96,6 +95,8 @@ const mapProductToForm = (source = {}) => {
     shelfLocation:
       source.shelfLocation || source.ShelfLocation || source.location || source.Location || '',
     specification: source.specification || source.Specification || '',
+    specDetail:
+      source.specDetail || source.SpecificationDetail || source.detail || source.Detail || '',
     unit: source.unit || source.Unit || '',
     baseUnit: {
       name: source.unit || source.Unit || '',
@@ -152,6 +153,7 @@ export const useEditProductForm = ({
     locations: [],
     shelfLocation: '',
     specification: '',
+    specDetail: '',
     unit: '',
     weight: '',
     weightUnit: 'g',
@@ -167,23 +169,16 @@ export const useEditProductForm = ({
     notes: '',
   };
 
-  const initForm = () => {
-    if (product) {
-      const m = mapProductToForm(product);
-      return { ...defaultForm, ...m };
-    }
-    return defaultForm;
-  };
+  const initForm = () => (product ? { ...defaultForm, ...mapProductToForm(product) } : defaultForm);
 
   const initImages = () => {
     if (!product) return [];
     const m = mapProductToForm(product);
     if (m.images?.length) return m.images;
-    if (m.image) {
+    if (m.image)
       return [
         { id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-init`, url: m.image },
       ];
-    }
     return [];
   };
 
@@ -192,49 +187,28 @@ export const useEditProductForm = ({
   const fileInputRef = useRef(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
-  // LocalStorage state
-  const ls = (key, fallback) => {
-    try {
-      const r = localStorage.getItem(key);
-      return r ? JSON.parse(r) : fallback;
-    } catch {
-      return fallback;
-    }
-  };
-  const [availableAttributes, setAvailableAttributes] = useState(() =>
-    ls('availableAttributes', ['HÃNG', 'MAQUF'])
-  );
-  const [groups, setGroups] = useState(() => {
-    const stored = ls('productGroups', null);
+  // --- LS-backed lists ---
+  const [groups, persistGroups] = useLocalStorage('productGroups', () => {
     const fromProducts = productList
       .map((p) => p.group || p.categoryName || p.CategoryName || '')
       .filter(Boolean);
-    const unique = [
-      ...new Set([...(stored || ['Vật liệu thô', 'Sơn và Hóa chất', 'Kim khí']), ...fromProducts]),
-    ];
-    if (!stored) {
-      try {
-        localStorage.setItem('productGroups', JSON.stringify(unique));
-      } catch {}
-    }
-    return unique;
+    return [...new Set(['Vật liệu thô', 'Sơn và Hóa chất', 'Kim khí', ...fromProducts])];
   });
-  const [brands, setBrands] = useState(() => {
-    const stored = ls('productBrands', null);
+
+  const [brands, persistBrands] = useLocalStorage('productBrands', () => {
     const fromProducts = productList
       .map((p) => p.brand || p.brandName || p.BrandName || p.Brand || '')
       .filter(Boolean);
-    const unique = [...new Set([...(stored || ['Hòa Phát', 'Viettel']), ...fromProducts])];
-    if (!stored) {
-      try {
-        localStorage.setItem('productBrands', JSON.stringify(unique));
-      } catch {}
-    }
-    return unique;
+    return [...new Set(['Hòa Phát', 'Viettel', ...fromProducts])];
   });
-  const [locations, setLocations] = useState(() => ls('productLocations', ['Kệ A1', 'Kệ B2']));
 
-  // Modal toggles
+  const [locations, persistLocations] = useLocalStorage('productLocations', ['Kệ A1', 'Kệ B2']);
+
+  // --- Sub-hooks ---
+  const attr = useProductAttributes(form, setForm);
+  const conv = useConversionUnits(form, setForm);
+
+  // --- Modal toggles ---
   const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupParent, setNewGroupParent] = useState('');
@@ -242,52 +216,8 @@ export const useEditProductForm = ({
   const [newBrandName, setNewBrandName] = useState('');
   const [createLocationModalOpen, setCreateLocationModalOpen] = useState(false);
   const [newLocationName, setNewLocationName] = useState('');
-  const [createAttrModalOpen, setCreateAttrModalOpen] = useState(false);
-  const [newAttrName, setNewAttrName] = useState('');
-  const [editAttrModalOpen, setEditAttrModalOpen] = useState(false);
-  const [editAttrIndex, setEditAttrIndex] = useState(null);
-  const [editAttrValue, setEditAttrValue] = useState('');
-  const [editingAttrId, setEditingAttrId] = useState(null);
-  const [addConversionUnitModal, setAddConversionUnitModal] = useState(false);
-  const [newConversionUnit, setNewConversionUnit] = useState({
-    name: '',
-    convertValue: '',
-    convertFrom: '',
-    price: '',
-    directSale: false,
-  });
 
-  const persistLS = (key, val) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(val));
-    } catch {}
-  };
-  const persistAvailableAttributes = (next) => {
-    persistLS('availableAttributes', next);
-    setAvailableAttributes(next);
-  };
-  const addAvailableAttribute = (name) => {
-    const n = (name || '').trim();
-    if (!n) return;
-    setAvailableAttributes((prev) => {
-      if (prev.includes(n)) return prev;
-      const next = [...prev, n];
-      persistLS('availableAttributes', next);
-      return next;
-    });
-  };
-  const persistGroups = (next) => {
-    persistLS('productGroups', next);
-    setGroups(next);
-  };
-  const persistBrands = (next) => {
-    persistLS('productBrands', next);
-    setBrands(next);
-  };
-  const persistLocations = (next) => {
-    persistLS('productLocations', next);
-    setLocations(next);
-  };
+  // --- Location helpers ---
   const addLocation = (loc) => {
     const name = (loc || '').trim();
     if (!name) return;
@@ -297,14 +227,16 @@ export const useEditProductForm = ({
       return { ...c, locations: [...cl, name] };
     });
   };
+
   const removeLocation = (loc) => {
     setForm((c) => ({ ...c, locations: (c.locations || []).filter((l) => l !== loc) }));
   };
 
-  // Image handlers
+  // --- Image handlers ---
   const handleOpenFilePicker = () => {
     if (fileInputRef.current) fileInputRef.current.click();
   };
+
   const handleUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -326,6 +258,7 @@ export const useEditProductForm = ({
     });
     e.target.value = null;
   };
+
   const handlePinImage = (index) => {
     setImages((prev) => {
       const u = [...prev];
@@ -334,6 +267,7 @@ export const useEditProductForm = ({
       return u;
     });
   };
+
   const handleRemoveImage = (index) => {
     setImages((prev) => {
       const r = prev[index];
@@ -358,130 +292,11 @@ export const useEditProductForm = ({
 
   const handleChange = (field, value) => setForm((c) => ({ ...c, [field]: value }));
 
-  // Attributes
-  const addAttrRow = () => {
-    setForm((c) => ({
-      ...c,
-      attributes: [...(c.attributes || []), { id: Date.now(), name: '', value: '' }],
-    }));
-    setOpenDropdownId(null);
-  };
-  const updateAttr = (id, key, val) => {
-    setForm((c) => ({
-      ...c,
-      attributes: (c.attributes || []).map((a) => (a.id === id ? { ...a, [key]: val } : a)),
-    }));
-  };
-  const removeAttr = (id) => {
-    setForm((c) => ({ ...c, attributes: (c.attributes || []).filter((a) => a.id !== id) }));
-    if (openDropdownId === id) setOpenDropdownId(null);
-  };
-
-  // Conversion units
-  const addConversionUnitHandler = () => {
-    const name = (newConversionUnit.name || '').trim();
-    const cv = Number(newConversionUnit.convertValue) || 0;
-    const cf = (newConversionUnit.convertFrom || '').trim();
-    if (!name) {
-      alert('Vui lòng nhập tên đơn vị');
-      return;
-    }
-    const existing = [
-      form.baseUnit?.name,
-      ...(form.conversionUnits || []).map((u) => u.name),
-    ].filter(Boolean);
-    if (existing.includes(name)) {
-      alert(`Đơn vị "${name}" đã tồn tại`);
-      return;
-    }
-    if (cv <= 0) {
-      alert('Giá trị quy đổi phải lớn hơn 0');
-      return;
-    }
-    if (!cf) {
-      alert('Vui lòng chọn đơn vị gốc');
-      return;
-    }
-    if (!existing.includes(cf)) {
-      alert('Đơn vị gốc không hợp lệ');
-      return;
-    }
-    if (name === cf) {
-      alert('Không thể quy đổi đơn vị với chính nó');
-      return;
-    }
-    const unitsByName = (form.conversionUnits || []).reduce((acc, u) => {
-      acc[u.name] = u;
-      return acc;
-    }, {});
-    const computeMul = (un, visited = new Set()) => {
-      if (!un || visited.has(un)) return null;
-      if (un === form.baseUnit?.name) return 1;
-      const u = unitsByName[un];
-      if (!u) return null;
-      visited.add(un);
-      const pm = computeMul(u.convertFrom, visited);
-      return pm == null ? null : u.convertValue * pm;
-    };
-    const newMul =
-      cf === form.baseUnit?.name
-        ? cv
-        : (() => {
-            const pm = computeMul(cf);
-            return pm == null ? null : cv * pm;
-          })();
-    const calcPrice = newMul && form.baseUnit?.price ? Number(form.baseUnit.price) * newMul : 0;
-    setForm((c) => ({
-      ...c,
-      conversionUnits: [
-        ...(c.conversionUnits || []),
-        {
-          id: Date.now(),
-          name,
-          convertValue: cv,
-          convertFrom: cf,
-          calculatedPrice: calcPrice,
-          directSale: newConversionUnit.directSale,
-        },
-      ],
-    }));
-    setNewConversionUnit({
-      name: '',
-      convertValue: '',
-      convertFrom: '',
-      price: '',
-      directSale: false,
-    });
-    setAddConversionUnitModal(false);
-  };
-  const removeConversionUnit = (id) => {
-    setForm((c) => ({
-      ...c,
-      conversionUnits: (c.conversionUnits || []).filter((u) => u.id !== id),
-    }));
-  };
-  const updateConversionUnit = (id, key, val) => {
-    setForm((c) => ({
-      ...c,
-      conversionUnits: (c.conversionUnits || []).map((u) =>
-        u.id === id ? { ...u, [key]: val } : u
-      ),
-    }));
-  };
-
   useEffect(() => {
     const onDocClick = () => setOpenDropdownId(null);
     document.addEventListener('click', onDocClick);
     return () => document.removeEventListener('click', onDocClick);
   }, []);
-  useEffect(() => {
-    if (!addConversionUnitModal) return;
-    const h = (e) => {
-      if (e.key === 'Escape') setAddConversionUnitModal(false);
-    };
-    document.addEventListener('keydown', h);
-    return () => document.removeEventListener('keydown', h);
-  }, [addConversionUnitModal]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -495,28 +310,56 @@ export const useEditProductForm = ({
     setForm,
     images,
     fileInputRef,
-    availableAttributes,
-    persistAvailableAttributes,
-    addAvailableAttribute,
+    // Attributes (from sub-hook)
+    availableAttributes: attr.availableAttributes,
+    persistAvailableAttributes: attr.persistAvailableAttributes,
+    addAvailableAttribute: attr.addAvailableAttribute,
+    createAttrModalOpen: attr.createAttrModalOpen,
+    setCreateAttrModalOpen: attr.setCreateAttrModalOpen,
+    newAttrName: attr.newAttrName,
+    setNewAttrName: attr.setNewAttrName,
+    editAttrModalOpen: attr.editAttrModalOpen,
+    setEditAttrModalOpen: attr.setEditAttrModalOpen,
+    editAttrIndex: attr.editAttrIndex,
+    setEditAttrIndex: attr.setEditAttrIndex,
+    editAttrValue: attr.editAttrValue,
+    setEditAttrValue: attr.setEditAttrValue,
+    editingAttrId: attr.editingAttrId,
+    setEditingAttrId: attr.setEditingAttrId,
+    addAttrRow: attr.addAttrRow,
+    updateAttr: attr.updateAttr,
+    removeAttr: attr.removeAttr,
+    // Conversion units (from sub-hook)
+    addConversionUnitModal: conv.addModal,
+    setAddConversionUnitModal: conv.setAddModal,
+    newConversionUnit: conv.newUnit,
+    setNewConversionUnit: conv.setNewUnit,
+    addConversionUnitHandler: conv.addUnit,
+    removeConversionUnit: conv.removeUnit,
+    updateConversionUnit: conv.updateUnit,
+    // Groups
     groups,
-    setGroups,
+    setGroups: persistGroups,
     persistGroups,
     newGroupName,
     setNewGroupName,
     newGroupParent,
     setNewGroupParent,
+    // Brands
     brands,
-    setBrands,
+    setBrands: persistBrands,
     persistBrands,
     newBrandName,
     setNewBrandName,
+    // Locations
     locations,
-    setLocations,
+    setLocations: persistLocations,
     persistLocations,
     newLocationName,
     setNewLocationName,
     addLocation,
     removeLocation,
+    // Modal toggles
     createGroupModalOpen,
     setCreateGroupModalOpen,
     createBrandModalOpen,
@@ -525,33 +368,13 @@ export const useEditProductForm = ({
     setCreateLocationModalOpen,
     openDropdownId,
     setOpenDropdownId,
-    createAttrModalOpen,
-    setCreateAttrModalOpen,
-    newAttrName,
-    setNewAttrName,
-    editAttrModalOpen,
-    setEditAttrModalOpen,
-    editAttrIndex,
-    setEditAttrIndex,
-    editAttrValue,
-    setEditAttrValue,
-    editingAttrId,
-    setEditingAttrId,
-    addConversionUnitModal,
-    setAddConversionUnitModal,
-    newConversionUnit,
-    setNewConversionUnit,
+    // Image handlers
     handleOpenFilePicker,
     handleUpload,
     handlePinImage,
     handleRemoveImage,
+    // Misc
     handleChange,
-    addAttrRow,
-    updateAttr,
-    removeAttr,
-    addConversionUnitHandler,
-    removeConversionUnit,
-    updateConversionUnit,
     handleSubmit,
     MAX_IMAGES,
     formatMoney,
