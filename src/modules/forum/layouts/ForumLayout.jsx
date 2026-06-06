@@ -26,6 +26,7 @@ const ForumLayout = () => {
     if (path.includes('/my-posts')) return 'my-posts';
     if (path.includes('/saved')) return 'saved';
     if (path.includes('/top-products')) return 'top';
+    if (path.includes('/new-products')) return 'new';
     return 'home';
   };
 

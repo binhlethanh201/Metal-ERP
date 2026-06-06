@@ -105,6 +105,12 @@ const ForumTopProductsRightSidebar = () => {
                 </span>
               </div>
               <p className="mt-1 text-[11px] text-slate-400">{item.area}</p>
+              <button
+                type="button"
+                className="mt-2 w-full rounded-lg bg-[#004785] py-1.5 text-[10px] font-bold text-white transition-all hover:bg-black active:scale-95"
+              >
+                Thêm vào kho
+              </button>
             </div>
           ))}
         </div>
@@ -222,6 +228,12 @@ const ForumTopProductsRightSidebar = () => {
                   <button
                     onClick={() => setSelected(null)}
                     className="w-full rounded-xl bg-[#004785] py-2.5 text-sm font-bold text-white transition-colors hover:bg-black"
+                  >
+                    Thêm vào kho
+                  </button>
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50"
                   >
                     Đóng
                   </button>

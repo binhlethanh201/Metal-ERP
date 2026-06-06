@@ -207,7 +207,7 @@ const ForumTopProducts = () => {
                     type="button"
                     className="shrink-0 rounded-xl bg-[#004785] px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
                   >
-                    Nhập POS
+                    Thêm vào kho
                   </button>
                 </div>
               </article>

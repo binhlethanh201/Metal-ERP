@@ -176,7 +176,7 @@ const ForumTrends = () => {
                     type="button"
                     className="shrink-0 rounded-xl bg-[#004785] px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
                   >
-                    Nhập POS
+                    Thêm vào kho
                   </button>
                 </div>
               </article>
@@ -266,7 +266,11 @@ const ForumTrends = () => {
       <section className="pt-2">
         <div className="mb-4 flex items-center justify-between px-1">
           <h3 className="text-base font-bold text-gray-900">Danh sách sản phẩm xu hướng</h3>
-          <button type="button" className="text-xs font-bold text-[#004785] hover:underline">
+          <button
+            type="button"
+            onClick={() => navigate('/forum/new-products')}
+            className="text-xs font-bold text-[#004785] hover:underline"
+          >
             Xem tất cả
           </button>
         </div>
