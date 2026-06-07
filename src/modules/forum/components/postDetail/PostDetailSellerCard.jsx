@@ -71,22 +71,7 @@ const PostDetailSellerCard = ({ post, type }) => {
           )}
         </div>
       </div>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          className={`rounded-full border px-5 py-2 text-sm font-semibold transition-colors hover:bg-slate-50 ${cfg.contactStyle}`}
-        >
-          {cfg.contactLabel}
-        </button>
-        {cfg.showCall && (
-          <button
-            type="button"
-            className="rounded-full bg-[#1E6BB8] px-5 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
-          >
-            Gọi ngay
-          </button>
-        )}
-      </div>
+      {/* contact buttons removed per design */}
     </div>
   );
 };

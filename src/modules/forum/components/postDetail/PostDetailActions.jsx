@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
+import { useChat } from '../../contexts/ChatContext';
 
 const actionConfig = {
   wholesale: {
@@ -13,8 +14,6 @@ const actionConfig = {
       icon: 'inventory_2',
       className: 'border-2 border-[#004785] text-[#004785] hover:bg-blue-50',
     },
-    onPrimary: () => alert('Mở chat với người bán (demo)'),
-    onSecondary: () => alert('Đã thêm vào kho (demo)'),
   },
   supply: {
     primary: {
@@ -27,8 +26,6 @@ const actionConfig = {
       icon: 'inventory_2',
       className: 'border-2 border-[#004785] text-[#004785] hover:bg-blue-50',
     },
-    onPrimary: () => alert('Mở chat với người bán (demo)'),
-    onSecondary: () => alert('Đã thêm vào kho (demo)'),
   },
   clearance: {
     primary: {
@@ -41,11 +38,6 @@ const actionConfig = {
       icon: 'chat',
       className: 'border-2 border-red-500 text-red-600 hover:bg-red-50',
     },
-    onPrimary: () => {
-      const ok = window.confirm('Xác nhận mua hàng thanh lý? (demo)');
-      if (ok) alert('Đã gửi yêu cầu mua hàng!');
-    },
-    onSecondary: () => alert('Mở chat thương lượng (demo)'),
   },
   groupBuy: {
     primary: {
@@ -58,22 +50,47 @@ const actionConfig = {
       icon: 'chat',
       className: 'border-2 border-purple-500 text-purple-600 hover:bg-purple-50',
     },
-    onPrimary: () => {
-      const ok = window.confirm('Xác nhận tham gia nhóm mua chung? (demo)');
-      if (ok) alert('Đã tham gia nhóm mua!');
-    },
-    onSecondary: () => alert('Mở chat với trưởng nhóm (demo)'),
   },
 };
 
-const PostDetailActions = ({ type = 'wholesale' }) => {
+const PostDetailActions = ({ type = 'wholesale', onAddToWarehouse, sellerName, seller }) => {
+  const { convos, openChatWith } = useChat();
   const cfg = actionConfig[type] || actionConfig.wholesale;
+
+  const handleChat = () => {
+    if (seller) {
+      openChatWith({
+        id: seller.id || sellerName || seller.name,
+        name: seller.name || sellerName,
+        role: seller.role,
+        avatar: seller.avatar,
+      });
+      return;
+    }
+    if (convos.length > 0) openChatWith(convos[0]);
+  };
+
+  const handleSecondary = () => {
+    if (type === 'clearance') {
+      const ok = window.confirm('Xác nhận mua hàng thanh lý? (demo)');
+      if (ok) alert('Đã gửi yêu cầu mua hàng!');
+    } else if (type === 'groupBuy') {
+      const ok = window.confirm('Xác nhận tham gia nhóm mua chung? (demo)');
+      if (ok) alert('Đã tham gia nhóm mua!');
+    } else if (onAddToWarehouse) onAddToWarehouse();
+  };
 
   return (
     <div className="flex flex-wrap gap-4">
       <button
         type="button"
-        onClick={cfg.onPrimary}
+        onClick={
+          type === 'clearance'
+            ? handleSecondary
+            : type === 'groupBuy'
+              ? handleSecondary
+              : handleChat
+        }
         className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-base font-bold transition-colors active:scale-[0.98] ${cfg.primary.className}`}
       >
         <Icon name={cfg.primary.icon} size={20} />
@@ -81,7 +98,9 @@ const PostDetailActions = ({ type = 'wholesale' }) => {
       </button>
       <button
         type="button"
-        onClick={cfg.onSecondary}
+        onClick={
+          type === 'clearance' ? handleChat : type === 'groupBuy' ? handleChat : handleSecondary
+        }
         className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-base font-bold transition-colors active:scale-[0.98] ${cfg.secondary.className}`}
       >
         <Icon name={cfg.secondary.icon} size={20} />

@@ -11,6 +11,7 @@ import PostDetailProductIndicator from '../components/postDetail/PostDetailProdu
 import PostDetailEditBar from '../components/postDetail/PostDetailEditBar';
 import postDetailMockData from '../data/postDetailMockData';
 import Icon from '../../../shared/components/Icon';
+import AddToWarehouseModal from '../components/shared/AddToWarehouseModal';
 
 const TYPE_ALIAS = { trend: 'clearance', trusted: 'groupBuy', quote: 'supply' };
 
@@ -25,6 +26,7 @@ const PostDetail = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('description');
   const [productIdx, setProductIdx] = useState(0);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const rawType = searchParams.get('type') || 'wholesale';
@@ -261,7 +263,12 @@ const PostDetail = () => {
         <PostDetailInfoBar post={post} product={currentProduct} type={validType} />
       )}
 
-      <PostDetailActions type={validType} />
+      <PostDetailActions
+        type={validType}
+        onAddToWarehouse={() => setAddModalOpen(true)}
+        sellerName={post.author}
+        seller={{ id: post.id, name: post.author, role: post.authorRole, avatar: post.avatar }}
+      />
 
       <PostDetailTabsSection
         activeTab={activeTab}
@@ -351,6 +358,23 @@ const PostDetail = () => {
       )}
 
       <PostDetailComments comments={comments} />
+
+      <AddToWarehouseModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        products={products.map((p) => ({
+          id: p.id,
+          title: p.name,
+          giaBanSi: p.priceRange,
+          image: p.images?.[0] || p.image,
+          images: p.images,
+          detailImages: p.detailImages,
+          specs: p.specs,
+          area: p.area,
+          moq: p.moq,
+          description: post.description,
+        }))}
+      />
     </div>
   );
 };

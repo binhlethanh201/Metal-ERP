@@ -113,6 +113,15 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
           </button>
         </div>
 
+        <button
+          type="button"
+          onClick={() => setProductStatusFilter('draft')}
+          className="flex w-full items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-100"
+        >
+          <Icon name="description" size={16} />
+          Bản nháp
+        </button>
+
         <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-2">
           <h3 className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhóm hàng</h3>
           <button type="button" className="text-xs font-bold text-blue-900 hover:underline">

@@ -8,7 +8,6 @@ import ImageUploader from '../form/ImageUploader';
 import UnitManagement from '../form/UnitManagement';
 import AttributeEditor from '../form/AttributeEditor';
 import Icon from '../../../../../shared/components/Icon';
-import SpecEditorModal from '../../../../../shared/components/SpecEditorModal';
 
 const ProductInfoTab = ({ f }) => (
   <>
@@ -43,27 +42,6 @@ const ProductInfoTab = ({ f }) => (
             value={f.form.name || ''}
             onChange={(e) => f.handleChange('name', e.target.value)}
           />
-          <div className="mt-2 flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                {f.form.specDetail ? (
-                  <div className="truncate">{f.form.specDetail}</div>
-                ) : (
-                  <div className="text-slate-400">Chưa có chi tiết kỹ thuật</div>
-                )}
-              </div>
-            </div>
-            <div className="shrink-0">
-              <button
-                type="button"
-                onClick={() => f.setForm((c) => ({ ...c, _openSpecEditor: true }))}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                <Icon name="edit" size={16} />
-                Viết chi tiết
-              </button>
-            </div>
-          </div>
         </div>
         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="space-y-2">
@@ -319,30 +297,6 @@ const ProductInfoTab = ({ f }) => (
         <AttributeEditor f={f} />
       </div>
     </Section>
-
-    <Section
-      title="Thông số kỹ thuật"
-      subtitle="Thêm chi tiết kỹ thuật hoặc ghi chú chuyên sâu cho sản phẩm"
-    >
-      <div className="space-y-2">
-        <label className="text-label-md text-on-surface-variant">Chi tiết kỹ thuật</label>
-        <textarea
-          className="min-h-[120px] w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm focus:ring-0"
-          placeholder="Nhập chi tiết kỹ thuật, ví dụ: phương pháp bảo quản, lưu ý khi sử dụng..."
-          value={f.form.specDetail || ''}
-          onChange={(e) => f.handleChange('specDetail', e.target.value)}
-        />
-      </div>
-    </Section>
-
-    {/* Popup editor modal */}
-    {f.form._openSpecEditor && (
-      <SpecEditorModal
-        value={f.form.specDetail || ''}
-        onChange={(val) => f.setForm((c) => ({ ...c, specDetail: val }))}
-        onClose={() => f.setForm((c) => ({ ...c, _openSpecEditor: false }))}
-      />
-    )}
   </>
 );
 

@@ -400,6 +400,16 @@ const ProductQuickAddPopup = ({ isOpen, onClose, onSave }) => {
             <button
               type="button"
               className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              onClick={() => {
+                p.handleSave('draft');
+              }}
+              disabled={p.saving}
+            >
+              Lưu nháp
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
               onClick={() => p.handleSave('addNew')}
               disabled={p.saving}
             >

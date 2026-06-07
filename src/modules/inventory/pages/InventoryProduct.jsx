@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-// import { useOutletContext } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import EditProductModal from '../components/product/EditProductModal';
 import ProductFilterSidebar from '../components/product/ProductFilterSidebar';
@@ -13,9 +13,27 @@ export const ProductManagement = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [initialEditTab, setInitialEditTab] = useState('info');
+  const [searchParams] = useSearchParams();
 
   const { products, apiStatus, handleSaveProduct, handleDeleteProduct } = useProductList();
-  const filters = useProductFilters(products);
+
+  const mergedProducts = useMemo(() => {
+    try {
+      const drafts = JSON.parse(localStorage.getItem('draftProducts') || '[]');
+      return [...drafts, ...products];
+    } catch {
+      return products;
+    }
+  }, [products]);
+
+  const filters = useProductFilters(mergedProducts);
+
+  useEffect(() => {
+    if (searchParams.get('status') === 'draft') {
+      filters.setProductStatusFilter('draft');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     estimatedRef,

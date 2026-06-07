@@ -8,6 +8,7 @@ import Icon from '../../../shared/components/Icon';
 import { trendsTopProducts } from '../data/forumPageData';
 import { inventoryRows } from '../../inventory/data/inventoryMockData';
 import ForumImportSuggestRightSidebar from '../components/importSuggest/ForumImportSuggestRightSidebar';
+import AddToWarehouseModal from '../components/shared/AddToWarehouseModal';
 
 const STOCK_MIN = {
   'Sơn và Hóa chất': 20,
@@ -58,6 +59,8 @@ const fmtMoney = (n) => {
 const ForumImportSuggest = () => {
   const { setRightSidebar } = useOutletContext();
   const [activeTab, setActiveTab] = useState('gap');
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalProducts, setAddModalProducts] = useState([]);
 
   useEffect(() => {
     setRightSidebar?.(<ForumImportSuggestRightSidebar />);
@@ -239,6 +242,10 @@ const ForumImportSuggest = () => {
                 </span>
                 <button
                   type="button"
+                  onClick={() => {
+                    setAddModalProducts([item]);
+                    setAddModalOpen(true);
+                  }}
                   className="rounded-lg bg-[#004785] px-3.5 py-1.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
                 >
                   Thêm vào kho
@@ -252,6 +259,12 @@ const ForumImportSuggest = () => {
       <p className="text-center text-[11px] text-slate-400">
         Tự động cập nhật từ kho & thị trường.
       </p>
+
+      <AddToWarehouseModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        products={addModalProducts.length > 0 ? addModalProducts : []}
+      />
     </div>
   );
 };

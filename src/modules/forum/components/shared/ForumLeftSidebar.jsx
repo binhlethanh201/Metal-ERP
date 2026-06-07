@@ -89,13 +89,13 @@ const ForumLeftSidebar = ({ activeKey = 'home', onTriggerSwitch }) => {
             />
             <SidebarButton
               icon="assessment"
-              label="Top sản phẩm bán chạy"
+              label="Top sản phẩm tăng trưởng"
               active={activeKey === 'top'}
               onClick={() => navigate('/forum/top-products')}
             />
             <SidebarButton
-              icon="new_releases"
-              label="Sản phẩm mới"
+              icon="trending_up"
+              label="Sản phẩm xu hướng"
               active={activeKey === 'new'}
               onClick={() => navigate('/forum/new-products')}
             />

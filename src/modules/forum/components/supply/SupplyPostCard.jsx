@@ -6,6 +6,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../shared/Avatar';
 import Icon from '../../../../shared/components/Icon';
+import { useChat } from '../../contexts/ChatContext';
 
 const TYPE_ROUTE_MAP = {
   'Bán sỉ': 'wholesale',
@@ -17,6 +18,15 @@ const TYPE_ROUTE_MAP = {
 const SupplyPostCard = ({ post }) => {
   const navigate = useNavigate();
   const postType = TYPE_ROUTE_MAP[post.type] || 'wholesale';
+  const { openChatWith } = useChat();
+
+  const getAreaFromProduct = (product) => {
+    if (!product) return '—';
+    if (product.area) return product.area;
+    if (!product.moq) return '—';
+    if (product.moq.includes('/')) return product.moq.split('/').slice(1).join('/').trim();
+    return '—';
+  };
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm transition-all duration-200 hover:border-[#004785]/30 hover:shadow-md">
@@ -89,7 +99,7 @@ const SupplyPostCard = ({ post }) => {
               className="h-24 w-full rounded-xl border border-slate-100 object-cover shadow-sm md:h-20 md:w-24"
               src={post.product.image}
             />
-            <div className="grid w-full grid-cols-2 gap-4 font-medium md:grid-cols-4">
+            <div className="grid w-full grid-cols-2 gap-4 font-medium md:grid-cols-3">
               <div>
                 <p className="mb-0.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
                   Sản phẩm
@@ -104,18 +114,11 @@ const SupplyPostCard = ({ post }) => {
               </div>
               <div>
                 <p className="mb-0.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  MOQ / Khu vực
+                  Khu vực
                 </p>
-                <p className="text-sm font-bold text-slate-700">{post.product.moq}</p>
-              </div>
-              <div>
-                <p className="mb-0.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  Trạng thái
+                <p className="text-sm font-bold text-slate-700">
+                  {getAreaFromProduct(post.product)}
                 </p>
-                <div className="mt-0.5 flex items-center gap-1.5">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                  <p className="text-sm font-bold text-green-600">{post.product.status}</p>
-                </div>
               </div>
             </div>
           </div>
@@ -148,6 +151,15 @@ const SupplyPostCard = ({ post }) => {
             <button
               type="button"
               className="rounded-xl border-[2px] border-[#004785] px-4 py-2 text-xs font-bold text-[#004785] transition-all hover:bg-[#004785]/5 active:scale-95"
+              onClick={(e) => {
+                e.stopPropagation();
+                openChatWith({
+                  id: post.authorId || post.id || post.author,
+                  name: post.author,
+                  role: post.authorRole || post.role || 'Người bán',
+                  avatar: post.avatar || null,
+                });
+              }}
             >
               Nhắn tin
             </button>

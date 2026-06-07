@@ -6,6 +6,7 @@ import { useOutletContext } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import { trendsTopProducts as rawProducts } from '../data/forumPageData';
 import ForumTopProductsRightSidebar from '../components/topProducts/ForumTopProductsRightSidebar';
+import AddToWarehouseModal from '../components/shared/AddToWarehouseModal';
 
 const TIME_TABS = ['30 ngày', '7 ngày', 'Hôm nay'];
 const AREAS = ['Tất cả', 'Toàn quốc', 'Hà Nội', 'TP.HCM', 'Miền Bắc', 'Miền Nam', 'Miền Trung'];
@@ -58,12 +59,19 @@ const ForumTopProducts = () => {
   const [area, setArea] = useState('Tất cả');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalProducts, setAddModalProducts] = useState([]);
   const ITEMS_PER_PAGE = 6;
   const { setRightSidebar } = useOutletContext();
 
-  const sortedProducts = useMemo(
-    () => [...rawProducts].sort((a, b) => parseInt(b.percent) - parseInt(a.percent)),
+  const productsWithId = useMemo(
+    () => rawProducts.map((p, i) => ({ ...p, id: p.id || `top-${i}` })),
     []
+  );
+
+  const sortedProducts = useMemo(
+    () => [...productsWithId].sort((a, b) => parseInt(b.percent) - parseInt(a.percent)),
+    [productsWithId]
   );
 
   const filteredProducts = useMemo(() => {
@@ -205,6 +213,10 @@ const ForumTopProducts = () => {
                   </div>
                   <button
                     type="button"
+                    onClick={() => {
+                      setAddModalProducts([item]);
+                      setAddModalOpen(true);
+                    }}
                     className="shrink-0 rounded-xl bg-[#004785] px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
                   >
                     Thêm vào kho
@@ -327,6 +339,12 @@ const ForumTopProducts = () => {
             </div>
           );
         })()}
+
+      <AddToWarehouseModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        products={addModalProducts.length > 0 ? addModalProducts : productsWithId}
+      />
     </div>
   );
 };

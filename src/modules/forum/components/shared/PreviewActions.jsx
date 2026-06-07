@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
+import { useChat } from '../../contexts/ChatContext';
 
 const actionConfig = {
   wholesale: {
@@ -49,10 +50,12 @@ const actionConfig = {
 
 const PreviewActions = ({ postType }) => {
   const cfg = actionConfig[postType] || actionConfig.wholesale;
+  const { openChatPopup } = useChat();
   return (
     <div className="flex flex-wrap gap-4">
       <button
         type="button"
+        onClick={() => openChatPopup()}
         className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-base font-bold transition-colors active:scale-[0.98] ${cfg.primary.className}`}
       >
         <Icon name={cfg.primary.icon} size={20} />
@@ -60,6 +63,7 @@ const PreviewActions = ({ postType }) => {
       </button>
       <button
         type="button"
+        onClick={() => openChatPopup()}
         className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-base font-bold transition-colors active:scale-[0.98] ${cfg.secondary.className}`}
       >
         <Icon name={cfg.secondary.icon} size={20} />

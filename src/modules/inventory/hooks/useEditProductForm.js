@@ -303,6 +303,11 @@ export const useEditProductForm = ({
     if (onSave) onSave(form);
   };
 
+  const handleSaveDraft = () => {
+    if (onSave) onSave({ ...form, productStatus: 'draft' });
+    onClose?.();
+  };
+
   return {
     activeTab,
     setActiveTab,
@@ -376,6 +381,7 @@ export const useEditProductForm = ({
     // Misc
     handleChange,
     handleSubmit,
+    handleSaveDraft,
     MAX_IMAGES,
     formatMoney,
   };

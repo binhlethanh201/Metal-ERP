@@ -8,6 +8,7 @@ import { useOutletContext } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import { newProductsList as rawProducts } from '../data/forumPageData';
 import ForumNewProductsRightSidebar from '../components/newProducts/ForumNewProductsRightSidebar';
+import AddToWarehouseModal from '../components/shared/AddToWarehouseModal';
 
 const KHU_VUC = ['Tất cả', 'Toàn quốc', 'Hà Nội', 'TP.HCM', 'Miền Bắc', 'Miền Nam', 'Miền Trung'];
 const SORT_OPTIONS = [
@@ -62,11 +63,18 @@ const ForumNewProducts = () => {
   const [khuVuc, setKhuVuc] = useState('Tất cả');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalProducts, setAddModalProducts] = useState([]);
   const ITEMS_PER_PAGE = 6;
   const { setRightSidebar } = useOutletContext();
 
+  const productsWithId = useMemo(
+    () => rawProducts.map((p, i) => ({ ...p, id: p.id || `np-${i}` })),
+    []
+  );
+
   const filteredProducts = useMemo(() => {
-    let list = [...rawProducts];
+    let list = [...productsWithId];
     if (khuVuc !== 'Tất cả') list = list.filter((p) => p.khuVuc.includes(khuVuc));
 
     switch (sortBy) {
@@ -78,6 +86,7 @@ const ForumNewProducts = () => {
       default:
         return list.sort((a, b) => b.diemHot - a.diemHot);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [khuVuc, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
@@ -88,8 +97,9 @@ const ForumNewProducts = () => {
   }, [khuVuc, sortBy]);
 
   useEffect(() => {
-    setRightSidebar?.(<ForumNewProductsRightSidebar products={rawProducts} />);
+    setRightSidebar?.(<ForumNewProductsRightSidebar products={productsWithId} />);
     return () => setRightSidebar?.(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setRightSidebar]);
 
   return (
@@ -232,6 +242,10 @@ const ForumNewProducts = () => {
                     <div className="flex flex-col gap-2">
                       <button
                         type="button"
+                        onClick={() => {
+                          setAddModalProducts([product]);
+                          setAddModalOpen(true);
+                        }}
                         className="rounded-xl bg-[#004785] py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-black active:scale-95"
                       >
                         Thêm vào kho
@@ -361,6 +375,12 @@ const ForumNewProducts = () => {
             </div>
           );
         })()}
+
+      <AddToWarehouseModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        products={addModalProducts.length > 0 ? addModalProducts : productsWithId}
+      />
     </div>
   );
 };

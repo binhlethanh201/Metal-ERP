@@ -13,6 +13,7 @@ import {
   trendsQuickTrends as quickTrends,
   trendsPopularTags as popularTags,
 } from '../data/forumPageData';
+import AddToWarehouseModal from '../components/shared/AddToWarehouseModal';
 
 const getAccent = (percent) => {
   const n = parseInt(percent);
@@ -59,11 +60,19 @@ const getAccent = (percent) => {
 
 const ForumTrends = () => {
   const [activeTime, setActiveTime] = useState('30 ngày');
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalProducts, setAddModalProducts] = useState([]);
   const navigate = useNavigate();
 
-  const top2 = useMemo(
-    () => [...topProducts].sort((a, b) => parseInt(b.percent) - parseInt(a.percent)).slice(0, 2),
+  const topProductsWithId = useMemo(
+    () => topProducts.map((p, i) => ({ ...p, id: p.id || `trend-${i}` })),
     []
+  );
+
+  const top2 = useMemo(
+    () =>
+      [...topProductsWithId].sort((a, b) => parseInt(b.percent) - parseInt(a.percent)).slice(0, 2),
+    [topProductsWithId]
   );
 
   // Hứng hàm cập nhật sidebar từ rễ ForumLayout.jsx xuống
@@ -174,6 +183,10 @@ const ForumTrends = () => {
                   </div>
                   <button
                     type="button"
+                    onClick={() => {
+                      setAddModalProducts([item]);
+                      setAddModalOpen(true);
+                    }}
                     className="shrink-0 rounded-xl bg-[#004785] px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-black active:scale-95"
                   >
                     Thêm vào kho
@@ -319,15 +332,13 @@ const ForumTrends = () => {
                 <div className="flex w-full shrink-0 flex-col justify-center gap-2 border-t border-slate-100 pt-3 md:w-44 md:border-t-0 md:pt-0">
                   <button
                     type="button"
+                    onClick={() => {
+                      setAddModalProducts([{ ...product, id: `trend-list-${product.title}` }]);
+                      setAddModalOpen(true);
+                    }}
                     className="rounded-xl bg-[#004785] py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-black active:scale-95"
                   >
                     Thêm vào kho
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 active:scale-95"
-                  >
-                    Xem chi tiết
                   </button>
                 </div>
               </div>
@@ -335,6 +346,12 @@ const ForumTrends = () => {
           ))}
         </div>
       </section>
+
+      <AddToWarehouseModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        products={addModalProducts.length > 0 ? addModalProducts : topProductsWithId}
+      />
     </div>
   );
 };

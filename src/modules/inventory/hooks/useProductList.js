@@ -73,7 +73,17 @@ export const useProductList = () => {
   }, [token]);
 
   const handleSaveProduct = async (updated, productToEdit, onSuccess) => {
-    const prepared = { ...updated };
+    const isDraft = updated.productStatus === 'draft';
+    const prepared = { ...updated, productStatus: isDraft ? 'draft' : 'active' };
+
+    if (productToEdit?.id?.startsWith('SP-DRAFT-') && !isDraft) {
+      try {
+        const drafts = JSON.parse(localStorage.getItem('draftProducts') || '[]');
+        const filtered = drafts.filter((d) => d.id !== productToEdit.id);
+        localStorage.setItem('draftProducts', JSON.stringify(filtered));
+      } catch {}
+    }
+
     if (Array.isArray(prepared.images) && prepared.images.length > 0) {
       const mapped = await Promise.all(
         prepared.images.map(async (it) => {
@@ -97,25 +107,58 @@ export const useProductList = () => {
     const payload = productToEdit ? updateProductPayload(prepared) : createProductPayload(prepared);
 
     if (isRemoteData) {
-      const productKey = productToEdit?.productId || productToEdit?.id;
-      let savedRow = normalizeProduct({ ...payload, ...updated }, 0);
-      if (productKey) {
-        const response = await updateProduct(productKey, payload);
-        const savedData = response?.data || response?.result || response || payload;
-        savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
-      } else {
-        const response = await createProduct(payload);
-        const savedData = response?.data || response?.result || response || payload;
-        savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
-      }
+      try {
+        const productKey = productToEdit?.productId || productToEdit?.id;
+        let savedRow = normalizeProduct({ ...payload, ...updated }, 0);
+        if (productKey) {
+          const response = await updateProduct(productKey, payload);
+          const savedData = response?.data || response?.result || response || payload;
+          savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
+        } else {
+          const response = await createProduct(payload);
+          const savedData = response?.data || response?.result || response || payload;
+          savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
+        }
 
-      const response = await getProducts({ Page: 1, PageSize: 100 });
-      const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
-      setProducts(() => {
-        const nextItems = items.length > 0 ? items : inventoryRows;
-        const withoutSaved = nextItems.filter((item) => !sameProductKey(item, savedRow));
-        return [savedRow, ...withoutSaved];
-      });
+        const response = await getProducts({ Page: 1, PageSize: 100 });
+        const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
+        setProducts(() => {
+          const nextItems = items.length > 0 ? items : inventoryRows;
+          const withoutSaved = nextItems.filter((item) => !sameProductKey(item, savedRow));
+          return [savedRow, ...withoutSaved];
+        });
+      } catch {
+        setIsRemoteData(false);
+        setProducts((prev) => {
+          if (productToEdit) {
+            return prev.map((p) =>
+              sameProductKey(p, productToEdit)
+                ? {
+                    ...p,
+                    ...updated,
+                    id: p.id,
+                    productId: p.productId || p.id,
+                    productCode: updated.id || updated.productCode || p.productCode || p.id,
+                    status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
+                    statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
+                  }
+                : p
+            );
+          }
+          const nextCode = updated.id || updated.productCode || updated.productId || '';
+          return [
+            {
+              ...updated,
+              id: updated.productId || nextCode,
+              productId: updated.productId || '',
+              productCode: nextCode,
+              status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
+              statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
+            },
+            ...prev,
+          ];
+        });
+      }
     } else {
       setProducts((prev) => {
         if (productToEdit) {

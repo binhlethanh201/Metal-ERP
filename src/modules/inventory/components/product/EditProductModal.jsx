@@ -88,6 +88,13 @@ const EditProductModal = ({
                 Bỏ qua
               </button>
               <button
+                type="button"
+                onClick={f.handleSaveDraft}
+                className="h-[42px] rounded-[8px] border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 hover:bg-amber-50 hover:text-amber-700"
+              >
+                Lưu nháp
+              </button>
+              <button
                 type="submit"
                 className="h-[42px] rounded-[8px] bg-blue-600 px-5 text-sm font-semibold text-white"
               >

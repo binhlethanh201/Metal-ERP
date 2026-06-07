@@ -38,20 +38,7 @@ const PreviewSellerCard = () => (
         </div>
       </div>
     </div>
-    <div className="flex gap-2">
-      <button
-        type="button"
-        className="rounded-full border border-[#004785] px-5 py-2 text-sm font-semibold text-[#004785] hover:bg-slate-50"
-      >
-        Nhắn tin
-      </button>
-      <button
-        type="button"
-        className="rounded-full bg-[#1E6BB8] px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
-      >
-        Gọi ngay
-      </button>
-    </div>
+    {/* contact buttons removed per design */}
   </div>
 );
 

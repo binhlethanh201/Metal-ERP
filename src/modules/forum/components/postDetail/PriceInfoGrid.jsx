@@ -7,7 +7,7 @@ const wholesalePrices = (product) => [
   {
     label: 'Giá sỉ',
     value: product.priceRange?.split(' - ')[1] || product.priceRange || 'Liên hệ',
-    note: '/ Thùng',
+    note: '',
     tone: 'text-[#004785]',
     bg: 'bg-slate-50/50',
   },
@@ -16,7 +16,7 @@ const wholesalePrices = (product) => [
     value: product.priceRange
       ? `${(parseInt(product.priceRange.replace(/[^0-9]/g, '').slice(0, 7)) + 150000).toLocaleString('vi-VN')}đ`
       : 'Liên hệ',
-    note: '/ Thùng',
+    note: '',
     tone: 'text-slate-900',
     bg: 'bg-white',
   },

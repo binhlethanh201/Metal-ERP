@@ -236,4 +236,5 @@ export const createdQuickRanges = [
 export const statusOptions = [
   { label: 'Đang hoạt động', value: 'active' },
   { label: 'Ngừng hoạt động', value: 'inactive' },
+  { label: 'Bản nháp', value: 'draft' },
 ];

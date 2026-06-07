@@ -77,6 +77,7 @@ export const useProductFilters = (products = []) => {
       if (salesChannelFilter === 'no' && row.salesChannelLinked) return false;
       if (productStatusFilter === 'active' && row.productStatus !== 'active') return false;
       if (productStatusFilter === 'inactive' && row.productStatus !== 'inactive') return false;
+      if (productStatusFilter === 'draft' && row.productStatus !== 'draft') return false;
       if (createdRange) {
         const d = parseDateTime(row.createdAt);
         if (!d || d < createdRange.start || d > createdRange.end) return false;
