@@ -1,7 +1,7 @@
-/**
+﻿/**
  * Thẻ sản phẩm POS - Ảnh, tên, giá, SKU, tồn kho, badge trạng thái. Click để thêm vào giỏ.
  */
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
 const ProductCard = ({ product, onAddToCart, disabled = false }) => {
   const outOfStock = product.stock === 0;

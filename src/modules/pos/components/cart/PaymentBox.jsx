@@ -1,12 +1,12 @@
-/**
+﻿/**
  * PaymentBox Component - Hộp thanh toán
  */
 
 import { useState } from 'react';
-import { Input } from '../../../shared/components/Input';
-import { Button } from '../../../shared/components/Button';
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { mockPaymentMethods } from '../data/posMockData';
+import { Input } from '../../../../shared/components/Input';
+import { Button } from '../../../../shared/components/Button';
+import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { mockPaymentMethods } from '../../data/posMockData';
 
 export const PaymentBox = ({ total, onPaymentComplete }) => {
   const [selectedMethod, setSelectedMethod] = useState('cash');

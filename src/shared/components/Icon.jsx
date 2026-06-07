@@ -61,6 +61,9 @@ const staticIconMap = {
   account_balance: 'Landmark',
   qr_code_2: 'QrCode',
   credit_card: 'CreditCard',
+  add_circle: 'PlusCircle',
+  person: 'User',
+  barcode: 'ScanBarcode',
   check_circle: 'CheckCircle2',
   chat_bubble: 'MessageSquare',
 

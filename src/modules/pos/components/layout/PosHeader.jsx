@@ -1,8 +1,8 @@
-/** * Header POS nâng cấp - Search bar + nút Quét mã / Lịch sử / Thêm nhanh.
+﻿/** * Header POS nâng cấp - Search bar + nút Quét mã / Lịch sử / Thêm nhanh.
  * Đã đồng bộ hoàn toàn hệ thống Icon Lucide, nút thông báo, Avatar profile và bo góc rounded-xl theo InventoryTopbar.
  */
 import React from 'react';
-import Icon from '../../../shared/components/Icon';
+import Icon from '../../../../shared/components/Icon';
 
 const PosHeader = ({ search, onSearchChange, onBarcodeScan, onHistory, onQuickAdd }) => (
   <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-6 lg:left-[260px]">

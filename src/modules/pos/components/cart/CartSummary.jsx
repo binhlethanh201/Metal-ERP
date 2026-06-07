@@ -1,9 +1,9 @@
-/**
+﻿/**
  * CartSummary Component - Tóm tắt giỏ hàng
  */
 
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { Button } from '../../../shared/components/Button';
+import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { Button } from '../../../../shared/components/Button';
 
 export const CartSummary = ({ cart, onCheckout, loading = false }) => {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);

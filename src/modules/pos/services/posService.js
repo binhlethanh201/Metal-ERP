@@ -100,6 +100,29 @@ export const getShiftSummary = (shiftId) => {
   return apiGet(ENDPOINTS.POS.GET_SHIFT_SUMMARY(shiftId));
 };
 
+// ============ Customers ============
+export const getCustomers = (filters = {}) => {
+  const queryParams = new URLSearchParams(filters);
+  const endpoint = `${ENDPOINTS.POS.GET_CUSTOMERS}?${queryParams}`;
+  return apiGet(endpoint);
+};
+
+export const getCustomer = (id) => {
+  return apiGet(ENDPOINTS.POS.GET_CUSTOMER(id));
+};
+
+export const createCustomer = (data) => {
+  return apiPost(ENDPOINTS.POS.CREATE_CUSTOMER, data);
+};
+
+export const updateCustomer = (id, data) => {
+  return apiPut(ENDPOINTS.POS.UPDATE_CUSTOMER(id), data);
+};
+
+export const getCustomerOrders = (id) => {
+  return apiGet(ENDPOINTS.POS.GET_CUSTOMER_ORDERS(id));
+};
+
 export default {
   getPosProducts,
   searchProducts,
@@ -120,4 +143,9 @@ export default {
   startShift,
   endShift,
   getShiftSummary,
+  getCustomers,
+  getCustomer,
+  createCustomer,
+  updateCustomer,
+  getCustomerOrders,
 };

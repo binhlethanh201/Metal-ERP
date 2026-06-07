@@ -1,8 +1,8 @@
-/**
+﻿/**
  * CartItem Component - Mục trong giỏ hàng
  */
 
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
 export const CartItem = ({ item, onQuantityChange, onRemove }) => {
   const subtotal = item.price * item.quantity;

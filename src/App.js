@@ -32,6 +32,7 @@ const PosScreen = lazy(() => import('./modules/pos/pages/POSScreen'));
 const CheckoutPage = lazy(() => import('./modules/pos/pages/CheckoutPage'));
 const OrderHistory = lazy(() => import('./modules/pos/pages/OrderHistory'));
 const ShiftManagement = lazy(() => import('./modules/pos/pages/ShiftManagement'));
+const CustomerManagement = lazy(() => import('./modules/pos/pages/CustomerManagement'));
 
 // Forum Module
 const ForumLayout = lazy(() => import('./modules/forum/layouts/ForumLayout'));
@@ -88,6 +89,7 @@ function App() {
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="orders" element={<OrderHistory />} />
               <Route path="shift" element={<ShiftManagement />} />
+              <Route path="customers" element={<CustomerManagement />} />
             </Route>
 
             {/* FORUM */}

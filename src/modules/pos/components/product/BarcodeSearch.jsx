@@ -1,9 +1,9 @@
-/**
+﻿/**
  * BarcodeSearch Component - Tìm kiếm sản phẩm theo barcode
  */
 
 import { useState } from 'react';
-import { Input } from '../../../shared/components/Input';
+import { Input } from '../../../../shared/components/Input';
 
 export const BarcodeSearch = ({ onBarcodeFound, onError }) => {
   const [barcode, setBarcode] = useState('');

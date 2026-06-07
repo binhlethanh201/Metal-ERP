@@ -1,19 +1,27 @@
-/**
+﻿/**
  * Bộ khung Layout dùng chung cho toàn phân hệ bán hàng POS.
  * Tự động đồng bộ Header, Sidebar, cơ chế thông báo và tối ưu không gian hiển thị.
  */
 import React, { useState, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import PosSidebar from '../components/PosSidebar';
-import PosHeader from '../components/PosHeader';
+import PosSidebar from '../components/layout/PosSidebar';
+import PosHeader from '../components/layout/PosHeader';
+import PosFooter from '../components/layout/PosFooter';
 
 const PosLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [search, setSearch] = useState('');
-  const [activeMenu, setActiveMenu] = useState('Bán hàng');
+  const [activeMenu, setActiveMenu] = useState('Máy bán hàng');
   const [notice, setNotice] = useState('');
+  const [quickAddCust, setQuickAddCust] = useState(0);
+  const [drafts, setDrafts] = useState([]);
+  const [footerInfo, setFooterInfo] = useState({
+    orderCode: '---',
+    customer: '---',
+    points: '0 pts',
+  });
   const noticeTimer = useRef(null);
 
   const showNotice = useCallback((message) => {
@@ -24,9 +32,10 @@ const PosLayout = () => {
 
   const handleMenuSelect = (label) => {
     setActiveMenu(label);
-    if (label === 'Bán hàng') navigate('/pos');
+    if (label === 'Máy bán hàng') navigate('/pos');
     else if (label === 'Đơn hàng') navigate('/pos/orders');
-    else if (label === 'Báo cáo') navigate('/pos/shift');
+    else if (label === 'Quản lý ca bán') navigate('/pos/shift');
+    else if (label === 'Khách') navigate('/pos/customers');
     else showNotice(`${label} đang ở giao diện demo`);
   };
 
@@ -53,20 +62,45 @@ const PosLayout = () => {
       <PosHeader
         search={search}
         onSearchChange={setSearch}
-        onBarcodeScan={() => showNotice('Đang mở chế độ quét mã')}
+        onBarcodeScan={() => {
+          navigate('/pos');
+          setTimeout(() => showNotice('Đang mở chế độ quét mã'), 300);
+        }}
         onHistory={() => navigate('/pos/orders')}
-        onQuickAdd={() => showNotice('Đang mở thêm sản phẩm nhanh')}
+        onQuickAdd={() => {
+          navigate('/pos');
+          setTimeout(() => setQuickAddCust((c) => c + 1), 300);
+        }}
       />
 
       {/* Container nội dung thay đổi động */}
       {/* Nếu là màn hình chính thì bóp lề phải pr-[400px] nhường chỗ cho Giỏ hàng, trang phụ thì full width */}
       <main
-        className={`fixed bottom-0 left-[260px] top-16 flex flex-col overflow-hidden bg-[#f7f9fc] p-6 transition-all duration-200 ${
+        className={`fixed bottom-12 left-[260px] top-16 flex flex-col overflow-hidden bg-[#f7f9fc] p-6 transition-all duration-200 ${
           isMainPosScreen ? 'right-[400px]' : 'right-0 overflow-y-auto'
         }`}
       >
-        <Outlet context={{ search, setSearch, showNotice }} />
+        <Outlet
+          context={{
+            search,
+            setSearch,
+            showNotice,
+            quickAddCust,
+            drafts,
+            setDrafts,
+            setFooterInfo,
+          }}
+        />
       </main>
+
+      {/* Footer dung chung toan POS */}
+      <PosFooter
+        orderCode={footerInfo.orderCode}
+        staffName="Nguyễn Văn A"
+        customer={footerInfo.customer}
+        points={footerInfo.points}
+        synced
+      />
     </div>
   );
 };

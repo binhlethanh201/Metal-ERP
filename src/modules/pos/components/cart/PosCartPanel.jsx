@@ -1,5 +1,5 @@
-/** Panel giỏ hàng POS - Danh sách item + số lượng + voucher + tạm tính/VAT/tổng + phương thức TT + nút Thanh toán/Lưu nháp. */
-import Icon from '../../../shared/components/Icon';
+﻿/** Panel giỏ hàng POS - Danh sách item + số lượng + chọn khách hàng + voucher + tạm tính/VAT/tổng + nút Thanh toán/Lưu nháp. */
+import Icon from '../../../../shared/components/Icon';
 const formatCurrency = (v) => `${Math.max(0, v).toLocaleString('vi-VN')}đ`;
 
 const PosCartPanel = ({
@@ -7,8 +7,6 @@ const PosCartPanel = ({
   voucher,
   onVoucherChange,
   onApplyVoucher,
-  paymentMethod,
-  onPaymentMethodChange,
   subtotal,
   discount,
   vat,
@@ -18,14 +16,18 @@ const PosCartPanel = ({
   onSaveDraft,
   onQtyChange,
   onRemoveItem,
+  selectedCustomer,
+  onOpenCustomerPicker,
+  payMethod,
+  onPayMethodChange,
+  isSplitPay,
+  onToggleSplitPay,
 }) => {
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
+    ['credit_card', 'Thẻ'],
     ['account_balance', 'Chuyển khoản'],
-    ['qr_code_2', 'QR Code'],
-    ['credit_card', 'Thẻ ngân hàng'],
   ];
-
   return (
     <aside className="fixed bottom-12 right-0 top-16 z-30 flex w-[400px] flex-col border-l border-slate-200 bg-white shadow-[-4px_0_15px_rgba(0,0,0,0.02)]">
       <div className="flex items-center justify-between border-b border-slate-100 p-4">
@@ -36,6 +38,26 @@ const PosCartPanel = ({
           <Icon name="delete" />
         </button>
       </div>
+
+      {/* Chọn khách hàng */}
+      <button
+        type="button"
+        onClick={onOpenCustomerPicker}
+        className="flex items-center justify-between border-b border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50"
+      >
+        <div className="flex items-center gap-2">
+          <Icon name="person" className="text-slate-400" />
+          {selectedCustomer ? (
+            <div className="text-left">
+              <p className="text-sm font-semibold text-slate-900">{selectedCustomer.name}</p>
+              <p className="text-xs text-slate-400">{selectedCustomer.phone}</p>
+            </div>
+          ) : (
+            <span className="text-sm text-slate-500">Khách lẻ</span>
+          )}
+        </div>
+        <Icon name="chevron_right" className="text-slate-300" />
+      </button>
 
       <div className="custom-scrollbar flex flex-1 flex-col gap-y-4 overflow-y-auto p-4">
         {cart.map((item) => (
@@ -122,17 +144,35 @@ const PosCartPanel = ({
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-2">
+        <div className="mb-4 grid grid-cols-4 gap-2">
           {paymentMethods.map(([icon, method]) => (
             <button
               key={method}
-              onClick={() => onPaymentMethodChange(method)}
-              className={`flex items-center gap-x-2 rounded-lg border p-2 transition-colors active:scale-95 ${paymentMethod === method ? 'border-[#004785] bg-[#004785]/5 text-[#004785]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#004785]'}`}
+              onClick={() => {
+                onToggleSplitPay(false);
+                onPayMethodChange(method);
+              }}
+              className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2.5 transition-all active:scale-95 ${
+                !isSplitPay && payMethod === method
+                  ? 'border-[#004785] bg-blue-50'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
             >
-              <Icon name={icon} className="text-sm" />
-              <span className="text-[10px] font-bold">{method}</span>
+              <Icon name={icon} className="text-lg" />
+              <span className="text-[10px] font-bold text-slate-600">{method}</span>
             </button>
           ))}
+          <button
+            onClick={() => onToggleSplitPay(true)}
+            className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2.5 transition-all active:scale-95 ${
+              isSplitPay
+                ? 'border-[#004785] bg-blue-50'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }`}
+          >
+            <Icon name="add_circle" className="text-lg" />
+            <span className="text-[10px] font-bold text-slate-600">Kết hợp</span>
+          </button>
         </div>
 
         <div className="flex flex-col gap-y-2">

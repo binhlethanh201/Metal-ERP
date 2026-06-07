@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CheckoutPage - Trang thanh toán
  */
 
@@ -6,8 +6,8 @@ import { useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Modal } from '../../../shared/components/Modal';
-import { PaymentBox } from '../components/PaymentBox';
-import { ReceiptPreview } from '../components/ReceiptPreview';
+import { PaymentBox } from '../components/cart/PaymentBox';
+import { ReceiptPreview } from '../components/order/ReceiptPreview';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
 export const CheckoutPage = ({ cartItems = [] }) => {

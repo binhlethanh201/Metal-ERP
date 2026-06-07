@@ -1,18 +1,18 @@
-/** * Sidebar POS - Menu chức năng (Bán hàng, Đơn hàng, Khách, Báo cáo, Cài đặt) + nút Kho hàng.
+﻿/** * Sidebar POS - Menu chức năng (Máy bán hàng, Đơn hàng, Khách, Quản lý ca bán, Cài đặt) + nút Kho hàng.
  * Đã tinh chỉnh cỡ chữ và thêm hiệu ứng giả lập đồng bộ khi chuyển sang phân hệ Tổng kho.
  */
 import React, { useState } from 'react';
-import Icon from '../../../shared/components/Icon';
-import Logo from '../../../shared/components/Logo';
+import Icon from '../../../../shared/components/Icon';
+import Logo from '../../../../shared/components/Logo';
 
 const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
   const [isSwitching, setIsSwitching] = useState(false);
 
   const menuItems = [
-    ['shopping_cart', 'Bán hàng'],
+    ['shopping_cart', 'Máy bán hàng'],
     ['assignment', 'Đơn hàng'],
     ['groups', 'Khách'],
-    ['assessment', 'Báo cáo'],
+    ['assessment', 'Quản lý ca bán'],
     ['settings', 'Cài đặt'],
   ];
 
@@ -46,7 +46,7 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
       <aside className="custom-scrollbar fixed left-0 top-0 z-50 flex h-[calc(100vh-3rem)] w-[260px] flex-col overflow-y-auto border-r border-slate-200 bg-white p-4">
         {/* Khối Logo đồng bộ hệ thống */}
         <div className="mb-8 px-2">
-          <Logo moduleName="Bán Hàng" />
+          <Logo moduleName="Máy bán hàng" />
         </div>
 
         {/* Điều hướng Menu */}

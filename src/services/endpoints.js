@@ -71,6 +71,13 @@ export const ENDPOINTS = {
     START_SHIFT: '/pos/shifts/start',
     END_SHIFT: '/pos/shifts/end',
     GET_SHIFT_SUMMARY: (shiftId) => `/pos/shifts/${shiftId}/summary`,
+
+    // Customers
+    GET_CUSTOMERS: '/pos/customers',
+    GET_CUSTOMER: (id) => `/pos/customers/${id}`,
+    CREATE_CUSTOMER: '/pos/customers',
+    UPDATE_CUSTOMER: (id) => `/pos/customers/${id}`,
+    GET_CUSTOMER_ORDERS: (id) => `/pos/customers/${id}/orders`,
   },
 
   // ============ FORUM (Diễn đàn) ============
