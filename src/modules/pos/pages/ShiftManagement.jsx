@@ -584,14 +584,31 @@ export const ShiftManagement = () => {
               ))}
             </select>
           </div>
-          <Input
-            label="Tiền mặt đầu ca (VNĐ)"
-            type="number"
-            placeholder="Số tiền mặt có sẵn trong ngăn kéo"
-            value={startForm.openingBalance}
-            onChange={(e) => setStartForm((f) => ({ ...f, openingBalance: e.target.value }))}
-            required
-          />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Tiền mặt đầu ca (VNĐ) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Số tiền mặt có sẵn trong ngăn kéo"
+              value={
+                startForm.openingBalance
+                  ? Number(startForm.openingBalance).toLocaleString('vi-VN')
+                  : ''
+              }
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\./g, '');
+                if (raw === '' || /^\d+$/.test(raw)) {
+                  setStartForm((f) => ({ ...f, openingBalance: raw === '' ? '' : raw }));
+                }
+              }}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-lg font-bold focus:border-[#004785] focus:outline-none"
+            />
+            {startForm.openingBalance && Number(startForm.openingBalance) < 100000 && (
+              <p className="mt-1 text-xs text-amber-600">Số dư đầu ca nên từ 100.000đ trở lên</p>
+            )}
+          </div>
           <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
             Bắt đầu lúc{' '}
             <span className="font-semibold">{new Date().toLocaleTimeString('vi-VN')}</span> -{' '}
@@ -708,14 +725,31 @@ export const ShiftManagement = () => {
               Đối chiếu tiền mặt thực tế
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label="Tiền mặt thực tế kiểm đếm (VNĐ)"
-                type="number"
-                placeholder="Nhập số tiền mặt đếm được trong ngăn kéo"
-                value={endForm.actualCashCount}
-                onChange={(e) => setEndForm((f) => ({ ...f, actualCashCount: e.target.value }))}
-                hint="Đếm toàn bộ tiền mặt trong ngăn kéo kể cả tiền lẻ"
-              />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Tiền mặt thực tế kiểm đếm (VNĐ)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Nhập số tiền mặt đếm được trong ngăn kéo"
+                  value={
+                    endForm.actualCashCount
+                      ? Number(endForm.actualCashCount).toLocaleString('vi-VN')
+                      : ''
+                  }
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\./g, '');
+                    if (raw === '' || /^\d+$/.test(raw)) {
+                      setEndForm((f) => ({ ...f, actualCashCount: raw === '' ? '' : raw }));
+                    }
+                  }}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-lg font-bold focus:border-[#004785] focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-slate-400">
+                  Đếm toàn bộ tiền mặt trong ngăn kéo kể cả tiền lẻ
+                </p>
+              </div>
               <div className="rounded-lg border p-4">
                 <p className="text-sm font-medium text-slate-700">Chênh lệch</p>
                 {endForm.actualCashCount ? (
