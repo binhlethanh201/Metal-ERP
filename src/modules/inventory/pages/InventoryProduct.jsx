@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from '../../../shared/router';
 import Icon from '../../../shared/components/Icon';
 import EditProductModal from '../components/product/EditProductModal';
 import ProductFilterSidebar from '../components/product/ProductFilterSidebar';

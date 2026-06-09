@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '../../shared/router';
 import { Phone, Lock, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { loginRequest } from '../../services/authService';
@@ -13,12 +13,17 @@ const LoginPage = () => {
 
   const [formData, setFormData] = useState({ sdt: '', password: '' });
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ sdt: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
     if (error) setError('');
+    if (fieldErrors[name]) {
+      setFieldErrors({ ...fieldErrors, [name]: '' });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -27,6 +32,21 @@ const LoginPage = () => {
 
     setIsLoading(true);
     setError('');
+    setFieldErrors({ sdt: '', password: '' });
+
+    const validationErrors = {};
+    if (!formData.sdt.trim()) {
+      validationErrors.sdt = 'Vui lòng nhập email';
+    }
+    if (!formData.password.trim()) {
+      validationErrors.password = 'Mật khẩu không được để trống';
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await loginRequest({
@@ -90,6 +110,11 @@ const LoginPage = () => {
                 placeholder="Nhập SĐT của bạn"
               />
             </div>
+            {fieldErrors.sdt && (
+              <p className="mt-2 text-sm font-semibold text-red-600" role="alert">
+                {fieldErrors.sdt}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -134,6 +159,11 @@ const LoginPage = () => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {fieldErrors.password && (
+              <p className="mt-2 text-sm font-semibold text-red-600" role="alert">
+                {fieldErrors.password}
+              </p>
+            )}
           </div>
 
           <button
