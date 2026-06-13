@@ -1,77 +1,103 @@
-﻿import { Modal } from '../../../../shared/components/Modal';
+import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
 const handlePrint = (order) => {
-  const printWindow = window.open('', '_blank', 'width=400,height=600');
+  const printWindow = window.open('', '_blank', 'width=420,height=800');
   if (!printWindow) return;
 
   const itemsHtml = order.items
     .map(
       (item) => `
     <tr>
-      <td style="padding:2px 4px;font-size:11px;">${item.name}</td>
-      <td style="padding:2px 4px;text-align:center;font-size:11px;">${item.quantity}</td>
-      <td style="padding:2px 4px;text-align:right;font-size:11px;">${formatCurrency(item.price)}</td>
-      <td style="padding:2px 4px;text-align:right;font-size:11px;">${formatCurrency(item.price * item.quantity)}</td>
-    </tr>
-  `
+      <td class="name">${item.name}</td>
+      <td class="r">${item.quantity} x ${formatCurrency(item.price)}</td>
+      <td class="r">${formatCurrency(item.price * item.quantity)}</td>
+    </tr>`
     )
     .join('');
 
   const payLinesHtml = order.payLines
-    .map(
-      (pl) => `
-    <tr><td style="font-size:11px;">${pl.method}:</td><td style="text-align:right;font-size:11px;">${formatCurrency(pl.amount)}</td></tr>
-  `
-    )
+    .map((pl) => `<tr><td>${pl.method}</td><td class="r">${formatCurrency(pl.amount)}</td></tr>`)
     .join('');
 
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"><title>Hoa don ${order.id}</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 20px; color: #1e293b; }
-      .center { text-align: center; }
-      .title { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
-      .code { font-size: 11px; color: #64748b; margin-bottom: 4px; }
-      .divider { border-top: 1px dashed #cbd5e1; margin: 8px 0; }
-      table { width: 100%; border-collapse: collapse; }
-      th { font-size: 10px; color: #94a3b8; text-transform: uppercase; padding: 2px 4px; }
-      .total-line { font-weight: bold; font-size: 13px; }
-      .footer { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 12px; }
-    </style></head>
-    <body>
-      <div class="center">
-        <p class="title">HÓA ĐƠN BÁN HÀNG</p>
-        <p class="code">Mã: ${order.id}</p>
-        <p class="code">${new Date(order.date).toLocaleString('vi-VN')}</p>
-      </div>
-      <div class="divider"></div>
-      <table>
-        <thead><tr><th style="text-align:left;">Sản phẩm</th><th>SL</th><th style="text-align:right;">Đơn giá</th><th style="text-align:right;">Thành tiền</th></tr></thead>
-        <tbody>${itemsHtml}</tbody>
-      </table>
-      <div class="divider"></div>
-      <table>
-        <tr><td style="font-size:11px;">Tạm tính</td><td style="text-align:right;font-size:11px;">${formatCurrency(order.subtotal)}</td></tr>
-        ${order.discount > 0 ? `<tr><td style="font-size:11px;color:#ef4444;">Giảm giá</td><td style="text-align:right;font-size:11px;color:#ef4444;">-${formatCurrency(order.discount)}</td></tr>` : ''}
-        <tr><td style="font-size:11px;">VAT</td><td style="text-align:right;font-size:11px;">${formatCurrency(order.vat)}</td></tr>
-        <tr class="total-line"><td>TỔNG CỘNG</td><td style="text-align:right;">${formatCurrency(order.total)}</td></tr>
-      </table>
-      <div class="divider"></div>
-      <table>
-        <tr><td style="font-size:11px;">Khách hàng:</td><td style="text-align:right;font-size:11px;">${order.customer}</td></tr>
-        ${payLinesHtml}
-        <tr style="font-weight:bold;color:#16a34a;"><td style="font-size:11px;">Đã thanh toán:</td><td style="text-align:right;font-size:11px;">${formatCurrency(order.totalPaid)}</td></tr>
-        ${order.change > 0 ? `<tr><td style="font-size:11px;color:#d97706;">Tiền thừa:</td><td style="text-align:right;font-size:11px;color:#d97706;">${formatCurrency(order.change)}</td></tr>` : ''}
-      </table>
-      <p class="footer">Cảm ơn quý khách!</p>
-      <script>window.onload=function(){window.print();}</script>
-    </body>
-    </html>
-  `);
+  printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>In hóa đơn ${order.id}</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:14px;
+    color:#000;
+    background:#fff;
+    max-width:320px;
+    margin:0 auto;
+    padding:14px 10px;
+    line-height:1.35;
+  }
+  .c{text-align:center}
+  .r{text-align:right;white-space:nowrap}
+  .name{word-wrap:break-word}
+  h2{font-size:18px;font-weight:700;margin-bottom:2px}
+  .sub{font-size:12px;color:#333;margin-bottom:1px}
+  hr{border:none;border-top:1px dashed #000;margin:8px 0}
+  hr.d{border-top:1px dotted #888}
+  table{width:100%;border-collapse:collapse}
+  td{padding:2px 0;font-size:14px;vertical-align:top}
+  th{font-size:11px;color:#666;text-transform:uppercase;padding:1px 0 4px;font-weight:600}
+  .bold{font-weight:700}
+  .lg{font-size:17px}
+  .thanks{font-size:14px;font-weight:700;margin-top:6px}
+  @media print{
+    body{max-width:100%;width:100%;padding:12px 16px;font-size:12px}
+    td{font-size:12px}
+    h2{font-size:16px}
+    .lg{font-size:15px}
+    .sub{font-size:11px}
+    .thanks{font-size:12px}
+    th{font-size:10px}
+  }
+</style></head>
+<body>
+<div class="c">
+  <h2>MEP SYSTEM</h2>
+  <p class="sub">12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM</p>
+  <p class="sub">ĐT: 028.3999.8888 &bull; MST: 0312345678</p>
+</div>
+<hr>
+<div class="c">
+  <p class="bold lg">HÓA ĐƠN BÁN HÀNG</p>
+  <p style="font-size:13px;color:#555">Mã: ${order.id}</p>
+  <p style="font-size:13px;color:#555">${new Date(order.date).toLocaleString('vi-VN')}</p>
+</div>
+<hr>
+<table>
+  <thead><tr><th style="text-align:left">Mặt hàng</th><th style="text-align:right">SL x Giá</th><th style="text-align:right">T.Tiền</th></tr></thead>
+  ${itemsHtml}
+</table>
+<hr>
+<table>
+  <tr><td>Tạm tính</td><td class="r">${formatCurrency(order.subtotal)}</td></tr>
+  ${order.discount > 0 ? `<tr><td style="color:#c62828;">Giảm giá</td><td class="r" style="color:#c62828;">-${formatCurrency(order.discount)}</td></tr>` : ''}
+  <tr><td>VAT (8%)</td><td class="r">${formatCurrency(order.vat)}</td></tr>
+  <tr class="bold lg"><td>TỔNG CỘNG</td><td class="r">${formatCurrency(order.total)}</td></tr>
+</table>
+<hr>
+<table>
+  <tr><td>Khách hàng</td><td class="r">${order.customer}</td></tr>
+  ${payLinesHtml}
+  <tr class="bold"><td>Đã thanh toán</td><td class="r">${formatCurrency(order.totalPaid)}</td></tr>
+  ${order.change > 0 ? `<tr><td style="color:#e65100;">Tiền thừa</td><td class="r" style="color:#e65100;">${formatCurrency(order.change)}</td></tr>` : ''}
+</table>
+<hr class="d">
+<div class="c">
+  <p class="thanks">Cảm ơn quý khách!</p>
+  <p style="font-size:13px;color:#666">Hẹn gặp lại &#9728;</p>
+</div>
+<script>window.onload=function(){window.print()}</script>
+</body></html>`);
   printWindow.document.close();
 };
 

@@ -132,6 +132,93 @@ const OrderHistory = () => {
   const [timeFilter, setTimeFilter] = useState('all');
   const [selected, setSelected] = useState(null);
 
+  const handlePrintOrder = (order) => {
+    const printWindow = window.open('', '_blank', 'width=420,height=800');
+    if (!printWindow) return;
+
+    const totalPaid = order.payLines.reduce((s, pl) => s + pl.amount, 0);
+
+    const payLinesHtml = order.payLines
+      .map((pl) => `<tr><td>${pl.method}</td><td class="r">${formatCurrency(pl.amount)}</td></tr>`)
+      .join('');
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>In hoa don ${order.id}</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:14px;
+    color:#000;
+    background:#fff;
+    max-width:320px;
+    margin:0 auto;
+    padding:14px 10px;
+    line-height:1.35;
+  }
+  .c{text-align:center}
+  .r{text-align:right;white-space:nowrap}
+  h2{font-size:18px;font-weight:700;margin-bottom:2px}
+  .sub{font-size:12px;color:#333;margin-bottom:1px}
+  hr{border:none;border-top:1px dashed #000;margin:8px 0}
+  hr.d{border-top:1px dotted #888}
+  table{width:100%;border-collapse:collapse}
+  td{padding:2px 0;font-size:14px;vertical-align:top}
+  .bold{font-weight:700}
+  .lg{font-size:17px}
+  .thanks{font-size:14px;font-weight:700;margin-top:6px}
+  @media print{
+    body{max-width:100%;width:100%;padding:12px 16px;font-size:12px}
+    td{font-size:12px}
+    h2{font-size:16px}
+    .lg{font-size:15px}
+    .sub{font-size:11px}
+    .thanks{font-size:12px}
+  }
+</style></head>
+<body>
+<div class="c">
+  <h2>MEP SYSTEM</h2>
+  <p class="sub">12 Nguyen Van Bao, P.4, Go Vap, TP.HCM</p>
+  <p class="sub">DT: 028.3999.8888 &bull; MST: 0312345678</p>
+</div>
+<hr>
+<div class="c">
+  <p class="bold lg">HOA DON BAN HANG</p>
+  <p style="font-size:13px;color:#555">Ma: ${order.id}</p>
+  <p style="font-size:13px;color:#555">${new Date(order.date).toLocaleString('vi-VN')}</p>
+</div>
+<hr>
+<table>
+  <tr><td>So mon</td><td class="r">${order.items} mon</td></tr>
+  <tr><td>Thu ngan</td><td class="r">${order.cashier}</td></tr>
+</table>
+<hr>
+<table>
+  <tr><td>Tam tinh</td><td class="r">${formatCurrency(order.subtotal)}</td></tr>
+  ${order.discount > 0 ? `<tr><td style="color:#c62828;">Giam gia</td><td class="r" style="color:#c62828;">-${formatCurrency(order.discount)}</td></tr>` : ''}
+  <tr><td>VAT (8%)</td><td class="r">${formatCurrency(order.vat)}</td></tr>
+  <tr class="bold lg"><td>TONG CONG</td><td class="r">${formatCurrency(order.total)}</td></tr>
+</table>
+<hr>
+<table>
+  <tr><td>Khach hang</td><td class="r">${order.customer}</td></tr>
+  ${payLinesHtml}
+  <tr class="bold"><td>Da thanh toan</td><td class="r">${formatCurrency(totalPaid)}</td></tr>
+  ${order.change > 0 ? `<tr><td style="color:#e65100;">Tien thua</td><td class="r" style="color:#e65100;">${formatCurrency(order.change)}</td></tr>` : ''}
+</table>
+<hr class="d">
+<div class="c">
+  <p class="thanks">Cam on quy khach!</p>
+  <p style="font-size:13px;color:#666">Hen gap lai &#9728;</p>
+</div>
+<script>window.onload=function(){window.print()}</script>
+</body></html>`);
+    printWindow.document.close();
+  };
+
   const filtered = useMemo(() => {
     let list = MOCK_ORDERS;
     if (search) {
@@ -446,7 +533,7 @@ const OrderHistory = () => {
           </Card>
 
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => window.print()}>
+            <Button variant="outline" className="flex-1" onClick={() => handlePrintOrder(selected)}>
               In hóa đơn
             </Button>
           </div>

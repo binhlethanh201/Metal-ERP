@@ -59,7 +59,7 @@ export const hubConfigs = {
     centerIcon: 'inventory_2',
     actions: [
       { id: 'inv-1', label: 'Nhập kho', icon: 'input', path: '/inventory/import' },
-      { id: 'inv-2', label: 'Điều chuyển từ CH khác', icon: 'store' },
+      { id: 'inv-2', label: 'Dieu chuyen tu CH khac', icon: 'store' },
       { id: 'inv-3', label: 'Xuất kho', icon: 'output', path: '/inventory/goods-issue' },
       { id: 'inv-4', label: 'Chuyển kho', icon: 'swap_horiz' },
       { id: 'inv-5', label: 'Lệnh điều chuyển', icon: 'assignment' },
@@ -77,7 +77,7 @@ export const hubConfigs = {
     centerLabel: 'Đơn hàng',
     centerIcon: 'shopping_cart',
     actions: [
-      { id: 'ord-1', label: 'Tạo đơn hàng', icon: 'add_shopping_cart' },
+      { id: 'ord-1', label: 'Đơn hàng', icon: 'add_shopping_cart', path: '/inventory/orders' },
       { id: 'ord-2', label: 'Xử lý đơn', icon: 'inventory_2' },
       { id: 'ord-3', label: 'Giao hàng', icon: 'local_shipping' },
       { id: 'ord-4', label: 'Đổi trả', icon: 'cached' },

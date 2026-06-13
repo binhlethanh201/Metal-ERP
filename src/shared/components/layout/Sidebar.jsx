@@ -76,11 +76,14 @@ export const Sidebar = () => {
       <div className="mt-auto space-y-2 border-t border-slate-100 pt-4">
         <button className="bg-navy-cta w-full rounded-xl py-3 font-bold text-white transition-all active:scale-95">
           <span className="material-symbols-outlined mr-2 align-middle text-sm">bolt</span>
-          <span className="align-middle">Ho tro AI</span>
+          <span className="align-middle">Hỗ trợ AI</span>
         </button>
-        <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100">
+        <button
+          onClick={() => navigate('/admin')}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100"
+        >
           <span className="material-symbols-outlined">settings</span>
-          <span>Cai dat</span>
+          <span>Cài đặt</span>
         </button>
       </div>
     </aside>

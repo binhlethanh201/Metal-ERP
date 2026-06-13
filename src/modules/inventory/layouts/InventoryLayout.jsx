@@ -38,7 +38,8 @@ const InventoryLayout = () => {
         <main
           className={`flex-1 p-6 transition-all duration-200 ${
             location.pathname === '/inventory/dashboard' ||
-            location.pathname === '/inventory/products'
+            location.pathname === '/inventory/products' ||
+            location.pathname === '/inventory/orders'
               ? 'pt-[128px]'
               : 'pt-20'
           }`}

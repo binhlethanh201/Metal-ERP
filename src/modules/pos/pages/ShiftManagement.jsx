@@ -136,6 +136,7 @@ export const ShiftManagement = () => {
 
   // Form kết thúc ca: chỉ cần nhập tiền mặt thực tế kiểm đếm + ghi chú
   const [endForm, setEndForm] = useState({ actualCashCount: '', note: '' });
+  const [now, setNow] = useState(Date.now());
 
   // ---- Simulation: giả lập đơn hàng đến trong ca đang mở ----
   const addSimulatedOrder = useCallback(() => {
@@ -164,6 +165,13 @@ export const ShiftManagement = () => {
     }
     return () => clearInterval(orderIntervalRef.current);
   }, [isShiftActive, addSimulatedOrder]);
+
+  // Cập nhật đồng hồ thời gian làm việc mỗi giây
+  useEffect(() => {
+    if (!isShiftActive) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isShiftActive]);
 
   // ---- Tổng hợp số liệu từ đơn hàng hệ thống ----
   const shiftSummary = useMemo(() => {
@@ -198,11 +206,12 @@ export const ShiftManagement = () => {
 
   const elapsedStr = useMemo(() => {
     if (!activeShiftStart) return '';
-    const diff = Math.floor((Date.now() - activeShiftStart.getTime()) / 1000);
+    const diff = Math.floor((now - activeShiftStart.getTime()) / 1000);
     const h = Math.floor(diff / 3600);
     const m = Math.floor((diff % 3600) / 60);
-    return `${h}h ${m.toString().padStart(2, '0')}p`;
-  }, [activeShiftStart]);
+    const s = diff % 60;
+    return `${h}h ${m.toString().padStart(2, '0')}p ${s.toString().padStart(2, '0')}s`;
+  }, [activeShiftStart, now]);
 
   // ---- Handlers ----
   const handleOpenStartModal = () => {

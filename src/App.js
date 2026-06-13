@@ -55,6 +55,9 @@ const ForumDiscussion = lazy(() => import('./modules/forum/pages/ForumDiscussion
 const GoodsIssueList = lazy(() => import('./modules/inventory/pages/GoodsIssueList'));
 const GoodsIssueCreate = lazy(() => import('./modules/inventory/pages/GoodsIssueCreate'));
 
+// Order Management - part of Inventory module
+const OrderList = lazy(() => import('./modules/inventory/pages/OrderList'));
+
 // Admin
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
@@ -122,6 +125,7 @@ function App() {
               <Route path="inventory-count" element={<InventoryCountList />} />
               <Route path="goods-issue" element={<GoodsIssueList />} />
               <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
+              <Route path="orders" element={<OrderList />} />
             </Route>
 
             {/* ADMIN */}

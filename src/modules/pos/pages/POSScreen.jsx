@@ -50,7 +50,7 @@ const POSScreen = () => {
   const [showCustModal, setShowCustModal] = useState(false);
   const [showQuickAddCust, setShowQuickAddCust] = useState(false);
   const [isSplitPay, setIsSplitPay] = useState(false);
-  const prevQuickAdd = useRef(0);
+  const prevQuickAdd = useRef(quickAddCust);
 
   const { products: inventoryProducts } = useProductList();
   const posProducts = useMemo(() => inventoryProducts.map(mapToPosProduct), [inventoryProducts]);
