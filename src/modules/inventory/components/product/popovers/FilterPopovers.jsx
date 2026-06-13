@@ -1,5 +1,5 @@
 /**
- * FilterPopovers - DatePickerPopup + QuickRangePopover dÃ¹ng chung cho ProductFilterSidebar.
+ * FilterPopovers - DatePickerPopup + QuickRangePopover dùng chung cho ProductFilterSidebar.
  */
 import Icon from '../../../../../shared/components/Icon';
 
@@ -7,7 +7,7 @@ export const DatePickerPopup = ({ onCancel, onApply }) => (
   <div className="absolute left-[calc(100%+10px)] top-14 z-30 w-[620px] rounded-xl border border-slate-200 bg-white shadow-2xl">
     <div className="px-4 pb-3 pt-4">
       <p className="text-sm text-slate-500">
-        Tá»« ngÃ y: <span className="font-semibold text-slate-800">17/05/2026</span> - Äáº¿n ngÃ y:{' '}
+        Từ ngày: <span className="font-semibold text-slate-800">17/05/2026</span> - Đến ngày:{' '}
         <span className="font-semibold text-slate-800">17/05/2026</span>
       </p>
       <div className="mt-4 grid grid-cols-2 gap-4">
@@ -20,7 +20,7 @@ export const DatePickerPopup = ({ onCancel, onApply }) => (
               >
                 <Icon name="chevron_left" className="text-[16px]" />
               </button>
-              <p className="text-lg text-slate-700">ThÃ¡ng 5 2026</p>
+              <p className="text-lg text-slate-700">Tháng 5 2026</p>
               <button
                 type="button"
                 className="rounded-lg border border-slate-300 p-1 text-slate-500"
@@ -61,7 +61,7 @@ export const DatePickerPopup = ({ onCancel, onApply }) => (
     </div>
     <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
       <button type="button" className="text-base font-semibold text-blue-600" onClick={onCancel}>
-        HÃ´m nay
+        Hôm nay
       </button>
       <div className="flex items-center gap-2">
         <button
@@ -69,14 +69,14 @@ export const DatePickerPopup = ({ onCancel, onApply }) => (
           className="rounded-lg border border-slate-300 px-4 py-1.5 text-base font-semibold text-slate-600"
           onClick={onCancel}
         >
-          Bá» qua
+          Bỏ qua
         </button>
         <button
           type="button"
           className="rounded-lg bg-blue-600 px-4 py-1.5 text-base font-semibold text-white"
           onClick={onApply}
         >
-          Ãp dá»¥ng
+          Áp dụng
         </button>
       </div>
     </div>
@@ -113,7 +113,7 @@ export const QuickRangePopover = ({ ranges, onSelect, onReset }) => (
         className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-bold text-white"
         onClick={onReset}
       >
-        ToÃ n thá»i gian
+        Toàn thời gian
       </button>
     </div>
   </div>
