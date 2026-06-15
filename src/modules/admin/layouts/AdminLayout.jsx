@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import Icon from '../../../shared/components/Icon';
@@ -7,9 +7,13 @@ import Logo from '../../../shared/components/Logo';
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  // Giả định useAuth có cung cấp hàm logout
+  const { user, logout } = useAuth();
   const [currentTime, setCurrentTime] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
+  // Xử lý đồng hồ thời gian thực
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -20,52 +24,71 @@ const AdminLayout = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Xử lý click ra ngoài để đóng dropdown profile
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    if (logout) logout();
+    navigate('/login');
+  };
+
   const MENU_SECTIONS = [
     {
-      title: 'TỔNG QUAN HỆ THỐNG',
-      items: [{ label: 'Dashboard chung', path: '/admin', badge: null, icon: 'layout_dashboard' }],
-    },
-    {
-      title: 'VẬN HÀNH & CỘNG ĐỒNG',
+      title: 'TỔNG QUAN',
       items: [
-        { label: 'Cửa hàng (Tenants)', path: '/admin/users', badge: null, icon: 'users' },
-        { label: 'Kiểm duyệt B2B', path: '/admin/moderation', badge: '12', icon: 'shield_check' },
+        { label: 'Dashboard hệ thống', path: '/admin', badge: null, icon: 'layout_dashboard' },
       ],
     },
     {
-      title: 'TÀI CHÍNH',
-      items: [
-        { label: 'Doanh thu & Gói cước', path: '/admin/billing', badge: null, icon: 'credit_card' },
-      ],
+      title: 'TÀI KHOẢN & PHÂN QUYỀN',
+      items: [{ label: 'Quản lý Người dùng', path: '/admin/users', badge: null, icon: 'users' }],
     },
     {
-      title: 'DỮ LIỆU & CẤU HÌNH',
+      title: 'CỘNG ĐỒNG & NỘI DUNG',
       items: [
-        { label: 'Cây danh mục Master', path: '/admin/master-data', badge: null, icon: 'database' },
+        { label: 'Cây danh mục', path: '/admin/categories', badge: null, icon: 'folder_tree' },
         {
-          label: 'Cài đặt nền tảng',
-          path: '/admin/settings',
-          badge: null,
-          icon: 'sliders_horizontal',
+          label: 'Kiểm duyệt bài viết',
+          path: '/admin/moderation',
+          badge: '5',
+          icon: 'shield_alert',
         },
+      ],
+    },
+    {
+      title: 'VẬN HÀNH & HỆ THỐNG',
+      items: [
+        {
+          label: 'Thông báo hệ thống',
+          path: '/admin/notifications',
+          badge: null,
+          icon: 'bell_ring',
+        },
+        { label: 'Nhật ký máy chủ (Log)', path: '/admin/logs', badge: null, icon: 'terminal' },
       ],
     },
   ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F1F5F9] font-sans text-slate-900 antialiased">
-      {/* SIDEBAR TRÁI - CHUYỂN SANG NỀN SÁNG ĐỂ TRÁNH GÂY MỎI MẮT KHI ĐIỀU TIẾT */}
-      <aside className="z-50 flex w-64 shrink-0 flex-col border-r border-slate-300 bg-[#F8FAFC]">
-        {/* LOGO AREA KHÍT KHAO */}
-        <div className="flex h-14 items-center gap-2.5 border-b border-slate-300 bg-white px-4">
+    <div className="flex h-screen w-screen overflow-hidden bg-surface-container-low font-sans text-on-surface antialiased">
+      {/* LEFT SIDEBAR */}
+      <aside className="z-50 flex w-64 shrink-0 flex-col border-r border-outline-variant bg-surface-container-lowest">
+        <div className="flex h-14 items-center gap-2.5 border-b border-outline-variant bg-surface-container-lowest px-4">
           <Logo moduleName="Administrator" />
         </div>
 
-        {/* HỆ THỐNG MENU ĐIỀU HƯỚNG SÁNG SỦA, RÕ CHỮ */}
         <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto py-4">
           {MENU_SECTIONS.map((section, idx) => (
             <div key={idx}>
-              <h3 className="mb-2 px-4 font-sans text-[10px] font-black uppercase tracking-wider text-slate-400">
+              <h3 className="mb-2 px-4 font-sans text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
                 {section.title}
               </h3>
               <ul className="space-y-0.5 px-2">
@@ -75,24 +98,24 @@ const AdminLayout = () => {
                     <li key={item.path}>
                       <button
                         onClick={() => navigate(item.path)}
-                        className={`group flex w-full items-center justify-between rounded-[4px] px-3 py-2 text-xs font-bold transition-all ${
+                        className={`group flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-bold transition-all ${
                           isActive
-                            ? 'border-l-4 border-l-[#004785] bg-[#0F172A] text-white shadow-sm'
-                            : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                            ? 'bg-primary text-on-primary shadow-sm'
+                            : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <span
                             className={
-                              isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'
+                              isActive ? 'text-on-primary' : 'text-outline group-hover:text-primary'
                             }
                           >
-                            <Icon name={item.icon} size={14} />
+                            <Icon name={item.icon} size={16} />
                           </span>
                           <span>{item.label}</span>
                         </div>
                         {item.badge && (
-                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-[2px] bg-[#9A1616] px-1 text-[9px] font-black text-white">
+                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-sm bg-error px-1 text-[9px] font-black text-on-error">
                             {item.badge}
                           </span>
                         )}
@@ -104,55 +127,70 @@ const AdminLayout = () => {
             </div>
           ))}
         </div>
-
-        {/* CHÂN SIDEBAR CHỨA PROFILE ADMIN */}
-        <div className="flex items-center gap-3 border-t border-slate-300 bg-white p-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border border-slate-300 bg-slate-100 font-sans text-xs font-bold text-slate-800">
-            {user?.name?.charAt(0) || 'A'}
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="block truncate text-xs font-bold leading-none text-slate-800">
-              {user?.name || ' Admin'}
-            </span>
-            <span className="mt-1 block truncate font-sans text-[9px] font-bold uppercase text-slate-400">
-              Quyền: Tổng quản trị
-            </span>
-          </div>
-        </div>
       </aside>
 
-      {/* KHU VỰC BÊN PHẢI: TOPBAR VÀ KHÔNG GIAN HIỂN THỊ */}
+      {/* TOPBAR */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* TOPBAR PHẲNG MÀU TRẮNG ĐỒNG BỘ ĐỘ CAO H-14 */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-300 bg-white px-6">
-          <div className="w-full max-w-xl">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <Icon name="search" size={14} />
-              </span>
-              <input
-                type="text"
-                placeholder="Tra cứu mã đại lý, log server, hóa đơn tài chính..."
-                className="w-full rounded-[4px] border border-slate-300 bg-slate-50 px-3 py-1.5 pl-9 text-xs font-semibold text-slate-800 outline-none transition-all focus:border-slate-500 focus:bg-white"
-              />
-            </div>
-          </div>
-
-          {/* Tiện ích thời gian thực bên phải */}
+        <header className="flex h-14 shrink-0 items-center justify-end border-b border-outline-variant bg-surface-container-lowest px-6">
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 rounded-[4px] border border-slate-200 bg-slate-100 px-2.5 py-1 font-mono text-xs font-bold text-slate-600">
-              <Icon name="clock" size={12} /> {currentTime || '00:00:00'}
+            <span className="flex items-center gap-1.5 rounded-md border border-outline-variant bg-surface-container-lowest px-2.5 py-1 text-xs font-bold text-on-surface-variant">
+              <Icon name="clock" size={14} /> {currentTime || '00:00:00'}
             </span>
 
-            <button className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] border border-slate-300 bg-white text-slate-500 hover:bg-slate-50">
-              <Icon name="bell" size={14} />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#9A1616]" />
+            <button className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-high">
+              <Icon name="bell" size={16} />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-error" />
             </button>
+
+            <div className="h-6 w-px bg-outline-variant"></div>
+
+            {/*  PROFILE DROPDOWN */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest p-1 pr-2 transition-colors hover:bg-surface-container-high"
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded bg-primary-container text-xs font-bold text-on-primary-container">
+                  {user?.name?.charAt(0) || 'A'}
+                </div>
+                <span className="text-xs font-bold text-on-surface">{user?.name || 'Admin'}</span>
+                <span className="text-outline">
+                  <Icon name="chevron_down" size={14} />
+                </span>
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-md border border-outline-variant bg-surface-container-lowest shadow-lg">
+                  <div className="border-b border-surface-container-high px-4 py-3">
+                    <p className="text-xs font-bold text-on-surface">{user?.name || 'Admin'}</p>
+                    <p className="truncate text-[10px] font-semibold text-on-surface-variant">
+                      {user?.email || 'admin@mep.system'}
+                    </p>
+                  </div>
+                  <div className="p-1">
+                    <button
+                      onClick={() => {
+                        navigate('/change-password');
+                        setIsProfileOpen(false);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-container-low"
+                    >
+                      <Icon name="key" size={14} /> Đổi mật khẩu
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-bold text-error hover:bg-error-container/50"
+                    >
+                      <Icon name="log_out" size={14} /> Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        {/* VÙNG NỘI DUNG CHÍNH NỀN SLATE 100 DỊU MẮT */}
-        <main className="flex-1 overflow-y-auto bg-[#F1F5F9] p-6">
+        <main className="flex-1 overflow-y-auto bg-surface-container-low p-6">
           <Outlet />
         </main>
       </div>

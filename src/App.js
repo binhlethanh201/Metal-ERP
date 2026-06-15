@@ -58,13 +58,14 @@ const GoodsIssueCreate = lazy(() => import('./modules/inventory/pages/GoodsIssue
 // Order Management - part of Inventory module
 const OrderList = lazy(() => import('./modules/inventory/pages/OrderList'));
 
-// Admin
+// Admin Module
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
-const UserManagement = lazy(() => import('./modules/admin/pages/UserManagement'));
-const Moderation = lazy(() => import('./modules/admin/pages/Moderation'));
-const Billing = lazy(() => import('./modules/admin/pages/Billing'));
-const MasterData = lazy(() => import('./modules/admin/pages/MasterData'));
+const UserAccountsManagement = lazy(() => import('./modules/admin/pages/UserAccountsManagement'));
+const CategoryManagement = lazy(() => import('./modules/admin/pages/CategoryManagement'));
+const PostModeration = lazy(() => import('./modules/admin/pages/PostModeration'));
+const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotifications'));
+const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
 
 function App() {
   const LoadingSpinner = (
@@ -131,10 +132,11 @@ function App() {
             {/* ADMIN */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<UserManagement />} />
-              <Route path="moderation" element={<Moderation />} />
-              <Route path="billing" element={<Billing />} />
-              <Route path="master-data" element={<MasterData />} />
+              <Route path="users" element={<UserAccountsManagement />} />
+              <Route path="categories" element={<CategoryManagement />} />
+              <Route path="moderation" element={<PostModeration />} />
+              <Route path="notifications" element={<SystemNotifications />} />
+              <Route path="logs" element={<SystemLog />} />
             </Route>
           </Route>
 
