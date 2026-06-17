@@ -1,16 +1,42 @@
 /**
  * Topbar Tổng kho nâng cấp - Cấu trúc 2 tầng thông minh tự động điều chỉnh theo trang.
- * Đã thêm hiệu ứng giả lập đồng bộ khi chuyển sang phân hệ POS.
+ * Tích hợp Phân quyền UI (Role-based) và Dropdown Đăng xuất.
  */
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import { horizontalNav } from '../../data/inventoryPageData';
+import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth(); // Hook lấy thông tin user và hàm logout
+
   const [isSwitching, setIsSwitching] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Xử lý click ra ngoài để đóng dropdown avatar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // --- LOGIC PHÂN QUYỀN HIỂN THỊ ---
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
+  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+
+  // Xử lý Đăng xuất
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   // Hiển thị Tầng 2 ở trang Dashboard và Products
   const shouldShowSecondaryNav =
@@ -22,13 +48,12 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
     location.pathname.startsWith('/inventory/inventory-count') ||
     location.pathname.startsWith('/inventory/orders');
 
-  // Hàm xử lý hiệu ứng chuyển vùng sang POS
   const handleSwitchToPos = () => {
     setIsSwitching(true);
     setTimeout(() => {
       setIsSwitching(false);
       navigate('/pos');
-    }, 1800); // Tạo độ trễ 1.8 giây chuẩn trải nghiệm
+    }, 1800);
   };
 
   return (
@@ -62,16 +87,19 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
-              <button
-                type="button"
-                onClick={handleSwitchToPos}
-                className="flex items-center gap-1 rounded-lg border border-[#004785] px-4 py-2 text-sm font-bold text-[#004785] transition-all hover:bg-blue-50 active:scale-95"
-              >
-                <Icon name="point_of_sale" className="text-sm" />
-                <span>Máy bán hàng</span>
-              </button>
-            </div>
+            {/* CHỈ HIỂN THỊ NÚT POS NẾU LÀ OWNER */}
+            {isOwner && (
+              <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
+                <button
+                  type="button"
+                  onClick={handleSwitchToPos}
+                  className="flex items-center gap-1 rounded-lg border border-[#004785] px-4 py-2 text-sm font-bold text-[#004785] transition-all hover:bg-blue-50 active:scale-95"
+                >
+                  <Icon name="point_of_sale" className="text-sm" />
+                  <span>Máy bán hàng</span>
+                </button>
+              </div>
+            )}
 
             <div className="flex items-center gap-3">
               <button
@@ -81,12 +109,41 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
                 <Icon name="notifications" />
                 <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-error" />
               </button>
-              <div className="flex items-center gap-3 pl-2">
-                <img
-                  alt="User Profile Avatar"
-                  className="h-10 w-10 rounded-lg border border-slate-200 object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFo3D0VhkjDp6wYi7A3G3rtT-HeBeV9_Irw1MncCf1By9FiWAzrrW0Y1o_eR0BIqouI4JLwKyzpxHiyhHrOxhP1gc2OrbrKeKagYERgHPSLqIeqXh7iopYQYZFpQ3HRo32q_gQG4t9lU6JywKA9r6XbGmBU0YhjbyNzuCTVz8W4Q6FKwogP_fwDpM6p_EySDffHLbP5e-WRjoesCtXL6OJytbDZySk5VBmPYWb9eQM2XahiNm9R3AHtYeKbU3QQiT82T6wAgP0MXo"
-                />
+
+              {/* DROPDOWN AVATAR */}
+              <div className="relative pl-2" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-3 transition-transform focus:outline-none active:scale-95"
+                >
+                  <img
+                    alt="User Profile Avatar"
+                    className="h-10 w-10 rounded-lg border border-slate-200 object-cover shadow-sm"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFo3D0VhkjDp6wYi7A3G3rtT-HeBeV9_Irw1MncCf1By9FiWAzrrW0Y1o_eR0BIqouI4JLwKyzpxHiyhHrOxhP1gc2OrbrKeKagYERgHPSLqIeqXh7iopYQYZFpQ3HRo32q_gQG4t9lU6JywKA9r6XbGmBU0YhjbyNzuCTVz8W4Q6FKwogP_fwDpM6p_EySDffHLbP5e-WRjoesCtXL6OJytbDZySk5VBmPYWb9eQM2XahiNm9R3AHtYeKbU3QQiT82T6wAgP0MXo"
+                  />
+                </button>
+
+                {/* MENU DROPDOWN */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
+                    <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+                      <p className="text-sm font-bold text-slate-800">
+                        {user?.fullName || 'Người dùng'}
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] font-semibold uppercase text-slate-500">
+                        {userRoles.join(', ')}
+                      </p>
+                    </div>
+                    <div className="p-1">
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
+                      >
+                        <Icon name="log_out" size={16} /> Đăng xuất
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
