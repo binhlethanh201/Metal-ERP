@@ -1,12 +1,18 @@
-﻿/** * Sidebar POS - Menu chức năng (Máy bán hàng, Đơn hàng, Khách, Quản lý ca bán, Cài đặt) + nút Kho hàng.
- * Đã tinh chỉnh cỡ chữ và thêm hiệu ứng giả lập đồng bộ khi chuyển sang phân hệ Tổng kho.
+/**
+ * Sidebar POS nâng cấp - Tích hợp phân quyền (Chỉ Owner mới thấy nút Kho hàng).
  */
 import React, { useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import Logo from '../../../../shared/components/Logo';
+import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
   const [isSwitching, setIsSwitching] = useState(false);
+  const { user } = useAuth(); // Hook lấy thông tin user
+
+  // --- LOGIC PHÂN QUYỀN HIỂN THỊ ---
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
+  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
 
   const menuItems = [
     ['shopping_cart', 'Máy bán hàng'],
@@ -21,13 +27,12 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
     setIsSwitching(true);
     setTimeout(() => {
       setIsSwitching(false);
-      onNavigateWarehouse(); // Thực thi hàm điều hướng gốc truyền từ Layout
+      onNavigateWarehouse();
     }, 1800);
   };
 
   return (
     <>
-      {/* MÀN HÌNH CHUYỂN VÙNG VỀ TỔNG KHO */}
       {isSwitching && (
         <div className="animate-fadeIn fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm">
           <div className="flex max-w-sm flex-col items-center rounded-2xl bg-white p-8 text-center shadow-2xl">
@@ -44,12 +49,10 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
       )}
 
       <aside className="custom-scrollbar fixed left-0 top-0 z-50 flex h-[calc(100vh-3rem)] w-[260px] flex-col overflow-y-auto border-r border-slate-200 bg-white p-4">
-        {/* Khối Logo đồng bộ hệ thống */}
         <div className="mb-8 px-2">
           <Logo moduleName="Máy bán hàng" />
         </div>
 
-        {/* Điều hướng Menu */}
         <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
           {menuItems.map(([icon, label]) => {
             const active = activeMenu === label;
@@ -71,17 +74,19 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
           })}
         </nav>
 
-        {/* Khối chân trang giữ nguyên nút Kho hàng */}
-        <div className="mt-auto space-y-2 border-t border-slate-100 pt-4">
-          <button
-            type="button"
-            onClick={handleSwitchToWarehouse}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#004785] py-3 font-bold text-white transition-all active:scale-95"
-          >
-            <Icon name="inventory" className="text-sm" />
-            <span>Kho hàng</span>
-          </button>
-        </div>
+        {/* CHỈ HIỂN THỊ NÚT KHO HÀNG NẾU LÀ OWNER */}
+        {isOwner && (
+          <div className="mt-auto space-y-2 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={handleSwitchToWarehouse}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#004785] py-3 font-bold text-white transition-all active:scale-95"
+            >
+              <Icon name="inventory" className="text-sm" />
+              <span>Kho hàng</span>
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );

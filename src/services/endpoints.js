@@ -111,13 +111,13 @@ export const ENDPOINTS = {
 
   // ============ AUTH (Xác thực) ============
   AUTH: {
-    LOGIN: '/api/auth/login',
-    LOGOUT: '/api/auth/logout',
-    REGISTER_START: '/api/auth/register/start',
-    REGISTER_VERIFY: '/api/auth/register/verify',
-    REFRESH_TOKEN: '/api/auth/refresh',
-    GET_PROFILE: '/api/auth/profile',
-    UPDATE_PROFILE: '/api/auth/profile',
+    LOGIN: '/login',
+    LOGOUT: '/logout',
+    REGISTER_START: '/register/start',
+    REGISTER_VERIFY: '/register/verify',
+    REFRESH_TOKEN: '/refresh',
+    GET_PROFILE: '/profile',
+    UPDATE_PROFILE: '/profile',
   },
 
   // ============ GOODS ISSUE (Xuất Kho) ============

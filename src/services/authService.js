@@ -1,7 +1,5 @@
 /**
  * Auth Service - Xử lý đăng nhập/đăng ký qua API backend.
- * LƯU Ý: Auth dùng authRequest riêng thay vì apiClient vì auth URL có thể khác
- * với API_BASE_URL chính (REACT_APP_AUTH_URL vs REACT_APP_API_URL).
  */
 
 import ENDPOINTS from './endpoints';
@@ -12,26 +10,30 @@ const firstDefined = (...values) =>
 
 const normalizeBaseUrl = (value) => {
   if (!value) return '';
-
   return String(value)
     .replace(/\/index\.html?$/i, '')
     .replace(/\/$/, '');
 };
 
 const getAuthBaseUrl = () => {
-  const authUrl = normalizeBaseUrl(process.env.REACT_APP_AUTH_URL);
-  if (authUrl) return authUrl;
+  // Lấy domain gốc từ .env (Ví dụ: http://localhost:5100)
+  const envUrl =
+    normalizeBaseUrl(process.env.REACT_APP_AUTH_URL) ||
+    normalizeBaseUrl(process.env.REACT_APP_API_URL) ||
+    'http://localhost:5100';
 
-  const apiUrl = normalizeBaseUrl(process.env.REACT_APP_API_URL);
-  if (apiUrl) return apiUrl;
+  // Xóa bỏ /api hoặc /api/Auth ở cuối nếu lỡ nhập vào .env để lấy domain thuần
+  const cleanDomain = envUrl.replace(/\/api(\/Auth)?$/, '');
 
-  return 'http://localhost:3000/api';
+  // Tự động nối /api/Auth cho toàn bộ các request liên quan đến Authentication
+  return `${cleanDomain}/api/Auth`;
 };
 
 const authRequest = async (endpoint, body) => {
   const url = `${getAuthBaseUrl()}${endpoint}`;
+
   const response = await fetch(url, {
-    method: 'POST',
+    method: 'POST', // Đăng nhập, Đăng ký (Start/Verify) đều dùng POST
     headers: {
       'Content-Type': 'application/json',
     },
@@ -65,6 +67,7 @@ const normalizeLoginResponse = (response) => {
       response?.data,
       response?.result
     ) || null;
+
   const token = firstDefined(
     response?.accessToken,
     response?.token,
@@ -79,25 +82,17 @@ const normalizeLoginResponse = (response) => {
 
   let finalUser = user;
 
-  // If API returned top-level user fields (e.g., PhoneNumber, phoneNumber, userId, role),
-  // construct a user object to keep the client expectations consistent.
   if (!finalUser && response && typeof response === 'object') {
     const { accessToken, token: tkn, jwt, Password, PasswordHash, message, ...rest } = response;
-
-    // rest now contains non-token fields like phoneNumber, userId, role, branchId, etc.
     if (Object.keys(rest).length) {
       finalUser = { ...rest };
     }
   }
 
-  // Normalize common field names
   if (finalUser) {
-    // phoneNumber -> phone / sdt
     if (finalUser.phoneNumber && !finalUser.phone) finalUser.phone = finalUser.phoneNumber;
     if (finalUser.PhoneNumber && !finalUser.phone) finalUser.phone = finalUser.PhoneNumber;
-    // ensure email exists (some client logic expects it)
     if (!finalUser.email) finalUser.email = finalUser.phone || finalUser.username || '';
-    // ensure role exists
     if (!finalUser.role) finalUser.role = finalUser.roleId || finalUser.role || 'store_owner';
   }
 
@@ -110,18 +105,16 @@ const normalizeLoginResponse = (response) => {
 
 export const loginRequest = async (credentials) => {
   try {
-    // Normalize payload to backend expectations. Some backends expect
-    // PascalCase keys like { PhoneNumber, Password } (see Swagger screenshot).
+    // API mới yêu cầu truyền "email" thay vì "PhoneNumber"
     const payload = {};
 
-    if (credentials.sdt || credentials.phone) {
-      payload.PhoneNumber = credentials.sdt || credentials.phone;
+    if (credentials.email || credentials.username) {
+      payload.email = credentials.email || credentials.username;
     }
     if (credentials.password) {
-      payload.Password = credentials.password;
+      payload.password = credentials.password;
     }
 
-    // fallback to original keys if nothing mapped
     const bodyToSend = Object.keys(payload).length ? payload : credentials;
 
     const response = await authRequest(ENDPOINTS.AUTH.LOGIN, bodyToSend);
@@ -133,14 +126,13 @@ export const loginRequest = async (credentials) => {
 
     return normalized;
   } catch (error) {
+    // Giữ lại cơ chế fallback mock data khi API chưa sẵn sàng (Status 404)
     if (error?.status !== 404) {
       throw error;
     }
 
-    const lookup = credentials.sdt || credentials.phone || credentials.email || '';
-
+    const lookup = credentials.email || credentials.phone || credentials.username || '';
     const foundUser = MOCK_USERS.find((user) => {
-      // allow fallback lookup by email or phone-like value provided by UI
       return (
         ((user.email && user.email === lookup) || (user.phone && user.phone === lookup)) &&
         user.password === credentials.password
@@ -148,25 +140,24 @@ export const loginRequest = async (credentials) => {
     });
 
     if (!foundUser) {
-      throw new Error('Backend chưa có auth API và email/mật khẩu không khớp dữ liệu mẫu');
+      throw new Error('Tài khoản hoặc mật khẩu không chính xác.');
     }
 
-    const fakeToken = `mock_token_${Date.now()}`;
-    const { password, ...userInfo } = foundUser;
-
     return {
-      user: userInfo,
-      token: fakeToken,
+      user: { ...foundUser },
+      token: `mock_token_${Date.now()}`,
       raw: { fallback: true },
     };
   }
 };
 
 export const registerStartRequest = async (payload) => {
+  // Gửi đúng payload { email } theo API Doc
   return authRequest(ENDPOINTS.AUTH.REGISTER_START, payload);
 };
 
 export const registerVerifyRequest = async (payload) => {
+  // Gửi đúng payload { email, otpCode, password, fullName, branchName }
   return authRequest(ENDPOINTS.AUTH.REGISTER_VERIFY, payload);
 };
 

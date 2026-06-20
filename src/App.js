@@ -4,6 +4,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 // Layouts
 import PrivateRoute from './shared/components/layout/PrivateRoute';
 
+//Timeout
+import IdleTimeout from './shared/components/auth/IdleTimeout';
+
 // Static Pages
 import LandingPage from './pages/LandingPage';
 import NotFound from './pages/errors/NotFound';
@@ -79,24 +82,17 @@ function App() {
 
   return (
     <BrowserRouter>
+      <IdleTimeout timeoutMinutes={30} />
       <Suspense fallback={LoadingSpinner}>
         <Routes>
-          {/* HOMEPAGE */}
+          {/* PUBLIC ROUTE */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
+          {/* PRIVATE & PROTECTED ROUTES */}
+          {/* MODULE FORUM */}
           <Route element={<PrivateRoute />}>
-            {/* POS */}
-            <Route path="/pos" element={<PosLayout />}>
-              <Route index element={<PosScreen />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="orders" element={<OrderHistory />} />
-              <Route path="shift" element={<ShiftManagement />} />
-              <Route path="customers" element={<CustomerManagement />} />
-            </Route>
-
-            {/* FORUM */}
             <Route path="/forum" element={<ForumLayout />}>
               <Route index element={<ForumHome />} />
               <Route path="post/:id" element={<PostDetail />} />
@@ -113,8 +109,21 @@ function App() {
               <Route path="import-suggest" element={<ForumImportSuggest />} />
               <Route path="profile" element={<ForumProfile />} />
             </Route>
+          </Route>
 
-            {/* INVENTORY */}
+          {/* MODULE POS */}
+          <Route element={<PrivateRoute allowedRoles={['Owner', 'SalesStaff']} />}>
+            <Route path="/pos" element={<PosLayout />}>
+              <Route index element={<PosScreen />} />
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="orders" element={<OrderHistory />} />
+              <Route path="shift" element={<ShiftManagement />} />
+              <Route path="customers" element={<CustomerManagement />} />
+            </Route>
+          </Route>
+
+          {/*  MODULE INVENTORY */}
+          <Route element={<PrivateRoute allowedRoles={['Owner', 'InventoryStaff']} />}>
             <Route path="/inventory" element={<InventoryLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<InventoryDashboard />} />
@@ -128,8 +137,10 @@ function App() {
               <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
               <Route path="orders" element={<OrderList />} />
             </Route>
+          </Route>
 
-            {/* ADMIN */}
+          {/* MODULE ADMIN  */}
+          <Route element={<PrivateRoute allowedRoles={['Admin']} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UserAccountsManagement />} />
@@ -140,7 +151,7 @@ function App() {
             </Route>
           </Route>
 
-          {/* ERROR */}
+          {/* CÁC ROUTE LỖI */}
           <Route path="/403" element={<AccessDenied />} />
           <Route path="/500" element={<ServerError />} />
           <Route path="*" element={<NotFound />} />
