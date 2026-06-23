@@ -4,6 +4,21 @@
  */
 
 export const ENDPOINTS = {
+  // ============ OWNER (Quản lý) ============
+  OWNER: {
+    // Branches
+    BRANCHES: '/api/owner/branches',
+    BRANCH_DETAIL: (id) => `/api/owner/branches/${id}`,
+    BRANCH_HISTORY: (id) => `/api/owner/branches/${id}/history`,
+
+    // Staffs
+    STAFFS: '/api/owner/staffs',
+    STAFF_DETAIL: (id) => `/api/owner/staffs/${id}`,
+    STAFF_ASSIGN_BRANCH: (id) => `/api/owner/staffs/${id}/assign-branch`,
+    STAFF_UNASSIGN_BRANCH: (id, branchId) => `/api/owner/staffs/${id}/unassign-branch/${branchId}`,
+    STAFF_TOGGLE_STATUS: (id) => `/api/owner/staffs/${id}/toggle-status`,
+  },
+
   // ============ INVENTORY (Tổng kho) ============
   INVENTORY: {
     // Dashboard

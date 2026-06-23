@@ -28,6 +28,11 @@ const InventorySummaryReport = lazy(
   () => import('./modules/inventory/pages/InventorySummaryReport')
 );
 const InventoryCountList = lazy(() => import('./modules/inventory/pages/InventoryCountList'));
+// Goods Issue (Xuat Kho) - part of Inventory module
+const GoodsIssueList = lazy(() => import('./modules/inventory/pages/GoodsIssueList'));
+const GoodsIssueCreate = lazy(() => import('./modules/inventory/pages/GoodsIssueCreate'));
+// Order Management - part of Inventory module
+const OrderList = lazy(() => import('./modules/inventory/pages/OrderList'));
 
 // POS Module
 const PosLayout = lazy(() => import('./modules/pos/layouts/PosLayout'));
@@ -54,13 +59,6 @@ const ForumImportSuggest = lazy(() => import('./modules/forum/pages/ForumImportS
 const ForumProfile = lazy(() => import('./modules/forum/pages/ForumProfile'));
 const ForumDiscussion = lazy(() => import('./modules/forum/pages/ForumDiscussion'));
 
-// Goods Issue (Xuat Kho) - now part of Inventory module
-const GoodsIssueList = lazy(() => import('./modules/inventory/pages/GoodsIssueList'));
-const GoodsIssueCreate = lazy(() => import('./modules/inventory/pages/GoodsIssueCreate'));
-
-// Order Management - part of Inventory module
-const OrderList = lazy(() => import('./modules/inventory/pages/OrderList'));
-
 // Admin Module
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
@@ -69,6 +67,10 @@ const CategoryManagement = lazy(() => import('./modules/admin/pages/CategoryMana
 const PostModeration = lazy(() => import('./modules/admin/pages/PostModeration'));
 const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotifications'));
 const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
+
+// Owner Module
+const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManagement'));
+const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement'));
 
 function App() {
   const LoadingSpinner = (
@@ -136,6 +138,10 @@ function App() {
               <Route path="goods-issue" element={<GoodsIssueList />} />
               <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
               <Route path="orders" element={<OrderList />} />
+              <Route element={<PrivateRoute allowedRoles={['Owner']} />}>
+                <Route path="branches" element={<BranchManagement />} />
+                <Route path="employees" element={<StaffManagement />} />
+              </Route>
             </Route>
           </Route>
 
