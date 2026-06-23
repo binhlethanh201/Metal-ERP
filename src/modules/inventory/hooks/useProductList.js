@@ -1,7 +1,3 @@
-/**
- * Hook quản lý danh sách sản phẩm: fetch từ API (qua inventoryService), save, delete.
- * Tự fallback về inventoryRows mock khi API lỗi. Theo dõi auth token để re-fetch.
- */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import {
@@ -9,15 +5,11 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  toggleProductStatus,
 } from '../services/inventoryService';
-import {
-  extractProductList,
-  normalizeProduct,
-  createProductPayload,
-  updateProductPayload,
-} from '../utils/productUtils';
-import { inventoryRows } from '../data/inventoryMockData';
+import { normalizeProduct } from '../utils/productUtils';
 
+// Tiện ích chuyển đổi File ảnh thành Base64
 const fileToDataUrl = (file) =>
   new Promise((resolve, reject) => {
     try {
@@ -30,197 +22,251 @@ const fileToDataUrl = (file) =>
     }
   });
 
-const sameProductKey = (left, right) => {
-  const lk = String(left?.productId || left?.id || left?.productCode || '').trim();
-  const rk = String(right?.productId || right?.id || right?.productCode || '').trim();
-  return !!lk && lk === rk;
-};
-
-export const useProductList = () => {
-  const [products, setProducts] = useState(inventoryRows);
+export const useProductList = (queryParams) => {
+  const [products, setProducts] = useState([]);
+  const [paginationMeta, setPaginationMeta] = useState({
+    totalCount: 0,
+    totalPages: 1,
+    hasNextPage: false,
+  });
   const [apiStatus, setApiStatus] = useState({ loading: true, error: '' });
-  const [isRemoteData, setIsRemoteData] = useState(false);
   const { token } = useAuth();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const refetch = () => setRefreshTrigger((prev) => prev + 1);
 
+  // Tự động Fetch mỗi khi Token hoặc Query Params đổi
   useEffect(() => {
     let active = true;
-    const load = async () => {
+    const loadData = async () => {
       setApiStatus({ loading: true, error: '' });
       try {
-        const response = await getProducts({ Page: 1, PageSize: 100 });
-        const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
+        const response = await getProducts(queryParams);
         if (!active) return;
-        setIsRemoteData(true);
-        if (items.length > 0) setProducts(items);
+
+        if (response?.success && response?.data) {
+          const items = response.data.items || [];
+          setProducts(items.map(normalizeProduct));
+
+          setPaginationMeta({
+            totalCount: response.data.totalCount || 0,
+            totalPages: response.data.totalPages || 1,
+            hasNextPage: response.data.hasNextPage || false,
+          });
+        }
         setApiStatus({ loading: false, error: '' });
       } catch (error) {
         if (!active) return;
-        setProducts(inventoryRows);
-        setIsRemoteData(false);
-        setApiStatus({
-          loading: false,
-          error:
-            error?.status === 401
-              ? 'API đang yêu cầu JWT. Hãy đăng nhập thật hoặc dán token vào Swagger Authorize.'
-              : 'Không tải được dữ liệu từ API, đang dùng dữ liệu mẫu.',
-        });
+        setApiStatus({ loading: false, error: 'Lỗi tải dữ liệu từ API.' });
       }
     };
-    load();
+
+    if (queryParams) loadData();
+
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, queryParams, refreshTrigger]);
 
-  const handleSaveProduct = async (updated, productToEdit, onSuccess) => {
-    const isDraft = updated.productStatus === 'draft';
-    const prepared = { ...updated, productStatus: isDraft ? 'draft' : 'active' };
-
-    if (productToEdit?.id?.startsWith('SP-DRAFT-') && !isDraft) {
-      try {
-        const drafts = JSON.parse(localStorage.getItem('draftProducts') || '[]');
-        const filtered = drafts.filter((d) => d.id !== productToEdit.id);
-        localStorage.setItem('draftProducts', JSON.stringify(filtered));
-      } catch {}
-    }
-
-    if (Array.isArray(prepared.images) && prepared.images.length > 0) {
-      const mapped = await Promise.all(
-        prepared.images.map(async (it) => {
-          if (it?.file) {
-            try {
-              const data = await fileToDataUrl(it.file);
-              return { id: it.id || Date.now(), url: data };
-            } catch {
-              return { id: it.id || Date.now(), url: it.url || '' };
-            }
-          }
-          return typeof it === 'string'
-            ? { id: `${Date.now()}`, url: it }
-            : { id: it.id || `${Date.now()}`, url: it.url || '' };
-        })
-      );
-      prepared.images = mapped.slice(0, 10);
-      if (!prepared.image && prepared.images.length > 0) prepared.image = prepared.images[0].url;
-    }
-
-    const payload = productToEdit ? updateProductPayload(prepared) : createProductPayload(prepared);
-
-    if (isRemoteData) {
-      try {
-        const productKey = productToEdit?.productId || productToEdit?.id;
-        let savedRow = normalizeProduct({ ...payload, ...updated }, 0);
-        if (productKey) {
-          const response = await updateProduct(productKey, payload);
-          const savedData = response?.data || response?.result || response || payload;
-          savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
-        } else {
-          const response = await createProduct(payload);
-          const savedData = response?.data || response?.result || response || payload;
-          savedRow = normalizeProduct({ ...payload, ...savedData, ...updated }, 0);
-        }
-
-        const response = await getProducts({ Page: 1, PageSize: 100 });
-        const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
-        setProducts(() => {
-          const nextItems = items.length > 0 ? items : inventoryRows;
-          const withoutSaved = nextItems.filter((item) => !sameProductKey(item, savedRow));
-          return [savedRow, ...withoutSaved];
-        });
-      } catch {
-        setIsRemoteData(false);
-        setProducts((prev) => {
-          if (productToEdit) {
-            return prev.map((p) =>
-              sameProductKey(p, productToEdit)
-                ? {
-                    ...p,
-                    ...updated,
-                    id: p.id,
-                    productId: p.productId || p.id,
-                    productCode: updated.id || updated.productCode || p.productCode || p.id,
-                    status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
-                    statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
-                  }
-                : p
-            );
-          }
-          const nextCode = updated.id || updated.productCode || updated.productId || '';
-          return [
-            {
-              ...updated,
-              id: updated.productId || nextCode,
-              productId: updated.productId || '',
-              productCode: nextCode,
-              status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
-              statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
-            },
-            ...prev,
-          ];
-        });
-      }
-    } else {
-      setProducts((prev) => {
-        if (productToEdit) {
-          return prev.map((p) =>
-            sameProductKey(p, productToEdit)
-              ? {
-                  ...p,
-                  ...updated,
-                  id: p.id,
-                  productId: p.productId || p.id,
-                  productCode: updated.id || updated.productCode || p.productCode || p.id,
-                  status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
-                  statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
-                }
-              : p
-          );
-        }
-        const nextCode = updated.id || updated.productCode || updated.productId || '';
-        return [
-          {
-            ...updated,
-            id: updated.productId || nextCode,
-            productId: updated.productId || '',
-            productCode: nextCode,
-            status: Number(updated.stock || 0) > 0 ? 'Sẵn hàng' : 'Hết hàng',
-            statusTone: Number(updated.stock || 0) > 0 ? 'green' : 'red',
-          },
-          ...prev,
-        ];
-      });
-    }
-
-    setApiStatus((c) => ({ ...c, error: '' }));
+  // Đổi trạng thái 1 sản phẩm
+  const handleToggleStatus = async (id, currentIsActive) => {
+    const newStatus = !currentIsActive;
     try {
-      const brandName = (updated?.brand || updated?.BrandName || '').trim();
-      if (brandName) {
-        const raw = localStorage.getItem('productBrands');
-        const arr = raw ? JSON.parse(raw) : [];
-        if (!arr.includes(brandName))
-          localStorage.setItem('productBrands', JSON.stringify([...arr, brandName]));
-      }
-    } catch {}
-
-    onSuccess?.();
+      await toggleProductStatus(id, newStatus);
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.productId === id || p.id === id
+            ? { ...p, isActive: newStatus, productStatus: newStatus ? 'active' : 'inactive' }
+            : p
+        )
+      );
+    } catch (error) {
+      alert('Không thể đổi trạng thái. Vui lòng thử lại!');
+    }
   };
 
-  const handleDeleteProduct = async (row) => {
-    const confirmed = window.confirm(`Xóa hàng hóa ${row.name}?`);
+  // Đổi trạng thái hàng loạt
+  const handleBulkToggleStatus = async (selectedIds, targetStatus) => {
+    try {
+      const promises = selectedIds.map((id) => toggleProductStatus(id, targetStatus));
+      await Promise.all(promises);
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          selectedIds.includes(p.productId || p.id)
+            ? { ...p, isActive: targetStatus, productStatus: targetStatus ? 'active' : 'inactive' }
+            : p
+        )
+      );
+      return true;
+    } catch (error) {
+      alert('Có lỗi xảy ra khi cập nhật hàng loạt. Vui lòng tải lại trang để kiểm tra!');
+      return false;
+    }
+  };
+
+  // Lưu sản phẩm (Đã thêm bộ lọc chống Crash UUID cho Backend C#)
+  const handleSaveProduct = async (updated, productToEdit, onSuccess) => {
+    try {
+      const isDraft = updated.productStatus === 'draft';
+      const prepared = { ...updated, productStatus: isDraft ? 'draft' : 'active' };
+
+      // 1. Dọn dẹp Draft LocalStorage
+      if (productToEdit?.id?.startsWith('SP-DRAFT-') && !isDraft) {
+        try {
+          const drafts = JSON.parse(localStorage.getItem('draftProducts') || '[]');
+          const filtered = drafts.filter((d) => d.id !== productToEdit.id);
+          localStorage.setItem('draftProducts', JSON.stringify(filtered));
+        } catch {}
+      }
+
+      // 2. Xử lý Image sang Base64
+      if (Array.isArray(prepared.images) && prepared.images.length > 0) {
+        const mapped = await Promise.all(
+          prepared.images.map(async (it) => {
+            if (it?.file) {
+              try {
+                const data = await fileToDataUrl(it.file);
+                return { id: it.id || Date.now(), url: data };
+              } catch {
+                return { id: it.id || Date.now(), url: it.url || '' };
+              }
+            }
+            return typeof it === 'string'
+              ? { id: `${Date.now()}`, url: it }
+              : { id: it.id || `${Date.now()}`, url: it.url || '' };
+          })
+        );
+        prepared.images = mapped.slice(0, 10);
+        if (!prepared.image && prepared.images.length > 0) prepared.image = prepared.images[0].url;
+      }
+
+      // --- BỘ LỌC ÉP KIỂU VÀ CHECK UUID ---
+      // Hàm kiểm tra xem ID có phải là UUID chuẩn không
+      const isValidUUID = (str) => {
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return typeof str === 'string' && uuidRegex.test(str);
+      };
+
+      const safeCostPrice = Number(prepared.costPrice) || 0;
+      let safeSalePrice = Number(prepared.salePrice) || 0;
+      if (safeSalePrice > 0 && safeSalePrice < safeCostPrice) safeSalePrice = safeCostPrice;
+      const productKey = productToEdit?.productId || productToEdit?.id;
+
+      const payload = {
+        // Thông tin cơ bản
+        id: productKey && !productKey.startsWith('SP-DRAFT') ? productKey : undefined,
+        productId: productKey && !productKey.startsWith('SP-DRAFT') ? productKey : undefined,
+        productCode: prepared.productCode || prepared.id || `SP${Date.now()}`,
+        productName: prepared.name || prepared.productName || 'Chưa đặt tên',
+        barcode: prepared.barcode || '',
+        unit: prepared.unit || 'Sản phẩm',
+        brandName: prepared.brand || '',
+        categoryName: prepared.group || '',
+
+        // Tài chính & Kho
+        supplierId: prepared.supplierId ? prepared.supplierId : null,
+        itemType: prepared.itemType || 'Goods',
+        costPrice: safeCostPrice,
+        salePrice: safeSalePrice,
+        actualStock: Number(prepared.stock) || 0,
+        availableStock: Number(prepared.availableStock) || Number(prepared.stock) || 0,
+        reservedStock: Number(prepared.reservedStock) || 0,
+        minimumStock: Number(prepared.minimumStock ?? prepared.stockMin) || 0,
+        maximumStock: Number(prepared.stockMax) || 0,
+
+        // Kích thước & Media
+        shelfLocation:
+          prepared.locations && prepared.locations.length > 0
+            ? prepared.locations[0]
+            : prepared.shelfLocation || '',
+        shelfLocations: Array.isArray(prepared.locations) ? prepared.locations : [],
+        weight: Number(prepared.weight) || 0,
+        weightUnit: prepared.weightUnit || 'g',
+        width: Number(prepared.width) || 0,
+        length: Number(prepared.length) || 0,
+        height: Number(prepared.height) || 0,
+        sizeUnit: prepared.sizeUnit || 'mm',
+        specification: prepared.specification || '',
+        imageUrl: prepared.image || '',
+        images: (prepared.images || [])
+          .map((img) => (typeof img === 'string' ? img : img.url))
+          .filter(Boolean),
+
+        // Trạng thái
+        isActive: prepared.productStatus !== 'draft',
+        directSale: prepared.directSale !== false,
+
+        // Mảng con
+        attributes: (prepared.attributes || []).map((a) => {
+          const item = { name: a.name || '', value: a.value || '' };
+          if (isValidUUID(a.id)) item.id = a.id;
+          return item;
+        }),
+        conversionUnits: (prepared.conversionUnits || []).map((u) => {
+          const item = {
+            name: u.name || '',
+            rate: Number(u.rate) || 1,
+            convertValue: Number(u.convertValue) || Number(u.rate) || 1,
+            convertFrom: u.convertFrom || '',
+            price: Number(u.price) || 0,
+            directSale: u.directSale !== false,
+          };
+          if (isValidUUID(u.id)) item.id = u.id;
+          return item;
+        }),
+      };
+
+      // 4. Gọi API
+      if (productKey && !productKey.startsWith('SP-DRAFT')) {
+        await updateProduct(productKey, payload);
+      } else {
+        await createProduct(payload);
+      }
+
+      // 5. Cache UI Data
+      try {
+        const brandName = payload.brandName.trim();
+        if (brandName) {
+          const raw = localStorage.getItem('productBrands');
+          const arr = raw ? JSON.parse(raw) : [];
+          if (!arr.includes(brandName))
+            localStorage.setItem('productBrands', JSON.stringify([...arr, brandName]));
+        }
+      } catch {}
+
+      // 6. Refetch Data
+      onSuccess?.();
+    } catch (error) {
+      console.error('🚨 API Error Detail:', error?.data || error);
+      const errorMsg = error?.data?.message || error?.message || 'Không thể lưu sản phẩm.';
+      const detailMsg = Array.isArray(error?.data?.errors)
+        ? `\nChi tiết: ${error.data.errors[0]}`
+        : '';
+      alert(errorMsg + detailMsg);
+    }
+  };
+
+  // Xóa sản phẩm
+  const handleDeleteProduct = async (id) => {
+    const confirmed = window.confirm('Bạn có chắc muốn xóa hàng hóa này?');
     if (!confirmed) return;
     try {
-      if (isRemoteData) {
-        await deleteProduct(row.productId || row.id);
-        const response = await getProducts({ Page: 1, PageSize: 100 });
-        const items = extractProductList(response).map(normalizeProduct).filter(Boolean);
-        setProducts(items.length > 0 ? items : inventoryRows);
-      } else {
-        setProducts((prev) => prev.filter((item) => item.id !== row.id));
-      }
+      await deleteProduct(id);
+      setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
     } catch (error) {
-      alert(error?.message || 'Không thể xóa hàng hóa');
+      alert('Không thể xóa hàng hóa');
     }
   };
 
-  return { products, setProducts, apiStatus, isRemoteData, handleSaveProduct, handleDeleteProduct };
+  return {
+    products,
+    paginationMeta,
+    apiStatus,
+    handleSaveProduct,
+    handleDeleteProduct,
+    handleToggleStatus,
+    handleBulkToggleStatus,
+    refetch,
+  };
 };

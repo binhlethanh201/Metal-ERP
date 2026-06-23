@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Sidebar bộ lọc sản phẩm - Nhóm hàng, tồn kho, dự kiến hết, thời gian tạo,
  * nhà cung cấp, vị trí, loại hàng, bán trực tiếp, kênh bán, trạng thái.
  */

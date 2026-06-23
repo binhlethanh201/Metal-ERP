@@ -15,6 +15,7 @@ export const ENDPOINTS = {
     CREATE_PRODUCT: '/api/products',
     UPDATE_PRODUCT: (id) => `/api/products/${id}`,
     DELETE_PRODUCT: (id) => `/api/products/${id}`,
+    TOGGLE_PRODUCT_STATUS: (id) => `/api/products/${id}/toggle-status`,
 
     // Stock
     GET_STOCK: '/inventory/stock',

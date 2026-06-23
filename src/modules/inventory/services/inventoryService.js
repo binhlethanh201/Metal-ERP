@@ -7,7 +7,7 @@
  * Gọi đến apiClient và endpoints tập trung
  */
 
-import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../../services/apiClient';
 import ENDPOINTS from '../../../services/endpoints';
 
 const buildQueryString = (filters = {}) => {
@@ -46,6 +46,10 @@ export const updateProduct = (id, productData) => {
 
 export const deleteProduct = (id) => {
   return apiDelete(ENDPOINTS.INVENTORY.DELETE_PRODUCT(id));
+};
+
+export const toggleProductStatus = (id, isActive) => {
+  return apiPatch(`${ENDPOINTS.INVENTORY.TOGGLE_PRODUCT_STATUS(id)}?isActive=${isActive}`);
 };
 
 // ============ Stock ============

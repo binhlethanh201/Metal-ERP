@@ -18,7 +18,7 @@ const ProductDescriptionTab = ({ f }) => {
       <div className="overflow-hidden rounded-md border border-[#dcdfe6] bg-white">
         <div className="flex h-10 items-center gap-2 border-b border-gray-200 bg-[#f5f6f7] px-3">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-700">Mo ta</span>
+            <span className="text-sm font-semibold text-gray-700">Mô tả</span>
             <select className="rounded border bg-transparent px-2 py-1 text-sm text-gray-700">
               <option>Format</option>
             </select>
@@ -92,18 +92,18 @@ const ProductDescriptionTab = ({ f }) => {
         </div>
         <textarea
           className="min-h-[160px] w-full resize-none bg-white p-4 text-[15px] leading-[1.4] outline-none"
-          placeholder="Nhap mo ta san pham"
+          placeholder="Nhập mô tả sản phẩm"
           value={desc}
           onChange={(e) => f?.handleChange?.('description', e.target.value)}
         />
       </div>
       <div className="mt-4 overflow-hidden rounded-md border border-[#dcdfe6]">
         <div className="bg-[#f5f6f7] px-4 py-3 text-sm font-semibold text-gray-700">
-          Mau ghi chu (hoa don, dat hang)
+          Mẫu ghi chú (hoá đơn, đặt hàng)
         </div>
         <textarea
           className="min-h-[120px] w-full resize-none border-none p-4 outline-none"
-          placeholder="Nhap ghi chu"
+          placeholder="Nhập ghi chú"
           value={notes}
           onChange={(e) => f?.handleChange?.('notes', e.target.value)}
         />

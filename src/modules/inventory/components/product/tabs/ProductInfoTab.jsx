@@ -19,8 +19,8 @@ const ProductInfoTab = ({ f }) => (
             <input
               className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 focus:ring-0"
               type="text"
-              value={f.form.id || ''}
-              onChange={(e) => f.handleChange('id', e.target.value)}
+              value={f.form.productCode || f.form.id || ''}
+              onChange={(e) => f.handleChange('productCode', e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -46,7 +46,7 @@ const ProductInfoTab = ({ f }) => (
         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-label-md text-on-surface-variant">Nhóm hàng</label>
+              <label className="text-label-md text-on-surface-variant">Nhóm hàng / Danh mục</label>
               <button
                 type="button"
                 onClick={() => {
@@ -64,9 +64,11 @@ const ProductInfoTab = ({ f }) => (
               value={f.form.group || ''}
               onChange={(e) => f.handleChange('group', e.target.value)}
             >
-              <option>Chọn nhóm hàng</option>
-              {f.groups.map((g) => (
-                <option key={g}>{g}</option>
+              <option value="">Chọn danh mục</option>
+              {(Array.isArray(f.groups) ? f.groups : []).map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
               ))}
             </select>
           </div>
@@ -89,9 +91,11 @@ const ProductInfoTab = ({ f }) => (
               value={f.form.brand || ''}
               onChange={(e) => f.handleChange('brand', e.target.value)}
             >
-              <option>Chọn thương hiệu</option>
-              {f.brands.map((b) => (
-                <option key={b}>{b}</option>
+              <option value="">Chọn thương hiệu</option>
+              {(Array.isArray(f.brands) ? f.brands : []).map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
               ))}
             </select>
           </div>
@@ -113,7 +117,7 @@ const ProductInfoTab = ({ f }) => (
 
     <Section
       title="Tồn kho"
-      subtitle="Quản lý số lượng tồn kho và định mức tồn. Khi tồn kho chạm đến định mức, bạn sẽ nhận được cảnh báo."
+      subtitle="Quản lý số lượng tồn kho và định mức. Khi tồn kho chạm định mức thấp nhất, bạn sẽ nhận được cảnh báo."
       defaultOpen
     >
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -121,28 +125,33 @@ const ProductInfoTab = ({ f }) => (
           <label className="text-label-md text-on-surface-variant">Tồn kho hiện tại</label>
           <input
             className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right font-semibold focus:ring-0"
-            type="text"
-            value={f.form.stock || '0'}
+            type="number"
+            min="0"
+            value={f.form.stock !== '' ? f.form.stock : '0'}
             onChange={(e) => f.handleChange('stock', e.target.value)}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-label-md text-on-surface-variant">Định mức tồn thấp nhất</label>
+          <label className="text-label-md text-on-surface-variant">
+            Định mức tồn thấp nhất (Tối thiểu)
+          </label>
           <input
             className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right focus:ring-0"
-            type="text"
-            value={f.form.minimumStock ?? f.form.stockMin ?? '0'}
-            onChange={(e) =>
-              f.setForm((c) => ({ ...c, minimumStock: e.target.value, stockMin: e.target.value }))
-            }
+            type="number"
+            min="0"
+            value={f.form.minimumStock !== '' ? f.form.minimumStock : '0'}
+            onChange={(e) => f.handleChange('minimumStock', e.target.value)}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-label-md text-on-surface-variant">Định mức tồn cao nhất</label>
+          <label className="text-label-md text-on-surface-variant">
+            Định mức tồn cao nhất (Tối đa)
+          </label>
           <input
             className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right focus:ring-0"
-            type="text"
-            value={f.form.stockMax ?? '0'}
+            type="number"
+            min="0"
+            value={f.form.stockMax !== '' ? f.form.stockMax : '0'}
             onChange={(e) => f.handleChange('stockMax', e.target.value)}
           />
         </div>
@@ -158,15 +167,6 @@ const ProductInfoTab = ({ f }) => (
           <div key={field} className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-label-md text-on-surface-variant">{label}</label>
-              {field === 'salePrice' && (
-                <button
-                  type="button"
-                  className="text-label-md flex items-center gap-1 font-bold leading-[1.15] text-primary"
-                >
-                  <Icon name="settings" size={16} />
-                  Thiết lập giá
-                </button>
-              )}
             </div>
             <div className="relative">
               <input
@@ -204,7 +204,7 @@ const ProductInfoTab = ({ f }) => (
       <div className="mb-5 grid grid-cols-2 gap-5">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-label-md text-on-surface-variant">Vị trí</label>
+            <label className="text-label-md text-on-surface-variant">Vị trí Kệ/Tủ</label>
             <button
               type="button"
               onClick={() => {
@@ -217,7 +217,7 @@ const ProductInfoTab = ({ f }) => (
             </button>
           </div>
           <div className="relative flex min-h-[44px] w-full flex-wrap items-center gap-2 rounded-[8px] border border-outline-variant bg-surface-container-lowest px-3 py-2.5 text-[15px]">
-            {(f.form.locations || []).map((loc) => (
+            {(Array.isArray(f.form.locations) ? f.form.locations : []).map((loc) => (
               <div
                 key={loc}
                 className="inline-flex items-center gap-1 rounded bg-gray-200 px-2 py-1 text-sm text-gray-800"
@@ -239,7 +239,8 @@ const ProductInfoTab = ({ f }) => (
           <div className="flex items-center overflow-hidden rounded-[8px] border border-outline-variant bg-surface-container-lowest">
             <input
               className="flex-1 border-none bg-transparent px-3 py-2 text-right text-[15px] font-semibold leading-[1.35] focus:ring-0"
-              type="text"
+              type="number"
+              min="0"
               value={f.form.weight || ''}
               onChange={(e) => f.handleChange('weight', e.target.value)}
             />
@@ -248,8 +249,8 @@ const ProductInfoTab = ({ f }) => (
               value={f.form.weightUnit || 'g'}
               onChange={(e) => f.handleChange('weightUnit', e.target.value)}
             >
-              <option>g</option>
-              <option>kg</option>
+              <option value="g">g</option>
+              <option value="kg">kg</option>
             </select>
           </div>
         </div>
@@ -259,14 +260,16 @@ const ProductInfoTab = ({ f }) => (
         <div className="max-w-lg">
           <div className="inline-flex w-full items-stretch overflow-hidden rounded-lg border border-[#dcdfe6] bg-white">
             <input
-              type="text"
+              type="number"
+              min="0"
               placeholder="Rộng"
               value={f.form.width || ''}
               onChange={(e) => f.handleChange('width', e.target.value)}
               className="w-1/3 border-r border-[#e5e7eb] bg-white px-3 py-2 text-center text-[15px] placeholder-gray-400 focus:outline-none"
             />
             <input
-              type="text"
+              type="number"
+              min="0"
               placeholder="Dài"
               value={f.form.length || ''}
               onChange={(e) => f.handleChange('length', e.target.value)}
@@ -274,11 +277,11 @@ const ProductInfoTab = ({ f }) => (
             />
             <div className="relative w-1/3">
               <select
-                value={f.form.sizeUnit || ''}
+                value={f.form.sizeUnit || 'mm'}
                 onChange={(e) => f.handleChange('sizeUnit', e.target.value)}
                 className="w-full appearance-none bg-white px-3 py-2 text-left text-[15px] focus:outline-none"
               >
-                <option value="">mm</option>
+                <option value="mm">mm</option>
                 <option value="cm">cm</option>
                 <option value="m">m</option>
               </select>
