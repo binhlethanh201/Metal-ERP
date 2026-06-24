@@ -4,13 +4,13 @@ import { getCreatedPresetRange, getEstimatedPresetRange } from '../utils/product
 export const useProductFilters = () => {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdat', direction: 'desc' });
-  const [groupKeyword, setGroupKeyword] = useState(''); // Ánh xạ thành CategoryName
-  const [supplierKeyword, setSupplierKeyword] = useState(''); // Ánh xạ thành BrandName/Supplier
+  const [groupKeyword, setGroupKeyword] = useState('');
+  const [supplierKeyword, setSupplierKeyword] = useState('');
   const [productStatusFilter, setProductStatusFilter] = useState('active');
-  const [pageSize, setPageSize] = useState(10); // Khớp default 10 của backend
+  const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [branchId, setBranchId] = useState('');
 
-  // Các state UI cho Popover (Giữ nguyên của bạn)
   const [estimatedStockOutFilter, setEstimatedStockOutFilter] = useState('allTime');
   const [createdTimeFilter, setCreatedTimeFilter] = useState('allTime');
   const [estimatedQuickOpen, setEstimatedQuickOpen] = useState(false);
@@ -31,7 +31,6 @@ export const useProductFilters = () => {
   const createdRef = useRef(null);
   const statusDropdownRef = useRef(null);
 
-  // VŨ KHÍ MỚI: Tự động gom param chuẩn API Document
   const queryParams = useMemo(() => {
     const params = {
       PageNumber: currentPage,
@@ -43,9 +42,9 @@ export const useProductFilters = () => {
     if (search.trim()) params.SearchTerm = search.trim();
     if (groupKeyword.trim()) params.CategoryName = groupKeyword.trim();
     if (supplierKeyword.trim()) params.BrandName = supplierKeyword.trim();
-
     if (productStatusFilter === 'active') params.Status = 'active';
     if (productStatusFilter === 'inactive') params.Status = 'inactive';
+    if (branchId) params.branchId = branchId;
 
     return params;
   }, [
@@ -56,6 +55,7 @@ export const useProductFilters = () => {
     supplierKeyword,
     productStatusFilter,
     sortConfig,
+    branchId,
   ]);
 
   const toggleSort = (key) => {
@@ -72,13 +72,15 @@ export const useProductFilters = () => {
 
   const handlePageSizeChange = (size) => {
     setPageSize(size);
-    setCurrentPage(1); // Đổi size thì reset về trang 1
+    setCurrentPage(1);
   };
 
   return {
-    queryParams, // <-- Chỉ cần truyền cái này vào useProductList
+    queryParams,
     search,
     setSearch,
+    branchId,
+    setBranchId,
     sortConfig,
     toggleSort,
     getSortIcon,
@@ -93,7 +95,26 @@ export const useProductFilters = () => {
     handlePageSizeChange,
     currentPage,
     setCurrentPage,
-    // ... xuất nốt các state UI râu ria khác để Modal/Sidebar ko bị lỗi
+
+    // --- BỔ SUNG ĐẦY ĐỦ CÁC STATE BỊ THIẾU ĐỂ XÓA WARNING ---
+    estimatedStockOutFilter,
+    setEstimatedStockOutFilter,
+    createdTimeFilter,
+    setCreatedTimeFilter,
+    estimatedRange,
+    setEstimatedRange,
+    createdRange,
+    setCreatedRange,
+    locationKeyword,
+    setLocationKeyword,
+    itemTypeKeyword,
+    setItemTypeKeyword,
+    directSaleFilter,
+    setDirectSaleFilter,
+    salesChannelFilter,
+    setSalesChannelFilter,
+    // --------------------------------------------------------
+
     estimatedRef,
     createdRef,
     statusDropdownRef,

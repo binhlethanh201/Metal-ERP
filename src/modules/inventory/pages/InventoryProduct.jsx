@@ -6,6 +6,8 @@ import ProductFilterSidebar from '../components/product/ProductFilterSidebar';
 import ProductTable from '../components/product/ProductTable';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useProductList } from '../hooks/useProductList';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { getBranches } from '../../owner/services/branchService';
 
 export const ProductManagement = () => {
   const [expandedId, setExpandedId] = useState('');
@@ -15,9 +17,35 @@ export const ProductManagement = () => {
   const [initialEditTab, setInitialEditTab] = useState('info');
   const [searchParams] = useSearchParams();
   const [selectedIds, setSelectedIds] = useState([]);
+  // Lấy thông tin user hiện tại
+  const { user } = useAuth();
+  const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
+  const [branches, setBranches] = useState([]);
 
   // Khởi tạo Filters và gọi API List
   const filters = useProductFilters();
+  const { setBranchId } = filters;
+
+  // Tải danh sách chi nhánh nếu user là Owner
+  useEffect(() => {
+    if (isOwner) {
+      getBranches()
+        .then((res) => {
+          if (res?.success && res.data) {
+            const branchList = res.data;
+            setBranches(branchList);
+            if (branchList.length > 0) {
+              setBranchId(branchList[0].branchId);
+            }
+          }
+        })
+        .catch((err) => console.error('Lỗi tải chi nhánh:', err));
+    }
+  }, [isOwner, setBranchId]);
+
+  const shouldFetchProducts = !isOwner || (isOwner && filters.branchId);
+  const activeQueryParams = shouldFetchProducts ? filters.queryParams : null;
+
   const {
     products,
     paginationMeta,
@@ -27,7 +55,7 @@ export const ProductManagement = () => {
     handleToggleStatus,
     handleBulkToggleStatus,
     refetch,
-  } = useProductList(filters.queryParams);
+  } = useProductList(activeQueryParams);
 
   useEffect(() => {
     if (searchParams.get('status') === 'draft') {
@@ -204,17 +232,42 @@ export const ProductManagement = () => {
               </div>
             </div>
           )}
-          {/* Thanh Search nội bộ & Nhóm nút Thao tác nhanh */}
+          {/* Thanh Search nội bộ & BỘ LỌC CHI NHÁNH (OWNER) */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex min-w-[240px] max-w-lg flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
-              <Icon name="search" className="mr-2 text-slate-400" />
-              <input
-                className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
-                placeholder="Theo mã, tên hàng"
-                value={filters.search}
-                onChange={(e) => filters.setSearch(e.target.value)}
-              />
-              <Icon name="tune" className="ml-2 cursor-pointer text-slate-400" />
+            <div className="flex flex-1 gap-3">
+              <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
+                <Icon name="search" className="mr-2 text-slate-400" />
+                <input
+                  className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
+                  placeholder="Theo mã, tên hàng..."
+                  value={filters.search}
+                  onChange={(e) => {
+                    filters.setSearch(e.target.value);
+                    filters.setCurrentPage(1);
+                  }}
+                />
+              </div>
+
+              {/* BỘ LỌC CHI NHÁNH (OWNER) */}
+              {isOwner && branches.length > 0 && (
+                <div className="flex max-w-xs flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
+                  <Icon name="Warehouse" className="mr-2 text-slate-400" />
+                  <select
+                    className="w-full border-none bg-transparent text-sm font-medium text-slate-700 outline-none focus:ring-0"
+                    value={filters.branchId}
+                    onChange={(e) => {
+                      filters.setBranchId(e.target.value);
+                      filters.setCurrentPage(1);
+                    }}
+                  >
+                    {branches.map((b) => (
+                      <option key={b.branchId} value={b.branchId}>
+                        {b.branchName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
