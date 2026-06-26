@@ -9,7 +9,6 @@ export const useProductFilters = () => {
   const [productStatusFilter, setProductStatusFilter] = useState('active');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [branchId, setBranchId] = useState('');
 
   const [estimatedStockOutFilter, setEstimatedStockOutFilter] = useState('allTime');
   const [createdTimeFilter, setCreatedTimeFilter] = useState('allTime');
@@ -26,6 +25,7 @@ export const useProductFilters = () => {
   const [itemTypeKeyword, setItemTypeKeyword] = useState('');
   const [directSaleFilter, setDirectSaleFilter] = useState('all');
   const [salesChannelFilter, setSalesChannelFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
 
   const estimatedRef = useRef(null);
   const createdRef = useRef(null);
@@ -44,7 +44,6 @@ export const useProductFilters = () => {
     if (supplierKeyword.trim()) params.BrandName = supplierKeyword.trim();
     if (productStatusFilter === 'active') params.Status = 'active';
     if (productStatusFilter === 'inactive') params.Status = 'inactive';
-    if (branchId) params.branchId = branchId;
 
     return params;
   }, [
@@ -55,7 +54,6 @@ export const useProductFilters = () => {
     supplierKeyword,
     productStatusFilter,
     sortConfig,
-    branchId,
   ]);
 
   const toggleSort = (key) => {
@@ -79,8 +77,6 @@ export const useProductFilters = () => {
     queryParams,
     search,
     setSearch,
-    branchId,
-    setBranchId,
     sortConfig,
     toggleSort,
     getSortIcon,
@@ -113,6 +109,8 @@ export const useProductFilters = () => {
     setDirectSaleFilter,
     salesChannelFilter,
     setSalesChannelFilter,
+    stockFilter,
+    setStockFilter,
     // --------------------------------------------------------
 
     estimatedRef,
