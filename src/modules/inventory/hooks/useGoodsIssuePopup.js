@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Hook quản lý toàn bộ state + logic cho Popup Thêm mới Phiếu Xuất Kho.
  *
  * Các logic quan trọng:
@@ -109,7 +109,6 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
   const [saving, setSaving] = useState(false);
   const [barcodemode, setBarcodemode] = useState(false);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
-  const [pendingCloseAction, setPendingCloseAction] = useState(null); // 'close' | 'cancel'
   const [showQuickAddCustomer, setShowQuickAddCustomer] = useState(false);
 
   // ---- Autocomplete State ----
@@ -407,7 +406,6 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
   const requestClose = useCallback(
     (actionType) => {
       if (isDirty) {
-        setPendingCloseAction(actionType);
         setShowConfirmClose(true);
         return;
       }
@@ -418,7 +416,6 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
 
   const handleConfirmCancel = useCallback(() => {
     setShowConfirmClose(false);
-    setPendingCloseAction(null);
     // Giu nguyen form
   }, []);
 
@@ -491,7 +488,7 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
       alert(error?.message || 'Loi khi luu phiếu xuất');
       return false;
     }
-  }, [header, dirtyLines, isValid]);
+  }, [header, dirtyLines, isValid, isEditMode, editData?.id]);
 
   // ========== QUICK ADD CUSTOMER ==========
   const handleQuickAddCustomer = useCallback(

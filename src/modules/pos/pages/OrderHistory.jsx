@@ -1,4 +1,4 @@
-﻿/**
+/**
  * OrderHistory Page - Lich su don hang POS (ban tai quay, khong giao hang)
  */
 import { useState, useMemo } from 'react';

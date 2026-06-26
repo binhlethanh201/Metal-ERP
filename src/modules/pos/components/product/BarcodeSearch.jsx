@@ -1,4 +1,4 @@
-﻿/**
+/**
  * BarcodeSearch Component - Tìm kiếm sản phẩm theo barcode
  */
 

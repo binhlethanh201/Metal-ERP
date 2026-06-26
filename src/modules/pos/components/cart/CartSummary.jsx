@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CartSummary Component - Tóm tắt giỏ hàng
  */
 

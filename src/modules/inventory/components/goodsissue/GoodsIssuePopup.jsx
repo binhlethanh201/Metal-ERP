@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GoodsIssuePopup - Modal Thêm mới Phiếu Xuất Kho (Popup Overlay).
  *
  * Cấu trúc:
@@ -254,14 +254,15 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
   };
 
   // Escape key
+  const { requestClose } = popup;
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e) => {
-      if (e.key === 'Escape') popup.requestClose('escape');
+      if (e.key === 'Escape') requestClose('escape');
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [isOpen, popup.requestClose]);
+  }, [isOpen, requestClose]);
 
   // Khoa scroll body
   useEffect(() => {

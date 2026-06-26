@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Mock data cho module Quản lý Xuất Kho (Goods Issue).
  * Dữ liệu bám theo Specs MISA: danh sách phiếu xuất, khách hàng, sản phẩm, kho.
  */

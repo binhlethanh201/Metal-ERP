@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ConfirmUnsavedModal - Modal cảnh báo khi form bị thay đổi mà người dùng muốn thoát.
  * 3 nút: Hủy (giữ form) | Không (đóng, ko lưu) | Có (lưu rồi đóng)
  */

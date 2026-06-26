@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Hook quản lý form Thêm mới / Sửa phiếu xuất kho.
  * Quản lý: header info, dòng hàng hóa, validations, isDirty, submit.
  */
@@ -8,7 +8,6 @@ import { createGoodsIssue } from '../services/goodsIssueService';
 import { buildIssuePayload, buildIssueLine } from '../utils/goodsIssueUtils';
 
 const generateIssueNumber = () => {
-  const now = new Date();
   const seq = String(Math.floor(Math.random() * 9000) + 1000);
   return `XK${seq}`;
 };

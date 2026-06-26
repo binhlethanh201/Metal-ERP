@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Trang Máy bán hàng chinh - Container ben trong PosLayout.
  * Su dung cac component con: CustomerBar, PaymentModal, SuccessModal, ReceiptModal, CustomerPickerModal.
  */
@@ -12,7 +12,6 @@ import SuccessModal from '../components/order/SuccessModal';
 import ReceiptModal from '../components/order/ReceiptModal';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { usePosCart } from '../hooks/usePosCart';
 import { usePosProducts } from '../hooks/usePosProducts';
 import { useProductList } from '../../inventory/hooks/useProductList';
@@ -33,8 +32,7 @@ const mapToPosProduct = (p) => ({
 });
 
 const POSScreen = () => {
-  const { search, setSearch, showNotice, quickAddCust, drafts, setDrafts, setFooterInfo } =
-    useOutletContext();
+  const { search, showNotice, quickAddCust, setDrafts, setFooterInfo } = useOutletContext();
   const location = useLocation();
   const draftData = location.state?.draft;
   const loadedDraft = useRef(null);
@@ -160,7 +158,7 @@ const POSScreen = () => {
       // Xoa draft khoi danh sach
       setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
     }
-  }, [draftData]);
+  }, [draftData, cart, setDrafts]);
 
   // ---- Thêm nhanh khách hàng ----
   useEffect(() => {
