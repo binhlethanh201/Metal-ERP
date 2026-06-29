@@ -3,7 +3,7 @@
  * Sửa đổi tại đây sẽ ảnh hưởng đến toàn bộ ứng dụng
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5100/api';
 
 const API_CONFIG = {
   baseURL: API_BASE_URL,
@@ -55,11 +55,30 @@ export const apiClient = async (endpoint, options = {}) => {
 
     // Xử lý lỗi HTTP
     if (!response.ok) {
+      // 401 → redirect login
+      if (response.status === 401) {
+        sessionStorage.removeItem('authToken');
+        localStorage.removeItem('authToken');
+        window.location.href = '/login';
+        throw new Error('Unauthorized');
+      }
+      // 403 → throw với message rõ
+      if (response.status === 403) {
+        const error403 = new Error('Không có quyền thực hiện thao tác này');
+        error403.status = 403;
+        throw error403;
+      }
       const errorData = await response.json().catch(() => ({}));
       const error = new Error(errorData.message || `HTTP ${response.status}`);
       error.status = response.status;
       error.data = errorData;
       throw error;
+    }
+
+    // Handle blob response (e.g., file downloads)
+    if (options.responseType === 'blob') {
+      const blob = await response.blob();
+      return blob;
     }
 
     // Parse response linh hoạt theo JSON hoặc text

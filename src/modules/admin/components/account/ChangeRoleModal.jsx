@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const ChangeRoleModal = ({ isOpen, onClose, staffData, onSave }) => {
-  const [selectedRole, setSelectedRole] = useState(staffData?.role || 'INVENTORY_CONTROLLER');
+  const initialRole =
+    (Array.isArray(staffData?.roles) && staffData.roles[0]) || 'INVENTORY_CONTROLLER';
+  const [selectedRole, setSelectedRole] = useState(initialRole);
 
   if (!isOpen) return null;
 
@@ -21,7 +23,9 @@ const ChangeRoleModal = ({ isOpen, onClose, staffData, onSave }) => {
             <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
               Tài khoản nhân sự
             </label>
-            <div className="text-sm font-bold text-on-surface">{staffData?.name}</div>
+            <div className="text-sm font-bold text-on-surface">
+              {staffData?.fullName || staffData?.name}
+            </div>
             <div className="font-mono text-xs text-outline">{staffData?.email}</div>
           </div>
 

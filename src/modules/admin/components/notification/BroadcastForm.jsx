@@ -7,6 +7,12 @@ const BroadcastForm = ({ onBroadcast }) => {
   const [targetScope, setTargetScope] = useState('all');
   const [isUrgent, setIsUrgent] = useState(false);
 
+  const TARGET_MAP = {
+    all: 'ALL',
+    owners: 'OWNER',
+    staff: 'STAFF',
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -20,7 +26,12 @@ const BroadcastForm = ({ onBroadcast }) => {
       return;
     }
 
-    onBroadcast({ title, content, targetScope, isUrgent });
+    onBroadcast({
+      title,
+      content,
+      target: TARGET_MAP[targetScope] || 'ALL',
+      isUrgent,
+    });
 
     // Reset form sau khi gửi thành công
     setTitle('');

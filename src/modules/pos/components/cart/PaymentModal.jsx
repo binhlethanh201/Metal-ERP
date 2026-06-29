@@ -17,11 +17,16 @@ const PaymentModal = ({
   onRemoveLine,
   onLineChange,
   onQuickFill,
+  onSelectMethod,
+  onOpenQR,
+  onOpenDebt,
 }) => {
+  // 4 payment methods theo SRS: Cash, Transfer, Combined, Debt
   const allMethods = [
-    { id: 'cash', name: 'Tiền mặt', icon: '💵' },
-    { id: 'card', name: 'Thẻ', icon: '💳' },
-    { id: 'transfer', name: 'Chuyển khoản', icon: '📱' },
+    { id: 'Cash', name: 'Tiền mặt', icon: '💵' },
+    { id: 'Transfer', name: 'Chuyển khoản', icon: '📱' },
+    { id: 'Combined', name: 'Kết hợp', icon: '🔄' },
+    { id: 'Debt', name: 'Ghi nợ', icon: '📒', disabled: !selectedCustomer?.debtLimit },
   ];
 
   return (

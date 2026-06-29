@@ -1,68 +1,64 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
+import { getLogList, exportLogs } from '../services/adminService';
 import LogFilterBar from '../components/log/LogFilterBar';
 import LogTable from '../components/log/LogTable';
-
-const MOCK_LOGS = [
-  {
-    id: 'LOG-9942',
-    time: '19:45:12 15/06/2026',
-    level: 'ERROR',
-    source: 'AuthService',
-    message: 'Failed to validate JWT token for Tenant T-7721. Signature expired.',
-  },
-  {
-    id: 'LOG-9941',
-    time: '19:42:05 15/06/2026',
-    level: 'WARN',
-    source: 'Database',
-    message: 'Slow query detected on community_posts table (850ms).',
-  },
-  {
-    id: 'LOG-9940',
-    time: '19:30:00 15/06/2026',
-    level: 'INFO',
-    source: 'NotificationWorker',
-    message: 'Successfully broadcasted URGENT notice to 1,402 active nodes.',
-  },
-  {
-    id: 'LOG-9939',
-    time: '19:15:22 15/06/2026',
-    level: 'INFO',
-    source: 'PaymentGateway',
-    message: 'Webhook received for transaction TRX-998. Status: SUCCESS.',
-  },
-  {
-    id: 'LOG-9938',
-    time: '18:50:11 15/06/2026',
-    level: 'ERROR',
-    source: 'InventorySync',
-    message: 'Connection timeout while pulling stock data from Branch B-02.',
-  },
-];
+import LogDetailModal from '../components/log/LogDetailModal';
 
 const SystemLog = () => {
+  const [logs, setLogs] = useState([]);
   const [filterLevel, setFilterLevel] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Tối ưu hóa việc lọc dữ liệu
+  const fetchLogs = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    const params = filterLevel !== 'ALL' ? { level: filterLevel } : {};
+    getLogList(params)
+      .then((data) => {
+        setLogs(Array.isArray(data) ? data : data?.items || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('System logs API error:', err);
+        setError(err.message || 'Không tải được nhật ký hệ thống');
+        setLoading(false);
+      });
+  }, [filterLevel]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
+
   const filteredLogs = useMemo(() => {
-    return MOCK_LOGS.filter((log) => {
-      const matchesLevel = filterLevel === 'ALL' || log.level === filterLevel;
+    return logs.filter((log) => {
       const matchesSearch =
-        log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.source.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesLevel && matchesSearch;
+        (log.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (log.source || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (log.action || '').toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
     });
-  }, [filterLevel, searchTerm]);
+  }, [logs, searchTerm]);
 
-  const handleExportData = () => {
-    alert('Đang xuất dữ liệu log toàn hệ thống ra file .TXT');
+  const handleExportData = async (format) => {
+    try {
+      const blob = await exportLogs(format);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `system-logs-${new Date().toISOString().split('T')[0]}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error:', err);
+    }
   };
 
   return (
     <div className="space-y-6 text-on-surface">
-      {/* HEADER */}
       <div className="flex items-center justify-between border-b border-outline-variant pb-3">
         <div>
           <h1 className="text-xl font-bold uppercase tracking-tight text-on-surface">
@@ -72,15 +68,22 @@ const SystemLog = () => {
             Theo dõi sự kiện máy chủ, cảnh báo bảo mật và truy vết lỗi API
           </p>
         </div>
-        <button
-          onClick={handleExportData}
-          className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container-high"
-        >
-          <Icon name="download" size={16} /> XUẤT LOG (TXT)
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleExportData('csv')}
+            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container-high"
+          >
+            <Icon name="download" size={16} /> XUẤT CSV
+          </button>
+          <button
+            onClick={() => handleExportData('txt')}
+            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container-high"
+          >
+            <Icon name="download" size={16} /> XUẤT TXT
+          </button>
+        </div>
       </div>
 
-      {/* FILTER BAR */}
       <LogFilterBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -88,8 +91,19 @@ const SystemLog = () => {
         onFilterChange={setFilterLevel}
       />
 
-      {/* LOG TABLE */}
-      <LogTable logs={filteredLogs} />
+      {loading && (
+        <div className="rounded-md bg-surface-container-lowest p-8 text-center text-xs text-on-surface-variant">
+          Đang tải...
+        </div>
+      )}
+      {error && (
+        <div className="rounded-md bg-error-container p-3 text-xs font-semibold text-error">
+          {error}
+        </div>
+      )}
+      {!loading && !error && <LogTable logs={filteredLogs} onRowClick={setSelectedLog} />}
+
+      <LogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />
     </div>
   );
 };

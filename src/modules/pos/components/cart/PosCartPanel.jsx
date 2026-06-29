@@ -22,6 +22,9 @@ const PosCartPanel = ({
   onPayMethodChange,
   isSplitPay,
   onToggleSplitPay,
+  onOpenHeldOrders,
+  onOpenPriceCheck,
+  onOpenStockCheck,
 }) => {
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
@@ -175,18 +178,34 @@ const PosCartPanel = ({
           </button>
         </div>
 
-        <div className="flex flex-col gap-y-2">
-          <button
-            onClick={onPay}
-            className="w-full rounded-lg bg-[#004785] py-4 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-blue-900/20 transition-all hover:opacity-90 active:scale-95"
-          >
-            THANH TOÁN (F9)
-          </button>
+        <div className="grid grid-cols-4 gap-2">
           <button
             onClick={onSaveDraft}
-            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-[#004785] hover:text-[#004785] active:scale-95"
+            className="flex flex-col items-center gap-0.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 transition-all hover:border-amber-400 hover:text-amber-600 active:scale-95"
           >
-            Lưu bản nháp
+            <Icon name="pause_circle" size={14} />
+            <span>Đơn treo</span>
+          </button>
+          <button
+            onClick={onOpenPriceCheck}
+            className="flex flex-col items-center gap-0.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 transition-all hover:border-blue-400 hover:text-blue-600 active:scale-95"
+          >
+            <Icon name="local_offer" size={14} />
+            <span>Tra giá</span>
+          </button>
+          <button
+            onClick={onOpenStockCheck}
+            className="flex flex-col items-center gap-0.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 transition-all hover:border-green-400 hover:text-green-600 active:scale-95"
+          >
+            <Icon name="inventory_2" size={14} />
+            <span>Tra kho</span>
+          </button>
+          <button
+            onClick={onPay}
+            className="flex flex-col items-center gap-0.5 rounded-lg border-2 border-[#004785] bg-[#004785] py-2 text-xs font-bold text-white transition-all hover:bg-[#003366] active:scale-95"
+          >
+            <Icon name="payments" size={14} />
+            <span>Thanh toán</span>
           </button>
         </div>
       </div>

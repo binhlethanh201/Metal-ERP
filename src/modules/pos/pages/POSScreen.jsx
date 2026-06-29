@@ -1,9 +1,12 @@
-﻿/**
- * Trang Máy bán hàng chinh - Container ben trong PosLayout.
- * Su dung cac component con: CustomerBar, PaymentModal, SuccessModal, ReceiptModal, CustomerPickerModal.
+/**
+ * Trang Máy bán hàng chính - Container bên trong PosLayout.
+ * Chỉ kết nối API thực tế cho: GET danh sách sản phẩm.
+ * Các tính năng còn lại (giỏ hàng, thanh toán, treo đơn, khách hàng) chạy local state.
+ * TODO (FE): gán API cho từng nghiệp vụ khi BE sẵn sàng.
  */
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useOutletContext, useLocation } from 'react-router-dom';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useOutletContext } from 'react-router-dom';
+
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
@@ -12,157 +15,117 @@ import SuccessModal from '../components/order/SuccessModal';
 import ReceiptModal from '../components/order/ReceiptModal';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { usePosCart } from '../hooks/usePosCart';
-import { usePosProducts } from '../hooks/usePosProducts';
-import { useProductList } from '../../inventory/hooks/useProductList';
-import { initialCart, mockCustomers } from '../data/posMockData';
+import CheckPriceTool from '../components/product/CheckPriceTool';
+import CheckStockTool from '../components/product/CheckStockTool';
+import HoldNoteModal from '../components/hold/HoldNoteModal';
+import HeldOrdersDrawer from '../components/hold/HeldOrdersDrawer';
+import ScanModal from '../components/cart/ScanModal';
+import PromoModal from '../components/cart/PromoModal';
+import QRModal from '../components/cart/QRModal';
+import DebtModal from '../components/cart/DebtModal';
+
+import { getPosProducts } from '../services/posService';
+import { mockCustomers } from '../data/posMockData';
 
 const PAYMENT_LABELS = { cash: 'Tiền mặt', card: 'Thẻ', transfer: 'Chuyển khoản' };
 const newPaymentLine = (method = 'cash') => ({ id: Date.now(), method, amount: 0 });
 
 const mapToPosProduct = (p) => ({
-  id: p.productCode || p.id || '',
-  name: p.name || '',
-  price: p.salePrice ?? p.price ?? 0,
+  id: p.productId || p.id || '',
+  name: p.productName || p.name || '',
+  price: p.retailPrice ?? p.salePrice ?? p.price ?? 0,
   sku: p.productCode || p.barcode || p.id || '',
-  stock: p.stock ?? 0,
-  category: p.group || p.category || '',
-  status: p.status || (p.stock > 0 ? 'Còn hàng' : 'Hết hàng'),
-  image: p.image || '',
+  stock: p.availableStock ?? p.stock ?? 0,
+  category: p.categoryName || p.group || p.category || '',
+  status: (p.availableStock ?? p.stock ?? 0) > 0 ? 'Còn hàng' : 'Hết hàng',
+  image: p.imageUrl || p.image || '',
+  productId: p.productId || p.id,
+  productName: p.productName || p.name,
+  productCode: p.productCode || p.sku,
+  barcode: p.barcode || '',
 });
 
 const POSScreen = () => {
-  const { search, setSearch, showNotice, quickAddCust, drafts, setDrafts, setFooterInfo } =
-    useOutletContext();
-  const location = useLocation();
-  const draftData = location.state?.draft;
-  const loadedDraft = useRef(null);
+  const { search, setSearch, showNotice, quickAddCust, setFooterInfo } = useOutletContext();
 
+  // ── Products (kết nối API thực tế) ─────────────────────────
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      setProductsLoading(true);
+      setProductsError('');
+      try {
+        const res = await getPosProducts({ search: search || undefined });
+        const items = res?.items || res?.data?.items || res || [];
+        setProducts(items.map(mapToPosProduct));
+      } catch {
+        setProductsError('Không thể tải danh sách sản phẩm.');
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+    load();
+  }, [search]);
+
+  // ── Cart (local state) ──────────────────────────────────────
+  const [cartItems, setCartItems] = useState([]);
+  const [appliedVoucher, setAppliedVoucher] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Tiền mặt');
+
+  const addToCart = useCallback((product) => {
+    setCartItems((prev) => {
+      const key = product.productId || product.id;
+      const existed = prev.find((item) => (item.productId || item.id) === key);
+      if (existed) {
+        return prev.map((item) =>
+          (item.productId || item.id) === key ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  }, []);
+
+  const changeQty = useCallback((id, delta) => {
+    setCartItems((prev) =>
+      prev
+        .map((item) =>
+          (item.productId || item.id) === id
+            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  }, []);
+
+  const removeItem = useCallback((id) => {
+    setCartItems((prev) => prev.filter((item) => (item.productId || item.id) !== id));
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setCartItems([]);
+    setAppliedVoucher('');
+    setPaymentMethod('Tiền mặt');
+  }, []);
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price ?? 0) * item.quantity, 0);
+  const discount = cartItems.length > 0 && appliedVoucher ? 50000 : 0;
+  const vat = Math.round((subtotal - discount) * 0.08);
+  const total = subtotal - discount + vat;
+
+  const applyVoucher = useCallback(() => {
+    if (!appliedVoucher.trim()) return;
+    showNotice('Đã áp dụng mã giảm giá');
+  }, [appliedVoucher, showNotice]);
+
+  // ── Customer (local state — TODO: kết nối API) ──────────────
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [lastOrder, setLastOrder] = useState(null);
-  const [payLines, setPayLines] = useState([newPaymentLine('cash')]);
-  const [paying, setPaying] = useState(false);
-  const [orderCounter, setOrderCounter] = useState(1);
   const [showCustModal, setShowCustModal] = useState(false);
   const [showQuickAddCust, setShowQuickAddCust] = useState(false);
-  const [isSplitPay, setIsSplitPay] = useState(false);
   const prevQuickAdd = useRef(quickAddCust);
 
-  const { products: inventoryProducts } = useProductList();
-  const posProducts = useMemo(() => inventoryProducts.map(mapToPosProduct), [inventoryProducts]);
-
-  const cart = usePosCart(initialCart);
-  const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
-
-  const handleAddToCart = useCallback((p) => cart.addToCart(p), [cart]);
-  const handleClearCart = useCallback(() => {
-    cart.clearCart();
-    setSelectedCustomer(null);
-  }, [cart]);
-  const handleApplyVoucher = useCallback(() => {
-    showNotice(cart.applyVoucher() ? 'Đã áp dụng mã giảm giá' : 'Vui lòng nhập mã giảm giá');
-  }, [cart, showNotice]);
-
-  // ---- Thanh toán ----
-  const totalPaid = payLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
-  const remaining = Math.max(0, cart.total - totalPaid);
-  const isPaymentValid = Math.abs(totalPaid - cart.total) <= 1 && totalPaid > 0;
-
-  const processOrder = (lines, totalPaidAmount) => {
-    setPaying(true);
-    setTimeout(() => {
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      const order = {
-        id: 'POS-' + dateStr + '-' + String(orderCounter).padStart(3, '0'),
-        date: new Date().toISOString(),
-        items: [...cart.cart],
-        subtotal: cart.subtotal,
-        discount: cart.discount,
-        vat: cart.vat,
-        total: cart.total,
-        payLines: lines.map((l) => ({ method: PAYMENT_LABELS[l.method], amount: l.amount })),
-        totalPaid: totalPaidAmount,
-        change: Math.max(0, totalPaidAmount - cart.total),
-        customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
-      };
-      setLastOrder(order);
-      setOrderCounter((c) => c + 1);
-      setPaying(false);
-      setShowPayModal(false);
-      setShowSuccess(true);
-      cart.clearCart();
-      setSelectedCustomer(null);
-    }, 600);
-  };
-
-  const handleOpenPay = () => {
-    if (cart.cart.length === 0) {
-      showNotice('Giỏ hàng đang trống');
-      return;
-    }
-    if (isSplitPay) {
-      const m =
-        cart.paymentMethod === 'Tiền mặt'
-          ? 'cash'
-          : cart.paymentMethod === 'Thẻ'
-            ? 'card'
-            : 'transfer';
-      setPayLines([{ ...newPaymentLine(m), amount: 0 }]);
-      setShowPayModal(true);
-    } else {
-      const m =
-        cart.paymentMethod === 'Tiền mặt'
-          ? 'cash'
-          : cart.paymentMethod === 'Thẻ'
-            ? 'card'
-            : 'transfer';
-      processOrder([{ method: m, amount: cart.total }], cart.total);
-    }
-  };
-
-  const handleProcessPayment = () => {
-    if (!isPaymentValid) return;
-    processOrder(
-      payLines.filter((l) => l.amount > 0),
-      totalPaid
-    );
-  };
-
-  // ---- Pay lines ----
-  const handleAddPayLine = () => setPayLines((prev) => [...prev, newPaymentLine('transfer')]);
-  const handleRemovePayLine = (id) =>
-    setPayLines((prev) => (prev.length > 1 ? prev.filter((l) => l.id !== id) : prev));
-  const handlePayLineChange = (id, field, value) => {
-    setPayLines((prev) =>
-      prev.map((l) =>
-        l.id !== id
-          ? l
-          : field === 'method'
-            ? { ...l, method: value, amount: 0 }
-            : { ...l, amount: Number(value) }
-      )
-    );
-  };
-  const handleQuickFill = (id) =>
-    setPayLines((prev) => prev.map((l) => (l.id === id ? { ...l, amount: remaining } : l)));
-
-  // ---- Load draft neu co ----
-  useEffect(() => {
-    if (draftData && draftData.id !== loadedDraft.current) {
-      loadedDraft.current = draftData.id;
-      // Nap items vao cart
-      draftData.items.forEach((item) => cart.addToCart(item));
-      setSelectedCustomer(draftData.customer);
-      // Xoa draft khoi danh sach
-      setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
-    }
-  }, [draftData]);
-
-  // ---- Thêm nhanh khách hàng ----
   useEffect(() => {
     if (quickAddCust > prevQuickAdd.current) {
       prevQuickAdd.current = quickAddCust;
@@ -176,21 +139,169 @@ const POSScreen = () => {
     showNotice('Đã thêm khách: ' + newCust.name);
   };
 
-  // ---- Cap nhat footer ----
+  // ── Payment (local state — TODO: kết nối API) ──────────────
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastOrder, setLastOrder] = useState(null);
+  const [payLines, setPayLines] = useState([newPaymentLine('cash')]);
+  const [paying, setPaying] = useState(false);
+  const [orderCounter, setOrderCounter] = useState(1);
+  const [isSplitPay, setIsSplitPay] = useState(false);
+
+  const totalPaid = payLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
+  const remaining = Math.max(0, total - totalPaid);
+  const isPaymentValid = Math.abs(totalPaid - total) <= 1 && totalPaid > 0;
+
+  // ── Hold Invoice (local state — TODO: kết nối API) ─────────
+  const [showHoldNote, setShowHoldNote] = useState(false);
+  const [showHeldOrders, setShowHeldOrders] = useState(false);
+  const [heldOrders, setHeldOrders] = useState([]);
+
+  const handleHold = ({ holdNote } = {}) => {
+    if (cartItems.length === 0) {
+      showNotice('Giỏ hàng đang trống');
+      return;
+    }
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const held = {
+      id: 'HOLD-' + dateStr + '-' + String(heldOrders.length + 1).padStart(3, '0'),
+      holdNote: holdNote || '',
+      customerName: selectedCustomer ? selectedCustomer.name || selectedCustomer.customerName : '',
+      cartItems: [...cartItems],
+      appliedVoucher,
+      paymentMethod,
+      createdAt: new Date().toISOString(),
+    };
+    setHeldOrders((prev) => [held, ...prev]);
+    setShowHoldNote(false);
+    clearCart();
+    showNotice('Đã treo hóa đơn. Có thể khôi phục trong phiên làm việc.');
+  };
+
+  const handleResume = (invoice) => {
+    clearCart();
+    if (invoice.cartItems) {
+      setCartItems(invoice.cartItems);
+      setAppliedVoucher(invoice.appliedVoucher || '');
+      setPaymentMethod(invoice.paymentMethod || 'Tiền mặt');
+    }
+    setSelectedCustomer(invoice.customerName ? { name: invoice.customerName } : null);
+    setHeldOrders((prev) => prev.filter((o) => o.id !== invoice.id));
+    showNotice(`Đã khôi phục đơn treo #${invoice.id}`);
+  };
+
+  // ── Process order (local — TODO: kết nối API finalize) ─────
+  const processOrder = async (lines, totalPaidAmount) => {
+    setPaying(true);
+    try {
+      // TODO: gọi API tạo đơn hàng / finalize invoice ở đây
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const order = {
+        id: 'POS-' + dateStr + '-' + String(orderCounter).padStart(3, '0'),
+        date: new Date().toISOString(),
+        items: [...cartItems],
+        subtotal,
+        discount,
+        vat,
+        total,
+        payLines: lines.map((l) => ({
+          method: PAYMENT_LABELS[l.method] || l.method,
+          amount: l.amount,
+        })),
+        totalPaid: totalPaidAmount,
+        change: Math.max(0, totalPaidAmount - total),
+        customer: selectedCustomer
+          ? selectedCustomer.name || selectedCustomer.customerName
+          : 'Khách lẻ',
+      };
+      setLastOrder(order);
+      setOrderCounter((c) => c + 1);
+      setShowPayModal(false);
+      setShowSuccess(true);
+      clearCart();
+      setSelectedCustomer(null);
+    } catch (err) {
+      console.error('Payment error:', err);
+      showNotice('Lỗi thanh toán. Vui lòng thử lại.');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const handleOpenPay = () => {
+    if (cartItems.length === 0) {
+      showNotice('Giỏ hàng đang trống');
+      return;
+    }
+    if (isSplitPay) {
+      setPayLines([{ ...newPaymentLine('transfer'), amount: 0 }]);
+      setShowPayModal(true);
+    } else {
+      const m =
+        paymentMethod === 'Tiền mặt' ? 'cash' : paymentMethod === 'Thẻ' ? 'card' : 'transfer';
+      processOrder([{ method: m, amount: total }], total);
+    }
+  };
+
+  const handleProcessPayment = () => {
+    if (!isPaymentValid) return;
+    processOrder(
+      payLines.filter((l) => l.amount > 0),
+      totalPaid
+    );
+  };
+
+  // Pay lines
+  const handleAddPayLine = () => setPayLines((prev) => [...prev, newPaymentLine('transfer')]);
+  const handleRemovePayLine = (id) =>
+    setPayLines((prev) => (prev.length > 1 ? prev.filter((l) => l.id !== id) : prev));
+  const handlePayLineChange = (id, field, value) => {
+    setPayLines((prev) =>
+      prev.map((l) =>
+        l.id !== id
+          ? field === 'method'
+            ? { ...l, method: value, amount: 0 }
+            : { ...l, amount: Number(value) }
+          : l
+      )
+    );
+  };
+  const handleQuickFill = (id) =>
+    setPayLines((prev) => prev.map((l) => (l.id === id ? { ...l, amount: remaining } : l)));
+
+  // ── Tool Modals ─────────────────────────────────────────────
+  const [showPriceTool, setShowPriceTool] = useState(false);
+  const [showStockTool, setShowStockTool] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showDebtModal, setShowDebtModal] = useState(false);
+
+  // ── Footer info ─────────────────────────────────────────────
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const currentOrderCode = 'POS-' + dateStr + '-' + String(orderCounter).padStart(3, '0');
 
   useEffect(() => {
     setFooterInfo({
       orderCode: currentOrderCode,
-      customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
+      customer: selectedCustomer
+        ? selectedCustomer.name || selectedCustomer.customerName || 'Khách lẻ'
+        : 'Khách lẻ',
       points: selectedCustomer
-        ? Math.floor(selectedCustomer.totalSpent / 100000) + ' pts'
+        ? Math.floor((selectedCustomer.totalSpent || 0) / 100000) + ' pts'
         : '0 pts',
     });
   }, [currentOrderCode, selectedCustomer, setFooterInfo]);
 
-  // ---- Receipt ----
+  const handleApplyVoucher = () => {
+    if (!appliedVoucher.trim()) {
+      showNotice('Vui lòng nhập mã giảm giá');
+      return;
+    }
+    applyVoucher();
+  };
+
   const handleCloseReceipt = () => {
     setShowReceipt(false);
     setLastOrder(null);
@@ -205,55 +316,44 @@ const POSScreen = () => {
           onClearCustomer={() => setSelectedCustomer(null)}
         />
         <div className="custom-scrollbar flex-1 overflow-y-auto pb-4">
-          <ProductGrid products={filteredProducts} onAddToCart={handleAddToCart} />
+          <ProductGrid
+            products={products}
+            onAddToCart={addToCart}
+            loading={productsLoading}
+            error={productsError}
+          />
         </div>
       </div>
 
       <PosCartPanel
-        cart={cart.cart}
-        voucher={cart.voucher}
-        onVoucherChange={cart.setVoucher}
+        cart={cartItems}
+        voucher={appliedVoucher}
+        onVoucherChange={setAppliedVoucher}
         onApplyVoucher={handleApplyVoucher}
-        subtotal={cart.subtotal}
-        discount={cart.discount}
-        vat={cart.vat}
-        total={cart.total}
-        onClearCart={handleClearCart}
+        subtotal={subtotal}
+        discount={discount}
+        vat={vat}
+        total={total}
+        onClearCart={clearCart}
         onPay={handleOpenPay}
-        onSaveDraft={() => {
-          if (cart.cart.length === 0) {
-            showNotice('Giỏ hàng trống, không có gì để lưu');
-            return;
-          }
-          const draft = {
-            id: 'draft-' + Date.now(),
-            items: [...cart.cart],
-            customer: selectedCustomer,
-            subtotal: cart.subtotal,
-            discount: cart.discount,
-            vat: cart.vat,
-            total: cart.total,
-            createdAt: new Date().toISOString(),
-          };
-          setDrafts((prev) => [draft, ...prev]);
-          cart.clearCart();
-          setSelectedCustomer(null);
-          showNotice('Đã lưu đơn nháp. Vào Đơn hàng để tiếp tục.');
-        }}
-        onQtyChange={cart.changeQty}
-        onRemoveItem={cart.removeItem}
+        onSaveDraft={() => setShowHoldNote(true)}
+        onQtyChange={changeQty}
+        onRemoveItem={removeItem}
         selectedCustomer={selectedCustomer}
         onOpenCustomerPicker={() => setShowCustModal(true)}
-        payMethod={cart.paymentMethod}
-        onPayMethodChange={cart.setPaymentMethod}
+        payMethod={paymentMethod}
+        onPayMethodChange={setPaymentMethod}
         isSplitPay={isSplitPay}
         onToggleSplitPay={setIsSplitPay}
+        onOpenHeldOrders={() => setShowHeldOrders(true)}
+        onOpenPriceCheck={() => setShowPriceTool(true)}
+        onOpenStockCheck={() => setShowStockTool(true)}
       />
 
       <PaymentModal
         isOpen={showPayModal}
         onClose={() => setShowPayModal(false)}
-        cart={cart}
+        cart={{ cart: cartItems, subtotal, discount, vat, total }}
         selectedCustomer={selectedCustomer}
         payLines={payLines}
         totalPaid={totalPaid}
@@ -293,6 +393,68 @@ const POSScreen = () => {
         isOpen={showQuickAddCust}
         onClose={() => setShowQuickAddCust(false)}
         onAdd={handleQuickAddCustomer}
+      />
+
+      {/* Hold Invoice */}
+      <HoldNoteModal
+        isOpen={showHoldNote}
+        onClose={() => setShowHoldNote(false)}
+        onConfirm={handleHold}
+      />
+
+      <HeldOrdersDrawer
+        isOpen={showHeldOrders}
+        onClose={() => setShowHeldOrders(false)}
+        onResume={handleResume}
+        heldOrders={heldOrders}
+      />
+
+      {/* Tool Modals */}
+      <CheckPriceTool isOpen={showPriceTool} onClose={() => setShowPriceTool(false)} />
+      <CheckStockTool isOpen={showStockTool} onClose={() => setShowStockTool(false)} />
+
+      {/* New Modals */}
+      <ScanModal
+        isOpen={showScanModal}
+        onClose={() => setShowScanModal(false)}
+        onItemAdded={(product) => {
+          if (product) addToCart(product);
+          setShowScanModal(false);
+          showNotice('Đã thêm sản phẩm');
+        }}
+      />
+
+      <PromoModal
+        isOpen={showPromoModal}
+        onClose={() => setShowPromoModal(false)}
+        currentPromo={appliedVoucher}
+        onPromoApplied={(promo) => {
+          setAppliedVoucher(promo);
+          setShowPromoModal(false);
+          showNotice('Đã áp dụng khuyến mãi');
+        }}
+        onPromoRemoved={() => {
+          setAppliedVoucher('');
+          showNotice('Đã bỏ khuyến mãi');
+        }}
+      />
+
+      <QRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        amount={total}
+        invoiceCode={currentOrderCode}
+      />
+
+      <DebtModal
+        isOpen={showDebtModal}
+        onClose={() => setShowDebtModal(false)}
+        customer={selectedCustomer}
+        amount={total}
+        onDebtRecorded={() => {
+          showNotice('Đã ghi nợ');
+          setShowDebtModal(false);
+        }}
       />
     </>
   );

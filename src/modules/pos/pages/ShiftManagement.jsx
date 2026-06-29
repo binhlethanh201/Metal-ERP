@@ -1,8 +1,9 @@
 /**
  * ShiftManagement Page - Quản lý ca bán hàng
- * Nghiệp vụ: Mở ca (nhập số dư đầu) -> Bán hàng (hệ thống tự ghi nhận từng đơn) -> Đóng ca (hệ thống tự tổng hợp, thu ngân chỉ kiểm đếm đối chiếu)
+ * Nghiệp vụ: Mở ca (nhập số dư đầu) → Bán hàng → Đóng ca (đối chiếu tiền mặt)
+ * TODO (FE): Kết nối API khi BE sẵn sàng — hiện chạy với MOCK DATA local.
  */
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
@@ -11,115 +12,51 @@ import { Modal } from '../../../shared/components/Modal';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
+const CASHIERS = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C', 'Phạm Thị D'];
+
+// ── MOCK DATA ──────────────────────────────────────────────────
 const MOCK_SHIFTS = [
   {
-    id: 1,
-    date: '2024-05-08',
+    id: 'SH-001',
+    date: '2026-06-28',
     cashier: 'Nguyễn Văn A',
     startTime: '08:00',
-    endTime: '16:00',
-    openingBalance: 5000000,
-    closingBalance: 8500000,
-    actualCashCount: 6980000,
-    cashVariance: -20000,
-    totalSales: 3500000,
-    cashSales: 2000000,
-    cardSales: 1200000,
-    transferSales: 300000,
-    orderCount: 47,
+    endTime: '17:00',
+    openingBalance: 500000,
+    closingBalance: 3200000,
+    actualCashCount: 3200000,
+    cashVariance: 0,
+    totalSales: 5800000,
+    cashSales: 2700000,
+    cardSales: 1800000,
+    transferSales: 1300000,
+    orderCount: 14,
     status: 'closed',
     note: '',
   },
   {
-    id: 2,
-    date: '2024-05-07',
+    id: 'SH-002',
+    date: '2026-06-27',
     cashier: 'Trần Thị B',
-    startTime: '13:00',
-    endTime: '21:00',
-    openingBalance: 3000000,
-    closingBalance: 9200000,
-    actualCashCount: 6800000,
-    cashVariance: 0,
-    totalSales: 6200000,
-    cashSales: 3800000,
-    cardSales: 2000000,
-    transferSales: 400000,
-    orderCount: 72,
-    status: 'closed',
-    note: 'Ca chiều đông khách',
-  },
-  {
-    id: 3,
-    date: '2024-05-07',
-    cashier: 'Nguyễn Văn A',
     startTime: '08:00',
-    endTime: '12:00',
-    openingBalance: 5000000,
-    closingBalance: 7300000,
-    actualCashCount: 6500000,
-    cashVariance: 0,
-    totalSales: 2300000,
-    cashSales: 1500000,
-    cardSales: 600000,
-    transferSales: 200000,
-    orderCount: 31,
+    endTime: '17:30',
+    openingBalance: 500000,
+    closingBalance: 2900000,
+    actualCashCount: 2850000,
+    cashVariance: -50000,
+    totalSales: 4200000,
+    cashSales: 2400000,
+    cardSales: 1200000,
+    transferSales: 600000,
+    orderCount: 10,
     status: 'closed',
-    note: '',
-  },
-  {
-    id: 4,
-    date: '2024-05-06',
-    cashier: 'Lê Văn C',
-    startTime: '08:00',
-    endTime: '16:00',
-    openingBalance: 4000000,
-    closingBalance: 7800000,
-    actualCashCount: 6080000,
-    cashVariance: -20000,
-    totalSales: 3800000,
-    cashSales: 2100000,
-    cardSales: 1400000,
-    transferSales: 300000,
-    orderCount: 55,
-    status: 'closed',
-    note: '',
-  },
-  {
-    id: 5,
-    date: '2024-05-05',
-    cashier: 'Nguyễn Văn A',
-    startTime: '08:00',
-    endTime: '16:00',
-    openingBalance: 5000000,
-    closingBalance: 8100000,
-    actualCashCount: 6800000,
-    cashVariance: 0,
-    totalSales: 3100000,
-    cashSales: 1800000,
-    cardSales: 1000000,
-    transferSales: 300000,
-    orderCount: 42,
-    status: 'closed',
-    note: '',
+    note: 'Thiếu 50k cần điều tra',
   },
 ];
 
-const CASHIERS = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C', 'Phạm Thị D'];
-
-const PAYMENT_METHODS = ['cash', 'card', 'transfer'];
-
-const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-const randomAmount = () => {
-  const amounts = [
-    15000, 20000, 25000, 30000, 35000, 45000, 50000, 55000, 65000, 75000, 85000, 100000, 120000,
-    150000, 200000, 250000, 350000, 500000, 750000, 1200000,
-  ];
-  return amounts[Math.floor(Math.random() * amounts.length)];
-};
-
 export const ShiftManagement = () => {
   const [shifts, setShifts] = useState(MOCK_SHIFTS);
+  const [loading] = useState(false);
   const [isShiftActive, setIsShiftActive] = useState(false);
   const [activeShiftStart, setActiveShiftStart] = useState(null);
   const [showStartModal, setShowStartModal] = useState(false);
@@ -129,42 +66,8 @@ export const ShiftManagement = () => {
   const [dateFilter, setDateFilter] = useState('');
 
   const [startForm, setStartForm] = useState({ cashier: '', openingBalance: '' });
-
-  // Đơn hàng phát sinh trong ca đang mở (hệ thống tự ghi nhận)
-  const [shiftOrders, setShiftOrders] = useState([]);
-  const orderIntervalRef = useRef(null);
-
-  // Form kết thúc ca: chỉ cần nhập tiền mặt thực tế kiểm đếm + ghi chú
   const [endForm, setEndForm] = useState({ actualCashCount: '', note: '' });
   const [now, setNow] = useState(Date.now());
-
-  // ---- Simulation: giả lập đơn hàng đến trong ca đang mở ----
-  const addSimulatedOrder = useCallback(() => {
-    const method = randomItem(PAYMENT_METHODS);
-    const amount = randomAmount();
-    setShiftOrders((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        time: new Date().toLocaleTimeString('vi-VN'),
-        amount,
-        paymentMethod: method,
-      },
-    ]);
-  }, []);
-
-  useEffect(() => {
-    if (isShiftActive) {
-      addSimulatedOrder();
-      orderIntervalRef.current = setInterval(() => {
-        addSimulatedOrder();
-      }, 8000);
-    } else {
-      clearInterval(orderIntervalRef.current);
-      orderIntervalRef.current = null;
-    }
-    return () => clearInterval(orderIntervalRef.current);
-  }, [isShiftActive, addSimulatedOrder]);
 
   // Cập nhật đồng hồ thời gian làm việc mỗi giây
   useEffect(() => {
@@ -173,26 +76,20 @@ export const ShiftManagement = () => {
     return () => clearInterval(timer);
   }, [isShiftActive]);
 
-  // ---- Tổng hợp số liệu từ đơn hàng hệ thống ----
+  // ── Tổng hợp số liệu ca đang mở ────────────────────────────
   const shiftSummary = useMemo(() => {
-    const orderCount = shiftOrders.length;
-    const cashSales = shiftOrders
-      .filter((o) => o.paymentMethod === 'cash')
-      .reduce((s, o) => s + o.amount, 0);
-    const cardSales = shiftOrders
-      .filter((o) => o.paymentMethod === 'card')
-      .reduce((s, o) => s + o.amount, 0);
-    const transferSales = shiftOrders
-      .filter((o) => o.paymentMethod === 'transfer')
-      .reduce((s, o) => s + o.amount, 0);
-    const totalSales = cashSales + cardSales + transferSales;
     const openingBalance = Number(startForm.openingBalance) || 0;
+    // TODO (FE): lấy dữ liệu doanh số thực từ API khi kết nối
+    const cashSales = 0;
+    const cardSales = 0;
+    const transferSales = 0;
+    const totalSales = cashSales + cardSales + transferSales;
     const expectedClosingBalance = openingBalance + cashSales;
     const actualCash = Number(endForm.actualCashCount) || 0;
     const cashVariance = actualCash > 0 ? actualCash - expectedClosingBalance : 0;
 
     return {
-      orderCount,
+      orderCount: 0,
       cashSales,
       cardSales,
       transferSales,
@@ -202,28 +99,21 @@ export const ShiftManagement = () => {
       actualCash,
       cashVariance,
     };
-  }, [shiftOrders, startForm.openingBalance, endForm.actualCashCount]);
+  }, [startForm.openingBalance, endForm.actualCashCount]);
 
   const elapsedStr = useMemo(() => {
     if (!activeShiftStart) return '';
-    const diff = Math.floor((now - activeShiftStart.getTime()) / 1000);
+    const diff = Math.floor((now - activeShiftStart) / 1000);
     const h = Math.floor(diff / 3600);
     const m = Math.floor((diff % 3600) / 60);
     const s = diff % 60;
     return `${h}h ${m.toString().padStart(2, '0')}p ${s.toString().padStart(2, '0')}s`;
   }, [activeShiftStart, now]);
 
-  // ---- Handlers ----
+  // ── Handlers ────────────────────────────────────────────────
   const handleOpenStartModal = () => {
     setStartForm({ cashier: '', openingBalance: '' });
     setShowStartModal(true);
-  };
-
-  const handleStartShift = () => {
-    setIsShiftActive(true);
-    setActiveShiftStart(new Date());
-    setShiftOrders([]);
-    setShowStartModal(false);
   };
 
   const handleOpenEndModal = () => {
@@ -231,50 +121,46 @@ export const ShiftManagement = () => {
     setShowEndModal(true);
   };
 
+  const handleStartShift = () => {
+    // TODO (FE): gọi API POST /pos/shifts/start
+    if (!startForm.cashier || !startForm.openingBalance) return;
+    setIsShiftActive(true);
+    setActiveShiftStart(Date.now());
+    setShowStartModal(false);
+  };
+
   const handleEndShift = () => {
+    // TODO (FE): gọi API POST /pos/shifts/{id}/end
+    if (!activeShiftStart) return;
+    const dateStr = new Date().toISOString().split('T')[0];
     const now = new Date();
-    const st = activeShiftStart;
-    const startTime = st
-      ? `${st.getHours().toString().padStart(2, '0')}:${st.getMinutes().toString().padStart(2, '0')}`
-      : '08:00';
-    const endTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-    const {
-      orderCount,
-      cashSales,
-      cardSales,
-      transferSales,
-      totalSales,
-      openingBalance,
-      expectedClosingBalance,
-      cashVariance,
-    } = shiftSummary;
-    const actualCash = Number(endForm.actualCashCount) || expectedClosingBalance;
-
     const newShift = {
-      id: Date.now(),
-      date: now.toISOString().split('T')[0],
-      cashier: startForm.cashier || 'Nguyễn Văn A',
-      startTime,
-      endTime,
-      openingBalance,
-      closingBalance: actualCash,
-      actualCashCount: actualCash,
-      cashVariance,
-      totalSales,
-      cashSales,
-      cardSales,
-      transferSales,
-      orderCount,
+      id: 'SH-' + String(shifts.length + 1).padStart(3, '0'),
+      date: dateStr,
+      cashier: startForm.cashier,
+      startTime: new Date(activeShiftStart).toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      endTime: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      openingBalance: Number(startForm.openingBalance) || 0,
+      closingBalance:
+        Number(endForm.actualCashCount) || Number(startForm.openingBalance) || 0,
+      actualCashCount: Number(endForm.actualCashCount) || 0,
+      cashVariance: shiftSummary.cashVariance,
+      totalSales: shiftSummary.totalSales,
+      cashSales: shiftSummary.cashSales,
+      cardSales: shiftSummary.cardSales,
+      transferSales: shiftSummary.transferSales,
+      orderCount: shiftSummary.orderCount,
       status: 'closed',
       note: endForm.note,
     };
-
     setShifts((prev) => [newShift, ...prev]);
     setIsShiftActive(false);
     setActiveShiftStart(null);
-    setShiftOrders([]);
     setShowEndModal(false);
+    setEndForm({ actualCashCount: '', note: '' });
   };
 
   const handleViewDetail = (shift) => {
@@ -282,7 +168,7 @@ export const ShiftManagement = () => {
     setShowDetailModal(true);
   };
 
-  // ---- Lọc & thống kê ----
+  // ── Lọc & thống kê ──────────────────────────────────────────
   const filteredShifts = useMemo(() => {
     if (!dateFilter) return shifts;
     return shifts.filter((s) => s.date === dateFilter);
@@ -292,10 +178,23 @@ export const ShiftManagement = () => {
   const totalRevenue = shifts.reduce((sum, s) => sum + s.totalSales, 0);
   const avgPerShift = totalShifts > 0 ? totalRevenue / totalShifts : 0;
   const totalHours = shifts.reduce((sum, s) => {
+    if (!s.startTime || !s.endTime) return sum;
     const [sH, sM] = s.startTime.split(':').map(Number);
     const [eH, eM] = s.endTime.split(':').map(Number);
-    return sum + (eH + eM / 60 - (sH + sM / 60));
+    const diff = eH + eM / 60 - (sH + sM / 60);
+    return sum + (diff >= 0 ? diff : 0);
   }, 0);
+
+  const {
+    orderCount,
+    cashSales,
+    cardSales,
+    transferSales,
+    totalSales,
+    openingBalance,
+    expectedClosingBalance,
+    cashVariance,
+  } = shiftSummary;
 
   const columns = [
     { key: 'date', header: 'Ngày', width: '120px' },
@@ -358,17 +257,6 @@ export const ShiftManagement = () => {
     },
   ];
 
-  const {
-    orderCount,
-    cashSales,
-    cardSales,
-    transferSales,
-    totalSales,
-    openingBalance,
-    expectedClosingBalance,
-    cashVariance,
-  } = shiftSummary;
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -405,7 +293,9 @@ export const ShiftManagement = () => {
                   <h2 className="text-lg font-bold text-slate-900">Ca đang mở</h2>
                   <p className="text-sm text-slate-500">
                     {startForm.cashier || 'Thu ngân'} - Bắt đầu lúc{' '}
-                    {activeShiftStart?.toLocaleTimeString('vi-VN')}
+                    {activeShiftStart
+                      ? new Date(activeShiftStart).toLocaleTimeString('vi-VN')
+                      : ''}
                   </p>
                 </div>
               </div>
@@ -446,47 +336,6 @@ export const ShiftManagement = () => {
                 </p>
               </div>
             </div>
-
-            {/* Đơn hàng gần đây trong ca */}
-            {shiftOrders.length > 0 && (
-              <div className="border-t border-slate-100 pt-4">
-                <p className="mb-2 text-xs font-bold uppercase tracking-[0.05em] text-slate-400">
-                  Đơn hàng gần đây
-                </p>
-                <div className="max-h-32 space-y-1 overflow-y-auto">
-                  {shiftOrders
-                    .slice(-8)
-                    .reverse()
-                    .map((o) => (
-                      <div
-                        key={o.id}
-                        className="flex items-center justify-between rounded bg-slate-50 px-3 py-1.5 text-sm"
-                      >
-                        <span className="text-slate-500">{o.time}</span>
-                        <span className="font-medium text-slate-900">
-                          {formatCurrency(o.amount)}
-                        </span>
-                        <Badge
-                          variant={
-                            o.paymentMethod === 'cash'
-                              ? 'warning'
-                              : o.paymentMethod === 'card'
-                                ? 'info'
-                                : 'primary'
-                          }
-                          size="sm"
-                        >
-                          {o.paymentMethod === 'cash'
-                            ? 'Tiền mặt'
-                            : o.paymentMethod === 'card'
-                              ? 'Thẻ'
-                              : 'CK'}
-                        </Badge>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
           </div>
         </Card>
       )}
@@ -626,7 +475,7 @@ export const ShiftManagement = () => {
         </div>
       </Modal>
 
-      {/* ====== MODAL CHỐT CA (hệ thống tự tổng hợp) ====== */}
+      {/* ====== MODAL CHỐT CA ====== */}
       <Modal
         isOpen={showEndModal}
         onClose={() => setShowEndModal(false)}
@@ -664,7 +513,7 @@ export const ShiftManagement = () => {
             </div>
           </div>
 
-          {/* Tổng hợp doanh số từ hệ thống (chỉ xem, không sửa) */}
+          {/* Tổng hợp doanh số */}
           <div className="border-t border-slate-200 pt-4">
             <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.05em] text-slate-500">
               Hệ thống tự tổng hợp từ đơn hàng
@@ -698,7 +547,9 @@ export const ShiftManagement = () => {
                   {formatCurrency(transferSales)}
                 </p>
                 <p className="text-xs text-blue-600">
-                  {totalSales > 0 ? `${((transferSales / totalSales) * 100).toFixed(0)}%` : '0%'}
+                  {totalSales > 0
+                    ? `${((transferSales / totalSales) * 100).toFixed(0)}%`
+                    : '0%'}
                 </p>
               </div>
             </div>
@@ -943,10 +794,10 @@ export const ShiftManagement = () => {
 
             {selectedShift.note && (
               <div className="border-t border-slate-200 pt-4">
-                <h3 className="mb-2 text-sm font-bold uppercase tracking-[0.05em] text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-[0.05em] text-slate-500">
                   Ghi chú
-                </h3>
-                <p className="text-sm text-slate-700">{selectedShift.note}</p>
+                </p>
+                <p className="mt-1 text-sm text-slate-600">{selectedShift.note}</p>
               </div>
             )}
           </div>

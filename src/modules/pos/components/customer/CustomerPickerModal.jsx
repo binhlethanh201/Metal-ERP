@@ -1,4 +1,9 @@
-﻿import { useState } from 'react';
+/**
+ * CustomerPickerModal - Chọn khách hàng khi tạo đơn
+ * TODO (FE): Kết nối API GET /pos/customers?search=... khi BE sẵn sàng.
+ * Hiện tìm kiếm từ mockCustomers local.
+ */
+import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { Badge } from '../../../../shared/components/Badge';
@@ -7,20 +12,29 @@ import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { mockCustomers } from '../../data/posMockData';
 
 const GROUP_COLORS = {
-  'Ca nhan': 'info',
-  'Doanh nghiep': 'primary',
-  'Dai ly': 'warning',
-  'Nha thau': 'success',
+  'Cá nhân': 'info',
+  'Doanh nghiệp': 'primary',
+  'Đại lý': 'warning',
+  'Nhà thầu': 'success',
 };
 
 const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) => {
   const [search, setSearch] = useState('');
 
-  const filtered = mockCustomers.filter((c) => {
-    if (!search) return true;
-    const kw = search.toLowerCase();
-    return c.name.toLowerCase().includes(kw) || c.phone.includes(kw);
-  });
+  useEffect(() => {
+    if (!isOpen) setSearch('');
+  }, [isOpen]);
+
+  // TODO (FE): thay bằng API call GET /pos/customers?search=...
+  const filtered = useMemo(() => {
+    const kw = search.trim().toLowerCase();
+    if (!kw) return mockCustomers;
+    return mockCustomers.filter(
+      (c) =>
+        (c.name || '').toLowerCase().includes(kw) ||
+        (c.phone || '').includes(kw)
+    );
+  }, [search]);
 
   return (
     <Modal
@@ -39,6 +53,7 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
           placeholder="Tìm theo tên hoặc số điện thoại..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          autoFocus
         />
         <div className="max-h-72 space-y-1 overflow-y-auto">
           <button
@@ -71,7 +86,7 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#004785] text-sm font-bold text-white">
-                  {c.name.charAt(0)}
+                  {(c.name || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -85,12 +100,17 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
                   </p>
                 </div>
                 <div className="text-right text-xs">
-                  <p className="font-bold text-green-600">{formatCurrency(c.totalSpent)}</p>
-                  <p className="text-slate-400">{c.orderCount} don</p>
+                  <p className="font-bold text-green-600">{formatCurrency(c.totalSpent || 0)}</p>
+                  <p className="text-slate-400">{c.orderCount || 0} đơn</p>
                 </div>
               </div>
             </button>
           ))}
+          {filtered.length === 0 && (
+            <div className="py-6 text-center text-sm text-slate-400">
+              Không tìm thấy khách hàng
+            </div>
+          )}
         </div>
       </div>
     </Modal>

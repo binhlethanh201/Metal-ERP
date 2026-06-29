@@ -1,7 +1,9 @@
-﻿/**
- * OrderHistory Page - Lich su don hang POS (ban tai quay, khong giao hang)
+/**
+ * OrderHistory Page - Lịch sử đơn hàng POS (bán tại quầy, không giao hàng)
+ * TODO (FE): Kết nối API GET /pos/invoices khi BE sẵn sàng.
+ * Hiện chạy với MOCK DATA local.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
@@ -9,128 +11,30 @@ import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { mockOrders } from '../data/posMockData';
 
-const MOCK_ORDERS = [
-  {
-    id: 'POS-20240508-001',
-    date: '2024-05-08 14:30',
-    customer: 'Cty TNHH XD Minh Phat',
-    cashier: 'Nguyen Van A',
-    items: 5,
-    subtotal: 4200000,
-    discount: 0,
-    vat: 336000,
-    total: 4536000,
-    payLines: [{ method: 'Tiền mặt', amount: 5000000 }],
-    change: 464000,
-  },
-  {
-    id: 'POS-20240508-002',
-    date: '2024-05-08 15:10',
-    customer: 'Khách lẻ',
-    cashier: 'Nguyen Van A',
-    items: 2,
-    subtotal: 850000,
-    discount: 50000,
-    vat: 64000,
-    total: 864000,
-    payLines: [{ method: 'The', amount: 864000 }],
-    change: 0,
-  },
-  {
-    id: 'POS-20240508-003',
-    date: '2024-05-08 16:45',
-    customer: 'Dai ly Tuan Kiet',
-    cashier: 'Nguyen Van A',
-    items: 12,
-    subtotal: 12500000,
-    discount: 500000,
-    vat: 960000,
-    total: 12960000,
-    payLines: [
-      { method: 'Tiền mặt', amount: 8000000 },
-      { method: 'Chuyển khoản', amount: 4960000 },
-    ],
-    change: 0,
-  },
-  {
-    id: 'POS-20240507-004',
-    date: '2024-05-07 09:15',
-    customer: 'Nha thau Quang Vinh',
-    cashier: 'Tran Thi B',
-    items: 8,
-    subtotal: 5600000,
-    discount: 0,
-    vat: 448000,
-    total: 6048000,
-    payLines: [{ method: 'Chuyển khoản', amount: 6048000 }],
-    change: 0,
-  },
-  {
-    id: 'POS-20240507-005',
-    date: '2024-05-07 11:30',
-    customer: 'Khách lẻ',
-    cashier: 'Tran Thi B',
-    items: 1,
-    subtotal: 1550000,
-    discount: 0,
-    vat: 124000,
-    total: 1674000,
-    payLines: [{ method: 'Tiền mặt', amount: 1700000 }],
-    change: 26000,
-  },
-  {
-    id: 'POS-20240507-006',
-    date: '2024-05-07 14:00',
-    customer: 'Anh Nguyen Van Hung',
-    cashier: 'Tran Thi B',
-    items: 3,
-    subtotal: 2100000,
-    discount: 0,
-    vat: 168000,
-    total: 2268000,
-    payLines: [{ method: 'The', amount: 2268000 }],
-    change: 0,
-  },
-  {
-    id: 'POS-20240506-007',
-    date: '2024-05-06 08:30',
-    customer: 'Cua hang VLXD Tuan Kiet',
-    cashier: 'Le Van C',
-    items: 20,
-    subtotal: 18500000,
-    discount: 925000,
-    vat: 1406000,
-    total: 18981000,
-    payLines: [
-      { method: 'Tiền mặt', amount: 10000000 },
-      { method: 'Chuyển khoản', amount: 8981000 },
-    ],
-    change: 0,
-  },
-  {
-    id: 'POS-20240506-008',
-    date: '2024-05-06 10:15',
-    customer: 'Khách lẻ',
-    cashier: 'Le Van C',
-    items: 2,
-    subtotal: 550000,
-    discount: 0,
-    vat: 44000,
-    total: 594000,
-    payLines: [{ method: 'Tiền mặt', amount: 600000 }],
-    change: 6000,
-  },
-];
-
-const PAYMENT_VARIANTS = { 'Tiền mặt': 'warning', The: 'info', 'Chuyển khoản': 'primary' };
+const PAYMENT_VARIANTS = { 'Tiền mặt': 'warning', Thẻ: 'info', 'Chuyển khoản': 'primary' };
 
 const OrderHistory = () => {
   const navigate = useNavigate();
   const { drafts, setDrafts } = useOutletContext();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error] = useState(null);
   const [search, setSearch] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
   const [selected, setSelected] = useState(null);
+
+  // TODO (FE): thay bằng API call GET /pos/invoices
+  const fetchOrders = useCallback(() => {
+    setLoading(true);
+    setOrders(mockOrders);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const handlePrintOrder = (order) => {
     const printWindow = window.open('', '_blank', 'width=420,height=800');
@@ -220,23 +124,31 @@ const OrderHistory = () => {
   };
 
   const filtered = useMemo(() => {
-    let list = MOCK_ORDERS;
+    let list = orders;
     if (search) {
       const kw = search.toLowerCase();
       list = list.filter(
         (o) => o.id.toLowerCase().includes(kw) || o.customer.toLowerCase().includes(kw)
       );
     }
-    if (timeFilter === 'today') list = list.filter((o) => o.date.startsWith('2024-05-08'));
-    if (timeFilter === 'yesterday') list = list.filter((o) => o.date.startsWith('2024-05-07'));
-    if (timeFilter === 'week') list = list.filter((o) => o.date >= '2024-05-01');
+    const today = new Date().toISOString().split('T')[0];
+    if (timeFilter === 'today') list = list.filter((o) => o.date.startsWith(today));
+    if (timeFilter === 'yesterday') {
+      const yest = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      list = list.filter((o) => o.date.startsWith(yest));
+    }
+    if (timeFilter === 'week') {
+      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+      list = list.filter((o) => o.date >= weekAgo);
+    }
     return list;
-  }, [search, timeFilter]);
+  }, [orders, search, timeFilter]);
 
-  const todayOrders = MOCK_ORDERS.filter((o) => o.date.startsWith('2024-05-08'));
+  const today = new Date().toISOString().split('T')[0];
+  const todayOrders = orders.filter((o) => o.date.startsWith(today));
   const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
   const todayCount = todayOrders.length;
-  const totalRevenue = MOCK_ORDERS.reduce((s, o) => s + o.total, 0);
+  const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
 
   const columns = [
     {
@@ -258,7 +170,7 @@ const OrderHistory = () => {
     },
     {
       key: 'items',
-      header: 'Mon',
+      header: 'Món',
       width: '50px',
       render: (v) => <span className="text-slate-600">{v}</span>,
     },
@@ -268,7 +180,7 @@ const OrderHistory = () => {
       width: '160px',
       render: (v) => (
         <div className="flex flex-wrap gap-1">
-          {v.map((pl, i) => (
+          {(v || []).map((pl, i) => (
             <Badge key={i} variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
               {pl.method}
             </Badge>
@@ -312,7 +224,7 @@ const OrderHistory = () => {
   return (
     <div className="flex h-full gap-6">
       {/* LEFT: List */}
-      <div className={`flex flex-col gap-4 overflow-y-auto ${selected ? 'flex-1' : 'flex-1'}`}>
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Đơn hàng</h1>
@@ -344,7 +256,7 @@ const OrderHistory = () => {
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-purple-600">
-                {todayCount > 0 ? formatCurrency(todayRevenue / todayCount) : '0 d'}
+                {todayCount > 0 ? formatCurrency(todayRevenue / todayCount) : '0 đ'}
               </div>
               <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
                 Bình quân/đơn
@@ -364,7 +276,7 @@ const OrderHistory = () => {
         </div>
 
         {/* Drafts - Đơn nháp chưa thanh toán */}
-        {drafts.length > 0 && (
+        {drafts && drafts.length > 0 && (
           <Card header={`Đơn nháp (${drafts.length})`} padding="p-0">
             <div className="divide-y divide-slate-100">
               {drafts.map((d) => (
@@ -376,7 +288,7 @@ const OrderHistory = () => {
                         {d.customer ? d.customer.name : 'Khách lẻ'}
                       </p>
                       <p className="text-xs text-slate-400">
-                        {d.items.length} mon - {formatCurrency(d.total)}
+                        {d.items.length} món - {formatCurrency(d.total)}
                       </p>
                     </div>
                   </div>
@@ -444,7 +356,20 @@ const OrderHistory = () => {
 
         {/* Table */}
         <Card padding="p-0">
-          <Table columns={columns} data={filtered} emptyMessage="Không có đơn hàng nào" />
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-slate-500">
+              <span className="loading-spinner mr-2" /> Đang tải...
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <p className="mb-2 text-red-500">{error}</p>
+              <Button variant="secondary" size="sm" onClick={fetchOrders}>
+                Thử lại
+              </Button>
+            </div>
+          ) : (
+            <Table columns={columns} data={filtered} emptyMessage="Không có đơn hàng nào" />
+          )}
         </Card>
       </div>
 
@@ -484,7 +409,7 @@ const OrderHistory = () => {
                   <span>{selected.cashier}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">So mon</span>
+                  <span className="text-slate-500">Số món</span>
                   <span className="font-semibold">{selected.items}</span>
                 </div>
               </div>
@@ -493,7 +418,7 @@ const OrderHistory = () => {
 
           <Card header="Thanh toán">
             <div className="space-y-2">
-              {selected.payLines.map((pl, i) => (
+              {(selected.payLines || []).map((pl, i) => (
                 <div key={i} className="flex justify-between rounded-lg bg-slate-50 p-2 text-sm">
                   <Badge variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
                     {pl.method}
@@ -517,7 +442,7 @@ const OrderHistory = () => {
                   <span>{formatCurrency(selected.vat)}</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785]">
-                  <span>Tong</span>
+                  <span>Tổng</span>
                   <span>{formatCurrency(selected.total)}</span>
                 </div>
               </div>

@@ -4,16 +4,20 @@ import Icon from '../../../../shared/components/Icon';
 const CreateAccountModal = ({ isOpen, onClose, initialTab, onSave }) => {
   const [accountType, setAccountType] = useState(initialTab || 'owners');
   const [formData, setFormData] = useState({
-    name: '',
+    fullName: '',
+    username: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     role: 'SALES_STAFF',
-    plan: 'BASIC',
+    subscriptionPlan: 'BASIC',
   });
 
   // Sync tab khi modal mở
   useEffect(() => {
-    if (isOpen) setAccountType(initialTab);
+    if (isOpen) {
+      setAccountType(initialTab);
+      setFormData((prev) => ({ ...prev, role: 'SALES_STAFF', subscriptionPlan: 'BASIC' }));
+    }
   }, [isOpen, initialTab]);
 
   if (!isOpen) return null;
@@ -22,7 +26,7 @@ const CreateAccountModal = ({ isOpen, onClose, initialTab, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) {
+    if (!formData.fullName || !formData.email) {
       alert('Vui lòng nhập Tên và Email.');
       return;
     }
@@ -31,7 +35,18 @@ const CreateAccountModal = ({ isOpen, onClose, initialTab, onSave }) => {
       alert('[BR-44] Lỗi: Email nhân viên nội bộ phải có định dạng @system.local');
       return;
     }
-    onSave({ type: accountType, ...formData });
+    const payload =
+      accountType === 'community'
+        ? { fullName: formData.fullName, email: formData.email, phoneNumber: formData.phoneNumber }
+        : {
+            fullName: formData.fullName,
+            username: formData.username || formData.email,
+            email: formData.email,
+            phoneNumber: formData.phoneNumber,
+            roles: [formData.role],
+            subscriptionPlan: formData.subscriptionPlan,
+          };
+    onSave({ type: accountType, ...payload });
   };
 
   return (
@@ -66,8 +81,8 @@ const CreateAccountModal = ({ isOpen, onClose, initialTab, onSave }) => {
                 Họ & Tên / Tên Shop
               </label>
               <input
-                name="name"
-                value={formData.name}
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
                 type="text"
                 className="w-full rounded-md border border-outline-variant p-2.5 text-sm outline-none focus:border-primary"
@@ -87,6 +102,36 @@ const CreateAccountModal = ({ isOpen, onClose, initialTab, onSave }) => {
                 placeholder="email@domain.com"
               />
             </div>
+          </div>
+
+          {accountType !== 'community' && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
+                Username
+              </label>
+              <input
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                type="text"
+                className="w-full rounded-md border border-outline-variant p-2.5 text-sm outline-none focus:border-primary"
+                placeholder="Mặc định lấy theo email nếu bỏ trống"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
+              Số điện thoại
+            </label>
+            <input
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              type="tel"
+              className="w-full rounded-md border border-outline-variant p-2.5 text-sm outline-none focus:border-primary"
+              placeholder="Ví dụ: 0901234567"
+            />
           </div>
 
           {/* Render dynamic fields based on type */}
@@ -113,8 +158,8 @@ const CreateAccountModal = ({ isOpen, onClose, initialTab, onSave }) => {
                 Gói Subscription (Quota)
               </label>
               <select
-                name="plan"
-                value={formData.plan}
+                name="subscriptionPlan"
+                value={formData.subscriptionPlan}
                 onChange={handleChange}
                 className="w-full rounded-md border border-outline-variant p-2.5 text-sm outline-none"
               >

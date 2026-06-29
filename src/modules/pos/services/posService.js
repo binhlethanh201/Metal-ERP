@@ -1,109 +1,173 @@
 /**
- * POS Service - Tất cả API calls cho module Bán hàng
- * Gọi đến apiClient và endpoints tập trung
- */
-
-/**
  * POS Service - Tất cả API calls cho module Bán hàng.
- * Gọi qua apiClient + endpoints tập trung. Gồm: Products, Cart, Orders, Payment, Receipt, Shift.
+ * Gọi qua apiClient + endpoints tập trung.
+ * Backend: MEP.Sale.Api (ASP.NET Core 8) - 28 endpoints.
  */
-import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
-import ENDPOINTS from '../../services/endpoints';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../../services/apiClient';
+import ENDPOINTS from '../../../services/endpoints';
 
 // ============ Products ============
 export const getPosProducts = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.POS.GET_POS_PRODUCTS}?${queryParams}`;
+  const params = new URLSearchParams(filters).toString();
+  const endpoint = params
+    ? `${ENDPOINTS.POS.GET_POS_PRODUCTS}?${params}`
+    : ENDPOINTS.POS.GET_POS_PRODUCTS;
   return apiGet(endpoint);
+};
+
+export const getProductPrice = (productId) => {
+  return apiGet(ENDPOINTS.POS.GET_PRODUCT_PRICE(productId));
+};
+
+export const getProductStock = (productId) => {
+  return apiGet(ENDPOINTS.POS.GET_PRODUCT_STOCK(productId));
 };
 
 export const searchProducts = (keyword) => {
-  const queryParams = new URLSearchParams({ keyword });
-  const endpoint = `${ENDPOINTS.POS.SEARCH_PRODUCTS}?${queryParams}`;
+  const params = new URLSearchParams({ keyword }).toString();
+  return apiGet(`${ENDPOINTS.POS.GET_POS_PRODUCTS}?${params}`);
+};
+
+// ============ Invoices ============
+/** Tạo hóa đơn mới (Draft) */
+export const createInvoice = (data = {}) => {
+  return apiPost(ENDPOINTS.POS.CREATE_INVOICE, data);
+};
+
+/** Lấy chi tiết 1 hóa đơn */
+export const getInvoice = (invoiceId) => {
+  return apiGet(ENDPOINTS.POS.GET_INVOICE(invoiceId));
+};
+
+/** Lịch sử hóa đơn (filter: status, dateFrom, dateTo, staffId, page) */
+export const getInvoiceHistory = (filters = {}) => {
+  const params = new URLSearchParams(filters).toString();
+  const endpoint = params
+    ? `${ENDPOINTS.POS.GET_INVOICE_HISTORY}?${params}`
+    : ENDPOINTS.POS.GET_INVOICE_HISTORY;
   return apiGet(endpoint);
 };
 
-export const getProductByBarcode = (barcode) => {
-  return apiGet(ENDPOINTS.POS.GET_PRODUCT_BY_BARCODE(barcode));
+/** Danh sách hóa đơn đang treo */
+export const getInvoicesOnHold = (page = 1) => {
+  return apiGet(`${ENDPOINTS.POS.GET_INVOICES_ON_HOLD}?page=${page}`);
 };
 
-// ============ Cart ============
-export const getCart = () => {
-  return apiGet(ENDPOINTS.POS.GET_CART);
+// ============ Invoice Items ============
+/** Thêm sản phẩm vào hóa đơn */
+export const addItem = (invoiceId, data) => {
+  return apiPost(ENDPOINTS.POS.ADD_ITEM(invoiceId), data);
 };
 
-export const addToCart = (cartItem) => {
-  return apiPost(ENDPOINTS.POS.ADD_TO_CART, cartItem);
+/** Quét barcode để thêm sản phẩm */
+export const scanItem = (invoiceId, data) => {
+  return apiPost(ENDPOINTS.POS.SCAN_ITEM(invoiceId), data);
 };
 
-export const updateCartItem = (itemId, itemData) => {
-  return apiPut(ENDPOINTS.POS.UPDATE_CART_ITEM(itemId), itemData);
+/** Tìm sản phẩm để thêm (theo tên/SKU) - POST body: { keyword } */
+export const searchItem = (invoiceId, data) => {
+  return apiPost(ENDPOINTS.POS.SEARCH_ITEM(invoiceId), data);
 };
 
-export const removeFromCart = (itemId) => {
-  return apiDelete(ENDPOINTS.POS.REMOVE_FROM_CART(itemId));
+/** Lấy danh sách items của hóa đơn */
+export const getInvoiceItems = (invoiceId) => {
+  return apiGet(ENDPOINTS.POS.GET_ITEMS(invoiceId));
 };
 
-export const clearCart = () => {
-  return apiPost(ENDPOINTS.POS.CLEAR_CART, {});
+// ============ Invoice Actions ============
+/** Thanh toán hóa đơn (Draft → Completed) */
+export const finalizeInvoice = (invoiceId) => {
+  return apiPost(ENDPOINTS.POS.FINALIZE_INVOICE(invoiceId), {});
 };
 
-// ============ Orders & Checkout ============
-export const createOrder = (orderData) => {
-  return apiPost(ENDPOINTS.POS.CREATE_ORDER, orderData);
+/** Hủy hóa đơn (Draft/OnHold → Cancelled) */
+export const cancelInvoice = (invoiceId) => {
+  return apiPatch(ENDPOINTS.POS.CANCEL_INVOICE(invoiceId), {});
 };
 
-export const getOrder = (id) => {
-  return apiGet(ENDPOINTS.POS.GET_ORDER(id));
+/** Treo hóa đơn (Draft → OnHold) - lưu trạng thái giỏ hàng */
+export const holdInvoice = (invoiceId, data = {}) => {
+  return apiPost(ENDPOINTS.POS.HOLD_INVOICE(invoiceId), data);
 };
 
-export const getOrderHistory = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.POS.GET_ORDER_HISTORY}?${queryParams}`;
-  return apiGet(endpoint);
+/** Khôi phục hóa đơn đang treo (OnHold → Draft) */
+export const resumeInvoice = (invoiceId) => {
+  return apiPost(ENDPOINTS.POS.RESUME_INVOICE(invoiceId), {});
 };
 
-export const getRecentOrders = (limit = 10) => {
-  const queryParams = new URLSearchParams({ limit });
-  const endpoint = `${ENDPOINTS.POS.GET_RECENT_ORDERS}?${queryParams}`;
-  return apiGet(endpoint);
+// ============ Payments ============
+/** Tạo thanh toán (Cash/Transfer/Combined/Debt) */
+export const createPayment = (invoiceId, data) => {
+  return apiPost(ENDPOINTS.POS.CREATE_PAYMENT(invoiceId), data);
 };
 
-// ============ Payment ============
-export const processPayment = (paymentData) => {
-  return apiPost(ENDPOINTS.POS.PROCESS_PAYMENT, paymentData);
+/** Lấy mã QR chuyển khoản */
+export const getPaymentQR = (paymentId) => {
+  return apiGet(ENDPOINTS.POS.GET_PAYMENT_QR(paymentId));
 };
 
-export const getPaymentMethods = () => {
-  return apiGet(ENDPOINTS.POS.GET_PAYMENT_METHODS);
+/** Xác nhận đã nhận tiền chuyển khoản */
+export const confirmTransfer = (paymentId) => {
+  return apiPost(ENDPOINTS.POS.CONFIRM_TRANSFER(paymentId), {});
 };
 
-// ============ Receipt ============
-export const generateReceipt = (orderId) => {
-  return apiGet(ENDPOINTS.POS.GENERATE_RECEIPT(orderId));
+/** Ghi nhận công nợ khách hàng */
+export const recordDebt = (data) => {
+  return apiPost(ENDPOINTS.POS.RECORD_DEBT, data);
 };
 
-export const printReceipt = (orderId) => {
-  return apiPost(ENDPOINTS.POS.PRINT_RECEIPT(orderId), {});
+// ============ Promotions ============
+/** Áp dụng mã khuyến mãi */
+export const applyPromo = (invoiceId, data) => {
+  return apiPost(ENDPOINTS.POS.APPLY_PROMO(invoiceId), data);
+};
+
+/** Xóa mã khuyến mãi */
+export const removePromo = (invoiceId) => {
+  return apiDelete(ENDPOINTS.POS.REMOVE_PROMO(invoiceId));
+};
+
+// ============ Printing ============
+/** In hóa đơn */
+export const printInvoice = (invoiceId) => {
+  return apiPost(ENDPOINTS.POS.PRINT_INVOICE(invoiceId), {});
+};
+
+/** Tải hóa đơn PDF */
+export const downloadPdf = (invoiceId) => {
+  return apiGet(ENDPOINTS.POS.DOWNLOAD_PDF(invoiceId));
 };
 
 // ============ Shift Management ============
-export const startShift = (shiftData) => {
-  return apiPost(ENDPOINTS.POS.START_SHIFT, shiftData);
+/** Bắt đầu ca làm việc */
+export const startShift = (data) => {
+  return apiPost(ENDPOINTS.POS.START_SHIFT, data);
 };
 
-export const endShift = (shiftData) => {
-  return apiPost(ENDPOINTS.POS.END_SHIFT, shiftData);
+/** Kết thúc ca làm việc */
+export const endShift = (shiftId, data) => {
+  return apiPost(ENDPOINTS.POS.END_SHIFT(shiftId), data);
 };
 
+/** Tóm tắt ca làm việc */
 export const getShiftSummary = (shiftId) => {
   return apiGet(ENDPOINTS.POS.GET_SHIFT_SUMMARY(shiftId));
 };
 
+/** Lịch sử ca làm việc */
+export const listShifts = (filters = {}) => {
+  const params = new URLSearchParams(filters).toString();
+  const endpoint = params ? `${ENDPOINTS.POS.LIST_SHIFTS}?${params}` : ENDPOINTS.POS.LIST_SHIFTS;
+  return apiGet(endpoint);
+};
+
 // ============ Customers ============
+/** Danh sách khách hàng (filter: search, group, page, limit) */
 export const getCustomers = (filters = {}) => {
-  const queryParams = new URLSearchParams(filters);
-  const endpoint = `${ENDPOINTS.POS.GET_CUSTOMERS}?${queryParams}`;
+  const params = new URLSearchParams(filters).toString();
+  const endpoint = params
+    ? `${ENDPOINTS.POS.GET_CUSTOMERS}?${params}`
+    : ENDPOINTS.POS.GET_CUSTOMERS;
   return apiGet(endpoint);
 };
 
@@ -119,33 +183,70 @@ export const updateCustomer = (id, data) => {
   return apiPut(ENDPOINTS.POS.UPDATE_CUSTOMER(id), data);
 };
 
-export const getCustomerOrders = (id) => {
-  return apiGet(ENDPOINTS.POS.GET_CUSTOMER_ORDERS(id));
+/** Lịch sử mua hàng của khách */
+export const getCustomerOrders = (id, filters = {}) => {
+  const params = new URLSearchParams(filters).toString();
+  const endpoint = `${ENDPOINTS.POS.GET_CUSTOMER_ORDERS(id)}${params ? '?' + params : ''}`;
+  return apiGet(endpoint);
 };
+
+/** Xem điểm tích lũy (chỉ đọc) */
+export const getCustomerPoints = (id) => {
+  return apiGet(ENDPOINTS.POS.GET_CUSTOMER_POINTS(id));
+};
+
+// ============ Returns (Đổi trả hàng) ============
+export const createReturn = (data) => apiPost(ENDPOINTS.POS.CREATE_RETURN, data);
+export const getReturn = (id) => apiGet(ENDPOINTS.POS.GET_RETURN(id));
+export const getReturnList = (params = {}) => {
+  const q = new URLSearchParams(params).toString();
+  return apiGet(ENDPOINTS.POS.LIST_RETURNS + (q ? '?' + q : ''));
+};
+export const addReturnItem = (returnId, data) =>
+  apiPost(ENDPOINTS.POS.ADD_RETURN_ITEM(returnId), data);
+export const finalizeReturn = (returnId, data) =>
+  apiPost(ENDPOINTS.POS.FINALIZE_RETURN(returnId), data);
+export const cancelReturn = (returnId) => apiPatch(ENDPOINTS.POS.CANCEL_RETURN(returnId), {});
 
 export default {
   getPosProducts,
+  getProductPrice,
+  getProductStock,
   searchProducts,
-  getProductByBarcode,
-  getCart,
-  addToCart,
-  updateCartItem,
-  removeFromCart,
-  clearCart,
-  createOrder,
-  getOrder,
-  getOrderHistory,
-  getRecentOrders,
-  processPayment,
-  getPaymentMethods,
-  generateReceipt,
-  printReceipt,
+  createInvoice,
+  getInvoice,
+  getInvoiceHistory,
+  getInvoicesOnHold,
+  addItem,
+  scanItem,
+  searchItem,
+  getInvoiceItems,
+  finalizeInvoice,
+  cancelInvoice,
+  holdInvoice,
+  resumeInvoice,
+  createPayment,
+  getPaymentQR,
+  confirmTransfer,
+  recordDebt,
+  applyPromo,
+  removePromo,
+  printInvoice,
+  downloadPdf,
   startShift,
   endShift,
   getShiftSummary,
+  listShifts,
   getCustomers,
   getCustomer,
   createCustomer,
   updateCustomer,
   getCustomerOrders,
+  getCustomerPoints,
+  createReturn,
+  getReturn,
+  getReturnList,
+  addReturnItem,
+  finalizeReturn,
+  cancelReturn,
 };

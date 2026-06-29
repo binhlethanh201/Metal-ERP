@@ -1,14 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
-import { MOCK_CATEGORIES } from '../data/mockData';
+import {
+  getCategoryList,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '../services/adminService';
 import CategoryModal from '../components/category/CategoryModal';
 import ConfirmActionModal from '../components/ConfirmActionModal';
 
 const CategoryManagement = () => {
-  const [categories, setCategories] = useState(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // States quản lý Modal
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [deleteModalConfig, setDeleteModalConfig] = useState({
@@ -17,35 +23,45 @@ const CategoryManagement = () => {
     targetName: '',
   });
 
-  // Thuật toán: Chuyển đổi dữ liệu phẳng thành Cây phân cấp (Tree)
+  const fetchCategories = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    getCategoryList()
+      .then((data) => {
+        setCategories(Array.isArray(data) ? data : data?.items || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Category API error:', err);
+        setError(err.message || 'Không tải được danh mục');
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
   const categoryTree = useMemo(() => {
-    // Lọc theo search term trước
     const filtered = categories.filter(
       (c) =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.id.toLowerCase().includes(searchTerm.toLowerCase())
+        (c.categoryName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.categoryId || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    // Xây dựng cây. (Giả định các MOCK_CATEGORIES ban đầu đều là 'root')
-    // const tree = [];
     const childrenMap = {};
-
     filtered.forEach((cat) => {
       const parent = cat.parentId || 'root';
       if (!childrenMap[parent]) childrenMap[parent] = [];
       childrenMap[parent].push(cat);
     });
-
     const buildNode = (node, depth = 0) => ({
       ...node,
       depth,
-      children: (childrenMap[node.id] || []).map((child) => buildNode(child, depth + 1)),
+      children: (childrenMap[node.categoryId] || []).map((child) => buildNode(child, depth + 1)),
     });
-
     return (childrenMap['root'] || []).map((rootNode) => buildNode(rootNode, 0));
   }, [categories, searchTerm]);
 
-  // Các hàm xử lý Modal giữ nguyên...
   const handleOpenAdd = () => {
     setEditingCategory(null);
     setIsCategoryModalOpen(true);
@@ -55,38 +71,48 @@ const CategoryManagement = () => {
     setIsCategoryModalOpen(true);
   };
 
-  const handleSaveCategory = (formData) => {
-    if (editingCategory) {
-      setCategories(
-        categories.map((c) => (c.id === editingCategory.id ? { ...c, ...formData } : c))
-      );
-    } else {
-      const newEntry = {
-        id: `CAT-${Math.floor(Math.random() * 1000)}`,
-        ...formData,
-        items: 0,
-        lastUpdate: new Date().toLocaleDateString('vi-VN'),
-      };
-      setCategories([...categories, newEntry]);
+  const handleSaveCategory = async (formData) => {
+    try {
+      if (editingCategory) {
+        await updateCategory(editingCategory.categoryId, formData);
+      } else {
+        await createCategory(formData);
+      }
+      setIsCategoryModalOpen(false);
+      fetchCategories();
+    } catch (err) {
+      console.error('Save category error:', err);
+      alert(err.message || 'Lưu danh mục thất bại');
     }
-    setIsCategoryModalOpen(false);
   };
 
   const triggerDelete = (cat) => {
-    if (cat.items > 0) {
-      alert(`[Exception E1] Lỗi: Không thể xóa "${cat.name}" vì đang chứa ${cat.items} dữ liệu.`);
+    if ((cat.postCount || 0) > 0) {
+      alert(
+        `[Exception E1] Lỗi: Không thể xóa "${cat.categoryName}" vì đang chứa ${cat.postCount} bài viết.`
+      );
       return;
     }
-    setDeleteModalConfig({ isOpen: true, targetId: cat.id, targetName: cat.name });
+    setDeleteModalConfig({ isOpen: true, targetId: cat.categoryId, targetName: cat.categoryName });
   };
 
-  // Hàm Đệ quy để Render từng nhánh của cây
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteCategory(deleteModalConfig.targetId);
+      setDeleteModalConfig({ isOpen: false, targetId: null, targetName: '' });
+      fetchCategories();
+    } catch (err) {
+      console.error('Delete category error:', err);
+      alert(err.message || 'Xóa danh mục thất bại');
+    }
+  };
+
   const renderTreeNodes = (nodes) => {
     return nodes.map((cat) => (
-      <div key={cat.id}>
+      <div key={cat.categoryId}>
         <div
           className="flex items-center justify-between border-b border-outline-variant/30 p-4 transition-colors last:border-0 hover:bg-surface-container-low"
-          style={{ paddingLeft: `${cat.depth * 2 + 1}rem` }} // Thụt lề thụ động theo độ sâu
+          style={{ paddingLeft: `${cat.depth * 2 + 1}rem` }}
         >
           <div className="flex items-center gap-4">
             {cat.depth > 0 ? (
@@ -98,24 +124,22 @@ const CategoryManagement = () => {
                 <Icon name="folder" size={20} />
               </div>
             )}
-
             <div>
-              <h4 className="text-base font-bold text-on-surface">{cat.name}</h4>
+              <p className="text-base font-bold text-on-surface">{cat.categoryName}</p>
               <div className="mt-1 flex gap-3 text-xs font-medium text-on-surface-variant">
                 <span>
-                  Mã: <span className="font-mono text-outline">{cat.id}</span>
+                  Mã: <span className="font-mono text-outline">{cat.categoryId}</span>
                 </span>
                 <span>•</span>
                 <span>
                   Bao gồm:{' '}
-                  <span className={cat.items > 0 ? 'font-bold text-primary' : ''}>
-                    {cat.items} dữ liệu
+                  <span className={cat.postCount > 0 ? 'font-bold text-primary' : ''}>
+                    {cat.postCount || 0} bài viết
                   </span>
                 </span>
               </div>
             </div>
           </div>
-
           <div className="flex gap-2">
             <button
               onClick={() => handleOpenEdit(cat)}
@@ -131,8 +155,6 @@ const CategoryManagement = () => {
             </button>
           </div>
         </div>
-
-        {/* Render đệ quy các con của Node hiện tại */}
         {cat.children && cat.children.length > 0 && (
           <div className="bg-surface-container-lowest/50">{renderTreeNodes(cat.children)}</div>
         )}
@@ -159,7 +181,6 @@ const CategoryManagement = () => {
         </button>
       </div>
 
-      {/* SEARCH BAR */}
       <div className="flex items-center justify-between rounded-md border border-outline-variant bg-surface-container-lowest p-2 shadow-sm">
         <div className="relative w-full max-w-md">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-outline">
@@ -175,17 +196,28 @@ const CategoryManagement = () => {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface-container-lowest shadow-sm">
-        {categoryTree.length > 0 ? (
-          renderTreeNodes(categoryTree)
-        ) : (
-          <div className="p-8 text-center text-sm font-semibold text-on-surface-variant">
-            Không tìm thấy danh mục nào.
-          </div>
-        )}
-      </div>
+      {loading && (
+        <div className="rounded-lg border border-outline-variant bg-surface-container-lowest p-8 text-center text-xs text-on-surface-variant">
+          Đang tải...
+        </div>
+      )}
+      {error && (
+        <div className="rounded-md bg-error-container p-3 text-xs font-semibold text-error">
+          {error}
+        </div>
+      )}
+      {!loading && !error && (
+        <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface-container-lowest shadow-sm">
+          {categoryTree.length > 0 ? (
+            renderTreeNodes(categoryTree)
+          ) : (
+            <div className="p-8 text-center text-sm font-semibold text-on-surface-variant">
+              Không tìm thấy danh mục nào.
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* MODALS */}
       <CategoryModal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
@@ -196,10 +228,7 @@ const CategoryManagement = () => {
       <ConfirmActionModal
         isOpen={deleteModalConfig.isOpen}
         onClose={() => setDeleteModalConfig({ isOpen: false, targetId: null, targetName: '' })}
-        onConfirm={() => {
-          setCategories(categories.filter((c) => c.id !== deleteModalConfig.targetId));
-          setDeleteModalConfig({ isOpen: false });
-        }}
+        onConfirm={handleConfirmDelete}
         title="Xác nhận xóa danh mục"
         message={`Bạn có chắc chắn muốn xóa "${deleteModalConfig.targetName}"?`}
         warningNote="Hành động này không thể hoàn tác."

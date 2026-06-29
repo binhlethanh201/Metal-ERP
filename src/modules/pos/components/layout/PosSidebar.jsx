@@ -17,6 +17,7 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
   const menuItems = [
     ['shopping_cart', 'Máy bán hàng'],
     ['assignment', 'Đơn hàng'],
+    ['assignment_return', 'Đổi trả hàng'],
     ['groups', 'Khách'],
     ['assessment', 'Quản lý ca bán'],
     ['settings', 'Cài đặt'],

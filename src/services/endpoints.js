@@ -58,42 +58,65 @@ export const ENDPOINTS = {
   // ============ POS (Bán hàng) ============
   POS: {
     // Products
-    GET_POS_PRODUCTS: '/pos/products',
-    SEARCH_PRODUCTS: '/pos/products/search',
-    GET_PRODUCT_BY_BARCODE: (barcode) => `/pos/products/barcode/${barcode}`,
+    GET_POS_PRODUCTS: '/api/pos/products',
+    GET_PRODUCT_PRICE: (productId) => `/api/pos/products/${productId}/price`,
+    GET_PRODUCT_STOCK: (productId) => `/api/pos/products/${productId}/stock`,
+    // Tìm sản phẩm: dùng GET_POS_PRODUCTS với query param (không có endpoint riêng)
+    GET_PRODUCT_BY_BARCODE: (barcode) => `/api/pos/products/barcode/${barcode}`,
 
-    // Cart
-    GET_CART: '/pos/cart',
-    ADD_TO_CART: '/pos/cart/items',
-    UPDATE_CART_ITEM: (itemId) => `/pos/cart/items/${itemId}`,
-    REMOVE_FROM_CART: (itemId) => `/pos/cart/items/${itemId}`,
-    CLEAR_CART: '/pos/cart/clear',
+    // Invoices (thay thế Cart/Orders cũ)
+    CREATE_INVOICE: '/api/pos/invoices',
+    GET_INVOICE: (invoiceId) => `/api/pos/invoices/${invoiceId}`,
+    GET_INVOICE_HISTORY: '/api/pos/invoices',
+    GET_INVOICES_ON_HOLD: '/api/pos/invoices/on-hold',
 
-    // Checkout & Orders
-    CREATE_ORDER: '/pos/orders',
-    GET_ORDER: (id) => `/pos/orders/${id}`,
-    GET_ORDER_HISTORY: '/pos/orders/history',
-    GET_RECENT_ORDERS: '/pos/orders/recent',
+    // Invoice Items
+    ADD_ITEM: (invoiceId) => `/api/pos/invoices/${invoiceId}/items`,
+    SCAN_ITEM: (invoiceId) => `/api/pos/invoices/${invoiceId}/items/scan`,
+    SEARCH_ITEM: (invoiceId) => `/api/pos/invoices/${invoiceId}/items/search`,
+    GET_ITEMS: (invoiceId) => `/api/pos/invoices/${invoiceId}/items`,
 
-    // Payment
-    PROCESS_PAYMENT: '/pos/payments',
-    GET_PAYMENT_METHODS: '/pos/payments/methods',
+    // Invoice Actions
+    FINALIZE_INVOICE: (invoiceId) => `/api/pos/invoices/${invoiceId}/finalize`,
+    CANCEL_INVOICE: (invoiceId) => `/api/pos/invoices/${invoiceId}/cancel`,
+    HOLD_INVOICE: (invoiceId) => `/api/pos/invoices/${invoiceId}/hold`,
+    RESUME_INVOICE: (invoiceId) => `/api/pos/invoices/${invoiceId}/resume`,
 
-    // Receipt
-    GENERATE_RECEIPT: (orderId) => `/pos/receipts/${orderId}`,
-    PRINT_RECEIPT: (orderId) => `/pos/receipts/${orderId}/print`,
+    // Payments
+    CREATE_PAYMENT: (invoiceId) => `/api/pos/invoices/${invoiceId}/payments`,
+    GET_PAYMENT_QR: (paymentId) => `/api/pos/payments/${paymentId}/qr`,
+    CONFIRM_TRANSFER: (paymentId) => `/api/pos/payments/${paymentId}/confirm-transfer`,
+    RECORD_DEBT: '/api/pos/payments/debt',
+
+    // Promotions
+    APPLY_PROMO: (invoiceId) => `/api/pos/invoices/${invoiceId}/promo`,
+    REMOVE_PROMO: (invoiceId) => `/api/pos/invoices/${invoiceId}/promo`,
+
+    // Printing
+    PRINT_INVOICE: (invoiceId) => `/api/pos/invoices/${invoiceId}/print`,
+    DOWNLOAD_PDF: (invoiceId) => `/api/pos/invoices/${invoiceId}/print.pdf`,
 
     // Shift Management
-    START_SHIFT: '/pos/shifts/start',
-    END_SHIFT: '/pos/shifts/end',
-    GET_SHIFT_SUMMARY: (shiftId) => `/pos/shifts/${shiftId}/summary`,
+    START_SHIFT: '/api/pos/shifts/start',
+    END_SHIFT: (shiftId) => `/api/pos/shifts/${shiftId}/end`,
+    GET_SHIFT_SUMMARY: (shiftId) => `/api/pos/shifts/${shiftId}/summary`,
+    LIST_SHIFTS: '/api/pos/shifts',
 
     // Customers
-    GET_CUSTOMERS: '/pos/customers',
-    GET_CUSTOMER: (id) => `/pos/customers/${id}`,
-    CREATE_CUSTOMER: '/pos/customers',
-    UPDATE_CUSTOMER: (id) => `/pos/customers/${id}`,
-    GET_CUSTOMER_ORDERS: (id) => `/pos/customers/${id}/orders`,
+    GET_CUSTOMERS: '/api/pos/customers',
+    GET_CUSTOMER: (id) => `/api/pos/customers/${id}`,
+    CREATE_CUSTOMER: '/api/pos/customers',
+    UPDATE_CUSTOMER: (id) => `/api/pos/customers/${id}`,
+    GET_CUSTOMER_ORDERS: (id) => `/api/pos/customers/${id}/orders`,
+    GET_CUSTOMER_POINTS: (id) => `/api/pos/customers/${id}/points`,
+
+    // Returns (Đổi trả hàng - UC46-50)
+    CREATE_RETURN: '/api/pos/returns',
+    GET_RETURN: (id) => `/api/pos/returns/${id}`,
+    LIST_RETURNS: '/api/pos/returns',
+    ADD_RETURN_ITEM: (id) => `/api/pos/returns/${id}/items`,
+    FINALIZE_RETURN: (id) => `/api/pos/returns/${id}/finalize`,
+    CANCEL_RETURN: (id) => `/api/pos/returns/${id}/cancel`,
   },
 
   // ============ FORUM (Diễn đàn) ============
@@ -157,6 +180,70 @@ export const ENDPOINTS = {
 
     // File đính kèm
     UPLOAD_ATTACHMENT: (id) => `/goods-issue/${id}/attachments`,
+  },
+
+  // ============ ADMIN (Quản trị hệ thống) ============
+  ADMIN: {
+    // Dashboard
+    DASHBOARD_STATS: '/api/admin/dashboard/stats',
+    DASHBOARD_REVENUE: '/api/admin/dashboard/revenue-chart',
+    DASHBOARD_EVENTS: '/api/admin/dashboard/recent-events',
+    DASHBOARD_EXPORT: '/api/admin/dashboard/export',
+
+    // Staff Accounts
+    STAFF_LIST: '/api/admin/staff',
+    STAFF_DETAIL: (id) => `/api/admin/staff/${id}`,
+    STAFF_CREATE: '/api/admin/staff',
+    STAFF_UPDATE: (id) => `/api/admin/staff/${id}`,
+    STAFF_STATUS: (id) => `/api/admin/staff/${id}/status`,
+    STAFF_BAN: (id) => `/api/admin/staff/${id}/ban`,
+
+    // Community Users
+    COMMUNITY_LIST: '/api/admin/community-users',
+    COMMUNITY_DETAIL: (id) => `/api/admin/community-users/${id}`,
+    COMMUNITY_CREATE: '/api/admin/community-users',
+    COMMUNITY_UPDATE: (id) => `/api/admin/community-users/${id}`,
+    COMMUNITY_STATUS: (id) => `/api/admin/community-users/${id}/status`,
+    COMMUNITY_BAN: (id) => `/api/admin/community-users/${id}/ban`,
+
+    // Store Approvals
+    APPROVAL_LIST: '/api/admin/store-approvals',
+    APPROVAL_DETAIL: (id) => `/api/admin/store-approvals/${id}`,
+    APPROVAL_APPROVE: (id) => `/api/admin/store-approvals/${id}/approve`,
+    APPROVAL_REJECT: (id) => `/api/admin/store-approvals/${id}/reject`,
+
+    // System Notifications
+    NOTIF_LIST: '/api/admin/notifications',
+    NOTIF_CREATE: '/api/admin/notifications',
+    NOTIF_UPDATE: (id) => `/api/admin/notifications/${id}`,
+    NOTIF_SEND: (id) => `/api/admin/notifications/${id}/send`,
+    NOTIF_CANCEL: (id) => `/api/admin/notifications/${id}/cancel`,
+    NOTIF_DELETE: (id) => `/api/admin/notifications/${id}`,
+
+    // System Logs
+    LOG_LIST: '/api/admin/system-logs',
+    LOG_DETAIL: (id) => `/api/admin/system-logs/${id}`,
+    LOG_EXPORT: '/api/admin/system-logs/export',
+
+    // Community Categories
+    CATEGORY_LIST: '/api/admin/community-categories',
+    CATEGORY_CREATE: '/api/admin/community-categories',
+    CATEGORY_UPDATE: (id) => `/api/admin/community-categories/${id}`,
+    CATEGORY_REORDER: (id) => `/api/admin/community-categories/${id}/reorder`,
+    CATEGORY_DELETE: (id) => `/api/admin/community-categories/${id}`,
+
+    // Posts Moderation
+    POST_LIST: '/api/admin/posts',
+    POST_LOCK: (id) => `/api/admin/posts/${id}/lock`,
+    POST_UNLOCK: (id) => `/api/admin/posts/${id}/unlock`,
+    POST_PIN: (id) => `/api/admin/posts/${id}/pin`,
+    POST_UNPIN: (id) => `/api/admin/posts/${id}/unpin`,
+    POST_HIDE: (id) => `/api/admin/posts/${id}/hide`,
+
+    // Violation Reports
+    REPORT_LIST: '/api/admin/violation-reports',
+    REPORT_DETAIL: (id) => `/api/admin/violation-reports/${id}`,
+    REPORT_RESOLVE: (id) => `/api/admin/violation-reports/${id}/resolve`,
   },
 
   // ============ COMMON (Chung) ============
