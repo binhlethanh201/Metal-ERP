@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GoodsIssueList - Container Page: Danh sách phiếu xuất kho.
  * Layout bám sát InventoryProduct: Sidebar lọc bên trái, Search + Actions + Table bên phải.
  */

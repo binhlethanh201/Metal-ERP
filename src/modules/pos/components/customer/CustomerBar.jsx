@@ -1,4 +1,4 @@
-﻿import { Badge } from '../../../../shared/components/Badge';
+import { Badge } from '../../../../shared/components/Badge';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
 const GROUP_COLORS = {

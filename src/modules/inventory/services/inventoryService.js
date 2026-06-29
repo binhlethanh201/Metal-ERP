@@ -7,7 +7,7 @@
  * Gọi đến apiClient và endpoints tập trung
  */
 
-import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../../services/apiClient';
 import ENDPOINTS from '../../../services/endpoints';
 
 const buildQueryString = (filters = {}) => {
@@ -48,6 +48,31 @@ export const deleteProduct = (id) => {
   return apiDelete(ENDPOINTS.INVENTORY.DELETE_PRODUCT(id));
 };
 
+export const toggleProductStatus = (id, isActive) => {
+  return apiPatch(`${ENDPOINTS.INVENTORY.TOGGLE_PRODUCT_STATUS(id)}?isActive=${isActive}`);
+};
+
+// ============ Suppliers ============
+export const getSuppliers = (filters = {}) => {
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_SUPPLIERS}${buildQueryString(filters)}`);
+};
+
+export const getSupplier = (id) => {
+  return apiGet(ENDPOINTS.INVENTORY.GET_SUPPLIER(id));
+};
+
+export const createSupplier = (supplierData) => {
+  return apiPost(ENDPOINTS.INVENTORY.CREATE_SUPPLIER, supplierData);
+};
+
+export const updateSupplier = (id, supplierData) => {
+  return apiPut(ENDPOINTS.INVENTORY.UPDATE_SUPPLIER(id), supplierData);
+};
+
+export const deleteSupplier = (id) => {
+  return apiDelete(ENDPOINTS.INVENTORY.DELETE_SUPPLIER(id));
+};
+
 // ============ Stock ============
 export const getStock = (filters = {}) => {
   return apiGet(`${ENDPOINTS.INVENTORY.GET_STOCK}${buildQueryString(filters)}`);
@@ -72,6 +97,44 @@ export const createImport = (importData) => {
 
 export const getImport = (id) => {
   return apiGet(ENDPOINTS.INVENTORY.GET_IMPORT(id));
+};
+
+export const createInwardInventory = (payload) => {
+  return apiPost(ENDPOINTS.INVENTORY.CREATE_INWARD_INVENTORY, payload);
+};
+
+// ============ Inward Inventory (API) ============
+export const getInwardInventories = (filters = {}) => {
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_INWARD_INVENTORIES}${buildQueryString(filters)}`);
+};
+
+export const getInwardInventory = (id) => {
+  return apiGet(ENDPOINTS.INVENTORY.GET_INWARD_INVENTORY(id));
+};
+
+export const updateInwardInventory = (id, data) => {
+  return apiPut(ENDPOINTS.INVENTORY.UPDATE_INWARD_INVENTORY(id), data);
+};
+
+export const deleteInwardInventory = (id) => {
+  return apiDelete(ENDPOINTS.INVENTORY.DELETE_INWARD_INVENTORY(id));
+};
+
+// ============ Outward Inventory (API) ============
+export const getOutwardInventories = (filters = {}) => {
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_OUTWARD_INVENTORIES}${buildQueryString(filters)}`);
+};
+
+export const getOutwardInventory = (id) => {
+  return apiGet(ENDPOINTS.INVENTORY.GET_OUTWARD_INVENTORY(id));
+};
+
+export const updateOutwardInventory = (id, data) => {
+  return apiPut(ENDPOINTS.INVENTORY.UPDATE_OUTWARD_INVENTORY(id), data);
+};
+
+export const deleteOutwardInventory = (id) => {
+  return apiDelete(ENDPOINTS.INVENTORY.DELETE_OUTWARD_INVENTORY(id));
 };
 
 // ============ Stock Export ============
@@ -112,6 +175,11 @@ const inventoryService = {
   createProduct,
   updateProduct,
   deleteProduct,
+  getSuppliers,
+  getSupplier,
+  createSupplier,
+  updateSupplier,
+  deleteSupplier,
   getStock,
   getStockByProduct,
   updateStock,
@@ -121,6 +189,18 @@ const inventoryService = {
   getExports,
   createExport,
   getExport,
+  // Inward Inventory API
+  getInwardInventories,
+  getInwardInventory,
+  createInwardInventory,
+  updateInwardInventory,
+  deleteInwardInventory,
+  // Outward Inventory API
+  getOutwardInventories,
+  getOutwardInventory,
+  updateOutwardInventory,
+  deleteOutwardInventory,
+  // Others
   getLowStockAlerts,
   getStockReport,
   getMovementReport,

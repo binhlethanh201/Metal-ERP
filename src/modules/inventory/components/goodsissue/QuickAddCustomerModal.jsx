@@ -1,4 +1,4 @@
-﻿/**
+/**
  * QuickAddCustomerModal - Modal thêm nhanh đối tượng (khách hàng).
  * Form: Mã, Tên, SĐT, Địa chỉ.
  */

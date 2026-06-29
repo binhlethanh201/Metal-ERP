@@ -26,100 +26,66 @@ const mapProductToForm = (source = {}) => {
     return '';
   };
 
-  const parseStockLevel = (val) => {
-    if (!val || typeof val !== 'string') return null;
-    const parts = val.split('-').map((s) => Number(s.trim()));
-    if (parts.length === 2 && parts.every((n) => !Number.isNaN(n)))
-      return { min: parts[0], max: parts[1] };
-    return null;
-  };
-
   const resolveLocations = (source) => {
+    if (Array.isArray(source.shelfLocations) && source.shelfLocations.length)
+      return source.shelfLocations;
     if (Array.isArray(source.locations) && source.locations.length) return source.locations;
-    if (Array.isArray(source.Locations) && source.Locations.length) return source.Locations;
-    const loc =
-      source.shelfLocation || source.ShelfLocation || source.location || source.Location || '';
+    const loc = source.shelfLocation || source.location || '';
     return loc ? [loc] : [];
   };
 
-  const productId = source.productId || source.ProductId || source.id || source.Id || '';
-  const productCode = source.productCode || source.ProductCode || source.code || source.Code || '';
-  const stockLevelParsed = parseStockLevel(source.stockLevel || source.StockLevel);
-  const imageUrl =
-    resolveImageUrl(source.image) ||
-    resolveImageUrl(source.ImageUrl) ||
-    resolveImageUrl(source.imageUrl) ||
-    resolveImageUrl(source.ImageURL);
+  const productId = source.productId || source.id || '';
+  const productCode = source.productCode || source.code || '';
+
+  const imageUrl = resolveImageUrl(source.imageUrl) || resolveImageUrl(source.image);
+
   const imageList = Array.isArray(source.images)
     ? source.images.map((item, index) => ({
-        id: item?.id || item?.Id || `${Date.now()}-${index}`,
+        id: item?.id || `${Date.now()}-${index}`,
         url: resolveImageUrl(item),
       }))
-    : Array.isArray(source.Images)
-      ? source.Images.map((item, index) => ({
-          id: item?.id || item?.Id || `${Date.now()}-${index}`,
-          url: resolveImageUrl(item),
-        }))
-      : [];
+    : [];
 
   return {
     id: productCode || productId,
     productId,
     productCode,
-    barcode: source.barcode || source.Barcode || '',
-    name: source.productName || source.ProductName || source.name || source.Name || '',
-    group: source.categoryName || source.CategoryName || source.group || source.Group || '',
-    brand: source.brandName || source.BrandName || source.brand || source.Brand || '',
+    barcode: source.barcode || '',
+    name: source.productName || source.name || '',
+    group: source.categoryName || source.group || '',
+    brand: source.brandName || source.brand || '',
     image: imageUrl,
     images: imageList,
-    costPrice: source.costPrice ?? source.CostPrice ?? '',
-    salePrice:
-      source.salePrice ??
-      source.sellPrice ??
-      source.SellPrice ??
-      source.price ??
-      source.Price ??
-      '',
-    stock: source.actualStock ?? source.ActualStock ?? source.stock ?? source.Stock ?? 0,
-    reservedStock: source.reservedStock ?? source.ReservedStock ?? 0,
-    availableStock:
-      source.availableStock ??
-      source.AvailableStock ??
-      source.actualStock ??
-      source.ActualStock ??
-      0,
-    stockMin: source.minimumStock ?? source.MinimumStock ?? stockLevelParsed?.min ?? 0,
-    minimumStock: source.minimumStock ?? source.MinimumStock ?? stockLevelParsed?.min ?? 0,
-    stockMax: source.maximumStock ?? source.MaximumStock ?? stockLevelParsed?.max ?? 0,
+    costPrice: source.costPrice ?? 0,
+    salePrice: source.salePrice ?? 0,
+    stock: source.actualStock ?? source.stock ?? 0,
+    reservedStock: source.reservedStock ?? 0,
+    availableStock: source.availableStock ?? source.actualStock ?? 0,
+    stockMin: source.minimumStock ?? 0,
+    minimumStock: source.minimumStock ?? 0,
+    stockMax: source.maximumStock ?? 0,
     locations: resolveLocations(source),
-    shelfLocation:
-      source.shelfLocation || source.ShelfLocation || source.location || source.Location || '',
-    specification: source.specification || source.Specification || '',
-    specDetail:
-      source.specDetail || source.SpecificationDetail || source.detail || source.Detail || '',
-    unit: source.unit || source.Unit || '',
+    shelfLocation: source.shelfLocation || source.location || '',
+    specification: source.specification || '',
+    specDetail: source.specificationDetail || source.specDetail || '',
+    unit: source.unit || 'Sản phẩm',
     baseUnit: {
-      name: source.unit || source.Unit || '',
-      price:
-        source.salePrice ??
-        source.sellPrice ??
-        source.SellPrice ??
-        source.price ??
-        source.Price ??
-        '',
-      directSale: source.directSale ?? source.DirectSale ?? true,
+      name: source.unit || 'Sản phẩm',
+      price: source.salePrice ?? 0,
+      directSale: source.directSale ?? true,
     },
-    weight: source.weight || source.Weight || '',
-    weightUnit: source.weightUnit || source.WeightUnit || 'g',
-    width: source.width || source.Width || '',
-    length: source.length || source.Length || '',
-    height: source.height || source.Height || '',
-    sizeUnit: source.sizeUnit || source.SizeUnit || '',
-    conversionUnits: source.conversionUnits || source.ConversionUnits || [],
-    attributes: source.attributes || source.Attributes || [],
-    productStatus: source.productStatus || source.ProductStatus || 'active',
-    description: source.description || source.Description || '',
-    notes: source.notes || source.Notes || '',
+    weight: source.weight || '',
+    weightUnit: source.weightUnit || 'g',
+    width: source.width || '',
+    length: source.length || '',
+    height: source.height || '',
+    sizeUnit: source.sizeUnit || 'mm',
+    conversionUnits: source.conversionUnits || [],
+    attributes: source.attributes || [],
+    productStatus: source.isActive === false ? 'inactive' : 'active',
+    directSale: source.directSale ?? true,
+    description: source.description || source.specification || '',
+    notes: source.notes || '',
   };
 };
 
@@ -217,6 +183,29 @@ export const useEditProductForm = ({
   const [createLocationModalOpen, setCreateLocationModalOpen] = useState(false);
   const [newLocationName, setNewLocationName] = useState('');
 
+  // --- Functional updaters cho modal Tạo mới (dùng giá trị state mới nhất, tránh stale closure) ---
+  const saveNewGroup = (name) => {
+    const n = (name || '').trim();
+    if (!n) return false;
+    persistGroups((prev) => (prev.includes(n) ? prev : [...prev, n]));
+    setForm((c) => ({ ...c, group: n }));
+    return true;
+  };
+  const saveNewBrand = (name) => {
+    const n = (name || '').trim();
+    if (!n) return false;
+    persistBrands((prev) => (prev.includes(n) ? prev : [...prev, n]));
+    setForm((c) => ({ ...c, brand: n }));
+    return true;
+  };
+  const saveNewLocation = (name) => {
+    const n = (name || '').trim();
+    if (!n) return false;
+    persistLocations((prev) => (prev.includes(n) ? prev : [...prev, n]));
+    addLocation(n);
+    return true;
+  };
+
   // --- Location helpers ---
   const addLocation = (loc) => {
     const name = (loc || '').trim();
@@ -277,6 +266,33 @@ export const useEditProductForm = ({
         } catch {}
       }
       return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  // Thêm ảnh từ URL (không có File, chỉ lưu URL trực tiếp)
+  const handleAddImageUrl = (url) => {
+    const u = (url || '').trim();
+    if (!u) return;
+    setImages((prev) => {
+      const avail = Math.max(0, MAX_IMAGES - prev.length);
+      if (avail <= 0) {
+        alert(`Chỉ được tối đa ${MAX_IMAGES} ảnh`);
+        return prev;
+      }
+      // Tránh thêm URL trùng
+      if (prev.some((it) => (it.url || '') === u)) {
+        alert('Link ảnh này đã được thêm');
+        return prev;
+      }
+      const newImg = {
+        id: crypto?.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        url: u,
+        file: null,
+        isUrl: true,
+      };
+      return [...prev, newImg];
     });
   };
 
@@ -364,6 +380,10 @@ export const useEditProductForm = ({
     setNewLocationName,
     addLocation,
     removeLocation,
+    // Functional modal save helpers (tránh stale closure)
+    saveNewGroup,
+    saveNewBrand,
+    saveNewLocation,
     // Modal toggles
     createGroupModalOpen,
     setCreateGroupModalOpen,
@@ -378,6 +398,7 @@ export const useEditProductForm = ({
     handleUpload,
     handlePinImage,
     handleRemoveImage,
+    handleAddImageUrl,
     // Misc
     handleChange,
     handleSubmit,

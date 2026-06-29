@@ -4,39 +4,81 @@
  */
 
 export const ENDPOINTS = {
+  // ============ OWNER (Quản lý) ============
+  OWNER: {
+    // Branches
+    BRANCHES: '/api/owner/branches',
+    BRANCH_DETAIL: (id) => `/api/owner/branches/${id}`,
+    BRANCH_HISTORY: (id) => `/api/owner/branches/${id}/history`,
+
+    // Staffs
+    STAFFS: '/api/owner/staffs',
+    STAFF_DETAIL: (id) => `/api/owner/staffs/${id}`,
+    STAFF_ASSIGN_BRANCH: (id) => `/api/owner/staffs/${id}/assign-branch`,
+    STAFF_UNASSIGN_BRANCH: (id, branchId) => `/api/owner/staffs/${id}/unassign-branch/${branchId}`,
+    STAFF_TOGGLE_STATUS: (id) => `/api/owner/staffs/${id}/toggle-status`,
+  },
+
   // ============ INVENTORY (Tổng kho) ============
   INVENTORY: {
     // Dashboard
     DASHBOARD: '/inventory/dashboard',
 
-    // Products
-    GET_PRODUCTS: '/api/products',
-    GET_PRODUCT: (id) => `/api/products/${id}`,
-    CREATE_PRODUCT: '/api/products',
-    UPDATE_PRODUCT: (id) => `/api/products/${id}`,
-    DELETE_PRODUCT: (id) => `/api/products/${id}`,
+    // ================= Products =================
+    GET_PRODUCTS: '/api/Products',
+    CREATE_PRODUCT: '/api/Products',
+    GET_PRODUCT: (id) => `/api/Products/${id}`,
+    UPDATE_PRODUCT: (id) => `/api/Products/${id}`,
+    DELETE_PRODUCT: (id) => `/api/Products/${id}`,
 
-    // Stock
-    GET_STOCK: '/inventory/stock',
-    GET_STOCK_BY_PRODUCT: (productId) => `/inventory/stock/${productId}`,
-    UPDATE_STOCK: (productId) => `/inventory/stock/${productId}`,
+    SEARCH_PRODUCTS: '/api/Products/search',
+    SUGGEST_NEW_PRODUCT: '/api/Products/suggest-new-product',
 
-    // Stock Import/Export
-    GET_IMPORTS: '/inventory/imports',
-    CREATE_IMPORT: '/inventory/imports',
-    GET_IMPORT: (id) => `/inventory/imports/${id}`,
+    TOGGLE_PRODUCT_STATUS: (id) => `/api/Products/${id}/toggle-status`,
+    TOGGLE_PRODUCT_STATUS_BULK: '/api/Products/toggle-status-bulk',
 
-    GET_EXPORTS: '/inventory/exports',
-    CREATE_EXPORT: '/inventory/exports',
-    GET_EXPORT: (id) => `/inventory/exports/${id}`,
+    // ================= Suppliers =================
+    GET_SUPPLIERS: '/api/suppliers',
+    CREATE_SUPPLIER: '/api/suppliers',
+    GET_SUPPLIER: (id) => `/api/suppliers/${id}`,
+    UPDATE_SUPPLIER: (id) => `/api/suppliers/${id}`,
+    DELETE_SUPPLIER: (id) => `/api/suppliers/${id}`,
 
-    // Alerts & Warnings
-    GET_LOW_STOCK_ALERTS: '/inventory/alerts/low-stock',
+    // ================= Supplier Debt =================
+    GET_SUPPLIER_DEBTS: '/api/supplierdebt',
+    GET_SUPPLIER_DEBT: (supplierId) => `/api/supplierdebt/${supplierId}`,
+    EXPORT_SUPPLIER_DEBT: '/api/supplierdebt/export',
 
-    // Reports
-    GET_STOCK_REPORT: '/inventory/reports/stock',
-    GET_MOVEMENT_REPORT: '/inventory/reports/movement',
-    GET_IMPORT_SUGGESTIONS: '/inventory/suggestions/imports',
+    // ================= Supplier Payments =================
+    GET_SUPPLIER_PAYMENTS: '/api/supplierpayments',
+    CREATE_SUPPLIER_PAYMENT: '/api/supplierpayments',
+    UPDATE_SUPPLIER_PAYMENT: (id) => `/api/supplierpayments/${id}`,
+    DELETE_SUPPLIER_PAYMENT: (id) => `/api/supplierpayments/${id}`,
+
+    // ================= Inward Inventory =================
+    GET_INWARD_INVENTORIES: '/api/InwardInventory',
+    CREATE_INWARD_INVENTORY: '/api/InwardInventory',
+    GET_INWARD_INVENTORY: (id) => `/api/InwardInventory/${id}`,
+    UPDATE_INWARD_INVENTORY: (id) => `/api/InwardInventory/${id}`,
+    DELETE_INWARD_INVENTORY: (id) => `/api/InwardInventory/${id}`,
+
+    // ================= Outward Inventory =================
+    GET_OUTWARD_INVENTORIES: '/api/OutwardInventory',
+    CREATE_OUTWARD_INVENTORY: '/api/OutwardInventory',
+    GET_OUTWARD_INVENTORY: (id) => `/api/OutwardInventory/${id}`,
+    UPDATE_OUTWARD_INVENTORY: (id) => `/api/OutwardInventory/${id}`,
+    DELETE_OUTWARD_INVENTORY: (id) => `/api/OutwardInventory/${id}`,
+
+    // ================= Inventory Check =================
+    GET_INVENTORY_CHECKS: '/api/InventoryCheck',
+    CREATE_INVENTORY_CHECK: '/api/InventoryCheck',
+    GET_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}`,
+    FILL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/fill`,
+    APPROVE_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/approve`,
+    CANCEL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/cancel`,
+
+    // ================= Reports =================
+    INVENTORY_SUMMARY_REPORT: '/api/inventory/summary-report',
   },
 
   // ============ POS (Bán hàng) ============

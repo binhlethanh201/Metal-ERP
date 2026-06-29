@@ -1,4 +1,4 @@
-﻿/** Panel giỏ hàng POS - Danh sách item + số lượng + chọn khách hàng + voucher + tạm tính/VAT/tổng + nút Thanh toán/Lưu nháp. */
+/** Panel giỏ hàng POS - Danh sách item + số lượng + chọn khách hàng + voucher + tạm tính/VAT/tổng + nút Thanh toán/Lưu nháp. */
 import Icon from '../../../../shared/components/Icon';
 const formatCurrency = (v) => `${Math.max(0, v).toLocaleString('vi-VN')}đ`;
 

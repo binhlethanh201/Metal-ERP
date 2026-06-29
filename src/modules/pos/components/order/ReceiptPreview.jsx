@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ReceiptPreview Component - Xem trước hóa đơn
  */
 

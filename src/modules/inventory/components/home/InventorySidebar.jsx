@@ -1,17 +1,42 @@
 /**
  * Sidebar Tổng kho nâng cấp - Menu điều hướng trái sử dụng flat data từ sidebarItems.
  * Đã hạ mục Diễn đàn xuống chân trang thay thế nút Cài đặt và tích hợp hiệu ứng loading chuyển vùng có chữ.
+ * Tích hợp Phân quyền (RBAC): Tự động ẩn HOÀN TOÀN các menu không thuộc thẩm quyền của User.
  */
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import Logo from '../../../../shared/components/Logo';
 import { sidebarItems } from '../../data/inventoryPageData';
+import { useAuth } from '../../../../shared/hooks/useAuth'; // Import hook xác thực
 
 const InventorySidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSwitching, setIsSwitching] = useState(false); // Trạng thái loading chuyển phân hệ
+  const { user } = useAuth(); // Lấy thông tin user hiện tại
+  const [isSwitching, setIsSwitching] = useState(false);
+
+  // Chuẩn hóa mảng roles của user (Xử lý cả trường hợp API trả về chuỗi "role" hoặc mảng "roles")
+  const userRoles = user?.roles || (user?.role ? [user.role] : []);
+
+  // Kiểm tra xem User có mang role Owner hay không
+  const isOwner = userRoles.includes('Owner');
+
+  // Lọc danh sách menu: Xóa sổ hoàn toàn các menu Owner khỏi DOM nếu không đủ quyền
+  const visibleMenuItems = sidebarItems.filter((item) => {
+    // Nếu menu đánh cờ ownerOnly = true MÀ user KHÔNG PHẢI Owner -> Ẩn đi (return false)
+    if (item.ownerOnly && !isOwner) {
+      return false;
+    }
+
+    // Nếu sau này bạn xài thêm allowedRoles thì check ở đây
+    if (item.allowedRoles && item.allowedRoles.length > 0) {
+      return item.allowedRoles.some((r) => userRoles.includes(r));
+    }
+
+    // Còn lại là public menu, cho hiển thị
+    return true;
+  });
 
   // Hàm check xem item nào đang active dựa trên URL hiện tại
   const isItemActive = (path) => {
@@ -28,7 +53,7 @@ const InventorySidebar = () => {
     setTimeout(() => {
       setIsSwitching(false);
       navigate('/forum');
-    }, 1800); // Độ trễ 1.8s tạo cảm giác đồng bộ dữ liệu mượt mà
+    }, 1800);
   };
 
   return (
@@ -55,9 +80,9 @@ const InventorySidebar = () => {
           <Logo moduleName="Tổng Kho" />
         </div>
 
-        {/* Vùng điều hướng Menu chính (Đã dọn sạch mục Diễn đàn) */}
+        {/* Vùng điều hướng Menu chính (Đã được lọc qua quyền) */}
         <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto pr-1">
-          {sidebarItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const active = isItemActive(item.path);
             return (
               <button
@@ -77,7 +102,7 @@ const InventorySidebar = () => {
           })}
         </nav>
 
-        {/* TIỆN ÍCH CHÂN TRANG: GIỮ NÚT HỖ TRỢ AI & THAY NÚT CÀI ĐẶT THÀNH NÚT DIỄN ĐÀN ĐẶC BIỆT */}
+        {/* TIỆN ÍCH CHÂN TRANG */}
         <div className="mt-auto space-y-4 border-t border-slate-100 pt-4">
           <button
             type="button"

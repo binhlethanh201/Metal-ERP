@@ -3,7 +3,7 @@
  * Style bám sát ProductFilterSidebar: section header đậm, radio card,
  * QuickRangePopover + DatePickerPopup bay trái, custom dropdown, triToggle.
  */
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 /* ── QuickRangePopover ── */
@@ -281,28 +281,6 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
     </div>
   );
 };
-
-/* ── TriToggle ── */
-const TriToggle = ({ value, onChange }) => (
-  <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-    {[
-      { val: 'all', label: 'Tất cả' },
-      { val: 'yes', label: 'Có' },
-      { val: 'no', label: 'Không' },
-    ].map((v) => (
-      <button
-        key={v.val}
-        type="button"
-        className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors ${
-          value === v.val ? 'bg-blue-600 font-bold text-white' : 'text-slate-600'
-        }`}
-        onClick={() => onChange(v.val)}
-      >
-        {v.label}
-      </button>
-    ))}
-  </div>
-);
 
 /* ── MAIN ── */
 const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {

@@ -1,4 +1,4 @@
-﻿import { Modal } from '../../../../shared/components/Modal';
+import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
