@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { X, Package, User, Calendar, Building2, FileText, Printer } from 'lucide-react';
+import { X, Package, User, FileText, Printer } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 import { TransactionTypeBadge } from './TransactionTypeBadge';
 

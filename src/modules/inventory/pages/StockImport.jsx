@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   AlertCircle,
   CalendarClock,
@@ -9,7 +9,8 @@ import {
   Search,
   Trash2,
 } from 'lucide-react';
-import { createInwardInventory, getProducts, getSuppliers } from '../services/inventoryService';
+import { createInwardInventory, getProducts } from '../services/inventoryService';
+import { getSuppliers } from '../services/supplierService';
 
 const fallbackProducts = [
   {
@@ -69,7 +70,6 @@ const normalizeProduct = (item) => ({
   productName: item?.productName || item?.ProductName || item?.name || item?.Name || 'Sản phẩm',
   unitName: item?.unitName || item?.UnitName || item?.unit || item?.Unit || 'Đơn vị',
   costPrice: Number(item?.costPrice ?? item?.CostPrice ?? item?.price ?? item?.Price ?? 0),
-  // Chuẩn hóa field ảnh - dùng chung naming convention với productUtils.js
   image:
     item?.image ||
     item?.ImageUrl ||
@@ -110,13 +110,13 @@ export const StockImport = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(-1);
+
   const filteredProducts = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
     if (!keyword) return products.slice(0, 6);
 
     return products.filter((product) => {
       const haystack = `${product.productCode} ${product.productName}`.toLowerCase();
-
       return haystack.includes(keyword);
     });
   }, [products, searchText]);
@@ -163,6 +163,45 @@ export const StockImport = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // VÁ LỖI ESLINT: Bọc hàm addProductToTicket vào useCallback
+  const addProductToTicket = useCallback(
+    (product) => {
+      const existingItem = items.find((item) => item.id === product.id);
+
+      if (existingItem) {
+        setItems((current) =>
+          current.map((item) => {
+            if (item.id !== product.id) return item;
+            return {
+              ...item,
+              quantity: item.quantity + 1,
+            };
+          })
+        );
+        setStatus({ type: 'success', message: `Đã tăng số lượng ${product.productName}` });
+      } else {
+        setItems((current) => [
+          ...current,
+          {
+            id: product.id,
+            productCode: product.productCode,
+            productName: product.productName,
+            unitName: product.unitName,
+            quantity: 1,
+            costPrice: product.costPrice,
+          },
+        ]);
+        setStatus({ type: 'success', message: `Đã thêm ${product.productName}` });
+      }
+
+      setIsDropdownOpen(false);
+      setSearchText('');
+      setSelectedDropdownIndex(-1);
+    },
+    [items]
+  ); // Khai báo dependency items tại đây
+
+  // VÁ LỖI ESLINT: Khai báo addProductToTicket vào mảng dependency của useEffect này
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'F3') {
@@ -170,7 +209,6 @@ export const StockImport = () => {
         searchInputRef.current?.focus();
       }
 
-      // Xử lý keyboard navigation trong dropdown
       if (isDropdownOpen && filteredProducts.length > 0) {
         if (event.key === 'ArrowDown') {
           event.preventDefault();
@@ -198,7 +236,7 @@ export const StockImport = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDropdownOpen, selectedDropdownIndex, filteredProducts]);
+  }, [isDropdownOpen, selectedDropdownIndex, filteredProducts, addProductToTicket]);
 
   const supplierSuggestions = useMemo(() => {
     const keyword = supplierQuery.trim().toLowerCase();
@@ -216,43 +254,6 @@ export const StockImport = () => {
     );
     return { totalQuantity, totalAmount };
   }, [items]);
-
-  const addProductToTicket = (product) => {
-    const existingItem = items.find((item) => item.id === product.id);
-
-    if (existingItem) {
-      // Nếu sản phẩm đã tồn tại, cộng dồn số lượng
-      setItems((current) =>
-        current.map((item) => {
-          if (item.id !== product.id) return item;
-          return {
-            ...item,
-            quantity: item.quantity + 1,
-          };
-        })
-      );
-      setStatus({ type: 'success', message: `Đã tăng số lượng ${product.productName}` });
-    } else {
-      // Nếu chưa tồn tại, thêm dòng mới
-      setItems((current) => [
-        ...current,
-        {
-          id: product.id,
-          productCode: product.productCode,
-          productName: product.productName,
-          unitName: product.unitName,
-          quantity: 1,
-          costPrice: product.costPrice,
-        },
-      ]);
-      setStatus({ type: 'success', message: `Đã thêm ${product.productName}` });
-    }
-
-    // Đóng dropdown và xóa text tìm kiếm
-    setIsDropdownOpen(false);
-    setSearchText('');
-    setSelectedDropdownIndex(-1);
-  };
 
   const addSampleProduct = () => {
     const sample = products[1] || fallbackProducts[1];
@@ -286,21 +287,15 @@ export const StockImport = () => {
       return;
     }
 
-    // Parse GUID strings to actual Guids
     const parseGuid = (val) => {
       if (!val) return null;
       const str = String(val);
-      // Match UUID format: 8-4-4-4-12 hex chars
       if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)) {
         return str;
       }
       return null;
     };
 
-    // DEBUG: Log items để xem Id có đúng format không
-    console.log('DEBUG handleFinish: items state =', JSON.stringify(items, null, 2));
-
-    // Kiểm tra có sản phẩm nào dùng fallback data (id không phải UUID) không
     const hasFallbackData = items.some((item) => !parseGuid(item.id));
     if (hasFallbackData) {
       setStatus({
@@ -311,8 +306,7 @@ export const StockImport = () => {
     }
 
     const payload = {
-      // Backend C# dùng PascalCase + InwardInventoryType enum
-      InwardType: inwardType, // 1=Purchase, 2=CustomerReturn, 3=BalanceAdjust
+      InwardType: inwardType,
       SupplierId: parseGuid(selectedSupplier?.id),
       Reason: note,
       Note: note,
@@ -322,8 +316,6 @@ export const StockImport = () => {
         CostPrice: Number(item.costPrice || 0),
       })),
     };
-
-    console.log('DEBUG handleFinish: payload =', JSON.stringify(payload, null, 2));
 
     setIsSubmitting(true);
     setStatus({ type: 'info', message: 'Đang gửi phiếu nhập kho...' });
@@ -393,7 +385,6 @@ export const StockImport = () => {
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none ring-0"
               />
 
-              {/* Dropdown Autocomplete */}
               {isDropdownOpen && filteredProducts.length > 0 && (
                 <div
                   ref={dropdownRef}
@@ -409,7 +400,6 @@ export const StockImport = () => {
                         selectedDropdownIndex === index ? 'bg-sky-50' : 'hover:bg-slate-50'
                       }`}
                     >
-                      {/* Thumbnail */}
                       <div className="mt-0.5 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
                         {product.image ? (
                           <img
@@ -426,7 +416,6 @@ export const StockImport = () => {
                         {!product.image && <Package size={20} className="text-slate-400" />}
                       </div>
 
-                      {/* Product Info */}
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-slate-900">
                           {product.productName} ({product.unitName})

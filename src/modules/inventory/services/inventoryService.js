@@ -52,27 +52,6 @@ export const toggleProductStatus = (id, isActive) => {
   return apiPatch(`${ENDPOINTS.INVENTORY.TOGGLE_PRODUCT_STATUS(id)}?isActive=${isActive}`);
 };
 
-// ============ Suppliers ============
-export const getSuppliers = (filters = {}) => {
-  return apiGet(`${ENDPOINTS.INVENTORY.GET_SUPPLIERS}${buildQueryString(filters)}`);
-};
-
-export const getSupplier = (id) => {
-  return apiGet(ENDPOINTS.INVENTORY.GET_SUPPLIER(id));
-};
-
-export const createSupplier = (supplierData) => {
-  return apiPost(ENDPOINTS.INVENTORY.CREATE_SUPPLIER, supplierData);
-};
-
-export const updateSupplier = (id, supplierData) => {
-  return apiPut(ENDPOINTS.INVENTORY.UPDATE_SUPPLIER(id), supplierData);
-};
-
-export const deleteSupplier = (id) => {
-  return apiDelete(ENDPOINTS.INVENTORY.DELETE_SUPPLIER(id));
-};
-
 // ============ Stock ============
 export const getStock = (filters = {}) => {
   return apiGet(`${ENDPOINTS.INVENTORY.GET_STOCK}${buildQueryString(filters)}`);
@@ -175,11 +154,6 @@ const inventoryService = {
   createProduct,
   updateProduct,
   deleteProduct,
-  getSuppliers,
-  getSupplier,
-  createSupplier,
-  updateSupplier,
-  deleteSupplier,
   getStock,
   getStockByProduct,
   updateStock,

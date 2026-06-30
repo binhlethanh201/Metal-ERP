@@ -31,12 +31,17 @@ const InventoryCountList = lazy(() => import('./modules/inventory/pages/Inventor
 const InventoryTransactionManagement = lazy(
   () => import('./modules/inventory/pages/InventoryTransactionManagement')
 );
-// Goods Issue (Xuat Kho) - part of Inventory module
 const GoodsIssueList = lazy(() => import('./modules/inventory/pages/GoodsIssueList'));
 const GoodsIssueCreate = lazy(() => import('./modules/inventory/pages/GoodsIssueCreate'));
-// Order Management - part of Inventory module
 const OrderList = lazy(() => import('./modules/inventory/pages/OrderList'));
 const SupplierManagement = lazy(() => import('./modules/inventory/pages/SupplierManagement'));
+const SupplierDebtManagement = lazy(
+  () => import('./modules/inventory/pages/SupplierDebtManagement')
+);
+// ---> BỔ SUNG IMPORT TRANG QUẢN LÝ THANH TOÁN Ở ĐÂY <---
+const SupplierPaymentManagement = lazy(
+  () => import('./modules/inventory/pages/SupplierPaymentManagement')
+);
 
 // POS Module
 const PosLayout = lazy(() => import('./modules/pos/layouts/PosLayout'));
@@ -128,7 +133,7 @@ function App() {
             </Route>
           </Route>
 
-          {/*  MODULE INVENTORY */}
+          {/* MODULE INVENTORY */}
           <Route element={<PrivateRoute allowedRoles={['Owner', 'InventoryStaff']} />}>
             <Route path="/inventory" element={<InventoryLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
@@ -144,6 +149,11 @@ function App() {
               <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
               <Route path="orders" element={<OrderList />} />
               <Route path="suppliers" element={<SupplierManagement />} />
+              <Route path="supplier-debt" element={<SupplierDebtManagement />} />
+
+              {/* ---> BỔ SUNG ROUTE MỚI Ở ĐÂY <--- */}
+              <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
+
               <Route element={<PrivateRoute allowedRoles={['Owner']} />}>
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="employees" element={<StaffManagement />} />
