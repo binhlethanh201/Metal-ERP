@@ -1,15 +1,19 @@
 /**
- * OrderHistory Page - Lich su don hang POS (ban tai quay, khong giao hang)
+ * OrderHistory Page - Lịch sử đơn hàng POS (bán tại quầy)
+ * Dữ liệu từ API: GET /pos/invoices?status=Completed
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useAuth } from '../../../shared/hooks/useAuth';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { getOrders } from '../services/posService';
 
+// Mock data fallback — dùng khi API chưa có dữ liệu
 const MOCK_ORDERS = [
   {
     id: 'POS-20240508-001',
@@ -124,23 +128,69 @@ const MOCK_ORDERS = [
 ];
 
 const PAYMENT_VARIANTS = { 'Tiền mặt': 'warning', The: 'info', 'Chuyển khoản': 'primary' };
+const PAYMENT_LABELS = { CASH: 'Tiền mặt', TRANSFER: 'Chuyển khoản', CARD: 'Thẻ' };
 
 const OrderHistory = () => {
   const navigate = useNavigate();
   const { drafts, setDrafts } = useOutletContext();
+  const { user } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
   const [selected, setSelected] = useState(null);
+
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
+  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+
+  const fetchOrders = useCallback(async () => {
+    // Owner không có quyền gọi POS API (backend chỉ hỗ trợ SalesStaff)
+    if (isOwner) {
+      setOrders(MOCK_ORDERS);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const data = await getOrders({ status: 'Completed' });
+      // Backend trả về PageResultDto hoặc mảng trực tiếp
+      const items = Array.isArray(data) ? data : (data?.items ?? []);
+      setOrders(items);
+    } catch (err) {
+      console.error('Lỗi khi lấy danh sách đơn hàng:', err);
+      setFetchError(err.message || 'Không thể tải danh sách đơn hàng');
+      // Fallback: vẫn hiển thị mock để UI không trống
+      setOrders(MOCK_ORDERS);
+    } finally {
+      setLoading(false);
+    }
+  }, [isOwner]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const handlePrintOrder = (order) => {
     const printWindow = window.open('', '_blank', 'width=420,height=800');
     if (!printWindow) return;
 
-    const totalPaid = order.payLines.reduce((s, pl) => s + pl.amount, 0);
+    const payLines = Array.isArray(order.payLines) ? order.payLines : [];
+    const totalPaid =
+      payLines.length > 0
+        ? payLines.reduce((s, pl) => s + pl.amount, 0)
+        : order.totalAmount || order.total || 0;
 
-    const payLinesHtml = order.payLines
-      .map((pl) => `<tr><td>${pl.method}</td><td class="r">${formatCurrency(pl.amount)}</td></tr>`)
-      .join('');
+    const payLinesHtml =
+      payLines.length > 0
+        ? payLines
+            .map(
+              (pl) =>
+                `<tr><td>${pl.method}</td><td class="r">${formatCurrency(pl.amount)}</td></tr>`
+            )
+            .join('')
+        : `<tr><td>${order.paymentMethod || '-'}</td><td class="r">${formatCurrency(totalPaid)}</td></tr>`;
 
     printWindow.document.write(`<!DOCTYPE html>
 <html>
@@ -220,71 +270,114 @@ const OrderHistory = () => {
   };
 
   const filtered = useMemo(() => {
-    let list = MOCK_ORDERS;
+    if (!orders.length && !loading) return [];
+    let list = orders;
     if (search) {
       const kw = search.toLowerCase();
       list = list.filter(
-        (o) => o.id.toLowerCase().includes(kw) || o.customer.toLowerCase().includes(kw)
+        (o) =>
+          (o.invoiceCode || o.id || '').toLowerCase().includes(kw) ||
+          (o.customerName || '').toLowerCase().includes(kw)
       );
     }
-    if (timeFilter === 'today') list = list.filter((o) => o.date.startsWith('2024-05-08'));
-    if (timeFilter === 'yesterday') list = list.filter((o) => o.date.startsWith('2024-05-07'));
-    if (timeFilter === 'week') list = list.filter((o) => o.date >= '2024-05-01');
+    if (timeFilter === 'today') {
+      const today = new Date().toISOString().slice(0, 10);
+      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(today));
+    }
+    if (timeFilter === 'yesterday') {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      const y = d.toISOString().slice(0, 10);
+      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(y));
+    }
+    if (timeFilter === 'week') {
+      const w = new Date();
+      w.setDate(w.getDate() - 7);
+      list = list.filter((o) => new Date(o.createdAt || o.date) >= w);
+    }
     return list;
-  }, [search, timeFilter]);
+  }, [orders, search, timeFilter, loading]);
 
-  const todayOrders = MOCK_ORDERS.filter((o) => o.date.startsWith('2024-05-08'));
-  const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
+  const todayOrders = orders.filter((o) => {
+    const today = new Date().toISOString().slice(0, 10);
+    return (o.createdAt || o.date || '').startsWith(today);
+  });
+  const todayRevenue = todayOrders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
   const todayCount = todayOrders.length;
-  const totalRevenue = MOCK_ORDERS.reduce((s, o) => s + o.total, 0);
+  const totalRevenue = orders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
 
   const columns = [
     {
-      key: 'id',
+      key: 'invoiceCode',
       header: 'Mã đơn',
       width: '160px',
-      render: (v) => <span className="font-mono text-xs font-bold text-[#004785]">{v}</span>,
-    },
-    {
-      key: 'date',
-      header: 'Thời gian',
-      width: '140px',
-      render: (v) => <span className="text-xs text-slate-500">{v}</span>,
-    },
-    {
-      key: 'customer',
-      header: 'Khách hàng',
-      render: (v) => <span className="text-xs font-medium text-slate-900">{v}</span>,
-    },
-    {
-      key: 'items',
-      header: 'Mon',
-      width: '50px',
-      render: (v) => <span className="text-slate-600">{v}</span>,
-    },
-    {
-      key: 'payLines',
-      header: 'Thanh toán',
-      width: '160px',
-      render: (v) => (
-        <div className="flex flex-wrap gap-1">
-          {v.map((pl, i) => (
-            <Badge key={i} variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
-              {pl.method}
-            </Badge>
-          ))}
-        </div>
+      render: (v, row) => (
+        <span className="font-mono text-xs font-bold text-[#004785]">{v || row.id || '-'}</span>
       ),
     },
     {
-      key: 'total',
-      header: 'Tổng tiền',
-      render: (v) => <span className="text-xs font-bold text-green-600">{formatCurrency(v)}</span>,
+      key: 'createdAt',
+      header: 'Thời gian',
+      width: '140px',
+      render: (v, row) => (
+        <span className="text-xs text-slate-500">
+          {v ? new Date(v).toLocaleString('vi-VN') : row.date || '-'}
+        </span>
+      ),
     },
     {
-      key: 'cashier',
+      key: 'customerName',
+      header: 'Khách hàng',
+      render: (v, row) => (
+        <span className="text-xs font-medium text-slate-900">
+          {v || row.customer || 'Khách lẻ'}
+        </span>
+      ),
+    },
+    {
+      key: 'items',
+      header: 'Món',
+      width: '50px',
+      render: (v, row) => <span className="text-slate-600">{v?.length ?? row.items ?? 0}</span>,
+    },
+    {
+      key: 'paymentMethod',
+      header: 'Thanh toán',
+      width: '160px',
+      render: (v, row) => {
+        // API format: v là string | mock format: row.payLines là array
+        if (Array.isArray(row.payLines)) {
+          return (
+            <div className="flex flex-wrap gap-1">
+              {row.payLines.map((pl, i) => (
+                <Badge key={i} variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
+                  {pl.method}
+                </Badge>
+              ))}
+            </div>
+          );
+        }
+        const label = PAYMENT_LABELS[v] || v || row.paymentMethod || '-';
+        return (
+          <Badge variant={PAYMENT_VARIANTS[v] || 'secondary'} size="sm">
+            {label}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: 'totalAmount',
+      header: 'Tổng tiền',
+      render: (v, row) => (
+        <span className="text-xs font-bold text-green-600">
+          {formatCurrency(v ?? row.total ?? 0)}
+        </span>
+      ),
+    },
+    {
+      key: 'userName',
       header: 'Thu ngân',
-      render: (v) => <span className="text-xs text-slate-500">{v}</span>,
+      render: (v, row) => <span className="text-xs text-slate-500">{v || row.cashier || '-'}</span>,
     },
     {
       key: 'actions',
@@ -414,6 +507,12 @@ const OrderHistory = () => {
           </Card>
         )}
 
+        {fetchError && (
+          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+            <strong>Lưu ý:</strong> {fetchError}. Đang hiển thị dữ liệu mẫu.
+          </div>
+        )}
+
         {/* Search + Filter + Action */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-3">
@@ -444,7 +543,12 @@ const OrderHistory = () => {
 
         {/* Table */}
         <Card padding="p-0">
-          <Table columns={columns} data={filtered} emptyMessage="Không có đơn hàng nào" />
+          <Table
+            columns={columns}
+            data={filtered}
+            loading={loading}
+            emptyMessage={fetchError ? `Lỗi: ${fetchError}` : 'Không có đơn hàng nào'}
+          />
         </Card>
       </div>
 
@@ -477,15 +581,19 @@ const OrderHistory = () => {
               <div className="space-y-2 border-t border-slate-100 pt-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Khách hàng</span>
-                  <span className="font-semibold">{selected.customer}</span>
+                  <span className="font-semibold">
+                    {selected.customerName || selected.customer || 'Khách lẻ'}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Thu ngân</span>
-                  <span>{selected.cashier}</span>
+                  <span>{selected.userName || selected.cashier || '-'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">So mon</span>
-                  <span className="font-semibold">{selected.items}</span>
+                  <span className="text-slate-500">Số món</span>
+                  <span className="font-semibold">
+                    {selected.items?.length ?? selected.items ?? 0}
+                  </span>
                 </div>
               </div>
             </div>
@@ -493,39 +601,58 @@ const OrderHistory = () => {
 
           <Card header="Thanh toán">
             <div className="space-y-2">
-              {selected.payLines.map((pl, i) => (
-                <div key={i} className="flex justify-between rounded-lg bg-slate-50 p-2 text-sm">
-                  <Badge variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
-                    {pl.method}
+              {/* Mock: payLines array | API: paymentMethod string */}
+              {selected.payLines ? (
+                selected.payLines.map((pl, i) => (
+                  <div key={i} className="flex justify-between rounded-lg bg-slate-50 p-2 text-sm">
+                    <Badge variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
+                      {pl.method}
+                    </Badge>
+                    <span className="font-bold">{formatCurrency(pl.amount)}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex justify-between rounded-lg bg-slate-50 p-2 text-sm">
+                  <Badge
+                    variant={PAYMENT_VARIANTS[selected.paymentMethod] || 'secondary'}
+                    size="sm"
+                  >
+                    {PAYMENT_LABELS[selected.paymentMethod] || selected.paymentMethod || '-'}
                   </Badge>
-                  <span className="font-bold">{formatCurrency(pl.amount)}</span>
+                  <span className="font-bold">
+                    {formatCurrency(selected.totalAmount || selected.total || 0)}
+                  </span>
                 </div>
-              ))}
+              )}
               <div className="space-y-1 border-t border-slate-200 pt-2">
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Tạm tính</span>
-                  <span>{formatCurrency(selected.subtotal)}</span>
+                  <span>
+                    {formatCurrency(
+                      selected.subtotal ?? selected.totalAmount ?? selected.total ?? 0
+                    )}
+                  </span>
                 </div>
-                {selected.discount > 0 && (
+                {selected.discountAmount > 0 && (
                   <div className="flex justify-between text-xs text-red-500">
                     <span>Giảm giá</span>
-                    <span>-{formatCurrency(selected.discount)}</span>
+                    <span>-{formatCurrency(selected.discountAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>VAT</span>
-                  <span>{formatCurrency(selected.vat)}</span>
+                  <span>{formatCurrency(selected.taxAmount ?? selected.vat ?? 0)}</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785]">
-                  <span>Tong</span>
-                  <span>{formatCurrency(selected.total)}</span>
+                  <span>Tổng</span>
+                  <span>{formatCurrency(selected.totalAmount ?? selected.total ?? 0)}</span>
                 </div>
               </div>
-              {selected.change > 0 && (
+              {selected.changeAmount > 0 && (
                 <div className="flex justify-between rounded-lg bg-green-50 p-2 text-sm">
                   <span className="text-green-700">Tiền thừa</span>
                   <span className="font-bold text-green-700">
-                    {formatCurrency(selected.change)}
+                    {formatCurrency(selected.changeAmount)}
                   </span>
                 </div>
               )}

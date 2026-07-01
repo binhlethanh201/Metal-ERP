@@ -2,11 +2,14 @@
  * Sidebar POS nâng cấp - Tích hợp phân quyền (Chỉ Owner mới thấy nút Kho hàng).
  */
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import Logo from '../../../../shared/components/Logo';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isSwitching, setIsSwitching] = useState(false);
   const { user } = useAuth(); // Hook lấy thông tin user
 
@@ -14,11 +17,22 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
 
+  // Map menu label → route path
+  const MENU_ROUTES = {
+    'Máy bán hàng': '/pos',
+    'Đơn hàng': '/pos/orders',
+    Khách: '/pos/customers',
+    'Quản lý ca bán': '/pos/shift',
+    'Đổi trả': '/pos/returns',
+    'Cài đặt': '/pos/settings',
+  };
+
   const menuItems = [
     ['shopping_cart', 'Máy bán hàng'],
     ['assignment', 'Đơn hàng'],
     ['groups', 'Khách'],
     ['assessment', 'Quản lý ca bán'],
+    ['swap_horiz', 'Đổi trả'],
     ['settings', 'Cài đặt'],
   ];
 
@@ -29,6 +43,12 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
       setIsSwitching(false);
       onNavigateWarehouse();
     }, 1800);
+  };
+
+  const handleMenuClick = (label) => {
+    const path = MENU_ROUTES[label];
+    if (path) navigate(path);
+    onMenuSelect?.(label);
   };
 
   return (
@@ -55,12 +75,13 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
           {menuItems.map(([icon, label]) => {
-            const active = activeMenu === label;
+            // Active: the current route matches this menu item's path
+            const active = location.pathname === MENU_ROUTES[label];
             return (
               <button
                 key={label}
                 type="button"
-                onClick={() => onMenuSelect(label)}
+                onClick={() => handleMenuClick(label)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-200 ${
                   active
                     ? 'bg-blue-50 font-semibold text-blue-900'
