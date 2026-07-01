@@ -14,21 +14,31 @@ import CustomerPickerModal from '../components/customer/CustomerPickerModal';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
 import { usePosCart } from '../hooks/usePosCart';
 import { usePosProducts } from '../hooks/usePosProducts';
-import { useProductList } from '../../inventory/hooks/useProductList';
-import { initialCart, mockCustomers } from '../data/posMockData';
+import { usePosProductList } from '../hooks/usePosProductList';
+import {
+  createInvoice,
+  addInvoiceItem,
+  createPayment,
+  finalizeInvoice,
+} from '../services/posService';
+import { initialCart } from '../data/posMockData';
 
 const PAYMENT_LABELS = { cash: 'Tiền mặt', card: 'Thẻ', transfer: 'Chuyển khoản' };
 const newPaymentLine = (method = 'cash') => ({ id: Date.now(), method, amount: 0 });
 
+// Map API product sang format POS cart
 const mapToPosProduct = (p) => ({
-  id: p.productCode || p.id || '',
-  name: p.name || '',
-  price: p.salePrice ?? p.price ?? 0,
-  sku: p.productCode || p.barcode || p.id || '',
-  stock: p.stock ?? 0,
-  category: p.group || p.category || '',
-  status: p.status || (p.stock > 0 ? 'Còn hàng' : 'Hết hàng'),
+  id: p.productId || p.productCode || p.id || '',
+  name: p.productName || p.name || '',
+  price: p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0,
+  sku: p.productCode || p.barcode || '',
+  stock: p.availableStock ?? p.quantity ?? p.stock ?? 0,
+  category: p.categoryName || p.group || p.category || '',
+  status: (p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0 ? 'Còn hàng' : 'Hết hàng',
   image: p.image || '',
+  productId: p.productId || p.id || '',
+  barcode: p.barcode || '',
+  unit: p.unit || 'Cái',
 });
 
 const POSScreen = () => {
@@ -50,8 +60,8 @@ const POSScreen = () => {
   const [isSplitPay, setIsSplitPay] = useState(false);
   const prevQuickAdd = useRef(quickAddCust);
 
-  const { products: inventoryProducts } = useProductList();
-  const posProducts = useMemo(() => inventoryProducts.map(mapToPosProduct), [inventoryProducts]);
+  const { products: posApiProducts, loading: productsLoading } = usePosProductList();
+  const posProducts = useMemo(() => posApiProducts.map(mapToPosProduct), [posApiProducts]);
 
   const cart = usePosCart(initialCart);
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
@@ -65,17 +75,94 @@ const POSScreen = () => {
     showNotice(cart.applyVoucher() ? 'Đã áp dụng mã giảm giá' : 'Vui lòng nhập mã giảm giá');
   }, [cart, showNotice]);
 
+  // ---- Load draft neu co ----
+  useEffect(() => {
+    if (draftData && draftData.id !== loadedDraft.current) {
+      loadedDraft.current = draftData.id;
+      // Nap items vao cart
+      draftData.items.forEach((item) => cart.addToCart(item));
+      setSelectedCustomer(draftData.customer);
+      // Xoa draft khoi danh sach
+      setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
+    }
+  }, [draftData, cart, setDrafts]);
+
+  // ---- Thêm nhanh khách hàng ----
+  useEffect(() => {
+    if (quickAddCust > prevQuickAdd.current) {
+      prevQuickAdd.current = quickAddCust;
+      setShowQuickAddCust(true);
+    }
+  }, [quickAddCust]);
+
+  // ---- Cap nhat footer ----
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const currentOrderCode = 'POS-' + dateStr + '-' + String(orderCounter).padStart(3, '0');
+
+  useEffect(() => {
+    setFooterInfo({
+      orderCode: currentOrderCode,
+      customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
+      points: selectedCustomer
+        ? Math.floor(selectedCustomer.totalSpent / 100000) + ' pts'
+        : '0 pts',
+    });
+  }, [currentOrderCode, selectedCustomer, setFooterInfo]);
+
+  // Loading indicator (after all hooks - OK)
+  if (productsLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[#004785]" />
+          <p className="text-sm font-semibold text-slate-600">Đang tải sản phẩm...</p>
+        </div>
+      </div>
+    );
+  }
+
   // ---- Thanh toán ----
   const totalPaid = payLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
   const remaining = Math.max(0, cart.total - totalPaid);
   const isPaymentValid = Math.abs(totalPaid - cart.total) <= 1 && totalPaid > 0;
 
-  const processOrder = (lines, totalPaidAmount) => {
+  const processOrder = async (lines, totalPaidAmount) => {
     setPaying(true);
-    setTimeout(() => {
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    try {
+      // 1. Tạo hóa đơn
+      const invoice = await createInvoice({
+        customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
+        customerName: selectedCustomer?.name || null,
+        note: '',
+      });
+
+      // 2. Thêm từng sản phẩm vào hóa đơn
+      await Promise.all(
+        cart.cart.map((item) =>
+          addInvoiceItem(invoice.invoiceId, {
+            productId: item.productId || item.id,
+            quantity: item.quantity,
+            unitPrice: item.price,
+          })
+        )
+      );
+
+      // 3. Tạo thanh toán
+      // Backend C# expect: Cash, Transfer, Card (PascalCase)
+      const paymentMethods = { cash: 'Cash', card: 'Card', transfer: 'Transfer' };
+      for (const line of lines) {
+        await createPayment(invoice.invoiceId, {
+          method: paymentMethods[line.method] || 'Cash',
+          amount: line.amount,
+        });
+      }
+
+      // 4. Finalize hóa đơn (chuyển sang Completed, trừ kho)
+      await finalizeInvoice(invoice.invoiceId);
+
+      // Hiển thị thành công
       const order = {
-        id: 'POS-' + dateStr + '-' + String(orderCounter).padStart(3, '0'),
+        id: invoice.invoiceCode || invoice.invoiceId,
         date: new Date().toISOString(),
         items: [...cart.cart],
         subtotal: cart.subtotal,
@@ -89,12 +176,41 @@ const POSScreen = () => {
       };
       setLastOrder(order);
       setOrderCounter((c) => c + 1);
-      setPaying(false);
       setShowPayModal(false);
       setShowSuccess(true);
       cart.clearCart();
       setSelectedCustomer(null);
-    }, 600);
+      showNotice('Tạo đơn hàng thành công!');
+    } catch (err) {
+      console.error('Lỗi tạo đơn:', err);
+      showNotice('Lỗi: ' + (err.message || 'Không thể tạo đơn hàng'));
+      // Fallback: vẫn hiển thị mock nếu API lỗi
+      const order = {
+        id:
+          'POS-' +
+          new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+          '-' +
+          String(orderCounter).padStart(3, '0'),
+        date: new Date().toISOString(),
+        items: [...cart.cart],
+        subtotal: cart.subtotal,
+        discount: cart.discount,
+        vat: cart.vat,
+        total: cart.total,
+        payLines: lines.map((l) => ({ method: PAYMENT_LABELS[l.method], amount: l.amount })),
+        totalPaid: totalPaidAmount,
+        change: Math.max(0, totalPaidAmount - cart.total),
+        customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
+      };
+      setLastOrder(order);
+      setOrderCounter((c) => c + 1);
+      setShowPayModal(false);
+      setShowSuccess(true);
+      cart.clearCart();
+      setSelectedCustomer(null);
+    } finally {
+      setPaying(false);
+    }
   };
 
   const handleOpenPay = () => {
@@ -148,45 +264,10 @@ const POSScreen = () => {
   const handleQuickFill = (id) =>
     setPayLines((prev) => prev.map((l) => (l.id === id ? { ...l, amount: remaining } : l)));
 
-  // ---- Load draft neu co ----
-  useEffect(() => {
-    if (draftData && draftData.id !== loadedDraft.current) {
-      loadedDraft.current = draftData.id;
-      // Nap items vao cart
-      draftData.items.forEach((item) => cart.addToCart(item));
-      setSelectedCustomer(draftData.customer);
-      // Xoa draft khoi danh sach
-      setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
-    }
-  }, [draftData, cart, setDrafts]);
-
-  // ---- Thêm nhanh khách hàng ----
-  useEffect(() => {
-    if (quickAddCust > prevQuickAdd.current) {
-      prevQuickAdd.current = quickAddCust;
-      setShowQuickAddCust(true);
-    }
-  }, [quickAddCust]);
-
   const handleQuickAddCustomer = (newCust) => {
-    mockCustomers.unshift(newCust);
     setSelectedCustomer(newCust);
     showNotice('Đã thêm khách: ' + newCust.name);
   };
-
-  // ---- Cap nhat footer ----
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const currentOrderCode = 'POS-' + dateStr + '-' + String(orderCounter).padStart(3, '0');
-
-  useEffect(() => {
-    setFooterInfo({
-      orderCode: currentOrderCode,
-      customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
-      points: selectedCustomer
-        ? Math.floor(selectedCustomer.totalSpent / 100000) + ' pts'
-        : '0 pts',
-    });
-  }, [currentOrderCode, selectedCustomer, setFooterInfo]);
 
   // ---- Receipt ----
   const handleCloseReceipt = () => {

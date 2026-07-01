@@ -1,66 +1,81 @@
 /**
- * CheckoutPage - Trang thanh toán
+ * CheckoutPage - Trang thanh toán (Đã tích hợp với POSScreen)
+ * NOTE: Trang này hiện không được sử dụng vì POSScreen xử lý thanh toán trực tiếp
+ * Giữ lại cho trường hợp cần flow riêng
  */
-
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
-import { Modal } from '../../../shared/components/Modal';
-import { PaymentBox } from '../components/cart/PaymentBox';
-import { ReceiptPreview } from '../components/order/ReceiptPreview';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
-export const CheckoutPage = ({ cartItems = [] }) => {
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [completedOrder, setCompletedOrder] = useState(null);
+const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
+  const navigate = useNavigate();
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.1;
-  const total = subtotal + tax;
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
+    0
+  );
+  const discount = 0;
+  const vat = Math.round((subtotal - discount) * 0.08);
+  const total = subtotal - discount + vat;
 
-  const handlePaymentComplete = (paymentInfo) => {
-    const order = {
-      id: 'ORD' + Date.now(),
-      items: cartItems,
-      subtotal,
-      tax,
-      total,
-      ...paymentInfo,
-    };
-    setCompletedOrder(order);
-    setShowPaymentModal(false);
-    setShowReceipt(true);
-  };
-
-  const handlePrintReceipt = () => {
-    window.print();
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/pos');
+    }
   };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-slate-900">Thanh toán</h1>
-        <p className="mt-1 text-sm text-slate-500">Kiểm tra và xác nhận đơn hàng</p>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-slate-600 hover:text-[#004785]"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Quay lại
+        </button>
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Thanh toán</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {customer ? `Khách hàng: ${customer.name}` : 'Khách lẻ'}
+          </p>
+        </div>
       </div>
 
       {/* Order Summary */}
       <Card header="Chi tiết đơn hàng">
         <div className="space-y-3">
-          {cartItems.map((item) => (
-            <div key={item.id} className="flex justify-between rounded-lg bg-slate-50 p-3">
-              <div>
-                <p className="font-medium text-slate-900">{item.name}</p>
-                <p className="text-sm text-slate-500">
-                  {item.quantity} x {formatCurrency(item.price)}
+          {cartItems.length === 0 ? (
+            <p className="py-4 text-center text-slate-400">Giỏ hàng trống</p>
+          ) : (
+            cartItems.map((item) => (
+              <div
+                key={item.id || item.productId}
+                className="flex justify-between rounded-lg bg-slate-50 p-3"
+              >
+                <div>
+                  <p className="font-medium text-slate-900">{item.name}</p>
+                  <p className="text-sm text-slate-500">
+                    {item.quantity || 1} x {formatCurrency(item.price || 0)}
+                  </p>
+                </div>
+                <p className="font-semibold text-slate-900">
+                  {formatCurrency((item.price || 0) * (item.quantity || 1))}
                 </p>
               </div>
-              <p className="font-semibold text-slate-900">
-                {formatCurrency(item.price * item.quantity)}
-              </p>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="mt-4 space-y-2 border-t border-slate-200 pt-4">
@@ -69,8 +84,8 @@ export const CheckoutPage = ({ cartItems = [] }) => {
             <span>{formatCurrency(subtotal)}</span>
           </div>
           <div className="flex justify-between text-slate-600">
-            <span>Thuế VAT (10%):</span>
-            <span>{formatCurrency(tax)}</span>
+            <span>Thuế VAT (8%):</span>
+            <span>{formatCurrency(vat)}</span>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold text-slate-900">
             <span>TỔNG CỘNG:</span>
@@ -81,34 +96,13 @@ export const CheckoutPage = ({ cartItems = [] }) => {
 
       {/* Action */}
       <div className="flex gap-3">
-        <Button variant="secondary" className="flex-1">
+        <Button variant="secondary" className="flex-1" onClick={handleBack}>
           Quay lại
         </Button>
-        <Button variant="primary" className="flex-1" onClick={() => setShowPaymentModal(true)}>
-          Tiến hành thanh toán
+        <Button variant="primary" className="flex-1" disabled={cartItems.length === 0}>
+          Thanh toán
         </Button>
       </div>
-
-      {/* Payment Modal */}
-      <Modal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        title="Phương thức thanh toán"
-        size="md"
-      >
-        <PaymentBox total={total} onPaymentComplete={handlePaymentComplete} />
-      </Modal>
-
-      {/* Receipt Modal */}
-      {completedOrder && (
-        <Modal isOpen={showReceipt} onClose={() => setShowReceipt(false)} title="Hóa đơn" size="sm">
-          <ReceiptPreview
-            order={completedOrder}
-            onPrint={handlePrintReceipt}
-            onClose={() => setShowReceipt(false)}
-          />
-        </Modal>
-      )}
     </div>
   );
 };

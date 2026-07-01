@@ -41,6 +41,8 @@ const CheckoutPage = lazy(() => import('./modules/pos/pages/CheckoutPage'));
 const OrderHistory = lazy(() => import('./modules/pos/pages/OrderHistory'));
 const ShiftManagement = lazy(() => import('./modules/pos/pages/ShiftManagement'));
 const CustomerManagement = lazy(() => import('./modules/pos/pages/CustomerManagement'));
+const ReturnOrderPage = lazy(() => import('./modules/pos/pages/ReturnOrderPage'));
+const SettingsPage = lazy(() => import('./modules/pos/pages/SettingsPage'));
 
 // Forum Module
 const ForumLayout = lazy(() => import('./modules/forum/layouts/ForumLayout'));
@@ -121,6 +123,8 @@ function App() {
               <Route path="orders" element={<OrderHistory />} />
               <Route path="shift" element={<ShiftManagement />} />
               <Route path="customers" element={<CustomerManagement />} />
+              <Route path="returns" element={<ReturnOrderPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>
 
