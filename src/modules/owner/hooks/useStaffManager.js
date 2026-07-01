@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   getStaffs,
+  getAvailablePermissions,
   createStaff,
   updateStaff,
   toggleStaffStatus,
+  deleteStaff,
   assignBranch,
   unassignBranch,
 } from '../services/staffService';
@@ -12,6 +14,7 @@ import { getBranches } from '../services/branchService';
 export const useStaffManager = () => {
   const [staffs, setStaffs] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -47,6 +50,16 @@ export const useStaffManager = () => {
     }
   }, []);
 
+  // 🌟 Thêm hàm tải danh sách quyền hệ thống
+  const fetchAvailablePermissions = useCallback(async () => {
+    try {
+      const response = await getAvailablePermissions();
+      if (response?.success) setPermissions(response.data || []);
+    } catch (err) {
+      console.error('Lỗi tải danh sách quyền hạn', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchStaffs();
   }, [fetchStaffs]);
@@ -54,6 +67,11 @@ export const useStaffManager = () => {
   useEffect(() => {
     fetchBranchesForDropdown();
   }, [fetchBranchesForDropdown]);
+
+  // 🌟 Chạy hàm tải danh sách quyền khi hook mounted
+  useEffect(() => {
+    fetchAvailablePermissions();
+  }, [fetchAvailablePermissions]);
 
   const handleCreateStaff = async (formData, onSuccess) => {
     try {
@@ -91,6 +109,33 @@ export const useStaffManager = () => {
     }
   };
 
+  // 🌟 Thêm hàm xử lý xóa cứng và bắt lỗi 400 như Backend yêu cầu
+  const handleDeleteStaff = async (id) => {
+    if (
+      !window.confirm(
+        'Bạn có chắc chắn muốn xóa vĩnh viễn nhân viên này? Hành động này không thể hoàn tác.'
+      )
+    )
+      return;
+    try {
+      const response = await deleteStaff(id);
+      if (response?.success) {
+        alert('Đã xóa nhân viên hoàn toàn ra khỏi hệ thống.');
+        fetchStaffs();
+      }
+    } catch (err) {
+      // Nếu Backend trả về lỗi do vướng khóa ngoại (nhân viên đã tạo hóa đơn/phiếu kho)
+      if (err?.status === 400 || err?.data?.errors) {
+        alert(
+          err?.data?.message ||
+            'Không thể xóa vì nhân viên đã phát sinh dữ liệu nghiệp vụ (hóa đơn, phiếu kho...). Khuyên dùng: Hãy chuyển sang chức năng "Vô hiệu hóa" tài khoản.'
+        );
+      } else {
+        alert('Lỗi khi xóa nhân viên.');
+      }
+    }
+  };
+
   const handleAssignBranch = async (staffId, branchId, onSuccess) => {
     try {
       const response = await assignBranch(staffId, branchId);
@@ -108,9 +153,7 @@ export const useStaffManager = () => {
     }
   };
 
-  //Xử lý gỡ nhân viên khỏi chi nhánh
   const handleUnassignBranch = async (staffId, branchId) => {
-    // Hỏi xác nhận trước khi gỡ (an toàn UX)
     if (
       !window.confirm(
         'Bạn có chắc chắn muốn gỡ nhân viên này khỏi chi nhánh hiện tại? Họ sẽ không thể đăng nhập vào chi nhánh này nữa.'
@@ -123,7 +166,7 @@ export const useStaffManager = () => {
       const response = await unassignBranch(staffId, branchId);
       if (response?.success) {
         alert('Gỡ chi nhánh thành công!');
-        fetchStaffs(); // Refresh lại bảng dữ liệu
+        fetchStaffs();
       }
     } catch (err) {
       alert(err?.data?.message || 'Lỗi khi gỡ chi nhánh. (Có thể do dữ liệu không đồng bộ)');
@@ -133,6 +176,7 @@ export const useStaffManager = () => {
   return {
     staffs,
     branches,
+    permissions,
     loading,
     error,
     page,
@@ -143,6 +187,7 @@ export const useStaffManager = () => {
     handleCreateStaff,
     handleUpdateStaff,
     handleToggleStatus,
+    handleDeleteStaff,
     refetch: fetchStaffs,
     handleAssignBranch,
     handleUnassignBranch,

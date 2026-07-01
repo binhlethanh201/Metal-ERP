@@ -71,7 +71,7 @@ export const hubConfigs = {
       { id: 'inv-3', label: 'Xuất kho', icon: 'output', path: '/inventory/goods-issue' },
       { id: 'inv-4', label: 'Chuyển kho', icon: 'swap_horiz' },
       { id: 'inv-5', label: 'Lệnh điều chuyển', icon: 'assignment' },
-      { id: 'inv-6', label: 'Kiểm kê kho', icon: 'inventory', path: '/inventory/inventory-count' },
+      { id: 'inv-6', label: 'Kiểm kê kho', icon: 'inventory', path: '/inventory/inventory-check' },
       {
         id: 'inv-7',
         label: 'Tổng hợp tồn kho',

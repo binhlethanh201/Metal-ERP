@@ -17,6 +17,7 @@ export const ENDPOINTS = {
     STAFF_ASSIGN_BRANCH: (id) => `/api/owner/staffs/${id}/assign-branch`,
     STAFF_UNASSIGN_BRANCH: (id, branchId) => `/api/owner/staffs/${id}/unassign-branch/${branchId}`,
     STAFF_TOGGLE_STATUS: (id) => `/api/owner/staffs/${id}/toggle-status`,
+    STAFF_AVAILABLE_PERMISSIONS: '/api/owner/staffs/available-permissions',
   },
 
   // ============ INVENTORY (Tổng kho) ============
@@ -73,9 +74,12 @@ export const ENDPOINTS = {
     GET_INVENTORY_CHECKS: '/api/InventoryCheck',
     CREATE_INVENTORY_CHECK: '/api/InventoryCheck',
     GET_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}`,
+    UPDATE_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}`,
+    DELETE_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}`,
     FILL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/fill`,
     APPROVE_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/approve`,
     CANCEL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/cancel`,
+    REASONS_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reasons`,
 
     // ================= Reports =================
     INVENTORY_SUMMARY_REPORT: '/api/inventory/summary-report',

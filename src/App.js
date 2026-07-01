@@ -27,10 +27,10 @@ const InventoryReports = lazy(() => import('./modules/inventory/pages/InventoryR
 const InventorySummaryReport = lazy(
   () => import('./modules/inventory/pages/InventorySummaryReport')
 );
-const InventoryCountList = lazy(() => import('./modules/inventory/pages/InventoryCountList'));
 const InventoryTransactionManagement = lazy(
   () => import('./modules/inventory/pages/InventoryTransactionManagement')
 );
+const InventoryCheckList = lazy(() => import('./modules/inventory/pages/InventoryCheckList'));
 const GoodsIssueList = lazy(() => import('./modules/inventory/pages/GoodsIssueList'));
 const GoodsIssueCreate = lazy(() => import('./modules/inventory/pages/GoodsIssueCreate'));
 const OrderList = lazy(() => import('./modules/inventory/pages/OrderList'));
@@ -38,7 +38,6 @@ const SupplierManagement = lazy(() => import('./modules/inventory/pages/Supplier
 const SupplierDebtManagement = lazy(
   () => import('./modules/inventory/pages/SupplierDebtManagement')
 );
-// ---> BỔ SUNG IMPORT TRANG QUẢN LÝ THANH TOÁN Ở ĐÂY <---
 const SupplierPaymentManagement = lazy(
   () => import('./modules/inventory/pages/SupplierPaymentManagement')
 );
@@ -143,8 +142,8 @@ function App() {
               <Route path="export" element={<StockExport />} />
               <Route path="reports" element={<InventoryReports />} />
               <Route path="inventory-summary" element={<InventorySummaryReport />} />
-              <Route path="inventory-count" element={<InventoryCountList />} />
               <Route path="transactions" element={<InventoryTransactionManagement />} />
+              <Route path="inventory-check" element={<InventoryCheckList />} />
               <Route path="goods-issue" element={<GoodsIssueList />} />
               <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
               <Route path="orders" element={<OrderList />} />

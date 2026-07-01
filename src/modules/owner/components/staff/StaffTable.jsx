@@ -1,7 +1,16 @@
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 
-const StaffTable = ({ staffs, loading, onEdit, onToggleStatus, onAssign, onUnassign }) => {
+// 🌟 Thêm onDelete vào props
+const StaffTable = ({
+  staffs,
+  loading,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  onAssign,
+  onUnassign,
+}) => {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
@@ -10,7 +19,7 @@ const StaffTable = ({ staffs, loading, onEdit, onToggleStatus, onAssign, onUnass
             <tr>
               <th className="px-6 py-4 font-bold">Nhân viên</th>
               <th className="px-6 py-4 font-bold">Liên hệ</th>
-              <th className="px-6 py-4 font-bold">Chi nhánh làm việc</th>
+              {/* <th className="px-6 py-4 font-bold">Chi nhánh làm việc</th> */}
               <th className="px-6 py-4 font-bold">Trạng thái</th>
               <th className="px-6 py-4 text-right font-bold">Thao tác</th>
             </tr>
@@ -35,8 +44,7 @@ const StaffTable = ({ staffs, loading, onEdit, onToggleStatus, onAssign, onUnass
                   <td className="px-6 py-4">
                     <div className="font-bold text-blue-900">{staff.fullName}</div>
                     <div className="text-xs font-medium text-slate-400">
-                      Vai trò:{' '}
-                      {staff.permissionCodes?.includes('POS_SALE') ? 'Bán hàng' : 'Kho/Khác'}
+                      Vai trò: {staff.roles?.join(', ') || 'Chưa gán'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -45,7 +53,7 @@ const StaffTable = ({ staffs, loading, onEdit, onToggleStatus, onAssign, onUnass
                       {staff.phoneNumber || 'Chưa cập nhật SDT'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 font-medium text-slate-700">
+                  {/* <td className="px-6 py-4 font-medium text-slate-700">
                     {staff.branchId ? (
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-blue-800">{staff.branchName}</span>
@@ -60,7 +68,7 @@ const StaffTable = ({ staffs, loading, onEdit, onToggleStatus, onAssign, onUnass
                     ) : (
                       <span className="text-xs italic text-orange-500">Chưa gán chi nhánh</span>
                     )}
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4">
                     <button
                       onClick={() => onToggleStatus(staff.userId)}
@@ -79,21 +87,28 @@ const StaffTable = ({ staffs, loading, onEdit, onToggleStatus, onAssign, onUnass
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button
+                      {/* <button
                         onClick={() => onAssign(staff)}
                         className="rounded-lg p-2 text-orange-600 transition-colors hover:bg-orange-50"
                         title="Điều chuyển chi nhánh"
                       >
                         <Icon name="swap_horiz" size={20} />
-                      </button>
+                      </button> */}
 
-                      {/* Nút sửa cũ */}
                       <button
                         onClick={() => onEdit(staff)}
                         className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
                         title="Chỉnh sửa nhân viên"
                       >
                         <Icon name="edit" size={20} />
+                      </button>
+
+                      <button
+                        onClick={() => onDelete(staff.userId)}
+                        className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50"
+                        title="Xóa vĩnh viễn"
+                      >
+                        <Icon name="delete" size={20} />
                       </button>
                     </div>
                   </td>

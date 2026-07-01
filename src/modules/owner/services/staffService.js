@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../../services/apiClient';
 import ENDPOINTS from '../../../services/endpoints';
 
 /**
@@ -13,6 +13,13 @@ export const getStaffs = (filters = {}) => {
   });
   const queryString = params.toString();
   return apiGet(`${ENDPOINTS.OWNER.STAFFS}${queryString ? `?${queryString}` : ''}`);
+};
+
+/**
+ * Lấy danh sách quyền khả dụng trong hệ thống để làm UI Checkbox
+ */
+export const getAvailablePermissions = () => {
+  return apiGet(ENDPOINTS.OWNER.STAFF_AVAILABLE_PERMISSIONS);
 };
 
 /**
@@ -40,7 +47,14 @@ export const updateStaff = (id, staffData) => {
  * Bật/tắt trạng thái hoạt động (Toggle Status)
  */
 export const toggleStaffStatus = (id) => {
-  return apiPut(ENDPOINTS.OWNER.STAFF_TOGGLE_STATUS(id));
+  return apiPatch(ENDPOINTS.OWNER.STAFF_TOGGLE_STATUS(id));
+};
+
+/**
+ * Xóa vĩnh viễn nhân viên
+ */
+export const deleteStaff = (id) => {
+  return apiDelete(ENDPOINTS.OWNER.STAFF_DETAIL(id));
 };
 
 /**

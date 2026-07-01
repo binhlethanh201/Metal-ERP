@@ -9,6 +9,7 @@ const StaffManagement = () => {
   const {
     staffs,
     branches,
+    permissions, // 🌟 Lấy thêm danh sách quyền
     loading,
     search,
     setSearch,
@@ -18,15 +19,14 @@ const StaffManagement = () => {
     handleCreateStaff,
     handleUpdateStaff,
     handleToggleStatus,
+    handleDeleteStaff, // 🌟 Lấy thêm hàm xóa
     handleAssignBranch,
     handleUnassignBranch,
   } = useStaffManager();
 
-  // State cho Form Thêm/Sửa
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
 
-  // ---> BỔ SUNG STATE VÀ HÀM CHO MODAL ĐIỀU CHUYỂN <---
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assigningStaff, setAssigningStaff] = useState(null);
 
@@ -43,7 +43,6 @@ const StaffManagement = () => {
   const onConfirmAssign = (staffId, branchId) => {
     handleAssignBranch(staffId, branchId, closeAssignModal);
   };
-  // --------------------------------------------------------
 
   const openModal = (staff = null) => {
     setEditingStaff(staff);
@@ -55,29 +54,31 @@ const StaffManagement = () => {
     setEditingStaff(null);
   };
 
+  // 🌟 SỬA LẠI HÀM ONSAVE ĐỂ MAP CHUẨN PAYLOAD API
   const onSave = (formData) => {
     if (editingStaff) {
-      // Logic biên dịch Role thành mảng PermissionCodes chuẩn của Backend
-      let updatedPermissions = [];
-      if (formData.defaultRoleType === 'SalesStaff') {
-        updatedPermissions = ['POS_SALE', 'RETURN_PROCESS', 'CUSTOMER_MANAGE'];
-      } else {
-        updatedPermissions = ['STOCK_VIEW', 'STOCK_MANAGE', 'STOCK_TRANSFER'];
-      }
-
+      // Payload cho PUT /api/owner/staffs/{id}
       const payload = {
         fullName: formData.fullName,
         email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        branchId: formData.branchId || null,
-        password: formData.password || undefined, // Chỉ gửi pass nếu có nhập
-        isActive: formData.isActive, // Mở chức năng đổi trạng thái
-        permissionCodes: updatedPermissions, // Cập nhật luôn Role mới
+        phoneNumber: formData.phoneNumber || null,
+        password: formData.password || undefined,
+        isActive: formData.isActive,
+        permissionCodes: formData.permissionCodes, // Ghi đè toàn bộ quyền
       };
-
       handleUpdateStaff(editingStaff.userId, payload, closeModal);
     } else {
-      handleCreateStaff(formData, closeModal);
+      // Payload cho POST /api/owner/staffs
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        fullName: formData.fullName,
+        password: formData.password,
+        phoneNumber: formData.phoneNumber || null,
+        defaultRoleType: formData.defaultRoleType,
+        customPermissionCodes: formData.permissionCodes, // Backend dùng tên field này khi tạo
+      };
+      handleCreateStaff(payload, closeModal);
     }
   };
 
@@ -97,7 +98,6 @@ const StaffManagement = () => {
         </button>
       </div>
 
-      {/* Thanh tìm kiếm */}
       <div className="flex w-1/3 items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
         <Icon name="search" className="text-slate-400" />
         <input
@@ -117,11 +117,11 @@ const StaffManagement = () => {
         loading={loading}
         onEdit={openModal}
         onToggleStatus={handleToggleStatus}
+        onDelete={handleDeleteStaff} // 🌟 Truyền hàm xóa xuống Table
         onAssign={openAssignModal}
         onUnassign={handleUnassignBranch}
       />
 
-      {/* Phân trang */}
       {paginationMeta.totalPages > 1 && (
         <div className="mt-4 flex items-center justify-end gap-2">
           <button
@@ -148,7 +148,7 @@ const StaffManagement = () => {
         isOpen={isModalOpen}
         onClose={closeModal}
         staff={editingStaff}
-        branches={branches}
+        permissions={permissions}
         onSave={onSave}
       />
 
