@@ -86,8 +86,8 @@ export const normalizeProduct = (product, index) => {
     brandName: product?.brandName || product?.BrandName || '',
     salePrice: Number(
       product?.salePrice ??
-        product?.sellPrice ??
-        product?.SellPrice ??
+        product?.salePrice ??
+        product?.SalePrice ??
         product?.price ??
         product?.Price ??
         0
@@ -162,7 +162,7 @@ export const createProductPayload = (form) => ({
   Specification: buildSpecification(form),
   SpecificationDetail: form.specDetail || '',
   CostPrice: Number(form.costPrice || 0),
-  SellPrice: Number(form.salePrice || 0),
+  SalePrice: Number(form.salePrice || 0),
   ActualStock: Number(form.stock || 0),
   ReservedStock: Number(form.reservedStock || 0),
   AvailableStock: Number(form.availableStock ?? form.stock ?? 0),
@@ -183,7 +183,7 @@ export const updateProductPayload = (form) => ({
   Specification: buildSpecification(form),
   SpecificationDetail: form.specDetail || '',
   CostPrice: Number(form.costPrice || 0),
-  SellPrice: Number(form.salePrice || 0),
+  SalePrice: Number(form.salePrice || 0),
   ActualStock: Number(form.stock || 0),
   ReservedStock: Number(form.reservedStock || 0),
   AvailableStock: Number(form.availableStock ?? form.stock ?? 0),

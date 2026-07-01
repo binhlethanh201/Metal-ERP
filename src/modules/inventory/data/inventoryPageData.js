@@ -17,6 +17,12 @@ export const sidebarItems = [
   { label: 'Quản lý Nhà Cung Cấp', icon: 'store', path: '/inventory/suppliers', ownerOnly: true },
   { label: 'Quản lý chi nhánh', icon: 'store', path: '/inventory/branches', ownerOnly: true },
   { label: 'Quản lý nhân viên', icon: 'badge', path: '/inventory/employees', ownerOnly: true },
+  {
+    label: 'Báo cáo Tổng hợp',
+    icon: 'FileChartLine',
+    path: '/inventory/owner-reports',
+    ownerOnly: true,
+  },
 ];
 
 export const inventoryMenuGroups = [

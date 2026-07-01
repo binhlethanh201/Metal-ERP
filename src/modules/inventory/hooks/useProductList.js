@@ -6,6 +6,7 @@ import {
   updateProduct,
   deleteProduct,
   toggleProductStatus,
+  toggleProductStatusBulk,
 } from '../services/productService';
 import { normalizeProduct } from '../utils/productUtils';
 import { mockProducts, mockPagination } from '../data/productMockData';
@@ -138,7 +139,6 @@ export const useProductList = (queryParams) => {
 
   // Đổi trạng thái hàng loạt
   const handleBulkToggleStatus = async (selectedIds, targetStatus) => {
-    // Cập nhật local ngay lập tức
     setProducts((prev) =>
       prev.map((p) =>
         selectedIds.includes(p.productId || p.id)
@@ -147,9 +147,9 @@ export const useProductList = (queryParams) => {
       )
     );
     try {
-      await Promise.all(selectedIds.map((id) => toggleProductStatus(id, targetStatus)));
-    } catch {
-      // API chưa sẵn sàng → giữ trạng thái local
+      await toggleProductStatusBulk(selectedIds, targetStatus);
+    } catch (error) {
+      console.error('Bulk toggle failed:', error);
     }
     return true;
   };
@@ -189,14 +189,6 @@ export const useProductList = (queryParams) => {
         prepared.images = mapped.slice(0, 10);
         if (!prepared.image && prepared.images.length > 0) prepared.image = prepared.images[0].url;
       }
-
-      // --- BỘ LỌC ÉP KIỂU VÀ CHECK UUID ---
-      // Hàm kiểm tra xem ID có phải là UUID chuẩn không
-      const isValidUUID = (str) => {
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        return typeof str === 'string' && uuidRegex.test(str);
-      };
 
       const safeCostPrice = Number(prepared.costPrice) || 0;
       let safeSalePrice = Number(prepared.salePrice) || 0;
@@ -259,24 +251,16 @@ export const useProductList = (queryParams) => {
         isActive: prepared.productStatus !== 'draft',
         directSale: prepared.directSale !== false,
 
-        // Mảng con
-        attributes: (prepared.attributes || []).map((a) => {
-          const item = { name: a.name || '', value: a.value || '' };
-          if (isValidUUID(a.id)) item.id = a.id;
-          return item;
-        }),
-        conversionUnits: (prepared.conversionUnits || []).map((u) => {
-          const item = {
-            name: u.name || '',
-            rate: Number(u.rate) || 1,
-            convertValue: Number(u.convertValue) || Number(u.rate) || 1,
-            convertFrom: u.convertFrom || '',
-            price: Number(u.price) || 0,
-            directSale: u.directSale !== false,
-          };
-          if (isValidUUID(u.id)) item.id = u.id;
-          return item;
-        }),
+        attributes: (prepared.attributes || []).map((a) => ({
+          name: a.name || '',
+          value: a.value || '',
+        })),
+        conversionUnits: (prepared.conversionUnits || []).map((u) => ({
+          name: u.name || '',
+          rate: Number(u.rate) || 1,
+          price: Number(u.price) || 0,
+          directSale: u.directSale !== false,
+        })),
       };
 
       // Gửi kèm key PascalCase để tương thích backend C# dùng JsonPropertyName/PascalCase binding
@@ -291,7 +275,7 @@ export const useProductList = (queryParams) => {
       payload.SupplierId = payload.supplierId;
       payload.ItemType = payload.itemType;
       payload.CostPrice = payload.costPrice;
-      payload.SellPrice = payload.salePrice;
+      payload.SalePrice = payload.salePrice;
       payload.ActualStock = payload.actualStock;
       payload.AvailableStock = payload.availableStock;
       payload.ReservedStock = payload.reservedStock;

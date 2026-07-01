@@ -38,12 +38,11 @@ export const useProductFilters = () => {
       Sort: sortConfig.key,
       Order: sortConfig.direction,
     };
-
     if (search.trim()) params.SearchTerm = search.trim();
     if (groupKeyword.trim()) params.CategoryName = groupKeyword.trim();
-    if (supplierKeyword.trim()) params.BrandName = supplierKeyword.trim();
-    if (productStatusFilter === 'active') params.Status = 'active';
-    if (productStatusFilter === 'inactive') params.Status = 'inactive';
+    if (supplierKeyword.trim()) params.supplierId = supplierKeyword.trim();
+    if (productStatusFilter === 'active') params.status = 'active';
+    if (productStatusFilter === 'inactive') params.status = 'inactive';
 
     return params;
   }, [

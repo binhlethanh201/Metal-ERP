@@ -43,7 +43,10 @@ const InventorySidebar = () => {
     if (!path) return false;
     if (path === '/inventory/dashboard')
       return location.pathname.startsWith('/inventory/dashboard');
-    if (path === '/inventory/reports') return location.pathname.startsWith('/inventory/reports');
+    if (path === '/inventory/reports') return location.pathname === '/inventory/reports';
+    if (path === '/inventory/owner-reports')
+      return location.pathname.startsWith('/inventory/owner-reports');
+
     return location.pathname === path;
   };
 

@@ -80,6 +80,9 @@ const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
 const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManagement'));
 const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement'));
 
+// Report Module
+const OwnerReports = lazy(() => import('./modules/report/pages/OwnerReports'));
+
 function App() {
   const LoadingSpinner = (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -156,6 +159,7 @@ function App() {
               <Route element={<PrivateRoute allowedRoles={['Owner']} />}>
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="employees" element={<StaffManagement />} />
+                <Route path="owner-reports" element={<OwnerReports />} />
               </Route>
             </Route>
           </Route>

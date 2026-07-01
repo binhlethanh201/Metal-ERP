@@ -83,3 +83,31 @@ export const cancelInventoryCheck = (id, reason = '') => {
 export const reasonInventoryCheck = (id, details) => {
   return apiPost(ENDPOINTS.INVENTORY.REASONS_INVENTORY_CHECK(id), { details });
 };
+
+/**
+ * Yêu cầu đếm lại (Reject phiếu)
+ */
+export const rejectInventoryCheck = (id, reason) => {
+  return apiPost(ENDPOINTS.INVENTORY.REJECT_INVENTORY_CHECK(id), { reason });
+};
+
+/**
+ * Lấy danh sách thông báo kiểm kê
+ */
+export const getInventoryNotifications = (filters = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.set(key, value);
+    }
+  });
+  const queryString = params.toString();
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_NOTIFICATIONS}${queryString ? `?${queryString}` : ''}`);
+};
+
+/**
+ * Đánh dấu thông báo đã đọc
+ */
+export const markNotificationsAsRead = (notificationIds = null, markAllAsRead = false) => {
+  return apiPut(ENDPOINTS.INVENTORY.MARK_NOTIFICATION_READ, { notificationIds, markAllAsRead });
+};

@@ -1,40 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
-// Tái sử dụng API getProducts đã có sẵn trong hệ thống
 import { getProducts } from '../../services/inventoryService';
 
 const CreateCheckModal = ({ isOpen, onClose, branchId, onSave }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // State của Form
   const [selectedIds, setSelectedIds] = useState([]);
   const [notes, setNotes] = useState('');
   const [search, setSearch] = useState('');
 
-  // Tải danh sách hàng hóa khi mở Modal
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && branchId) {
       setLoading(true);
-      // Gọi API lấy tối đa 100 sản phẩm đang Active của chi nhánh này
-      getProducts({ branchId: branchId || undefined, PageSize: 100, Status: 'active' })
+      getProducts({ branchId: branchId, PageSize: 100, status: 'active' })
         .then((res) => {
           if (res?.success && res.data) {
-            setProducts(res.data.items || []);
+            const productsWithStock = (res.data.items || []).filter(
+              (p) => p.actualStock !== undefined
+            );
+            setProducts(productsWithStock);
           }
         })
         .finally(() => setLoading(false));
-
-      // Reset form
-      setSelectedIds([]);
-      setNotes('');
-      setSearch('');
     }
   }, [isOpen, branchId]);
 
   if (!isOpen) return null;
 
-  // Lọc sản phẩm theo text search
   const filteredProducts = products.filter(
     (p) =>
       p.productName.toLowerCase().includes(search.toLowerCase()) ||
@@ -61,13 +54,10 @@ const CreateCheckModal = ({ isOpen, onClose, branchId, onSave }) => {
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4">
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800">Tạo Phiếu Kiểm Kê Mới</h2>
-            <p className="mt-1 text-xs text-slate-500">
-              Chọn các mặt hàng cần kiểm đếm ngoài thực tế
-            </p>
+            <p className="mt-1 text-xs text-slate-500">Chọn mặt hàng cần kiểm đếm</p>
           </div>
           <button
             onClick={onClose}
@@ -77,17 +67,15 @@ const CreateCheckModal = ({ isOpen, onClose, branchId, onSave }) => {
           </button>
         </div>
 
-        {/* Nội dung */}
         <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
-          {/* Ô nhập Ghi chú */}
           <div className="mb-6">
             <label className="mb-2 block text-sm font-bold text-slate-700">
-              Mục đích / Ghi chú đợt kiểm kê
+              Mục đích / Ghi chú
             </label>
             <textarea
               rows="2"
               className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="VD: Kiểm kê đột xuất kho A, Kiểm kê định kỳ tháng 6..."
+              placeholder="VD: Kiểm kê định kỳ..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -107,12 +95,11 @@ const CreateCheckModal = ({ isOpen, onClose, branchId, onSave }) => {
             </div>
           </div>
 
-          {/* Bảng chọn sản phẩm */}
           <div className="max-h-[400px] overflow-hidden overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm text-slate-600">
               <thead className="sticky top-0 z-10 bg-slate-100 text-xs uppercase text-slate-500 shadow-sm">
                 <tr>
-                  <th className="w-12 border-b border-slate-200 px-4 py-3 text-center">
+                  <th className="w-12 border-b px-4 py-3 text-center">
                     <input
                       type="checkbox"
                       className="h-4 w-4 rounded border-slate-300"
@@ -123,11 +110,9 @@ const CreateCheckModal = ({ isOpen, onClose, branchId, onSave }) => {
                       onChange={(e) => handleSelectAll(e.target.checked)}
                     />
                   </th>
-                  <th className="border-b border-slate-200 px-4 py-3 font-bold">Mã SP</th>
-                  <th className="border-b border-slate-200 px-4 py-3 font-bold">Tên Sản Phẩm</th>
-                  <th className="border-b border-slate-200 px-4 py-3 text-center font-bold">
-                    Tồn Hệ Thống
-                  </th>
+                  <th className="border-b px-4 py-3 font-bold">Mã SP</th>
+                  <th className="border-b px-4 py-3 font-bold">Tên SP</th>
+                  <th className="border-b px-4 py-3 text-center font-bold">Tồn Hệ Thống</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -140,31 +125,34 @@ const CreateCheckModal = ({ isOpen, onClose, branchId, onSave }) => {
                 ) : filteredProducts.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-slate-400">
-                      Không tìm thấy hàng hóa nào
+                      Không tìm thấy sản phẩm
                     </td>
                   </tr>
                 ) : (
                   filteredProducts.map((p) => {
                     const id = p.productId || p.id;
                     const isSelected = selectedIds.includes(id);
+                    const stock = p.actualStock ?? p.availableStock ?? 0;
                     return (
                       <tr
                         key={id}
-                        className={`cursor-pointer transition-colors hover:bg-blue-50 ${isSelected ? 'bg-blue-50/50' : ''}`}
-                        onClick={() => toggleSelect(id)}
+                        className={`cursor-pointer transition-colors ${stock === 0 ? 'bg-red-50/30 opacity-70' : 'hover:bg-blue-50'} ${isSelected ? 'bg-blue-50/50' : ''}`}
+                        onClick={() => stock > 0 && toggleSelect(id)}
                       >
                         <td className="px-4 py-3 text-center">
                           <input
                             type="checkbox"
-                            className="h-4 w-4 rounded border-slate-300"
+                            disabled={stock === 0}
                             checked={isSelected}
                             readOnly
                           />
                         </td>
                         <td className="px-4 py-3 font-semibold text-slate-700">{p.productCode}</td>
                         <td className="px-4 py-3">{p.productName}</td>
-                        <td className="px-4 py-3 text-center font-bold text-blue-700">
-                          {p.actualStock ?? p.systemQuantity ?? 0}
+                        <td
+                          className={`px-4 py-3 text-center font-bold ${stock === 0 ? 'text-red-500' : 'text-blue-700'}`}
+                        >
+                          {stock}
                         </td>
                       </tr>
                     );
@@ -173,25 +161,20 @@ const CreateCheckModal = ({ isOpen, onClose, branchId, onSave }) => {
               </tbody>
             </table>
           </div>
-          <div className="mt-2 flex items-center gap-1 text-sm font-semibold text-blue-700">
-            <Icon name="check_circle" size={16} /> Đã chọn: {selectedIds.length} sản phẩm
-          </div>
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
           <button
             onClick={onClose}
             className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            Hủy bỏ
+            Hủy
           </button>
           <button
             onClick={handleSubmit}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
           >
-            <Icon name="save" size={20} />
-            Tạo Phiếu Nháp
+            Lưu phiếu nháp
           </button>
         </div>
       </div>

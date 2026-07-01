@@ -27,6 +27,9 @@ export const deleteProduct = (id) => apiDelete(`${BASE}/${id}`);
 export const toggleProductStatus = (id, isActive) =>
   apiPatch(`${BASE}/${id}/toggle-status?isActive=${isActive}`);
 
+export const toggleProductStatusBulk = (ids, isActive) =>
+  apiPatch(`${BASE}/toggle-status-bulk`, { ids, isActive });
+
 const productService = {
   getProducts,
   getProduct,
@@ -34,6 +37,7 @@ const productService = {
   updateProduct,
   deleteProduct,
   toggleProductStatus,
+  toggleProductStatusBulk,
 };
 
 export default productService;

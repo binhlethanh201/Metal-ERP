@@ -4,6 +4,16 @@
  */
 
 export const ENDPOINTS = {
+  // ============ REPORTS (Báo cáo) ============
+  REPORTS: {
+    DAILY_END: '/api/reports/daily-end',
+    STOCK_MOVEMENT: '/api/reports/stock-movement',
+    REVENUE_BY_TIME: '/api/reports/revenue-by-time',
+    LOW_STOCK: '/api/reports/low-stock',
+    PRODUCT_PROFIT: '/api/reports/product-profit',
+    SUPPLIER_DETAIL: '/api/reports/supplier-detail',
+  },
+
   // ============ OWNER (Quản lý) ============
   OWNER: {
     // Branches
@@ -31,10 +41,6 @@ export const ENDPOINTS = {
     GET_PRODUCT: (id) => `/api/Products/${id}`,
     UPDATE_PRODUCT: (id) => `/api/Products/${id}`,
     DELETE_PRODUCT: (id) => `/api/Products/${id}`,
-
-    SEARCH_PRODUCTS: '/api/Products/search',
-    SUGGEST_NEW_PRODUCT: '/api/Products/suggest-new-product',
-
     TOGGLE_PRODUCT_STATUS: (id) => `/api/Products/${id}/toggle-status`,
     TOGGLE_PRODUCT_STATUS_BULK: '/api/Products/toggle-status-bulk',
 
@@ -81,7 +87,10 @@ export const ENDPOINTS = {
     CANCEL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/cancel`,
     REASONS_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reasons`,
 
-    // ================= Reports =================
+    // API MỚI CHO KIỂM KÊ KHO
+    REJECT_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reject`,
+    GET_NOTIFICATIONS: '/api/InventoryCheck/notifications',
+    MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/read',
     INVENTORY_SUMMARY_REPORT: '/api/inventory/summary-report',
   },
 

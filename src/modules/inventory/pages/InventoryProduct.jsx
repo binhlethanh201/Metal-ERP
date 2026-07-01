@@ -1653,12 +1653,13 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
         </div>
         <div className="mb-6 space-y-2">
           <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhà cung cấp</p>
-          <input
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm"
-            placeholder="Chọn nhà cung cấp"
+          <select
+            className="w-full rounded-lg border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:ring-primary"
             value={supplierKeyword}
             onChange={(e) => setSupplierKeyword(e.target.value)}
-          />
+          >
+            <option value="">Tất cả nhà cung cấp</option>
+          </select>
         </div>
         <div className="mb-6 space-y-2">
           <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Vị trí</p>

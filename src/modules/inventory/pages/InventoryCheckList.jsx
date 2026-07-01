@@ -4,25 +4,40 @@ import { useInventoryCheckManager } from '../hooks/useInventoryCheckManager';
 import InventoryCheckTable from '../components/check/InventoryCheckTable';
 import CreateCheckModal from '../components/check/CreateCheckModal';
 import InventoryCheckDetailModal from '../components/check/InventoryCheckDetailModal';
+import { useAuth } from '../../../shared/hooks/useAuth';
 
 const InventoryCheckList = () => {
+  const { user } = useAuth(); // Bổ sung check quyền
+  const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
+
   const {
     checks,
     loading,
     status,
     setStatus,
     branchId,
+    setBranchId,
+    branches,
     pageNumber,
     setPageNumber,
     paginationMeta,
     handleCreateCheck,
     handleFillCheck,
+    handleApproveCheck,
+    handleRejectCheck,
   } = useInventoryCheckManager();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
 
-  const openCreateModal = () => setIsCreateModalOpen(true);
+  const openCreateModal = () => {
+    // Chặn Owner nếu chưa chọn chi nhánh
+    if (isOwner && !branchId) {
+      alert('Vui lòng chọn chi nhánh trước khi tạo phiếu!');
+      return;
+    }
+    setIsCreateModalOpen(true);
+  };
   const closeCreateModal = () => setIsCreateModalOpen(false);
 
   const openDetailModal = (ticketId) => setSelectedTicketId(ticketId);
@@ -46,19 +61,41 @@ const InventoryCheckList = () => {
         </button>
       </div>
 
-      <div className="flex w-fit items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <label className="ml-1 text-sm font-semibold text-slate-600">Lọc trạng thái:</label>
-        <select
-          className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm font-medium focus:border-blue-500 focus:outline-none"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="Draft">Phiếu Nháp</option>
-          <option value="WaitingForApproval">Chờ Duyệt</option>
-          <option value="Completed">Đã Hoàn Thành</option>
-          <option value="Cancelled">Đã Hủy</option>
-        </select>
+      {/* KHU VỰC BỘ LỌC */}
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Dropdown Chi nhánh (Chỉ hiện cho Owner) */}
+        {isOwner && (
+          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+            <label className="text-sm font-semibold text-slate-600">Chi nhánh:</label>
+            <select
+              className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm font-medium focus:border-blue-500 focus:outline-none"
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+            >
+              <option value="">-- Chọn chi nhánh --</option>
+              {branches.map((b) => (
+                <option key={b.branchId} value={b.branchId}>
+                  {b.branchName || b.branchCode}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="flex w-fit items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+          <label className="text-sm font-semibold text-slate-600">Lọc trạng thái:</label>
+          <select
+            className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm font-medium focus:border-blue-500 focus:outline-none"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="Draft">Phiếu Nháp</option>
+            <option value="WaitingForApproval">Chờ Duyệt</option>
+            <option value="Completed">Đã Hoàn Thành</option>
+            <option value="Cancelled">Đã Hủy</option>
+          </select>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -99,6 +136,8 @@ const InventoryCheckList = () => {
         onClose={closeDetailModal}
         ticketId={selectedTicketId}
         onFillSubmit={handleFillCheck}
+        onApproveSubmit={handleApproveCheck}
+        onRejectSubmit={handleRejectCheck}
       />
     </div>
   );

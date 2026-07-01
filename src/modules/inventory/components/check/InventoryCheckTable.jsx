@@ -22,8 +22,8 @@ const InventoryCheckTable = ({ rows, loading, onRowClick }) => {
       <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
         <tr>
           <th className="px-6 py-4 font-bold">Mã Phiếu</th>
-          <th className="px-6 py-4 font-bold">Thời Gian Tạo</th>
-          <th className="px-6 py-4 text-center font-bold">Số Lượng Mặt Hàng</th>
+          <th className="px-6 py-4 font-bold">Thời Gian Tạo / Phụ trách</th>
+          <th className="px-6 py-4 text-center font-bold">Số Lượng Hàng</th>
           <th className="px-6 py-4 text-center font-bold">Trạng Thái</th>
           <th className="px-6 py-4 text-right font-bold">Thao Tác</th>
         </tr>
@@ -48,15 +48,28 @@ const InventoryCheckTable = ({ rows, loading, onRowClick }) => {
             return (
               <tr key={row.ticketId} className="transition-colors hover:bg-blue-50/40">
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => onRowClick(row.ticketId)}
-                    className="font-bold text-blue-700 hover:text-blue-900 hover:underline"
-                  >
-                    {row.ticketCode}
-                  </button>
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => onRowClick(row.ticketId)}
+                      className="w-fit font-bold text-blue-700 hover:text-blue-900 hover:underline"
+                    >
+                      {row.ticketCode}
+                    </button>
+                    {/* Badge hiển thị nếu phiếu bị Reject bắt đếm lại */}
+                    {row.recountNumber > 0 && (
+                      <span className="w-fit rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
+                        Đếm lại (Lần {row.recountNumber})
+                      </span>
+                    )}
+                  </div>
                 </td>
-                <td className="px-6 py-4 font-medium text-slate-700">
-                  {new Date(row.createdAt).toLocaleString('vi-VN')}
+                <td className="px-6 py-4">
+                  <div className="font-medium text-slate-800">
+                    {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    PT: {row.assigneeUserName || row.createdByUserName}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-center font-bold text-slate-700">
                   {row.detailCount} <span className="text-xs font-normal text-slate-500">SKU</span>
