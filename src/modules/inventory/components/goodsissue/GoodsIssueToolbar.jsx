@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GoodsIssueToolbar - Thanh công cụ cho màn hình danh sách phiếu xuất.
  * Gồm: Search đa năng, Filter thời gian, Refresh, Export, Cài đặt cột, + Thêm mới.
  */

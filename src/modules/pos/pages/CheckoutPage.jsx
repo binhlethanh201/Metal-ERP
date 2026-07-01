@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CheckoutPage - Trang thanh toán
  */
 

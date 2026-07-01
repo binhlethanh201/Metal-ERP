@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ProductAutocomplete - Dropdown thông minh chọn hàng hóa cho dòng xuất kho.
  * Hiển thị Grid Dropdown với Mã HH | Tên HH | Tồn kho.
  * Hỗ trợ filter realtime, phím tắt, F9 thêm mới, F3 tìm nhanh.

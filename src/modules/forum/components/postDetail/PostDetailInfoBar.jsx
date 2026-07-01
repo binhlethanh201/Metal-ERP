@@ -33,28 +33,6 @@ const WholesaleBar = ({ product }) => {
   );
 };
 
-const SupplyBar = ({ post }) => (
-  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-orange-100 bg-orange-50/50 px-4 py-3">
-    <div className="flex items-center gap-2">
-      <Icon name="inventory_2" size={16} className="text-orange-700" />
-      <span className="text-xs font-semibold text-slate-500">Cần mua:</span>
-      <span className="text-sm font-bold text-orange-700">{post.neededQty}</span>
-    </div>
-    <span className="h-5 w-px bg-orange-200" />
-    <div className="flex items-center gap-2">
-      <Icon name="calendar_today" size={16} className="text-red-500" />
-      <span className="text-xs font-semibold text-red-600">Deadline:</span>
-      <span className="text-sm font-bold text-red-600">{post.deadline}</span>
-    </div>
-    <span className="h-5 w-px bg-orange-200" />
-    <div className="flex items-center gap-2">
-      <Icon name="location_on" size={16} className="text-slate-400" />
-      <span className="text-xs font-semibold text-slate-500">KV:</span>
-      <span className="text-sm font-bold text-slate-700">{post.area}</span>
-    </div>
-  </div>
-);
-
 const ClearanceBar = ({ product }) => {
   if (!product) return null;
   return (

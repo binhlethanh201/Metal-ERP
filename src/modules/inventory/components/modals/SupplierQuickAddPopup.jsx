@@ -7,7 +7,7 @@ import Icon from '../../../../shared/components/Icon';
 
 const SupplierQuickAddPopup = ({ isOpen, onClose, onSave }) => {
   const [type, setType] = useState('organization');
-  const [isCustomer, setIsCustomer] = useState(false);
+  const isCustomer = false;
   const [saving, setSaving] = useState(false);
 
   // Supplier groups & quick-add

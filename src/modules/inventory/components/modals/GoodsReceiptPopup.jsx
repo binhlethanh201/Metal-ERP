@@ -24,13 +24,14 @@ const GoodsReceiptPopup = ({ isOpen, onClose }) => {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+  const { requestClose: pRequestClose } = p;
   useEffect(() => {
     const h = (e) => {
-      if (e.key === 'Escape') p.requestClose();
+      if (e.key === 'Escape') pRequestClose();
     };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
-  }, [p.requestClose]);
+  }, [pRequestClose]);
 
   if (!isOpen) return null;
 

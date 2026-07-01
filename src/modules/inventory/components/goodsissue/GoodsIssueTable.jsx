@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GoodsIssueTable - Bảng danh sách phiếu xuất kho.
  * Các cột: Checkbox | Số phiếu | Trạng thái ĐB | Thời gian | Tham chiếu | Đối tượng |
  *          Tổng tiền hàng | Tổng thanh toán | Hình thức TT | Loại phiếu | Người lập | Chức năng

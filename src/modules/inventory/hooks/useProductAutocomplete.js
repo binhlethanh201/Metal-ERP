@@ -30,22 +30,6 @@ export const useProductAutocomplete = () => {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  const openSearch = useCallback((lineId, currentCode = '') => {
-    setActiveLineId(lineId);
-    setSearchText(currentCode || '');
-    setActiveIndex(-1);
-    setIsOpen(true);
-    filterProducts(currentCode || '');
-  }, []);
-
-  const closeSearch = useCallback(() => {
-    setIsOpen(false);
-    setActiveLineId(null);
-    setSearchText('');
-    setResults([]);
-    setActiveIndex(-1);
-  }, []);
-
   const filterProducts = useCallback((keyword) => {
     if (!keyword || !keyword.trim()) {
       setResults(productListForExport.slice(0, 20));
@@ -56,6 +40,25 @@ export const useProductAutocomplete = () => {
       (p) => p.code.toLowerCase().includes(kw) || p.name.toLowerCase().includes(kw)
     );
     setResults(filtered.slice(0, 20));
+  }, []);
+
+  const openSearch = useCallback(
+    (lineId, currentCode = '') => {
+      setActiveLineId(lineId);
+      setSearchText(currentCode || '');
+      setActiveIndex(-1);
+      setIsOpen(true);
+      filterProducts(currentCode || '');
+    },
+    [filterProducts]
+  );
+
+  const closeSearch = useCallback(() => {
+    setIsOpen(false);
+    setActiveLineId(null);
+    setSearchText('');
+    setResults([]);
+    setActiveIndex(-1);
   }, []);
 
   const handleSearchChange = useCallback(

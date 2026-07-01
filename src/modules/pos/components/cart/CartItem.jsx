@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CartItem Component - Mục trong giỏ hàng
  */
 

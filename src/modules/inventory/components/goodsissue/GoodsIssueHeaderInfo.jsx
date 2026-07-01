@@ -1,9 +1,7 @@
-﻿/**
+/**
  * GoodsIssueHeaderInfo - Phần thông tin chung của phiếu xuất kho.
  * Gồm: Loại XK, Đối tượng (+ thêm nhanh), Diễn giải, Tham chiếu, Số phiếu, Thời gian, Người lập.
  */
-import { useAuth } from '../../../../shared/hooks/useAuth';
-
 const GoodsIssueHeaderInfo = ({
   header,
   onChange,
@@ -11,8 +9,6 @@ const GoodsIssueHeaderInfo = ({
   issueTypes,
   onQuickAddCustomer,
 }) => {
-  const { user } = useAuth();
-
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

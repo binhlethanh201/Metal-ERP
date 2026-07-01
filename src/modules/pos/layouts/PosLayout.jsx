@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Bộ khung Layout dùng chung cho toàn phân hệ bán hàng POS.
  * Tự động đồng bộ Header, Sidebar, cơ chế thông báo và tối ưu không gian hiển thị.
  */

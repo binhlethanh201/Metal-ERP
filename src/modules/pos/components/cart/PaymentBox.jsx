@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PaymentBox Component - Hộp thanh toán
  */
 

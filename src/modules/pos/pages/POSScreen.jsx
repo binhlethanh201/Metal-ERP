@@ -5,7 +5,7 @@
  * TODO (FE): gán API cho từng nghiệp vụ khi BE sẵn sàng.
  */
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
@@ -46,7 +46,10 @@ const mapToPosProduct = (p) => ({
 });
 
 const POSScreen = () => {
-  const { search, setSearch, showNotice, quickAddCust, setFooterInfo } = useOutletContext();
+  const { search, setSearch, showNotice, quickAddCust, setFooterInfo, setDrafts } = useOutletContext();
+  const location = useLocation();
+  const draftData = location.state?.draft;
+  const loadedDraft = useRef(null);
 
   // ── Products (kết nối API thực tế) ─────────────────────────
   const [products, setProducts] = useState([]);
@@ -277,6 +280,20 @@ const POSScreen = () => {
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showDebtModal, setShowDebtModal] = useState(false);
+
+  // ---- Load draft neu co ----
+  useEffect(() => {
+    if (draftData && draftData.id !== loadedDraft.current) {
+      loadedDraft.current = draftData.id;
+      // Nap items vao cart
+      draftData.items.forEach((item) => addToCart(item));
+      setSelectedCustomer(draftData.customer);
+      // Xoa draft khoi danh sach
+      if (setDrafts) {
+        setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
+      }
+    }
+  }, [draftData, addToCart, setDrafts]);
 
   // ── Footer info ─────────────────────────────────────────────
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');

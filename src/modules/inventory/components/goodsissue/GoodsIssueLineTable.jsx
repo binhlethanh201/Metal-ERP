@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GoodsIssueLineTable - Bảng nhập liệu động các dòng hàng hóa xuất kho.
  * Các cột: Mã HH (autocomplete) | Tên HH | Số lô | HSD | Kho | Vị trí | ĐVT | SL | Đơn giá | Thành tiền | Xóa
  */
