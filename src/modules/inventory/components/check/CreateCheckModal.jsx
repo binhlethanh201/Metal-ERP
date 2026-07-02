@@ -95,7 +95,8 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
   };
 
   const handleSelectAll = (checked) => {
-    if (checked) setSelectedIds(filteredProducts.map((p) => p.productId || p.id));
+    if (checked)
+      setSelectedIds(filteredProducts.map((p) => p.branchProductId || p.productId || p.id));
     else setSelectedIds([]);
   };
 
@@ -235,7 +236,7 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
                   </tr>
                 ) : (
                   filteredProducts.map((p) => {
-                    const id = p.productId || p.id;
+                    const id = p.branchProductId || p.productId || p.id;
                     const isSelected = selectedIds.includes(id);
                     const stock = p.actualStock ?? p.availableStock ?? 0;
 

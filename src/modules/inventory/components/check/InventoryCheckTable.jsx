@@ -51,12 +51,17 @@ const InventoryCheckTable = ({ rows, loading, onRowClick }) => {
         ) : (
           rows.map((row) => {
             const statusInfo = getStatusInfo(row.status);
+            const ticketId =
+              row.ticketId || row.id || row.stockTicketId || row.inventoryCheckId || row.checkId;
             return (
-              <tr key={row.ticketId} className="transition-colors hover:bg-blue-50/40">
+              <tr
+                key={ticketId || row.ticketCode}
+                className="transition-colors hover:bg-blue-50/40"
+              >
                 <td className="px-6 py-4">
                   <div className="flex flex-col items-start gap-1">
                     <button
-                      onClick={() => onRowClick(row.ticketId)}
+                      onClick={() => onRowClick(row, ticketId)}
                       className="w-fit font-bold text-blue-700 hover:text-blue-900 hover:underline"
                     >
                       {row.ticketCode}
@@ -93,7 +98,7 @@ const InventoryCheckTable = ({ rows, loading, onRowClick }) => {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button
-                    onClick={() => onRowClick(row.ticketId)}
+                    onClick={() => onRowClick(row, ticketId)}
                     className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
                     title="Xem chi tiết"
                   >

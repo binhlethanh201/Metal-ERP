@@ -31,7 +31,8 @@ const EditCheckModal = ({ isOpen, onClose, detailData, branches = [], onSave }) 
       setAssigneeUserId(detailData.assigneeUserId || '');
 
       // Lấy danh sách ID sản phẩm đã có sẵn trong phiếu
-      const initialProductIds = detailData.details?.map((d) => d.productId) || [];
+      const initialProductIds =
+        detailData.details?.map((d) => d.branchProductId || d.productId || d.id) || [];
       setSelectedIds(initialProductIds);
 
       // Fetch danh sách sản phẩm trong kho
@@ -86,7 +87,8 @@ const EditCheckModal = ({ isOpen, onClose, detailData, branches = [], onSave }) 
   };
 
   const handleSelectAll = (checked) => {
-    if (checked) setSelectedIds(filteredProducts.map((p) => p.productId || p.id));
+    if (checked)
+      setSelectedIds(filteredProducts.map((p) => p.branchProductId || p.productId || p.id));
     else setSelectedIds([]);
   };
 
@@ -97,7 +99,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, branches = [], onSave }) 
     }
 
     // TÍNH TOÁN DANH SÁCH THÊM/BỚT THEO API DOCUMENT
-    const originalIds = detailData.details.map((d) => d.productId);
+    const originalIds = detailData.details.map((d) => d.branchProductId || d.productId || d.id);
 
     // addProductIds: Có trong selectedIds nhưng KHÔNG CÓ trong originalIds
     const addProductIds = selectedIds.filter((id) => !originalIds.includes(id));

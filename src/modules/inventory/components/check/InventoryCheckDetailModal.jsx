@@ -3,6 +3,21 @@ import Icon from '../../../../shared/components/Icon';
 import { getInventoryCheckDetail } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
+const normalizeDetailData = (data) => {
+  if (!data) return null;
+
+  const rawDetails = data.details || data.items || [];
+  const normalizedDetails = rawDetails.map((item) => ({
+    ...item,
+    detailId: item.detailId || item.ticketItemId || item.id || item.branchProductId,
+  }));
+
+  return {
+    ...data,
+    details: normalizedDetails,
+  };
+};
+
 const STATUS_MAP = {
   Draft: 'Nháp (Đang đếm)',
   WaitingForApproval: 'Chờ duyệt',
@@ -14,9 +29,12 @@ const InventoryCheckDetailModal = ({
   isOpen,
   onClose,
   ticketId,
+  ticketData,
   onFillSubmit,
   onApproveSubmit,
   onRejectSubmit,
+  onCancelSubmit,
+  onDeleteSubmit,
   onEditClick,
 }) => {
   const { user } = useAuth();
@@ -32,21 +50,33 @@ const InventoryCheckDetailModal = ({
   const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
-    if (isOpen && ticketId) {
+    if (isOpen && (ticketId || ticketData)) {
       setLoading(true);
       setIsRejecting(false);
       setRejectReason('');
 
+      const applyDetail = (data) => {
+        const normalized = normalizeDetailData(data);
+        if (!normalized) return;
+
+        setDetailData(normalized);
+        const initialValues = {};
+        (normalized.details || []).forEach((item) => {
+          initialValues[item.detailId] = item.isCounted ? item.actualQuantity : '';
+        });
+        setActualValues(initialValues);
+      };
+
+      if (ticketData) {
+        applyDetail(ticketData);
+        setLoading(false);
+        return;
+      }
+
       getInventoryCheckDetail(ticketId)
         .then((res) => {
           if (res?.success && res.data) {
-            setDetailData(res.data);
-            const initialValues = {};
-            res.data.details.forEach((item) => {
-              // Nếu đã count thì lấy actualQuantity, chưa thì để rỗng để ép user nhập
-              initialValues[item.detailId] = item.isCounted ? item.actualQuantity : '';
-            });
-            setActualValues(initialValues);
+            applyDetail(res.data);
           }
         })
         .catch((err) => console.error(err))
@@ -54,12 +84,15 @@ const InventoryCheckDetailModal = ({
     } else {
       setDetailData(null);
     }
-  }, [isOpen, ticketId]);
+  }, [isOpen, ticketId, ticketData]);
 
   if (!isOpen) return null;
 
   const isDraft = detailData?.status === 'Draft';
   const isWaiting = detailData?.status === 'WaitingForApproval';
+
+  const ticketIdentifier =
+    ticketId || detailData?.ticketId || detailData?.id || detailData?.stockTicketId;
 
   // Theo rule: Chỉ assignee hoặc Owner mới được fill (Đếm kho)
   const canFill = isDraft && (isOwner || currentUserId === detailData?.assigneeUserId);
@@ -80,7 +113,7 @@ const InventoryCheckDetailModal = ({
       detailId: detailId,
       actualQuantity: Number(actualValues[detailId]),
     }));
-    onFillSubmit(ticketId, detailsPayload, onClose);
+    onFillSubmit(ticketIdentifier, detailsPayload, onClose);
   };
 
   const handleRejectConfirm = () => {
@@ -88,7 +121,7 @@ const InventoryCheckDetailModal = ({
       alert('Vui lòng nhập lý do để nhân viên biết đường đếm lại!');
       return;
     }
-    onRejectSubmit(ticketId, rejectReason, onClose);
+    onRejectSubmit(ticketIdentifier, rejectReason, onClose);
   };
 
   return (
@@ -303,6 +336,25 @@ const InventoryCheckDetailModal = ({
             </button>
           )}
 
+          {/* Nút Delete / Cancel cho Owner khi phiếu đang Draft hoặc Waiting */}
+          {!isRejecting && isOwner && isDraft && (
+            <button
+              onClick={() => onDeleteSubmit(ticketIdentifier)}
+              className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-700 transition-colors hover:bg-red-100"
+            >
+              <Icon name="delete" size={20} /> Xóa phiếu
+            </button>
+          )}
+
+          {!isRejecting && isOwner && (isDraft || isWaiting) && (
+            <button
+              onClick={() => onCancelSubmit(ticketIdentifier, '', onClose)}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100"
+            >
+              <Icon name="Ban" size={20} /> Hủy phiếu
+            </button>
+          )}
+
           {/* Action cho Staff/Assignee: Đang Draft thì cho Fill */}
           {canFill && !isRejecting && (
             <button
@@ -323,7 +375,7 @@ const InventoryCheckDetailModal = ({
                 <Icon name="replay" size={20} /> Yêu cầu đếm lại
               </button>
               <button
-                onClick={() => onApproveSubmit(ticketId, onClose)}
+                onClick={() => onApproveSubmit(ticketIdentifier, onClose)}
                 className="flex items-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
               >
                 <Icon name="check_circle" size={20} /> Duyệt phiếu

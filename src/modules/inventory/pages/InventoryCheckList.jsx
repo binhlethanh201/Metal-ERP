@@ -23,15 +23,19 @@ const InventoryCheckList = () => {
     setPageNumber,
     paginationMeta,
     handleCreateCheck,
+    handleUpdateCheck,
+    handleDeleteCheck,
     handleFillCheck,
     handleApproveCheck,
     handleRejectCheck,
+    handleCancelCheck,
+    // handleReasonCheck,
   } = useInventoryCheckManager();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [selectedTicketData, setSelectedTicketData] = useState(null);
   const [editTicketData, setEditTicketData] = useState(null);
-  const { handleUpdateCheck } = useInventoryCheckManager();
 
   const openCreateModal = () => {
     // Chặn Owner nếu chưa chọn chi nhánh
@@ -43,8 +47,14 @@ const InventoryCheckList = () => {
   };
   const closeCreateModal = () => setIsCreateModalOpen(false);
 
-  const openDetailModal = (ticketId) => setSelectedTicketId(ticketId);
-  const closeDetailModal = () => setSelectedTicketId(null);
+  const openDetailModal = (row, ticketId) => {
+    setSelectedTicketId(ticketId || row?.ticketId || row?.id || row?.stockTicketId || null);
+    setSelectedTicketData(row || null);
+  };
+  const closeDetailModal = () => {
+    setSelectedTicketId(null);
+    setSelectedTicketData(null);
+  };
 
   return (
     <div className="animate-fade-in w-full space-y-4 text-slate-800">
@@ -138,12 +148,15 @@ const InventoryCheckList = () => {
       />
 
       <InventoryCheckDetailModal
-        isOpen={!!selectedTicketId}
+        isOpen={!!selectedTicketId || !!selectedTicketData}
         onClose={closeDetailModal}
         ticketId={selectedTicketId}
+        ticketData={selectedTicketData}
         onFillSubmit={handleFillCheck}
         onApproveSubmit={handleApproveCheck}
         onRejectSubmit={handleRejectCheck}
+        onCancelSubmit={handleCancelCheck}
+        onDeleteSubmit={handleDeleteCheck}
         onEditClick={(data) => {
           setEditTicketData(data);
           closeDetailModal();
