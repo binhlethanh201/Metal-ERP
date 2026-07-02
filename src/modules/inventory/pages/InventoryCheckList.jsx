@@ -5,6 +5,7 @@ import InventoryCheckTable from '../components/check/InventoryCheckTable';
 import CreateCheckModal from '../components/check/CreateCheckModal';
 import InventoryCheckDetailModal from '../components/check/InventoryCheckDetailModal';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import EditCheckModal from '../components/check/EditCheckModal';
 
 const InventoryCheckList = () => {
   const { user } = useAuth(); // Bổ sung check quyền
@@ -29,6 +30,8 @@ const InventoryCheckList = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [editTicketData, setEditTicketData] = useState(null);
+  const { handleUpdateCheck } = useInventoryCheckManager();
 
   const openCreateModal = () => {
     // Chặn Owner nếu chưa chọn chi nhánh
@@ -127,8 +130,11 @@ const InventoryCheckList = () => {
       <CreateCheckModal
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}
-        branchId={branchId}
-        onSave={(productIds, notes) => handleCreateCheck(productIds, notes, null, closeCreateModal)}
+        initialBranchId={branchId}
+        branches={branches}
+        onSave={(productIds, notes, assigneeUserId, selectedBranchId) =>
+          handleCreateCheck(productIds, notes, assigneeUserId, selectedBranchId, closeCreateModal)
+        }
       />
 
       <InventoryCheckDetailModal
@@ -138,6 +144,23 @@ const InventoryCheckList = () => {
         onFillSubmit={handleFillCheck}
         onApproveSubmit={handleApproveCheck}
         onRejectSubmit={handleRejectCheck}
+        onEditClick={(data) => {
+          setEditTicketData(data);
+          closeDetailModal();
+        }}
+      />
+
+      <EditCheckModal
+        isOpen={!!editTicketData}
+        onClose={() => setEditTicketData(null)}
+        detailData={editTicketData}
+        branches={branches}
+        onSave={(id, payload) => {
+          handleUpdateCheck(id, payload, () => {
+            setEditTicketData(null);
+            setSelectedTicketId(id);
+          });
+        }}
       />
     </div>
   );

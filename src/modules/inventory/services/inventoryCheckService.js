@@ -27,13 +27,14 @@ export const getInventoryCheckDetail = (id) => {
 
 /**
  * Tạo mới phiếu kiểm kê (Nháp)
- * @param {Array<string>} productIds - Danh sách ID sản phẩm cần kiểm
- * @param {string} notes - Ghi chú phiếu
- * @param {string|null} assigneeUserId - User ID được giao kiểm kê (Tùy chọn)
  */
-export const createInventoryCheck = (productIds, notes, assigneeUserId = null) => {
-  // Đã sửa branchId thành assigneeUserId theo đúng API document
-  return apiPost(ENDPOINTS.INVENTORY.CREATE_INVENTORY_CHECK, { productIds, notes, assigneeUserId });
+export const createInventoryCheck = (productIds, notes, assigneeUserId = null, branchId = null) => {
+  // Gắn branchId vào query để Backend biết phiếu này thuộc chi nhánh nào
+  const url = branchId
+    ? `${ENDPOINTS.INVENTORY.CREATE_INVENTORY_CHECK}?branchId=${branchId}`
+    : ENDPOINTS.INVENTORY.CREATE_INVENTORY_CHECK;
+
+  return apiPost(url, { productIds, notes, assigneeUserId });
 };
 
 /**

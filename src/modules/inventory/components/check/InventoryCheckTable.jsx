@@ -16,6 +16,12 @@ const getStatusInfo = (status) => {
   }
 };
 
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return `${date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${date.toLocaleDateString('vi-VN')}`;
+};
+
 const InventoryCheckTable = ({ rows, loading, onRowClick }) => {
   return (
     <table className="w-full text-left text-sm text-slate-600">
@@ -48,7 +54,7 @@ const InventoryCheckTable = ({ rows, loading, onRowClick }) => {
             return (
               <tr key={row.ticketId} className="transition-colors hover:bg-blue-50/40">
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col items-start gap-1">
                     <button
                       onClick={() => onRowClick(row.ticketId)}
                       className="w-fit font-bold text-blue-700 hover:text-blue-900 hover:underline"
@@ -64,15 +70,19 @@ const InventoryCheckTable = ({ rows, loading, onRowClick }) => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="font-medium text-slate-800">
-                    {new Date(row.createdAt).toLocaleDateString('vi-VN')}
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    PT: {row.assigneeUserName || row.createdByUserName}
+                  <div className="font-medium text-slate-800">{formatDateTime(row.createdAt)}</div>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    Phụ trách:{' '}
+                    <span
+                      className={`font-semibold ${!row.assigneeUserName ? 'italic text-slate-400' : 'text-slate-600'}`}
+                    >
+                      {row.assigneeUserName || 'Chưa gán'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-center font-bold text-slate-700">
-                  {row.detailCount} <span className="text-xs font-normal text-slate-500">SKU</span>
+                  {row.detailCount}{' '}
+                  <span className="text-xs font-normal text-slate-500">sản phẩm</span>
                 </td>
                 <td className="px-6 py-4 text-center">
                   <span

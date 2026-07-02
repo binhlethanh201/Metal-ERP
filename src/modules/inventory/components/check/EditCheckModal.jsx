@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { getProducts } from '../../services/inventoryService';
-import { useAuth } from '../../../../shared/hooks/useAuth';
 import { getStaffs } from '../../../owner/services/staffService';
+import { useAuth } from '../../../../shared/hooks/useAuth';
 
-const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onSave }) => {
+const EditCheckModal = ({ isOpen, onClose, detailData, branches = [], onSave }) => {
   const { user } = useAuth();
   const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
   const currentUserId = user?.userId || user?.id;
-
-  // State quản lý chi nhánh đang được chọn bên TRONG modal
-  const [localBranchId, setLocalBranchId] = useState('');
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,25 +20,23 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
   const [staffList, setStaffList] = useState([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
-  // Khởi tạo giá trị chi nhánh khi vừa mở Modal
-  useEffect(() => {
-    if (isOpen) {
-      setLocalBranchId(initialBranchId || (branches.length > 0 ? branches[0].branchId : ''));
-    } else {
-      // Reset khi đóng
-      setSelectedIds([]);
-      setNotes('');
-      setAssigneeUserId('');
-      setSearch('');
-      setLocalBranchId('');
-    }
-  }, [isOpen, initialBranchId, branches]);
+  const branchId = detailData?.branchId;
+  const branchName =
+    branches.find((b) => b.branchId === branchId)?.branchName || 'Chi nhánh hiện tại';
 
-  // Fetch dữ liệu mỗi khi người dùng đổi chi nhánh (localBranchId thay đổi)
+  // Khởi tạo dữ liệu từ detailData
   useEffect(() => {
-    if (isOpen && localBranchId) {
+    if (isOpen && detailData) {
+      setNotes(detailData.notes || '');
+      setAssigneeUserId(detailData.assigneeUserId || '');
+
+      // Lấy danh sách ID sản phẩm đã có sẵn trong phiếu
+      const initialProductIds = detailData.details?.map((d) => d.productId) || [];
+      setSelectedIds(initialProductIds);
+
+      // Fetch danh sách sản phẩm trong kho
       setLoading(true);
-      getProducts({ branchId: localBranchId, pageSize: 100, status: 'active' })
+      getProducts({ branchId: branchId, pageSize: 100, status: 'active' })
         .then((res) => {
           if (res?.success && res.data) {
             setProducts(res.data.items || res.data || []);
@@ -49,6 +44,7 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
         })
         .finally(() => setLoading(false));
 
+      // Fetch danh sách nhân viên
       if (isOwner) {
         setLoadingStaff(true);
         getStaffs({ pageSize: 100 })
@@ -56,7 +52,7 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
             if (res?.success && res.data) {
               const allStaff = res.data.items || [];
               const qualifiedStaff = allStaff.filter((staff) => {
-                const isSameBranch = staff.branchId === localBranchId || !staff.branchId;
+                const isSameBranch = staff.branchId === branchId || !staff.branchId;
                 const hasInventoryRole =
                   staff.roles?.includes('InventoryStaff') || staff.roles?.includes('Owner');
                 const hasPermission =
@@ -72,17 +68,12 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
       } else {
         setAssigneeUserId(currentUserId);
       }
+    } else {
+      setSearch('');
     }
-  }, [isOpen, localBranchId, isOwner, currentUserId]);
+  }, [isOpen, detailData, branchId, isOwner, currentUserId]);
 
-  // Hàm xử lý khi user chuyển chi nhánh khác
-  const handleBranchChange = (e) => {
-    setLocalBranchId(e.target.value);
-    setSelectedIds([]); // Hủy chọn sản phẩm cũ vì qua chi nhánh mới rồi
-    setAssigneeUserId(''); // Hủy người phụ trách cũ
-  };
-
-  if (!isOpen) return null;
+  if (!isOpen || !detailData) return null;
 
   const filteredProducts = products.filter(
     (p) =>
@@ -104,18 +95,37 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
       alert('Vui lòng chọn ít nhất 1 sản phẩm để kiểm kê!');
       return;
     }
+
+    // TÍNH TOÁN DANH SÁCH THÊM/BỚT THEO API DOCUMENT
+    const originalIds = detailData.details.map((d) => d.productId);
+
+    // addProductIds: Có trong selectedIds nhưng KHÔNG CÓ trong originalIds
+    const addProductIds = selectedIds.filter((id) => !originalIds.includes(id));
+
+    // removeProductIds: Có trong originalIds nhưng KHÔNG CÓ trong selectedIds
+    const removeProductIds = originalIds.filter((id) => !selectedIds.includes(id));
+
     const finalAssignee = assigneeUserId || null;
-    // Bắn trả về localBranchId để API gửi lên Backend
-    onSave(selectedIds, notes, finalAssignee, localBranchId);
+
+    const payload = {
+      notes,
+      assigneeUserId: finalAssignee,
+      addProductIds,
+      removeProductIds,
+    };
+
+    onSave(detailData.ticketId, payload);
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/60 p-4">
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">Tạo Phiếu Kiểm Kê Mới</h2>
-            <p className="mt-1 text-xs text-slate-500">Chọn mặt hàng có trong kho để kiểm đếm</p>
+            <h2 className="text-lg font-bold text-slate-800">
+              Cập nhật Phiếu: <span className="text-blue-600">{detailData.ticketCode}</span>
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">Chi nhánh: {branchName}</p>
           </div>
           <button
             onClick={onClose}
@@ -126,42 +136,22 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
         </div>
 
         <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
-          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* THÊM MỚI: BỘ LỌC CHI NHÁNH BÊN TRONG MODAL */}
-            {isOwner && (
-              <div className="col-span-1">
-                <label className="mb-2 block text-sm font-bold text-blue-700">
-                  Kiểm kê tại Chi nhánh
-                </label>
-                <select
-                  className="w-full rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={localBranchId}
-                  onChange={handleBranchChange}
-                >
-                  {branches.map((b) => (
-                    <option key={b.branchId} value={b.branchId}>
-                      {b.branchName || b.branchCode}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className={isOwner ? 'col-span-1' : 'col-span-2'}>
+          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
               <label className="mb-2 block text-sm font-bold text-slate-700">
                 Mục đích / Ghi chú
               </label>
               <textarea
-                rows="1"
+                rows="2"
                 className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="VD: Định kỳ..."
+                placeholder="VD: Kiểm kê định kỳ..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div>
 
             {isOwner && (
-              <div className="col-span-1">
+              <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
                   Người phụ trách
                 </label>
@@ -171,7 +161,7 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
                   onChange={(e) => setAssigneeUserId(e.target.value)}
                   disabled={loadingStaff}
                 >
-                  <option value="">-- Để trống --</option>
+                  <option value="">-- Chưa gán (Để trống) --</option>
                   <option value={currentUserId}>Tự giao cho tôi</option>
                   {staffList.map(
                     (staff) =>
@@ -182,13 +172,18 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
                       )
                   )}
                 </select>
+                {loadingStaff && (
+                  <span className="mt-1 inline-block text-xs text-slate-500">
+                    Đang tải nhân viên...
+                  </span>
+                )}
               </div>
             )}
           </div>
 
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">Danh sách Hàng hóa trong kho</h3>
-            <div className="flex w-64 items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+            <h3 className="text-sm font-bold text-slate-800">Danh sách Hàng hóa</h3>
+            <div className="flex w-64 items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 shadow-sm focus-within:border-blue-500">
               <Icon name="search" size={18} className="mr-2 text-slate-400" />
               <input
                 type="text"
@@ -230,7 +225,7 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
                 ) : filteredProducts.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-slate-400">
-                      Không tìm thấy sản phẩm nào trong kho này
+                      Không tìm thấy sản phẩm
                     </td>
                   </tr>
                 ) : (
@@ -238,7 +233,6 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
                     const id = p.productId || p.id;
                     const isSelected = selectedIds.includes(id);
                     const stock = p.actualStock ?? p.availableStock ?? 0;
-
                     return (
                       <tr
                         key={id}
@@ -250,11 +244,7 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
                         </td>
                         <td className="px-4 py-3 font-semibold text-slate-700">{p.productCode}</td>
                         <td className="px-4 py-3">{p.productName}</td>
-                        <td
-                          className={`px-4 py-3 text-center font-bold ${stock === 0 ? 'text-slate-400' : 'text-slate-700'}`}
-                        >
-                          {stock}
-                        </td>
+                        <td className="px-4 py-3 text-center font-bold text-slate-700">{stock}</td>
                       </tr>
                     );
                   })
@@ -267,15 +257,15 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
         <div className="flex justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Hủy
           </button>
           <button
             onClick={handleSubmit}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
           >
-            <Icon name="save" size={20} /> Tạo phiếu nháp
+            <Icon name="save" size={20} /> Cập nhật phiếu
           </button>
         </div>
       </div>
@@ -283,4 +273,4 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
   );
 };
 
-export default CreateCheckModal;
+export default EditCheckModal;

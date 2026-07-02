@@ -3,6 +3,13 @@ import Icon from '../../../../shared/components/Icon';
 import { getInventoryCheckDetail } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
+const STATUS_MAP = {
+  Draft: 'Nháp (Đang đếm)',
+  WaitingForApproval: 'Chờ duyệt',
+  Completed: 'Đã hoàn thành',
+  Cancelled: 'Đã hủy',
+};
+
 const InventoryCheckDetailModal = ({
   isOpen,
   onClose,
@@ -10,9 +17,11 @@ const InventoryCheckDetailModal = ({
   onFillSubmit,
   onApproveSubmit,
   onRejectSubmit,
+  onEditClick,
 }) => {
   const { user } = useAuth();
   const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
+  const currentUserId = user?.userId || user?.id; // Lấy ID của user hiện tại
 
   const [detailData, setDetailData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +43,8 @@ const InventoryCheckDetailModal = ({
             setDetailData(res.data);
             const initialValues = {};
             res.data.details.forEach((item) => {
-              initialValues[item.detailId] = item.actualQuantity || 0;
+              // Nếu đã count thì lấy actualQuantity, chưa thì để rỗng để ép user nhập
+              initialValues[item.detailId] = item.isCounted ? item.actualQuantity : '';
             });
             setActualValues(initialValues);
           }
@@ -51,7 +61,21 @@ const InventoryCheckDetailModal = ({
   const isDraft = detailData?.status === 'Draft';
   const isWaiting = detailData?.status === 'WaitingForApproval';
 
+  // Theo rule: Chỉ assignee hoặc Owner mới được fill (Đếm kho)
+  const canFill = isDraft && (isOwner || currentUserId === detailData?.assigneeUserId);
+
   const handleFill = () => {
+    // Validate Frontend: Kiểm tra xem có ô nào bị bỏ trống không
+    const hasUncounted = detailData?.details.some((item) => {
+      const val = actualValues[item.detailId];
+      return val === undefined || val === null || val === '';
+    });
+
+    if (hasUncounted) {
+      alert('Vui lòng nhập đầy đủ số lượng kiểm đếm cho tất cả sản phẩm!');
+      return;
+    }
+
     const detailsPayload = Object.keys(actualValues).map((detailId) => ({
       detailId: detailId,
       actualQuantity: Number(actualValues[detailId]),
@@ -83,8 +107,11 @@ const InventoryCheckDetailModal = ({
               )}
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Trạng thái: <strong className="uppercase">{detailData?.status}</strong> • Tạo bởi:{' '}
-              <strong>{detailData?.createdByUserName || 'N/A'}</strong>
+              Trạng thái:{' '}
+              <strong className="text-blue-600">
+                {STATUS_MAP[detailData?.status] || detailData?.status}
+              </strong>{' '}
+              • Người phụ trách: <strong>{detailData?.assigneeUserName || 'Chưa gán'}</strong>
             </p>
           </div>
           <button
@@ -131,9 +158,14 @@ const InventoryCheckDetailModal = ({
                       </th>
                       <th
                         className="border-b border-slate-200 px-4 py-3 text-center font-bold"
-                        title="Tồn kho trên phần mềm lúc tạo phiếu"
+                        title="Tồn kho sẽ được chốt số liệu chính xác từ hệ thống tại thời điểm bạn bấm Gửi Duyệt."
                       >
-                        Tồn Hệ Thống
+                        Tồn Hệ Thống{' '}
+                        <Icon
+                          name="info"
+                          size={14}
+                          className="inline align-text-bottom text-slate-400"
+                        />
                       </th>
                       <th className="border-b border-slate-200 px-4 py-3 text-center font-bold">
                         Kiểm Đếm Thực Tế
@@ -145,7 +177,11 @@ const InventoryCheckDetailModal = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {detailData?.details?.map((item) => {
-                      const currentActual = actualValues[item.detailId] ?? 0;
+                      const currentActualRaw = actualValues[item.detailId];
+                      const hasValue = currentActualRaw !== '' && currentActualRaw !== undefined;
+                      const currentActual = hasValue ? Number(currentActualRaw) : 0;
+
+                      // Tính discrepancy realtime lúc đang nhập cho user dễ nhìn
                       const discrepancy = currentActual - item.systemQuantity;
 
                       return (
@@ -158,12 +194,17 @@ const InventoryCheckDetailModal = ({
                             {item.systemQuantity}
                           </td>
                           <td className="px-4 py-3 text-center">
-                            {isDraft ? (
+                            {isDraft && canFill ? (
                               <input
                                 type="number"
                                 min="0"
-                                className="w-24 rounded border border-blue-300 px-2 py-1 text-center font-bold text-blue-700 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={currentActual}
+                                placeholder="Nhập..."
+                                className={`w-24 rounded border px-2 py-1 text-center font-bold shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  !hasValue
+                                    ? 'border-orange-300 bg-orange-50 text-orange-700'
+                                    : 'border-blue-300 text-blue-700'
+                                }`}
+                                value={currentActualRaw}
                                 onChange={(e) =>
                                   setActualValues({
                                     ...actualValues,
@@ -172,21 +213,31 @@ const InventoryCheckDetailModal = ({
                                 }
                               />
                             ) : (
-                              <span className="font-bold text-blue-700">{item.actualQuantity}</span>
+                              <span className="font-bold text-blue-700">
+                                {item.isCounted ? item.actualQuantity : '-'}
+                              </span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {isDraft ? (
                               <span
-                                className={`font-bold ${discrepancy === 0 ? 'text-slate-400' : discrepancy > 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                className={`font-bold ${!hasValue ? 'text-slate-300' : discrepancy === 0 ? 'text-slate-400' : discrepancy > 0 ? 'text-emerald-600' : 'text-red-600'}`}
                               >
-                                {discrepancy > 0 ? `+${discrepancy}` : discrepancy}
+                                {!hasValue
+                                  ? '-'
+                                  : discrepancy > 0
+                                    ? `+${discrepancy}`
+                                    : discrepancy}
                               </span>
                             ) : (
                               <span
-                                className={`font-bold ${item.discrepancy === 0 ? 'text-slate-400' : item.discrepancy > 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                className={`font-bold ${!item.isCounted ? 'text-slate-300' : item.discrepancy === 0 ? 'text-slate-400' : item.discrepancy > 0 ? 'text-emerald-600' : 'text-red-600'}`}
                               >
-                                {item.discrepancy > 0 ? `+${item.discrepancy}` : item.discrepancy}
+                                {!item.isCounted
+                                  ? '-'
+                                  : item.discrepancy > 0
+                                    ? `+${item.discrepancy}`
+                                    : item.discrepancy}
                               </span>
                             )}
                           </td>
@@ -195,14 +246,20 @@ const InventoryCheckDetailModal = ({
                     })}
                   </tbody>
                 </table>
+                {isDraft && (
+                  <div className="border-t border-blue-100 bg-blue-50 p-3 text-center text-xs italic text-blue-600">
+                    * Chú ý: Cột "Tồn Hệ Thống" và "Chênh Lệch" sẽ được hệ thống tính toán và chốt
+                    lại chính xác một lần nữa vào thời điểm bạn bấm "Gửi duyệt".
+                  </div>
+                )}
               </div>
             </>
           )}
         </div>
 
-        {/* Khu vực Form Nhập Lý Do Reject (Chỉ hiện khi bấm Yêu cầu đếm lại) */}
+        {/* Khu vực Form Nhập Lý Do Reject */}
         {isRejecting && (
-          <div className="border-t border-orange-200 bg-orange-50 px-6 py-4">
+          <div className="animate-fade-in border-t border-orange-200 bg-orange-50 px-6 py-4">
             <label className="mb-2 block text-sm font-bold text-orange-900">
               Nhập lý do yêu cầu đếm lại <span className="text-red-500">*</span>
             </label>
@@ -220,12 +277,23 @@ const InventoryCheckDetailModal = ({
         {/* Footer Actions */}
         <div className="flex justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
           {!isRejecting ? (
-            <button
-              onClick={onClose}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              {isDraft ? 'Lưu nháp / Đóng' : 'Đóng'}
-            </button>
+            <>
+              <button
+                onClick={onClose}
+                className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                {isDraft && canFill ? 'Đóng' : 'Đóng'}
+              </button>
+
+              {isDraft && isOwner && (
+                <button
+                  onClick={() => onEditClick(detailData)} // Gọi ra ngoài truyền detailData
+                  className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 text-sm font-bold text-blue-700 transition-colors hover:bg-blue-100"
+                >
+                  <Icon name="edit" size={20} /> Sửa phiếu
+                </button>
+              )}
+            </>
           ) : (
             <button
               onClick={() => setIsRejecting(false)}
@@ -235,13 +303,13 @@ const InventoryCheckDetailModal = ({
             </button>
           )}
 
-          {/* Action cho Staff: Đang Draft thì cho Fill */}
-          {isDraft && !isRejecting && (
+          {/* Action cho Staff/Assignee: Đang Draft thì cho Fill */}
+          {canFill && !isRejecting && (
             <button
               onClick={handleFill}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
             >
-              <Icon name="send" size={20} /> Gửi duyệt
+              <Icon name="send" size={20} /> Gửi duyệt (Chốt số)
             </button>
           )}
 

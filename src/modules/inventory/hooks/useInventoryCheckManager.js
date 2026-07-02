@@ -96,9 +96,21 @@ export const useInventoryCheckManager = () => {
   };
 
   // Tạo phiếu mới
-  const handleCreateCheck = async (productIds, notes, assigneeUserId = null, onSuccess) => {
+  const handleCreateCheck = async (
+    productIds,
+    notes,
+    assigneeUserId = null,
+    targetBranchId = null,
+    onSuccess
+  ) => {
     try {
-      const response = await createInventoryCheck(productIds, notes, assigneeUserId);
+      // Truyền thêm targetBranchId xuống service
+      const response = await createInventoryCheck(
+        productIds,
+        notes,
+        assigneeUserId,
+        targetBranchId
+      );
       if (response?.success) {
         alert('Tạo phiếu kiểm kê thành công (Trạng thái: Nháp)!');
         fetchChecks();
