@@ -42,6 +42,7 @@ const OrderHistory = lazy(() => import('./modules/pos/pages/OrderHistory'));
 const ShiftManagement = lazy(() => import('./modules/pos/pages/ShiftManagement'));
 const CustomerManagement = lazy(() => import('./modules/pos/pages/CustomerManagement'));
 const ReturnOrderPage = lazy(() => import('./modules/pos/pages/ReturnOrderPage'));
+const SettingsPage = lazy(() => import('./modules/pos/pages/SettingsPage'));
 
 // Forum Module
 const ForumLayout = lazy(() => import('./modules/forum/layouts/ForumLayout'));
@@ -68,7 +69,6 @@ const CategoryManagement = lazy(() => import('./modules/admin/pages/CategoryMana
 const PostModeration = lazy(() => import('./modules/admin/pages/PostModeration'));
 const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotifications'));
 const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
-const StoreApprovals = lazy(() => import('./modules/admin/pages/StoreApprovals'));
 
 // Owner Module
 const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManagement'));
@@ -119,11 +119,12 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={['Owner', 'SalesStaff']} />}>
             <Route path="/pos" element={<PosLayout />}>
               <Route index element={<PosScreen />} />
-              <Route path="returns" element={<ReturnOrderPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="orders" element={<OrderHistory />} />
               <Route path="shift" element={<ShiftManagement />} />
               <Route path="customers" element={<CustomerManagement />} />
+              <Route path="returns" element={<ReturnOrderPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>
 
@@ -157,7 +158,6 @@ function App() {
               <Route path="moderation" element={<PostModeration />} />
               <Route path="notifications" element={<SystemNotifications />} />
               <Route path="logs" element={<SystemLog />} />
-              <Route path="store-approvals" element={<StoreApprovals />} />
             </Route>
           </Route>
 

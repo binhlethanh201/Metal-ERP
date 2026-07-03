@@ -24,11 +24,12 @@ const getAuthToken = () => {
 /**
  * Hàm wrapper cho tất cả API requests
  * @param {string} endpoint - Đường dẫn API (không cần base URL)
- * @param {object} options - Fetch options (method, body, headers, etc.)
+ * @param {object} options - Fetch options (method, body, headers, baseURL, etc.)
  * @returns {Promise} Response data
  */
 export const apiClient = async (endpoint, options = {}) => {
-  const url = `${API_CONFIG.baseURL}${endpoint}`;
+  const baseURL = options.baseURL || API_CONFIG.baseURL;
+  const url = `${baseURL}${endpoint}`;
 
   const config = {
     method: options.method || 'GET',
@@ -130,5 +131,33 @@ export const apiPatch = (endpoint, body, options = {}) =>
  */
 export const apiDelete = (endpoint, options = {}) =>
   apiClient(endpoint, { ...options, method: 'DELETE' });
+
+// ============= POS-specific helpers =============
+// Backend POS chạy ở localhost:5100, khác với inventory (localhost:3000)
+const POS_BASE_URL = process.env.REACT_APP_POS_API_URL || 'http://localhost:5100/api';
+
+/**
+ * GET request cho POS backend
+ */
+export const apiPosGet = (endpoint, options = {}) =>
+  apiClient(endpoint, { ...options, method: 'GET', baseURL: POS_BASE_URL });
+
+/**
+ * POST request cho POS backend
+ */
+export const apiPosPost = (endpoint, body, options = {}) =>
+  apiClient(endpoint, { ...options, method: 'POST', body, baseURL: POS_BASE_URL });
+
+/**
+ * PUT request cho POS backend
+ */
+export const apiPosPut = (endpoint, body, options = {}) =>
+  apiClient(endpoint, { ...options, method: 'PUT', body, baseURL: POS_BASE_URL });
+
+/**
+ * PATCH request cho POS backend
+ */
+export const apiPosPatch = (endpoint, body, options = {}) =>
+  apiClient(endpoint, { ...options, method: 'PATCH', body, baseURL: POS_BASE_URL });
 
 export default apiClient;

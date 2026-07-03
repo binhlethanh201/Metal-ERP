@@ -1,11 +1,10 @@
 /**
  * CustomerManagement Page - Quản lý khách hàng trong POS
- * Danh sách, tìm kiếm, lọc, xem chi tiết, thêm/sửa khách hàng, tạo đơn hàng nhanh
- * TODO (FE): Kết nối API GET/POST/PUT /api/pos/customers khi BE sẵn sàng.
- * Hiện chạy với MOCK DATA local.
+ * API: /pos/customers - GET list, POST create, PUT update
  */
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../shared/hooks/useAuth';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
@@ -13,7 +12,8 @@ import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { CUSTOMER_GROUPS, mockCustomers } from '../data/posMockData';
+import { getCustomers, createCustomer, updateCustomer } from '../services/posService';
+import { CUSTOMER_GROUPS } from '../data/posMockData';
 
 const GROUP_COLORS = {
   'Cá nhân': 'info',
@@ -22,41 +22,107 @@ const GROUP_COLORS = {
   'Nhà thầu': 'success',
 };
 
-const PAYMENT_LABELS = { cash: 'Tiền mặt', card: 'Thẻ', transfer: 'CK' };
-const PAYMENT_VARIANTS = { cash: 'warning', card: 'info', transfer: 'primary' };
+const INITIAL_FORM = { name: '', phone: '', email: '', address: '', group: 'Cá nhân', notes: '' };
 
-// Sinh lịch sử đơn hàng giả lập theo dữ liệu thực của từng khách
-const generateCustomerOrders = (customer) => {
-  if (customer.orderCount === 0) return [];
-  const orders = [];
-  const avgAmount = customer.totalSpent / customer.orderCount;
-  const baseDate = new Date(customer.lastVisit !== '-' ? customer.lastVisit : '2024-01-01');
-  for (let i = 0; i < Math.min(customer.orderCount, 10); i++) {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() - i * Math.max(1, Math.floor(60 / customer.orderCount)));
-    const variation = 0.5 + Math.random();
-    const methods = ['cash', 'card', 'transfer'];
-    orders.push({
-      id: `ORD-${String(customer.id).padStart(3, '0')}-${String(i + 1).padStart(2, '0')}`,
-      date: d.toISOString().split('T')[0],
-      amount: Math.round(avgAmount * variation),
-      items: Math.max(1, Math.floor(Math.random() * 8) + 1),
-      method: methods[Math.floor(Math.random() * 3)],
-    });
-  }
-  return orders;
-};
+// Map API customer sang format local
+const mapCustomer = (c) => ({
+  id: c.customerId || c.id,
+  customerId: c.customerId,
+  name: c.customerName || '',
+  phone: c.phoneNumber || '',
+  email: c.email || '',
+  address: c.address || '',
+  group: c.group || 'Cá nhân',
+  notes: c.notes || '',
+  totalSpent: parseFloat(c.totalSpent || 0),
+  orderCount: parseInt(c.orderCount || 0),
+  lastVisit: c.lastVisit || '-',
+  createdAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : '-',
+});
 
 // Validate SĐT Việt Nam
 const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
 
-const INITIAL_FORM = { name: '', phone: '', email: '', address: '', group: 'Cá nhân', notes: '' };
+// Mock data fallback khi API lỗi
+const MOCK_CUSTOMERS = [
+  {
+    id: 1,
+    customerId: '1',
+    name: 'Nguyễn Văn A',
+    phone: '0903123456',
+    email: '',
+    address: 'Hà Nội',
+    group: 'Cá nhân',
+    notes: '',
+    totalSpent: 5000000,
+    orderCount: 12,
+    lastVisit: '2026-06-28',
+    createdAt: '01/01/2026',
+  },
+  {
+    id: 2,
+    customerId: '2',
+    name: 'Công ty TNHH XD Minh Phát',
+    phone: '02839998888',
+    email: 'info@minhphat.vn',
+    address: 'TP.HCM',
+    group: 'Doanh nghiệp',
+    notes: '',
+    totalSpent: 85000000,
+    orderCount: 45,
+    lastVisit: '2026-06-29',
+    createdAt: '01/01/2026',
+  },
+  {
+    id: 3,
+    customerId: '3',
+    name: 'Trần Thị B',
+    phone: '0903123457',
+    email: '',
+    address: 'Hà Nội',
+    group: 'Cá nhân',
+    notes: '',
+    totalSpent: 1200000,
+    orderCount: 3,
+    lastVisit: '2026-06-25',
+    createdAt: '15/03/2026',
+  },
+  {
+    id: 4,
+    customerId: '4',
+    name: 'Đại lý Tuấn Kiệt',
+    phone: '0908123456',
+    email: '',
+    address: 'Bình Dương',
+    group: 'Đại lý',
+    notes: '',
+    totalSpent: 25000000,
+    orderCount: 18,
+    lastVisit: '2026-06-27',
+    createdAt: '01/02/2026',
+  },
+  {
+    id: 5,
+    customerId: '5',
+    name: 'Nhà thầu Quang Vinh',
+    phone: '0905123456',
+    email: '',
+    address: 'Đồng Nai',
+    group: 'Nhà thầu',
+    notes: '',
+    totalSpent: 120000000,
+    orderCount: 8,
+    lastVisit: '2026-06-20',
+    createdAt: '01/01/2026',
+  },
+];
 
 export const CustomerManagement = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error] = useState(null);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('Tất cả');
   const [selected, setSelected] = useState(null);
@@ -64,30 +130,33 @@ export const CustomerManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const [formErrors, setFormErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
-  // Tải từ MOCK DATA (TODO: thay bằng API call)
-  const fetchCustomers = useCallback(() => {
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
+  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+
+  // Load customers
+  const fetchCustomers = useCallback(async () => {
+    // Owner không có quyền gọi POS API (backend chỉ hỗ trợ SalesStaff)
+    if (isOwner) {
+      setCustomers(MOCK_CUSTOMERS);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const mockList = mockCustomers.map((c) => ({
-      id: c.id,
-      name: c.name,
-      phone: c.phone || '',
-      email: c.email || '',
-      address: c.address || '',
-      group: c.group || 'Cá nhân',
-      notes: c.notes || '',
-      totalSpent: c.totalSpent || 0,
-      orderCount: c.orderCount || 0,
-      lastVisit: c.lastVisit || '-',
-      loyaltyPoints: 0,
-      membershipTier: 'Bronze',
-      debtLimit: 0,
-      currentDebt: 0,
-      createdAt: c.createdAt,
-    }));
-    setCustomers(mockList);
-    setLoading(false);
-  }, []);
+    setError(null);
+    try {
+      const data = await getCustomers();
+      const items = Array.isArray(data) ? data : data?.items || [];
+      setCustomers(items.map(mapCustomer));
+    } catch (err) {
+      console.error('Lỗi lấy khách hàng:', err);
+      setError(err.message);
+      setCustomers(MOCK_CUSTOMERS);
+    } finally {
+      setLoading(false);
+    }
+  }, [isOwner]);
 
   useEffect(() => {
     fetchCustomers();
@@ -109,18 +178,13 @@ export const CustomerManagement = () => {
   const totalCustomers = customers.length;
   const totalRevenue = customers.reduce((s, c) => s + c.totalSpent, 0);
 
-  const customerOrders = useMemo(() => {
-    if (!selected) return [];
-    return generateCustomerOrders(selected);
-  }, [selected]);
-
   const isSelectedInList = selected && filtered.some((c) => c.id === selected.id);
 
   const handleSelect = useCallback((customer) => {
     setSelected(customer);
   }, []);
 
-  // ── Validation ────────────────────────────────────────────
+  // ---- Validation ----
   const validateForm = (data) => {
     const errs = {};
     if (!data.name.trim()) errs.name = 'Vui lòng nhập tên khách hàng';
@@ -132,42 +196,40 @@ export const CustomerManagement = () => {
     return errs;
   };
 
-  // ── Add (local state — TODO: gọi API POST /pos/customers) ─
+  // ---- Add ----
   const handleOpenAdd = () => {
     setForm(INITIAL_FORM);
     setFormErrors({});
     setShowAddModal(true);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const errs = validateForm(form);
     if (Object.keys(errs).length > 0) {
       setFormErrors(errs);
       return;
     }
-    // TODO (FE): gọi API POST /pos/customers ở đây
-    const newCust = {
-      id: Date.now(),
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      address: form.address.trim(),
-      group: form.group,
-      notes: form.notes.trim(),
-      totalSpent: 0,
-      orderCount: 0,
-      lastVisit: '-',
-      loyaltyPoints: 0,
-      membershipTier: 'Bronze',
-      debtLimit: 0,
-      currentDebt: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setCustomers((prev) => [newCust, ...prev]);
-    setShowAddModal(false);
+    setSaving(true);
+    try {
+      const result = await createCustomer({
+        customerName: form.name.trim(),
+        phoneNumber: form.phone.trim(),
+        email: form.email.trim(),
+        address: form.address.trim(),
+        group: form.group,
+        notes: form.notes.trim(),
+      });
+      // Thêm vào danh sách
+      setCustomers((prev) => [mapCustomer(result), ...prev]);
+      setShowAddModal(false);
+    } catch (err) {
+      alert('Lỗi: ' + (err.message || 'Không thể thêm khách hàng'));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // ── Edit (local state — TODO: gọi API PUT /pos/customers/{id}) ─
+  // ---- Edit ----
   const handleOpenEdit = () => {
     if (!selected) return;
     setForm({
@@ -182,28 +244,34 @@ export const CustomerManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     const errs = validateForm(form);
     if (Object.keys(errs).length > 0) {
       setFormErrors(errs);
       return;
     }
-    // TODO (FE): gọi API PUT /pos/customers/{selected.id} ở đây
-    const updated = {
-      ...selected,
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      address: form.address.trim(),
-      group: form.group,
-      notes: form.notes.trim(),
-    };
-    setCustomers((prev) => prev.map((c) => (c.id === selected.id ? updated : c)));
-    setSelected(updated);
-    setShowEditModal(false);
+    setSaving(true);
+    try {
+      const result = await updateCustomer(selected.id, {
+        customerName: form.name.trim(),
+        phoneNumber: form.phone.trim(),
+        email: form.email.trim(),
+        address: form.address.trim(),
+        group: form.group,
+        notes: form.notes.trim(),
+      });
+      const updated = mapCustomer(result);
+      setCustomers((prev) => prev.map((c) => (c.id === selected.id ? updated : c)));
+      setSelected(updated);
+      setShowEditModal(false);
+    } catch (err) {
+      alert('Lỗi: ' + (err.message || 'Không thể cập nhật khách hàng'));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // ── Tạo đơn hàng cho khách đã chọn ────────────────────────
+  // ---- Tạo đơn hàng cho khách đã chọn ----
   const handleCreateOrder = () => {
     if (!selected) return;
     navigate('/pos', { state: { selectedCustomer: selected } });
@@ -223,11 +291,7 @@ export const CustomerManagement = () => {
         </button>
       ),
     },
-    {
-      key: 'phone',
-      header: 'Số điện thoại',
-      render: (v) => <span className="text-slate-600">{v}</span>,
-    },
+    { key: 'phone', header: 'SĐT', render: (v) => <span className="text-slate-600">{v}</span> },
     {
       key: 'group',
       header: 'Nhóm',
@@ -253,77 +317,6 @@ export const CustomerManagement = () => {
       render: (v) => <span className="text-slate-500">{v === '-' ? 'Chưa mua' : v}</span>,
     },
   ];
-
-  const CustomerForm = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input
-          label="Tên khách hàng"
-          placeholder="Nhập tên khách hàng"
-          value={form.name}
-          onChange={(e) => {
-            setForm((f) => ({ ...f, name: e.target.value }));
-            setFormErrors((prev) => ({ ...prev, name: '' }));
-          }}
-          required
-          error={formErrors.name}
-        />
-        <Input
-          label="Số điện thoại"
-          placeholder="VD: 0903123456"
-          value={form.phone}
-          onChange={(e) => {
-            setForm((f) => ({ ...f, phone: e.target.value }));
-            setFormErrors((prev) => ({ ...prev, phone: '' }));
-          }}
-          required
-          error={formErrors.phone}
-          hint="10 số, bắt đầu 03/05/07/08/09"
-        />
-      </div>
-      <Input
-        label="Email"
-        type="email"
-        placeholder="Nhập email (nếu có)"
-        value={form.email}
-        onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-        error={formErrors.email}
-      />
-      <Input
-        label="Địa chỉ"
-        placeholder="Nhập địa chỉ"
-        value={form.address}
-        onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-      />
-      <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Nhóm khách hàng</label>
-        <select
-          value={form.group}
-          onChange={(e) => setForm((f) => ({ ...f, group: e.target.value }))}
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
-        >
-          {CUSTOMER_GROUPS.filter((g) => g !== 'Tất cả').map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
-        <textarea
-          rows={3}
-          placeholder="Ghi chú về khách hàng (nếu có)"
-          value={form.notes}
-          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
-        />
-      </div>
-      {formErrors.api && (
-        <p className="text-sm text-red-600">{formErrors.api}</p>
-      )}
-    </div>
-  );
 
   return (
     <div className="flex h-full gap-6">
@@ -379,6 +372,12 @@ export const CustomerManagement = () => {
           </Card>
         </div>
 
+        {error && (
+          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+            <strong>Lưu ý:</strong> {error}. Đang hiển thị dữ liệu mẫu.
+          </div>
+        )}
+
         {/* Search + Filter + Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 gap-3">
@@ -408,20 +407,12 @@ export const CustomerManagement = () => {
 
         {/* Table */}
         <Card padding="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-12 text-slate-500">
-              <span className="loading-spinner mr-2" /> Đang tải...
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <p className="mb-2 text-red-500">{error}</p>
-              <Button variant="secondary" size="sm" onClick={fetchCustomers}>
-                Thử lại
-              </Button>
-            </div>
-          ) : (
-            <Table columns={columns} data={filtered} emptyMessage="Không tìm thấy khách hàng nào" />
-          )}
+          <Table
+            columns={columns}
+            data={filtered}
+            loading={loading}
+            emptyMessage={error ? `Lỗi: ${error}` : 'Không tìm thấy khách hàng nào'}
+          />
         </Card>
       </div>
 
@@ -448,7 +439,6 @@ export const CustomerManagement = () => {
                 </div>
                 <div className="flex gap-1">
                   <button
-                    type="button"
                     onClick={handleOpenEdit}
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#004785]"
                     title="Chỉnh sửa"
@@ -478,7 +468,7 @@ export const CustomerManagement = () => {
                 )}
                 <div className="flex items-start gap-2 text-sm">
                   <span className="w-5 text-center text-slate-400">📍</span>
-                  <span className="text-slate-600">{selected.address}</span>
+                  <span className="text-slate-600">{selected.address || '-'}</span>
                 </div>
               </div>
 
@@ -529,47 +519,16 @@ export const CustomerManagement = () => {
               </div>
             </div>
           </Card>
-
-          {/* Lịch sử mua hàng */}
-          <Card header={`Lịch sử mua hàng (${customerOrders.length} đơn gần đây)`}>
-            {customerOrders.length > 0 ? (
-              <div className="space-y-2">
-                {customerOrders.map((o) => (
-                  <div
-                    key={o.id}
-                    className="flex items-center justify-between rounded-lg border border-slate-100 p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{o.id}</p>
-                      <p className="text-xs text-slate-500">
-                        {o.date} - {o.items} món
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-green-600">{formatCurrency(o.amount)}</p>
-                      <Badge variant={PAYMENT_VARIANTS[o.method]} size="sm">
-                        {PAYMENT_LABELS[o.method]}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-4 text-center text-sm text-slate-400">
-                Khách hàng chưa có đơn hàng nào
-              </p>
-            )}
-          </Card>
         </div>
       )}
 
-      {/* Placeholder khi chưa chọn */}
+      {/* Placeholder */}
       {(!selected || !isSelectedInList) && (
         <div className="hidden w-96 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 xl:flex">
           <div className="px-4 text-center">
             <p className="text-4xl text-slate-300">👥</p>
             <p className="mt-3 text-sm font-medium text-slate-400">Chọn một khách hàng</p>
-            <p className="text-xs text-slate-300">để xem chi tiết và lịch sử mua hàng</p>
+            <p className="text-xs text-slate-300">để xem chi tiết</p>
           </div>
         </div>
       )}
@@ -585,13 +544,76 @@ export const CustomerManagement = () => {
             <Button variant="secondary" onClick={() => setShowAddModal(false)}>
               Hủy
             </Button>
-            <Button variant="primary" onClick={handleAdd} disabled={!form.name || !form.phone}>
+            <Button variant="primary" onClick={handleAdd} loading={saving}>
               Thêm khách hàng
             </Button>
           </>
         }
       >
-        <CustomerForm />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Tên khách hàng *"
+              placeholder="Nhập tên"
+              value={form.name}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, name: e.target.value }));
+                setFormErrors((p) => ({ ...p, name: '' }));
+              }}
+              required
+              error={formErrors.name}
+            />
+            <Input
+              label="SĐT *"
+              placeholder="VD: 0903123456"
+              value={form.phone}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, phone: e.target.value }));
+                setFormErrors((p) => ({ ...p, phone: '' }));
+              }}
+              required
+              error={formErrors.phone}
+            />
+          </div>
+          <Input
+            label="Email"
+            type="email"
+            placeholder="Nhập email (nếu có)"
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            error={formErrors.email}
+          />
+          <Input
+            label="Địa chỉ"
+            placeholder="Nhập địa chỉ"
+            value={form.address}
+            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+          />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Nhóm khách hàng</label>
+            <select
+              value={form.group}
+              onChange={(e) => setForm((f) => ({ ...f, group: e.target.value }))}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
+            >
+              {CUSTOMER_GROUPS.filter((g) => g !== 'Tất cả').map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
+            <textarea
+              rows={3}
+              placeholder="Ghi chú về khách hàng"
+              value={form.notes}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
+            />
+          </div>
+        </div>
       </Modal>
 
       {/* ====== MODAL SỬA ====== */}
@@ -605,13 +627,76 @@ export const CustomerManagement = () => {
             <Button variant="secondary" onClick={() => setShowEditModal(false)}>
               Hủy
             </Button>
-            <Button variant="primary" onClick={handleEdit} disabled={!form.name || !form.phone}>
+            <Button variant="primary" onClick={handleEdit} loading={saving}>
               Lưu thay đổi
             </Button>
           </>
         }
       >
-        <CustomerForm />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Tên khách hàng *"
+              placeholder="Nhập tên"
+              value={form.name}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, name: e.target.value }));
+                setFormErrors((p) => ({ ...p, name: '' }));
+              }}
+              required
+              error={formErrors.name}
+            />
+            <Input
+              label="SĐT *"
+              placeholder="VD: 0903123456"
+              value={form.phone}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, phone: e.target.value }));
+                setFormErrors((p) => ({ ...p, phone: '' }));
+              }}
+              required
+              error={formErrors.phone}
+            />
+          </div>
+          <Input
+            label="Email"
+            type="email"
+            placeholder="Nhập email"
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            error={formErrors.email}
+          />
+          <Input
+            label="Địa chỉ"
+            placeholder="Nhập địa chỉ"
+            value={form.address}
+            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+          />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Nhóm khách hàng</label>
+            <select
+              value={form.group}
+              onChange={(e) => setForm((f) => ({ ...f, group: e.target.value }))}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
+            >
+              {CUSTOMER_GROUPS.filter((g) => g !== 'Tất cả').map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
+            <textarea
+              rows={3}
+              placeholder="Ghi chú"
+              value={form.notes}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );

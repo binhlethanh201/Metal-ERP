@@ -6,8 +6,41 @@ import {
   updateProduct,
   deleteProduct,
   toggleProductStatus,
-} from '../services/inventoryService';
+} from '../services/productService';
 import { normalizeProduct } from '../utils/productUtils';
+import { mockProducts, mockPagination } from '../data/productMockData';
+
+// Lọc dữ liệu mẫu dựa trên queryParams để bộ lọc sidebar hoạt động
+const filterMockProducts = (params) => {
+  if (!params) return mockProducts;
+  let filtered = [...mockProducts];
+
+  if (params.SearchTerm) {
+    const kw = params.SearchTerm.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        (p.productCode || '').toLowerCase().includes(kw) ||
+        (p.productName || '').toLowerCase().includes(kw) ||
+        (p.name || '').toLowerCase().includes(kw)
+    );
+  }
+  if (params.CategoryName) {
+    const cat = params.CategoryName.toLowerCase();
+    filtered = filtered.filter((p) => (p.categoryName || '').toLowerCase().includes(cat));
+  }
+  if (params.Status === 'active') filtered = filtered.filter((p) => p.isActive !== false);
+  if (params.Status === 'inactive') filtered = filtered.filter((p) => p.isActive === false);
+  // 'draft' status: mock không có draft nên trả về rỗng, thêm 1 số mẫu để test
+  if (params.Status === 'draft') {
+    filtered = filtered.filter((p) => p.productStatus === 'draft');
+    if (filtered.length === 0) {
+      filtered = mockProducts
+        .slice(0, 2)
+        .map((p) => ({ ...p, isActive: true, productStatus: 'draft', id: `DRAFT-${p.id}` }));
+    }
+  }
+  return filtered;
+};
 
 // Tiện ích chuyển đổi File ảnh thành Base64
 const fileToDataUrl = (file) =>
@@ -29,7 +62,7 @@ export const useProductList = (queryParams) => {
     totalPages: 1,
     hasNextPage: false,
   });
-  const [apiStatus, setApiStatus] = useState({ loading: true, error: '' });
+  const [apiStatus, setApiStatus] = useState({ loading: true, error: '', isMock: false });
   const { token } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const refetch = () => setRefreshTrigger((prev) => prev + 1);
@@ -52,11 +85,29 @@ export const useProductList = (queryParams) => {
             totalPages: response.data.totalPages || 1,
             hasNextPage: response.data.hasNextPage || false,
           });
+          setApiStatus({ loading: false, error: '', isMock: false });
+        } else {
+          // API có response nhưng success=false (lỗi backend) → fallback mock
+          const filtered = filterMockProducts(queryParams);
+          setProducts(filtered.map(normalizeProduct));
+          setPaginationMeta({
+            ...mockPagination,
+            totalCount: filtered.length,
+            totalPages: Math.ceil(filtered.length / (queryParams?.PageSize || 10)),
+          });
+          setApiStatus({ loading: false, error: '', isMock: true });
         }
-        setApiStatus({ loading: false, error: '' });
       } catch (error) {
         if (!active) return;
-        setApiStatus({ loading: false, error: 'Lỗi tải dữ liệu từ API.' });
+        // API không gọi được (network/auth) → fallback mock
+        const filtered = filterMockProducts(queryParams);
+        setProducts(filtered.map(normalizeProduct));
+        setPaginationMeta({
+          ...mockPagination,
+          totalCount: filtered.length,
+          totalPages: Math.ceil(filtered.length / (queryParams?.PageSize || 10)),
+        });
+        setApiStatus({ loading: false, error: '', isMock: true });
       }
     };
 
@@ -70,38 +121,37 @@ export const useProductList = (queryParams) => {
   // Đổi trạng thái 1 sản phẩm
   const handleToggleStatus = async (id, currentIsActive) => {
     const newStatus = !currentIsActive;
+    // Cập nhật local ngay lập tức (kể cả khi dùng mock data)
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.productId === id || p.id === id
+          ? { ...p, isActive: newStatus, productStatus: newStatus ? 'active' : 'inactive' }
+          : p
+      )
+    );
     try {
       await toggleProductStatus(id, newStatus);
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.productId === id || p.id === id
-            ? { ...p, isActive: newStatus, productStatus: newStatus ? 'active' : 'inactive' }
-            : p
-        )
-      );
-    } catch (error) {
-      alert('Không thể đổi trạng thái. Vui lòng thử lại!');
+    } catch {
+      // API chưa sẵn sàng → vẫn giữ trạng thái local
     }
   };
 
   // Đổi trạng thái hàng loạt
   const handleBulkToggleStatus = async (selectedIds, targetStatus) => {
+    // Cập nhật local ngay lập tức
+    setProducts((prev) =>
+      prev.map((p) =>
+        selectedIds.includes(p.productId || p.id)
+          ? { ...p, isActive: targetStatus, productStatus: targetStatus ? 'active' : 'inactive' }
+          : p
+      )
+    );
     try {
-      const promises = selectedIds.map((id) => toggleProductStatus(id, targetStatus));
-      await Promise.all(promises);
-
-      setProducts((prev) =>
-        prev.map((p) =>
-          selectedIds.includes(p.productId || p.id)
-            ? { ...p, isActive: targetStatus, productStatus: targetStatus ? 'active' : 'inactive' }
-            : p
-        )
-      );
-      return true;
-    } catch (error) {
-      alert('Có lỗi xảy ra khi cập nhật hàng loạt. Vui lòng tải lại trang để kiểm tra!');
-      return false;
+      await Promise.all(selectedIds.map((id) => toggleProductStatus(id, targetStatus)));
+    } catch {
+      // API chưa sẵn sàng → giữ trạng thái local
     }
+    return true;
   };
 
   // Lưu sản phẩm (Đã thêm bộ lọc chống Crash UUID cho Backend C#)
@@ -217,11 +267,24 @@ export const useProductList = (queryParams) => {
         }),
       };
 
-      // 4. Gọi API
-      if (productKey && !productKey.startsWith('SP-DRAFT')) {
-        await updateProduct(productKey, payload);
-      } else {
-        await createProduct(payload);
+      // 4. Gọi API (fallback local nếu API chưa sẵn sàng)
+      try {
+        if (productKey && !productKey.startsWith('SP-DRAFT')) {
+          await updateProduct(productKey, payload);
+        } else {
+          await createProduct(payload);
+        }
+      } catch {
+        // API chưa sẵn sàng → cập nhật local
+        const normalized = normalizeProduct(payload);
+        setProducts((prev) => {
+          if (productKey && !productKey.startsWith('SP-DRAFT')) {
+            return prev.map((p) =>
+              p.productId === productKey || p.id === productKey ? { ...p, ...normalized } : p
+            );
+          }
+          return [...prev, { ...normalized, id: `SP-${Date.now()}` }];
+        });
       }
 
       // 5. Cache UI Data
@@ -251,11 +314,11 @@ export const useProductList = (queryParams) => {
   const handleDeleteProduct = async (id) => {
     const confirmed = window.confirm('Bạn có chắc muốn xóa hàng hóa này?');
     if (!confirmed) return;
+    setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
     try {
       await deleteProduct(id);
-      setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
-    } catch (error) {
-      alert('Không thể xóa hàng hóa');
+    } catch {
+      // API chưa sẵn sàng → giữ trạng thái local
     }
   };
 

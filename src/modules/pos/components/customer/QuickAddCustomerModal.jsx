@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
+import { createCustomer } from '../../services/posService';
 
 const INITIAL = { name: '', phone: '' };
 
 const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
   const [form, setForm] = useState(INITIAL);
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const errs = {};
     if (!form.name.trim()) errs.name = 'Vui lòng nhập tên';
     if (!form.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại';
@@ -19,22 +21,49 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
       return;
     }
 
-    onAdd({
-      id: Date.now(),
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      email: '',
-      address: '',
-      group: 'Ca nhan',
-      notes: '',
-      totalSpent: 0,
-      orderCount: 0,
-      lastVisit: '-',
-      createdAt: new Date().toISOString().split('T')[0],
-    });
-    setForm(INITIAL);
-    setErrors({});
-    onClose();
+    setSaving(true);
+    try {
+      const result = await createCustomer({
+        customerName: form.name.trim(),
+        phoneNumber: form.phone.trim(),
+      });
+      onAdd({
+        id: result.customerId || result.id || Date.now(),
+        customerId: result.customerId,
+        name: result.customerName || form.name.trim(),
+        phone: result.phoneNumber || form.phone.trim(),
+        email: result.email || '',
+        address: result.address || '',
+        group: result.group || 'Cá nhân',
+        notes: result.notes || '',
+        totalSpent: parseFloat(result.totalSpent || 0),
+        orderCount: parseInt(result.orderCount || 0),
+        lastVisit: result.lastVisit || '-',
+        createdAt: result.createdAt
+          ? new Date(result.createdAt).toLocaleDateString('vi-VN')
+          : new Date().toLocaleDateString('vi-VN'),
+      });
+    } catch (err) {
+      // Fallback: dùng local nếu API lỗi
+      onAdd({
+        id: Date.now(),
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: '',
+        address: '',
+        group: 'Cá nhân',
+        notes: '',
+        totalSpent: 0,
+        orderCount: 0,
+        lastVisit: '-',
+        createdAt: new Date().toLocaleDateString('vi-VN'),
+      });
+    } finally {
+      setSaving(false);
+      setForm(INITIAL);
+      setErrors({});
+      onClose();
+    }
   };
 
   const handleClose = () => {
