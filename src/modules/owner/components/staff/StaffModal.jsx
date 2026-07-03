@@ -12,7 +12,6 @@ const initialFormState = {
   permissionCodes: [],
 };
 
-// Định nghĩa các nhóm quyền chuẩn theo PermissionConstants của Backend
 const PERMISSION_GROUPS = [
   {
     label: 'Sale / POS & Thu ngân',
@@ -40,7 +39,6 @@ const PERMISSION_GROUPS = [
   },
 ];
 
-// Gợi ý bộ quyền chuẩn cho từng Role (Để hỗ trợ người dùng chọn nhanh / biết Role đó có gì)
 const DEFAULT_ROLE_PERMISSIONS = {
   SalesStaff: [
     'CUSTOMER_VIEW',
@@ -73,7 +71,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     'STOCK_CHECK_VIEW',
     'STOCK_CHECK_CREATE',
   ],
-  Staff: [], // Cấp quản lý/Toàn quyền -> Thường sẽ chọn tất cả hoặc theo cấu hình hệ thống
+  Staff: [],
 };
 
 const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
@@ -83,7 +81,6 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
   useEffect(() => {
     if (isOpen) {
       if (staff) {
-        // Chế độ UPDATE (PUT)
         setForm({
           ...staff,
           password: '',
@@ -97,17 +94,14 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
           isActive: staff.isActive !== undefined ? staff.isActive : 1,
           permissionCodes: staff.permissionCodes || [],
         });
-        // Khi Update, mặc định coi như đang chỉnh sửa bộ quyền hiện tại của Staff
         setIsCustomizing((staff.permissionCodes || []).length > 0);
       } else {
-        // Chế độ CREATE (POST)
         setForm(initialFormState);
-        setIsCustomizing(false); // Mặc định để customPermissionCodes rỗng (Backend tự nhận theo Role)
+        setIsCustomizing(false);
       }
     }
   }, [isOpen, staff]);
 
-  // Phân nhóm permissions tải từ API vào các Group hiển thị UI
   const groupedPermissions = useMemo(() => {
     if (!permissions.length) return [];
 
@@ -128,7 +122,6 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
       return;
     }
 
-    // Kiểm tra và xác nhận hành vi của PUT (Full Replace)
     if (staff && isCustomizing && form.permissionCodes.length === 0) {
       if (
         !window.confirm(
@@ -139,10 +132,8 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
       }
     }
 
-    // Chuẩn bị payload nộp lên trang cha
     const submitData = { ...form };
     if (!staff && !isCustomizing && form.defaultRoleType) {
-      // Khi Tạo mới và dùng quyền mặc định theo Role -> gửi mảng rỗng để Backend tự động áp dụng
       submitData.permissionCodes = [];
     }
 
@@ -158,11 +149,9 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
     });
   };
 
-  // Chọn nhanh toàn bộ quyền mẫu của Role (Để ghi đè thủ công)
   const handleApplyRoleDefaults = () => {
     setIsCustomizing(true);
     if (form.defaultRoleType === 'Staff') {
-      // Chọn tất cả quyền khả dụng từ API
       setForm((prev) => ({
         ...prev,
         permissionCodes: permissions.map((p) => p.permissionCode),
@@ -197,9 +186,16 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
       <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-800">
-            {staff ? 'Cập nhật Nhân viên' : 'Thêm Nhân viên mới'}
-          </h2>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">
+              {staff ? `Chi tiết nhân viên: ${staff.fullName}` : 'Thêm Nhân viên mới'}
+            </h2>
+            {staff && (
+              <p className="text-xs text-slate-500">
+                Bạn có thể kiểm tra và chỉnh sửa thông tin hoặc phân quyền trực tiếp tại đây.
+              </p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
@@ -237,7 +233,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               <input
                 type="password"
                 required={!staff}
-                placeholder="Nhập mật khẩu..."
+                placeholder="Nhập mật khẩu mới nếu muốn đổi..."
                 className={inputCss}
                 value={form.password || ''}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -284,13 +280,13 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
 
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                {staff ? 'Vai trò hiện tại' : 'Vai trò mặc định'}
+                {staff ? 'Vai trò / Chức danh' : 'Vai trò mặc định'}
               </label>
               <select
                 className={inputCss}
                 value={form.defaultRoleType}
                 onChange={handleRoleChange}
-                disabled={!!staff} // API PUT không cho đổi Role
+                disabled={!!staff}
               >
                 <option value="SalesStaff">Sales Staff (Nhân viên Bán hàng)</option>
                 <option value="InventoryStaff">Inventory Staff (Nhân viên Kho)</option>
@@ -299,7 +295,8 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               </select>
               {staff && (
                 <span className="mt-1 block text-xs italic text-slate-400">
-                  * API cập nhật không hỗ trợ đổi chức danh/vai trò.
+                  * Hệ thống không hỗ trợ đổi chức danh sau khi tạo. Bạn chỉ có thể sửa quyền bên
+                  dưới.
                 </span>
               )}
             </div>
@@ -321,7 +318,6 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
             )}
           </div>
 
-          {/* VÙNG QUẢN LÝ PHÂN QUYỀN (Dựa trên API /available-permissions) */}
           <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60 p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
               <div>
@@ -331,12 +327,12 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
                     size={20}
                     className="mr-2 inline align-text-bottom text-blue-600"
                   />
-                  Phân quyền chi tiết
+                  Phân quyền chi tiết ({form.permissionCodes.length} quyền đang chọn)
                 </label>
                 <p className="mt-0.5 text-xs text-slate-500">
                   {!staff
                     ? 'Chế độ tạo mới: Tùy chỉnh quyền sẽ ghi đè hoàn toàn quyền mặc định của vai trò.'
-                    : 'Chế độ cập nhật: Ghi đè bộ quyền hiện tại của nhân viên.'}
+                    : 'Chế độ xem & cập nhật: Tích hoặc bỏ tích để cập nhật quyền hạn cho nhân viên.'}
                 </p>
               </div>
 
@@ -361,7 +357,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
                     onClick={handleApplyRoleDefaults}
                     className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                   >
-                    Chọn nhanh mẫu của {form.defaultRoleType}
+                    Khôi phục bộ quyền mẫu {form.defaultRoleType}
                   </button>
                 )}
               </div>
@@ -441,14 +437,14 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               onClick={onClose}
               className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Hủy bỏ
+              Đóng
             </button>
             <button
               type="submit"
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
             >
               <Icon name="save" size={18} />
-              {staff ? 'Lưu cập nhật' : 'Tạo nhân viên'}
+              {staff ? 'Lưu thay đổi' : 'Tạo nhân viên'}
             </button>
           </div>
         </form>

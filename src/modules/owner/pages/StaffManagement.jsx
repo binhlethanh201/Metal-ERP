@@ -4,32 +4,40 @@ import { useStaffManager } from '../hooks/useStaffManager';
 import StaffTable from '../components/staff/StaffTable';
 import StaffModal from '../components/staff/StaffModal';
 
-// Ghi chú: Có thể lấy currentUserId từ store/context auth (VD: useAuth() hook) để truyền cho Table.
-// Ở đây giả định hook useStaffManager hoặc store của bạn có thể cung cấp currentUserId của Owner đang đăng nhập.
-
 const StaffManagement = () => {
   const {
     staffs,
     permissions,
     loading,
+    detailLoading,
     search,
     setSearch,
     page,
     setPage,
     paginationMeta,
+    fetchStaffDetail,
     handleCreateStaff,
     handleUpdateStaff,
     handleToggleStatus,
     handleDeleteStaff,
-    currentUserId, // Khuyến nghị: Lấy ID của owner đang đăng nhập từ auth state để xử lý bảo vệ self-action
+    currentUserId,
   } = useStaffManager();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
 
-  const openModal = (staff = null) => {
-    setEditingStaff(staff);
+  const openCreateModal = () => {
+    setEditingStaff(null);
     setIsModalOpen(true);
+  };
+
+  // GỌI API GET /api/owner/staffs/{id} KHI BẤM NÚT CHI TIẾT
+  const handleViewDetailClick = async (staffSummary) => {
+    const detailData = await fetchStaffDetail(staffSummary.userId);
+    if (detailData) {
+      setEditingStaff(detailData);
+      setIsModalOpen(true);
+    }
   };
 
   const closeModal = () => {
@@ -37,11 +45,9 @@ const StaffManagement = () => {
     setEditingStaff(null);
   };
 
-  // Map chuẩn payload theo tài liệu API:
-  // - PUT /api/owner/staffs/{id}: email, phoneNumber, fullName, isActive, password, permissionCodes
-  // - POST /api/owner/staffs: username, email, fullName, password, phoneNumber, defaultRoleType, customPermissionCodes
   const onSave = (formData) => {
     if (editingStaff) {
+      // Chế độ vừa xem vừa Update (PUT /api/owner/staffs/{id})
       const payload = {
         fullName: formData.fullName || null,
         email: formData.email || null,
@@ -52,6 +58,7 @@ const StaffManagement = () => {
       };
       handleUpdateStaff(editingStaff.userId, payload, closeModal);
     } else {
+      // Chế độ Tạo mới (POST /api/owner/staffs)
       const payload = {
         username: formData.username,
         email: formData.email,
@@ -67,6 +74,18 @@ const StaffManagement = () => {
 
   return (
     <div className="animate-fade-in w-full space-y-4 text-slate-800">
+      {/* Overlay loading khi đang gọi API getStaffDetail */}
+      {detailLoading && (
+        <div className="backdrop-blur-xs fixed inset-0 z-[300] flex items-center justify-center bg-black/30">
+          <div className="flex items-center gap-3 rounded-lg bg-white px-6 py-4 shadow-xl">
+            <Icon name="sync" className="animate-spin text-2xl text-blue-600" />
+            <span className="font-semibold text-slate-700">
+              Đang tải thông tin chi tiết nhân viên...
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Nhân sự</h1>
@@ -75,7 +94,7 @@ const StaffManagement = () => {
           </p>
         </div>
         <button
-          onClick={() => openModal()}
+          onClick={openCreateModal}
           className="flex items-center gap-2 rounded-lg bg-[#004785] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-black"
         >
           <Icon name="add" size={20} />
@@ -101,7 +120,7 @@ const StaffManagement = () => {
         staffs={staffs}
         loading={loading}
         currentUserId={currentUserId}
-        onEdit={openModal}
+        onViewDetail={handleViewDetailClick}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDeleteStaff}
       />

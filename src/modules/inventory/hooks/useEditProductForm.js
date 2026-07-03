@@ -1,11 +1,11 @@
 /**
  * useEditProductForm - Quản lý state + handlers của modal thêm/sửa sản phẩm.
- * Output: object chứa tất cả state + handlers để truyền xuống tab component.
  */
 import { useEffect, useState, useRef } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { useConversionUnits } from './useConversionUnits';
 import { useProductAttributes } from './useProductAttributes';
+import { getCategories, getBrands } from '../services/productService';
 
 const formatMoney = (value) => {
   const n = Number(value);
@@ -26,17 +26,15 @@ const mapProductToForm = (source = {}) => {
     return '';
   };
 
-  const resolveLocations = (source) => {
-    if (Array.isArray(source.shelfLocations) && source.shelfLocations.length)
-      return source.shelfLocations;
-    if (Array.isArray(source.locations) && source.locations.length) return source.locations;
-    const loc = source.shelfLocation || source.location || '';
+  const resolveLocations = (src) => {
+    if (Array.isArray(src.shelfLocations) && src.shelfLocations.length) return src.shelfLocations;
+    if (Array.isArray(src.locations) && src.locations.length) return src.locations;
+    const loc = src.shelfLocation || src.location || '';
     return loc ? [loc] : [];
   };
 
   const productId = source.productId || source.id || '';
   const productCode = source.productCode || source.code || '';
-
   const imageUrl = resolveImageUrl(source.imageUrl) || resolveImageUrl(source.image);
 
   const imageList = Array.isArray(source.images)
@@ -68,9 +66,9 @@ const mapProductToForm = (source = {}) => {
     shelfLocation: source.shelfLocation || source.location || '',
     specification: source.specification || '',
     specDetail: source.specificationDetail || source.specDetail || '',
-    unit: source.unit || 'Sản phẩm',
+    unit: source.unit || 'cái',
     baseUnit: {
-      name: source.unit || 'Sản phẩm',
+      name: source.unit || 'cái',
       price: source.salePrice ?? 0,
       directSale: source.directSale ?? true,
     },
@@ -120,14 +118,14 @@ export const useEditProductForm = ({
     shelfLocation: '',
     specification: '',
     specDetail: '',
-    unit: '',
+    unit: 'cái',
     weight: '',
     weightUnit: 'g',
     width: '',
     length: '',
     height: '',
-    sizeUnit: '',
-    baseUnit: { name: '', price: '', directSale: true },
+    sizeUnit: 'mm',
+    baseUnit: { name: 'cái', price: '', directSale: true },
     conversionUnits: [],
     attributes: [],
     productStatus: 'active',
@@ -153,20 +151,41 @@ export const useEditProductForm = ({
   const fileInputRef = useRef(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
-  // --- LS-backed lists ---
-  const [groups, persistGroups] = useLocalStorage('productGroups', () => {
-    const fromProducts = productList
-      .map((p) => p.group || p.categoryName || p.CategoryName || '')
-      .filter(Boolean);
-    return [...new Set(['Vật liệu thô', 'Sơn và Hóa chất', 'Kim khí', ...fromProducts])];
-  });
+  // --- API / LS lists cho Categories & Brands ---
+  const [groups, setGroups] = useState([]);
+  const [brands, setBrands] = useState([]);
 
-  const [brands, persistBrands] = useLocalStorage('productBrands', () => {
-    const fromProducts = productList
-      .map((p) => p.brand || p.brandName || p.BrandName || p.Brand || '')
-      .filter(Boolean);
-    return [...new Set(['Hòa Phát', 'Viettel', ...fromProducts])];
-  });
+  useEffect(() => {
+    let active = true;
+    const loadMetadata = async () => {
+      try {
+        const [catRes, brandRes] = await Promise.all([getCategories(), getBrands()]);
+        if (!active) return;
+        if (catRes?.success && Array.isArray(catRes?.data)) {
+          setGroups(catRes.data.map((item) => item.name));
+        } else {
+          // Fallback từ productList
+          const fromProducts = productList
+            .map((p) => p.group || p.categoryName || '')
+            .filter(Boolean);
+          setGroups([...new Set(fromProducts)]);
+        }
+
+        if (brandRes?.success && Array.isArray(brandRes?.data)) {
+          setBrands(brandRes.data.map((item) => item.name));
+        } else {
+          const fromProducts = productList.map((p) => p.brand || p.brandName || '').filter(Boolean);
+          setBrands([...new Set(fromProducts)]);
+        }
+      } catch (err) {
+        console.error('Lỗi tải categories/brands:', err);
+      }
+    };
+    loadMetadata();
+    return () => {
+      active = false;
+    };
+  }, [productList]);
 
   const [locations, persistLocations] = useLocalStorage('productLocations', ['Kệ A1', 'Kệ B2']);
 
@@ -175,29 +194,9 @@ export const useEditProductForm = ({
   const conv = useConversionUnits(form, setForm);
 
   // --- Modal toggles ---
-  const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [newGroupParent, setNewGroupParent] = useState('');
-  const [createBrandModalOpen, setCreateBrandModalOpen] = useState(false);
-  const [newBrandName, setNewBrandName] = useState('');
   const [createLocationModalOpen, setCreateLocationModalOpen] = useState(false);
   const [newLocationName, setNewLocationName] = useState('');
 
-  // --- Functional updaters cho modal Tạo mới (dùng giá trị state mới nhất, tránh stale closure) ---
-  const saveNewGroup = (name) => {
-    const n = (name || '').trim();
-    if (!n) return false;
-    persistGroups((prev) => (prev.includes(n) ? prev : [...prev, n]));
-    setForm((c) => ({ ...c, group: n }));
-    return true;
-  };
-  const saveNewBrand = (name) => {
-    const n = (name || '').trim();
-    if (!n) return false;
-    persistBrands((prev) => (prev.includes(n) ? prev : [...prev, n]));
-    setForm((c) => ({ ...c, brand: n }));
-    return true;
-  };
   const saveNewLocation = (name) => {
     const n = (name || '').trim();
     if (!n) return false;
@@ -206,7 +205,6 @@ export const useEditProductForm = ({
     return true;
   };
 
-  // --- Location helpers ---
   const addLocation = (loc) => {
     const name = (loc || '').trim();
     if (!name) return;
@@ -221,7 +219,6 @@ export const useEditProductForm = ({
     setForm((c) => ({ ...c, locations: (c.locations || []).filter((l) => l !== loc) }));
   };
 
-  // --- Image handlers ---
   const handleOpenFilePicker = () => {
     if (fileInputRef.current) fileInputRef.current.click();
   };
@@ -269,7 +266,6 @@ export const useEditProductForm = ({
     });
   };
 
-  // Thêm ảnh từ URL (không có File, chỉ lưu URL trực tiếp)
   const handleAddImageUrl = (url) => {
     const u = (url || '').trim();
     if (!u) return;
@@ -279,26 +275,28 @@ export const useEditProductForm = ({
         alert(`Chỉ được tối đa ${MAX_IMAGES} ảnh`);
         return prev;
       }
-      // Tránh thêm URL trùng
       if (prev.some((it) => (it.url || '') === u)) {
         alert('Link ảnh này đã được thêm');
         return prev;
       }
-      const newImg = {
-        id: crypto?.randomUUID
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        url: u,
-        file: null,
-        isUrl: true,
-      };
-      return [...prev, newImg];
+      return [
+        ...prev,
+        {
+          id: crypto?.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          url: u,
+          file: null,
+          isUrl: true,
+        },
+      ];
     });
   };
 
   useEffect(() => {
     setForm((c) => ({ ...c, image: images[0]?.url || '' }));
   }, [images]);
+
   useEffect(() => {
     setForm((c) => ({
       ...c,
@@ -331,7 +329,6 @@ export const useEditProductForm = ({
     setForm,
     images,
     fileInputRef,
-    // Attributes (from sub-hook)
     availableAttributes: attr.availableAttributes,
     persistAvailableAttributes: attr.persistAvailableAttributes,
     addAvailableAttribute: attr.addAvailableAttribute,
@@ -350,7 +347,6 @@ export const useEditProductForm = ({
     addAttrRow: attr.addAttrRow,
     updateAttr: attr.updateAttr,
     removeAttr: attr.removeAttr,
-    // Conversion units (from sub-hook)
     addConversionUnitModal: conv.addModal,
     setAddConversionUnitModal: conv.setAddModal,
     newConversionUnit: conv.newUnit,
@@ -358,21 +354,8 @@ export const useEditProductForm = ({
     addConversionUnitHandler: conv.addUnit,
     removeConversionUnit: conv.removeUnit,
     updateConversionUnit: conv.updateUnit,
-    // Groups
     groups,
-    setGroups: persistGroups,
-    persistGroups,
-    newGroupName,
-    setNewGroupName,
-    newGroupParent,
-    setNewGroupParent,
-    // Brands
     brands,
-    setBrands: persistBrands,
-    persistBrands,
-    newBrandName,
-    setNewBrandName,
-    // Locations
     locations,
     setLocations: persistLocations,
     persistLocations,
@@ -380,26 +363,16 @@ export const useEditProductForm = ({
     setNewLocationName,
     addLocation,
     removeLocation,
-    // Functional modal save helpers (tránh stale closure)
-    saveNewGroup,
-    saveNewBrand,
     saveNewLocation,
-    // Modal toggles
-    createGroupModalOpen,
-    setCreateGroupModalOpen,
-    createBrandModalOpen,
-    setCreateBrandModalOpen,
     createLocationModalOpen,
     setCreateLocationModalOpen,
     openDropdownId,
     setOpenDropdownId,
-    // Image handlers
     handleOpenFilePicker,
     handleUpload,
     handlePinImage,
     handleRemoveImage,
     handleAddImageUrl,
-    // Misc
     handleChange,
     handleSubmit,
     handleSaveDraft,

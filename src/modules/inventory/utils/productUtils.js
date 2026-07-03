@@ -1,26 +1,21 @@
-/**
- * Product Utils - Các hàm tiện ích xử lý dữ liệu sản phẩm.
- * Tách từ ProductManagement.jsx để tái sử dụng và giảm kích thước page.
- */
-
 export const extractProductList = (response) => {
   if (Array.isArray(response)) return response;
+  // Chuẩn API Envelopes mới: response.data.items
+  if (response?.data && Array.isArray(response.data.items)) return response.data.items;
   if (Array.isArray(response?.items)) return response.items;
   if (Array.isArray(response?.data)) return response.data;
-  if (Array.isArray(response?.data?.items)) return response.data.items;
-  if (Array.isArray(response?.result?.items)) return response.result.items;
   return [];
 };
 
 export const buildDimensionText = (product = {}) => {
-  const specification = product?.specification || product?.Specification || '';
+  const specification = product?.specification || '';
   if (specification) return specification;
 
-  const width = product?.width || product?.Width || '';
-  const length = product?.length || product?.Length || '';
-  const weight = product?.weight || product?.Weight || '';
-  const weightUnit = product?.weightUnit || product?.WeightUnit || '';
-  const sizeUnit = product?.sizeUnit || product?.SizeUnit || '';
+  const width = product?.width || '';
+  const length = product?.length || '';
+  const weight = product?.weight || '';
+  const weightUnit = product?.weightUnit || '';
+  const sizeUnit = product?.sizeUnit || '';
 
   const sizeParts = [width, length].filter(
     (v) => v !== undefined && v !== null && `${v}`.trim() !== ''
@@ -31,105 +26,53 @@ export const buildDimensionText = (product = {}) => {
   if (sizeText && weightText && sizeUnit) return `${sizeText}${sizeUnit}, ${weightText}`;
   if (sizeText && weightText) return `${sizeText}, ${weightText}`;
   if (sizeText && sizeUnit) return `${sizeText}${sizeUnit}`;
-  if (sizeText) return sizeText;
-  return weightText || '';
+  return sizeText || weightText || '';
 };
 
-const resolveImageUrl = (value) => {
-  if (!value) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object')
-    return (
-      value.url || value.Url || value.imageUrl || value.ImageUrl || value.src || value.path || ''
-    );
-  return '';
-};
-
-export const normalizeProduct = (product, index) => {
-  const id =
-    product?.id ||
-    product?.Id ||
-    product?.productId ||
-    product?.ProductId ||
-    product?.productCode ||
-    product?.ProductCode ||
-    `API-${index + 1}`;
-  const productId = product?.productId || product?.ProductId || id;
-  const productCode =
-    product?.productCode || product?.ProductCode || product?.code || product?.Code || id;
-  const stock = Number(
-    product?.actualStock ??
-      product?.ActualStock ??
-      product?.initialStock ??
-      product?.InitialStock ??
-      product?.stock ??
-      product?.Stock ??
-      0
-  );
+export const normalizeProduct = (product = {}, index = 0) => {
+  const id = product.id || product.productId || `API-${index + 1}`;
+  const actualStock = Number(product.actualStock ?? 0);
+  const availableStock = Number(product.availableStock ?? actualStock);
 
   return {
     id,
-    productId,
-    productCode,
-    name: product?.productName || product?.ProductName || product?.name || product?.Name || '',
-    image:
-      product?.image ||
-      product?.ImageUrl ||
-      product?.imageUrl ||
-      resolveImageUrl(Array.isArray(product?.images) ? product.images[0] : null) ||
-      resolveImageUrl(Array.isArray(product?.Images) ? product.Images[0] : null) ||
-      product?.thumbnailUrl ||
-      product?.Thumbnail ||
-      '',
-    unit: product?.unit || product?.Unit || '',
-    brand: product?.brandName || product?.BrandName || product?.brand || product?.Brand || '',
-    brandName: product?.brandName || product?.BrandName || '',
-    salePrice: Number(
-      product?.salePrice ??
-        product?.salePrice ??
-        product?.SalePrice ??
-        product?.price ??
-        product?.Price ??
-        0
-    ),
-    costPrice: Number(product?.costPrice ?? product?.CostPrice ?? 0),
-    stock,
-    reservedStock: Number(product?.reservedStock ?? product?.ReservedStock ?? 0),
-    availableStock: Number(product?.availableStock ?? product?.AvailableStock ?? stock),
-    location:
-      product?.shelfLocation ||
-      product?.ShelfLocation ||
-      product?.location ||
-      product?.Location ||
-      '',
-    shelfLocation:
-      product?.shelfLocation ||
-      product?.ShelfLocation ||
-      product?.location ||
-      product?.Location ||
-      '',
-    status: stock > 0 ? 'Sẵn hàng' : 'Hết hàng',
-    statusTone: stock > 0 ? 'green' : 'red',
-    createdAt: product?.createdAt || product?.CreatedAt || '',
-    group: product?.categoryName || product?.CategoryName || product?.group || product?.Group || '',
-    categoryName: product?.categoryName || product?.CategoryName || '',
-    barcode: product?.barcode || product?.Barcode || 'Chưa có',
-    specification: product?.specification || product?.Specification || '',
-    stockLevel:
-      (product?.minimumStock ?? product?.MinimumStock)
-        ? `${product?.minimumStock ?? product?.MinimumStock} - ${stock}`
-        : 'Chưa có',
-    minimumStock: Number(product?.minimumStock ?? product?.MinimumStock ?? 0),
-    weight: product?.weight || product?.Weight || 'Chưa có',
-    dimension: product?.dimension || product?.Dimension || buildDimensionText(product) || 'Chưa có',
-    supplier: product?.supplierName || product?.SupplierName || 'Chưa có',
-    itemType: product?.itemType || product?.ItemType || 'Hàng hóa thường',
-    directSale: Boolean(product?.directSale ?? product?.DirectSale ?? true),
-    salesChannelLinked: Boolean(
-      product?.salesChannelLinked ?? product?.SalesChannelLinked ?? false
-    ),
-    productStatus: (product?.isActive ?? product?.IsActive) === false ? 'inactive' : 'active',
-    estimatedOutAt: product?.estimatedOutAt || product?.EstimatedOutAt || '',
+    productId: id,
+    productCode: product.productCode || id,
+    name: product.productName || '',
+    barcode: product.barcode || 'Chưa có',
+    unit: product.unit || '',
+    brand: product.brandName || '',
+    brandName: product.brandName || '',
+    group: product.categoryName || '',
+    categoryName: product.categoryName || '',
+    supplierId: product.supplierId || null,
+    supplier: product.supplierName || 'Không xác định',
+    itemType: product.itemType || 'Goods',
+    costPrice: Number(product.costPrice ?? 0),
+    salePrice: Number(product.salePrice ?? 0),
+    stock: actualStock,
+    actualStock,
+    availableStock,
+    reservedStock: Number(product.reservedStock ?? 0),
+    location: product.shelfLocation || '',
+    shelfLocation: product.shelfLocation || '',
+    image: product.imageUrl || (Array.isArray(product.images) && product.images[0]) || '',
+    images: Array.isArray(product.images) ? product.images : [],
+    attributes: Array.isArray(product.attributes) ? product.attributes : [],
+    conversionUnits: Array.isArray(product.conversionUnits) ? product.conversionUnits : [],
+    specification: product.specification || '',
+    weight: product.weight || null,
+    weightUnit: product.weightUnit || '',
+    width: product.width || null,
+    length: product.length || null,
+    height: product.height || null,
+    dimension: buildDimensionText(product) || 'Chưa có',
+    status: product.status || (availableStock > 0 ? 'Sẵn hàng' : 'Hết hàng'),
+    statusTone: product.statusTone || (availableStock > 0 ? 'green' : 'red'),
+    productStatus: product.productStatus || (product.status === 'inactive' ? 'inactive' : 'active'),
+    estimatedOutAt: product.estimatedOutAt || '',
+    directSale: Boolean(product.directSale ?? true),
+    salesChannelLinked: Boolean(product.salesChannelLinked ?? false),
   };
 };
 
@@ -154,47 +97,50 @@ export const buildSpecification = (form) => {
   return `${form.height || ''}`.trim();
 };
 
+// Chuẩn hóa Payload CREATE (ProductUpsertDto - camelCase chuẩn)
 export const createProductPayload = (form) => ({
-  ProductCode: form.productCode || form.id || '',
-  Barcode: form.barcode || '',
-  ProductName: form.name || '',
-  Unit: form.baseUnit?.name || form.unit || 'Cái',
-  Specification: buildSpecification(form),
-  SpecificationDetail: form.specDetail || '',
-  CostPrice: Number(form.costPrice || 0),
-  SalePrice: Number(form.salePrice || 0),
-  ActualStock: Number(form.stock || 0),
-  ReservedStock: Number(form.reservedStock || 0),
-  AvailableStock: Number(form.availableStock ?? form.stock ?? 0),
-  MinimumStock: Number(form.minimumStock ?? form.stockMin ?? 0),
-  ShelfLocation: form.shelfLocation || form.location || form.locations?.[0] || '',
-  ImageUrl: form.image || '',
-  Images: (form.images || []).map((i) => i?.url || ''),
-  CategoryName: form.group || '',
-  BrandName: form.brand || '',
-  IsActive: form.productStatus !== 'inactive',
+  productCode: form.productCode || form.id || `SP${Date.now()}`,
+  productName: form.name || form.productName || '',
+  barcode: form.barcode || '',
+  unit: form.baseUnit?.name || form.unit || 'cái',
+  brandName: form.brand || '',
+  categoryName: form.group || '',
+  supplierId: form.supplierId || null,
+  itemType: form.itemType || 'Goods',
+  costPrice: Number(form.costPrice || 0),
+  salePrice: Number(form.salePrice || 0),
+  actualStock: Number(form.stock || 0),
+  availableStock: Number(form.availableStock ?? form.stock ?? 0),
+  reservedStock: Number(form.reservedStock || 0),
+  shelfLocation: form.shelfLocation || form.location || form.locations?.[0] || '',
+  weight: Number(form.weight) || null,
+  weightUnit: form.weightUnit || 'g',
+  width: Number(form.width) || null,
+  length: Number(form.length) || null,
+  height: Number(form.height) || null,
+  specification: buildSpecification(form),
+  imageUrl: form.image || '',
+  images: (form.images || [])
+    .map((i) => (typeof i === 'string' ? i : i?.url || ''))
+    .filter(Boolean),
+  attributes: (form.attributes || []).map((a) => ({
+    name: a.name || '',
+    value: a.value || '',
+  })),
+  conversionUnits: (form.conversionUnits || []).map((u) => ({
+    name: u.name || '',
+    rate: Number(u.rate) || 1,
+    price: Number(u.price) || 0,
+    directSale: u.directSale !== false,
+  })),
 });
 
-export const updateProductPayload = (form) => ({
-  ProductCode: form.productCode || form.id || '',
-  Barcode: form.barcode || '',
-  ProductName: form.name || '',
-  Unit: form.baseUnit?.name || form.unit || 'Cái',
-  Specification: buildSpecification(form),
-  SpecificationDetail: form.specDetail || '',
-  CostPrice: Number(form.costPrice || 0),
-  SalePrice: Number(form.salePrice || 0),
-  ActualStock: Number(form.stock || 0),
-  ReservedStock: Number(form.reservedStock || 0),
-  AvailableStock: Number(form.availableStock ?? form.stock ?? 0),
-  MinimumStock: Number(form.minimumStock ?? form.stockMin ?? 0),
-  ShelfLocation: form.shelfLocation || form.location || form.locations?.[0] || '',
-  ImageUrl: form.image || '',
-  Images: (form.images || []).map((i) => i?.url || ''),
-  CategoryName: form.group || '',
-  BrandName: form.brand || '',
-  IsActive: form.productStatus !== 'inactive',
-});
+// Chuẩn hóa Payload UPDATE (PUT không cập nhật productCode theo đúng Docs)
+export const updateProductPayload = (form) => {
+  const base = createProductPayload(form);
+  delete base.productCode; // Không gửi mã sản phẩm khi update
+  return base;
+};
 
 export const formatMoney = (value) => new Intl.NumberFormat('vi-VN').format(value);
 
@@ -207,31 +153,11 @@ export {
   getEstimatedPresetRange,
 } from './dateUtils';
 
-/* ========== Constants ========== */
 export const toneClass = {
   green: 'bg-green-100 text-green-700',
   amber: 'bg-amber-100 text-amber-700',
   red: 'bg-red-100 text-red-700',
 };
-
-export const estimatedQuickRanges = [
-  { label: 'Hôm nay', group: 'estimated' },
-  { label: 'Ngày mai', group: 'estimated' },
-  { label: '3 ngày tới', group: 'estimated' },
-  { label: '5 ngày tới', group: 'estimated' },
-  { label: '7 ngày tới', group: 'estimated' },
-  { label: '30 ngày tới', group: 'estimated' },
-  { label: 'Tháng này', group: 'estimated' },
-];
-
-export const createdQuickRanges = [
-  { label: 'Hôm nay', group: 'created' },
-  { label: 'Hôm qua', group: 'created' },
-  { label: 'Tuần này', group: 'created' },
-  { label: 'Tuần trước', group: 'created' },
-  { label: 'Tháng này', group: 'created' },
-  { label: 'Tháng trước', group: 'created' },
-];
 
 export const statusOptions = [
   { label: 'Đang hoạt động', value: 'active' },

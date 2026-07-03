@@ -1,24 +1,42 @@
 /**
  * TRANG HÀNG HÓA - Consolidated
- * Gộp từ: ProductTable, ProductFilterSidebar, FilterPopovers, ProductDetailPanel,
- * ProductInfoTab, ProductDescriptionTab, EditProductModal, EditProductModals,
- * Section, ImageUploader, AttributeEditor, UnitManagement
  */
 import { useState, useEffect, Fragment } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import { useProductFilters } from '../hooks/useProductFilters';
-import { getProduct } from '../services/productService';
+import {
+  getProduct,
+  getCategories,
+  renameCategory,
+  deleteCategory,
+  getBrands,
+  renameBrand,
+  deleteBrand,
+} from '../services/productService';
 import { useProductList } from '../hooks/useProductList';
 import { useEditProductForm } from '../hooks/useEditProductForm';
-import {
-  estimatedQuickRanges,
-  createdQuickRanges,
-  statusOptions,
-  formatMoney,
-} from '../utils/productUtils';
+import { formatMoney } from '../utils/productUtils';
 
-/* ==================== UTILITY ==================== */
+/* ==================== CONFIG / UTILITY ==================== */
+const estimatedQuickRanges = [
+  { label: 'Hôm nay', group: 'estimated' },
+  { label: 'Ngày mai', group: 'estimated' },
+  { label: '3 ngày tới', group: 'estimated' },
+  { label: '5 ngày tới', group: 'estimated' },
+  { label: '7 ngày tới', group: 'estimated' },
+  { label: '30 ngày tới', group: 'estimated' },
+  { label: 'Tháng này', group: 'estimated' },
+];
+
+const createdQuickRanges = [
+  { label: 'Hôm nay', group: 'created' },
+  { label: 'Hôm qua', group: 'created' },
+  { label: 'Tuần này', group: 'created' },
+  { label: 'Tuần trước', group: 'created' },
+  { label: 'Tháng này', group: 'created' },
+  { label: 'Tháng trước', group: 'created' },
+];
+
 const fmtMoney = (v) => formatMoney(v);
 const fmtDateTime = (dateStr) => {
   if (!dateStr) return '---';
@@ -37,57 +55,9 @@ const DatePickerPopup = ({ onCancel, onApply }) => (
   <div className="absolute left-[calc(100%+10px)] top-14 z-30 w-[620px] rounded-xl border border-slate-200 bg-white shadow-2xl">
     <div className="px-4 pb-3 pt-4">
       <p className="text-sm text-slate-500">
-        Từ ngày: <span className="font-semibold text-slate-800">17/05/2026</span> - Đến ngày:{' '}
-        <span className="font-semibold text-slate-800">17/05/2026</span>
+        Từ ngày: <span className="font-semibold text-slate-800">01/05/2026</span> - Đến ngày:{' '}
+        <span className="font-semibold text-slate-800">31/05/2026</span>
       </p>
-      <div className="mt-4 grid grid-cols-2 gap-4">
-        {[0, 1].map((side) => (
-          <div key={side}>
-            <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2">
-              <button
-                type="button"
-                className="rounded-lg border border-slate-300 p-1 text-slate-500"
-              >
-                <Icon name="chevron_left" className="text-[16px]" />
-              </button>
-              <p className="text-lg text-slate-700">Tháng 5 2026</p>
-              <button
-                type="button"
-                className="rounded-lg border border-slate-300 p-1 text-slate-500"
-              >
-                <Icon name="chevron_right" className="text-[16px]" />
-              </button>
-            </div>
-            <div className="grid grid-cols-7 gap-y-3 text-center text-sm text-slate-400">
-              {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d) => (
-                <span key={`${side}-${d}`}>{d}</span>
-              ))}
-              {(side === 0
-                ? [27, 28, 29, 30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-                : [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 1, 2, 3, 4, 5, 6, 7]
-              ).map((day) => (
-                <span
-                  key={`${side}-${day}`}
-                  className={
-                    side === 0
-                      ? day < 4
-                        ? 'text-slate-300'
-                        : 'text-slate-700'
-                      : day < 8
-                        ? 'text-slate-700'
-                        : 'text-slate-400'
-                  }
-                >
-                  {day}
-                </span>
-              ))}
-              <span className="flex h-10 w-10 items-center justify-center justify-self-center rounded-full bg-blue-600 font-bold text-white">
-                17
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
     <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
       <button type="button" className="text-base font-semibold text-blue-600" onClick={onCancel}>
@@ -120,10 +90,10 @@ const QuickRangePopover = ({ ranges, onSelect, onReset }) => (
   >
     <div className={`grid gap-4 ${ranges.length <= 3 ? 'grid-cols-3' : 'grid-cols-5'}`}>
       {ranges.map((col) => (
-        <div key={col.title}>
-          <p className="mb-2 text-sm font-bold text-slate-800">{col.title}</p>
+        <div key={col.title || col.label}>
+          <p className="mb-2 text-sm font-bold text-slate-800">{col.title || 'Mốc thời gian'}</p>
           <div className="flex flex-col gap-2">
-            {col.options.map((opt) => (
+            {(col.options || [col.label]).map((opt) => (
               <button
                 key={opt}
                 type="button"
@@ -184,8 +154,60 @@ const Section = ({ title, subtitle, defaultOpen = true, children }) => {
   );
 };
 
+const AutocompleteInput = ({ label, value, onChange, options = [], placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [filteredOptions, setFilteredOptions] = useState(options);
+
+  useEffect(() => {
+    const kw = (value || '').toLowerCase();
+    setFilteredOptions(options.filter((opt) => opt.toLowerCase().includes(kw)));
+  }, [value, options]);
+
+  return (
+    <div className="relative space-y-2">
+      <label className="text-label-md text-on-surface-variant">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value || ''}
+          placeholder={placeholder || 'Chọn hoặc nhập mới...'}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 focus:ring-0"
+        />
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          <Icon name="expand_more" size={18} />
+        </button>
+      </div>
+      {isOpen && filteredOptions.length > 0 && (
+        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-xl">
+          {filteredOptions.map((opt) => (
+            <li
+              key={opt}
+              onClick={() => {
+                onChange(opt);
+                setIsOpen(false);
+              }}
+              className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+            >
+              {opt}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 const ImageUploader = ({
-  images,
+  images = [],
   maxImages,
   fileInputRef,
   onOpenFilePicker,
@@ -271,7 +293,7 @@ const ImageUploader = ({
           )}
           {images.map((img, idx) => (
             <div
-              key={img.id}
+              key={img.id || idx}
               className="relative h-20 w-20 overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb]"
             >
               <button
@@ -360,7 +382,7 @@ const AttributeEditor = ({ f }) => (
                 className="absolute bottom-full left-0 z-50 mb-2 w-full origin-bottom transform overflow-hidden rounded-lg bg-white shadow-lg"
                 style={{ padding: '8px 0', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
               >
-                {f.availableAttributes.map((item, aidx) => (
+                {(f.availableAttributes || []).map((item, aidx) => (
                   <div
                     key={item + aidx}
                     onClick={() => {
@@ -461,7 +483,7 @@ const UnitManagement = ({ f }) => (
           onChange={(e) =>
             f.handleChange('baseUnit', {
               ...(f.form.baseUnit || {}),
-              price: Number(e.target.value.replaceAll(',', '')) || 0,
+              price: Number(e.target.value.replaceAll('.', '').replaceAll(',', '')) || 0,
             })
           }
         />
@@ -494,38 +516,29 @@ const UnitManagement = ({ f }) => (
               <span className="text-[14px] font-medium text-gray-700">1</span>
               <span className="text-[14px] font-semibold text-gray-700">{unit.name}</span>
               <span className="text-[16px] font-semibold text-gray-600">=</span>
-              <span className="text-[14px] font-medium text-gray-700">{unit.convertValue}</span>
-              <span className="text-[14px] font-semibold text-gray-700">{unit.convertFrom}</span>
+              <span className="text-[14px] font-medium text-gray-700">
+                {unit.rate || unit.convertValue}
+              </span>
+              <span className="text-[14px] font-semibold text-gray-700">
+                {f.form.baseUnit?.name || 'Cái'}
+              </span>
             </div>
             <div className="min-w-[20px] flex-1" />
             <div className="min-w-[100px] text-right">
               <span className="text-[14px] text-gray-600">
-                {(() => {
-                  const base = Number(f.form.baseUnit?.price) || 0;
-                  const unitsByName = (f.form.conversionUnits || []).reduce((acc, u) => {
-                    acc[u.name] = u;
-                    return acc;
-                  }, {});
-                  const computeMultiplierForUnit = (uName, visited = new Set()) => {
-                    if (!uName || visited.has(uName)) return null;
-                    if (uName === f.form.baseUnit?.name) return 1;
-                    const uu = unitsByName[uName];
-                    if (!uu) return null;
-                    visited.add(uName);
-                    if (uu.convertFrom === f.form.baseUnit?.name) return uu.convertValue;
-                    const pm = computeMultiplierForUnit(uu.convertFrom, visited);
-                    return pm == null ? null : uu.convertValue * pm;
-                  };
-                  const mult = computeMultiplierForUnit(unit.name);
-                  const price = mult && base ? base * mult : unit.calculatedPrice || 0;
-                  return price ? fmtMoney(price) : '-';
-                })()}
+                {unit.price
+                  ? fmtMoney(unit.price)
+                  : fmtMoney(
+                      (Number(f.form.baseUnit?.price) || 0) *
+                        (Number(unit.rate || unit.convertValue) || 1)
+                    )}{' '}
+                đ
               </span>
             </div>
             <div className="flex flex-none items-center space-x-2">
               <input
                 type="checkbox"
-                checked={unit.directSale || false}
+                checked={unit.directSale !== false}
                 onChange={(e) => f.updateConversionUnit(unit.id, 'directSale', e.target.checked)}
                 className="h-4 w-4 rounded border-outline-variant text-[#1E6BB8]"
               />
@@ -554,7 +567,7 @@ const UnitManagement = ({ f }) => (
 );
 
 /* ==================== MODAL SUB-COMPONENTS ==================== */
-const ModalWrapper = ({ children, onClose }) => (
+const ModalWrapper = ({ children }) => (
   <div className="fixed inset-0 z-[320] flex items-center justify-center bg-black/40">
     <div className="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-2xl">
       {children}
@@ -583,100 +596,6 @@ const ModalFooter = ({ onCancel, onSave, saveLabel = 'Lưu', extraLeft }) => (
     </div>
   </div>
 );
-
-const CreateGroupModal = ({
-  open,
-  groups,
-  newGroupName,
-  setNewGroupName,
-  newGroupParent,
-  setNewGroupParent,
-  onClose,
-  onSave,
-}) => {
-  if (!open) return null;
-  const handleKey = (e) => {
-    if (e.key === 'Enter' && (newGroupName || '').trim()) {
-      e.preventDefault();
-      onSave?.();
-    }
-  };
-  return (
-    <ModalWrapper>
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h3 className="text-lg font-semibold">Tạo nhóm hàng</h3>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-          <Icon name="close" />
-        </button>
-      </div>
-      <div className="space-y-4 p-6">
-        <div>
-          <label className="mb-2 block text-sm text-gray-700">
-            Tên nhóm <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            onKeyDown={handleKey}
-            className="w-full rounded-md border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
-            autoFocus
-          />
-        </div>
-        <div>
-          <label className="mb-2 block text-sm text-gray-700">Nhóm cha</label>
-          <select
-            value={newGroupParent}
-            onChange={(e) => setNewGroupParent(e.target.value)}
-            className="w-full rounded-md border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Chọn nhóm hàng</option>
-            {(Array.isArray(groups) ? groups : []).map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <ModalFooter onCancel={onClose} onSave={onSave} />
-    </ModalWrapper>
-  );
-};
-
-const CreateBrandModal = ({ open, newBrandName, setNewBrandName, onClose, onSave }) => {
-  if (!open) return null;
-  const handleKey = (e) => {
-    if (e.key === 'Enter' && (newBrandName || '').trim()) {
-      e.preventDefault();
-      onSave?.();
-    }
-  };
-  return (
-    <ModalWrapper>
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h3 className="text-lg font-semibold">Tạo thương hiệu</h3>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-          <Icon name="close" />
-        </button>
-      </div>
-      <div className="p-6">
-        <label className="mb-2 block text-sm text-gray-700">
-          Tên thương hiệu <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={newBrandName}
-          onChange={(e) => setNewBrandName(e.target.value)}
-          onKeyDown={handleKey}
-          className="w-full rounded-md border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
-          autoFocus
-        />
-      </div>
-      <ModalFooter onCancel={onClose} onSave={onSave} />
-    </ModalWrapper>
-  );
-};
 
 const CreateLocationModal = ({ open, newLocationName, setNewLocationName, onClose, onSave }) => {
   if (!open) return null;
@@ -787,32 +706,6 @@ const AddConversionUnitModal = ({
   onSave,
 }) => {
   if (!open) return null;
-  const base = Number(form.baseUnit?.price) || 0;
-  const cv = Number(newConversionUnit.convertValue) || 0;
-  const from = newConversionUnit.convertFrom;
-  const unitsByName = (form.conversionUnits || []).reduce((acc, u) => {
-    acc[u.name] = u;
-    return acc;
-  }, {});
-  const computeMultiplierPreview = (fromName, visited = new Set()) => {
-    if (!fromName || visited.has(fromName)) return null;
-    if (!form.baseUnit?.name || fromName === form.baseUnit.name) return 1;
-    const u = unitsByName[fromName];
-    if (!u) return null;
-    visited.add(fromName);
-    if (u.convertFrom === form.baseUnit.name) return u.convertValue;
-    const pm = computeMultiplierPreview(u.convertFrom, visited);
-    return pm == null ? null : u.convertValue * pm;
-  };
-  const previewMultiplier = from
-    ? from === form.baseUnit?.name
-      ? cv
-      : (() => {
-          const pm = computeMultiplierPreview(from);
-          return pm == null ? null : cv * pm;
-        })()
-    : null;
-  const previewPrice = previewMultiplier && base ? base * previewMultiplier : 0;
   return (
     <ModalWrapper>
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
@@ -826,76 +719,43 @@ const AddConversionUnitModal = ({
           <label className="mb-2 block text-sm text-gray-700">Tên đơn vị</label>
           <input
             type="text"
-            value={newConversionUnit.name}
+            value={newConversionUnit.name || ''}
             onChange={(e) => setNewConversionUnit({ ...newConversionUnit, name: e.target.value })}
             placeholder="Ví dụ: lốc, thùng"
             className="w-full rounded-md border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
             autoFocus
           />
         </div>
-        <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
-          <div className="text-sm font-medium text-blue-900">Công thức quy đổi:</div>
-          <div className="mt-2 text-base">
-            <span className="font-semibold">1 {newConversionUnit.name || '[tên đơn vị]'}</span>
-            <span className="mx-2">=</span>
-            <span className="font-semibold">{newConversionUnit.convertValue || '?'}</span>
-            <span className="ml-2">{newConversionUnit.convertFrom || '[đơn vị gốc]'}</span>
-          </div>
-        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-2 block text-sm text-gray-700">Giá trị quy đổi</label>
+            <label className="mb-2 block text-sm text-gray-700">Giá trị quy đổi (Rate)</label>
             <input
               type="number"
-              value={newConversionUnit.convertValue}
+              value={newConversionUnit.rate || newConversionUnit.convertValue || ''}
               onChange={(e) =>
-                setNewConversionUnit({ ...newConversionUnit, convertValue: e.target.value })
+                setNewConversionUnit({
+                  ...newConversionUnit,
+                  rate: e.target.value,
+                  convertValue: e.target.value,
+                })
               }
-              placeholder="Ví dụ: 4, 20"
+              placeholder="Ví dụ: 12, 24"
               min="1"
               className="w-full rounded-md border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm text-gray-700">Đơn vị quy đổi từ</label>
-            <select
-              value={newConversionUnit.convertFrom}
+            <label className="mb-2 block text-sm text-gray-700">Giá bán</label>
+            <input
+              type="number"
+              value={newConversionUnit.price || ''}
               onChange={(e) =>
-                setNewConversionUnit({ ...newConversionUnit, convertFrom: e.target.value })
+                setNewConversionUnit({ ...newConversionUnit, price: e.target.value })
               }
-              className="w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
-            >
-              <option value="">Chọn đơn vị</option>
-              {form.baseUnit?.name && (
-                <option value={form.baseUnit.name}>{form.baseUnit.name}</option>
-              )}
-              {(form.conversionUnits || []).map((u) => (
-                <option key={u.id} value={u.name}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+              placeholder="Giá bán của đơn vị này"
+              className="w-full rounded-md border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+            />
           </div>
-        </div>
-        <div>
-          <label className="mb-2 block text-sm text-gray-700">Giá bán (tự tính)</label>
-          <div className="w-full rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-right text-sm text-gray-700">
-            {previewPrice ? fm(previewPrice) : '-'}
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="direct-sell-conv"
-            checked={newConversionUnit.directSale}
-            onChange={(e) =>
-              setNewConversionUnit({ ...newConversionUnit, directSale: e.target.checked })
-            }
-            className="h-4 w-4 rounded border-gray-300 text-[#1E6BB8]"
-          />
-          <label htmlFor="direct-sell-conv" className="text-sm text-gray-700">
-            Cho phép bán đơn vị này
-          </label>
         </div>
       </div>
       <ModalFooter onCancel={onClose} onSave={onSave} saveLabel="Thêm" />
@@ -903,15 +763,215 @@ const AddConversionUnitModal = ({
   );
 };
 
+/* ==================== CATEGORY / BRAND MANAGER MODAL ==================== */
+const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
+  const [activeTab, setActiveTab] = useState('categories');
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editingName, setEditingName] = useState('');
+  const [newNameInput, setNewNameInput] = useState('');
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const res = activeTab === 'categories' ? await getCategories() : await getBrands();
+      if (res?.success && Array.isArray(res?.data)) {
+        setItems(res.data);
+      } else {
+        setItems([]);
+      }
+    } catch (err) {
+      console.error('Lỗi lấy danh sách metadata:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeTab]);
+
+  const handleRename = async (oldName) => {
+    const trimmed = (newNameInput || '').trim();
+    if (!trimmed || trimmed === oldName) {
+      setEditingName('');
+      return;
+    }
+    try {
+      const res =
+        activeTab === 'categories'
+          ? await renameCategory(oldName, trimmed)
+          : await renameBrand(oldName, trimmed);
+      if (res?.success) {
+        alert(res?.message || 'Đổi tên thành công');
+        setEditingName('');
+        loadData();
+        onSuccess?.();
+      }
+    } catch (err) {
+      alert(err?.data?.message || 'Lỗi đổi tên');
+    }
+  };
+
+  const handleDelete = async (item) => {
+    const isCat = activeTab === 'categories';
+    const label = isCat ? 'nhóm hàng' : 'thương hiệu';
+    if (
+      !window.confirm(
+        `Thao tác này sẽ gỡ ${label} "${item.name}" khỏi ${item.productCount} sản phẩm.\nBạn có chắc chắn muốn tiếp tục?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = isCat ? await deleteCategory(item.name) : await deleteBrand(item.name);
+      if (res?.success) {
+        alert(res?.message || 'Xóa thành công');
+        loadData();
+        onSuccess?.();
+      }
+    } catch (err) {
+      alert(err?.data?.message || 'Lỗi khi xóa');
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[350] flex items-center justify-center bg-black/50 p-4">
+      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <h3 className="text-lg font-bold text-gray-800">Quản lý Nhóm hàng & Thương hiệu</h3>
+          <button onClick={onClose} className="rounded-full p-1 hover:bg-gray-100">
+            <Icon name="X" size={20} className="text-gray-500" />
+          </button>
+        </div>
+        <div className="flex border-b border-gray-200 bg-gray-50 px-6">
+          <button
+            type="button"
+            onClick={() => setActiveTab('categories')}
+            className={`py-3 font-semibold ${activeTab === 'categories' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          >
+            Nhóm hàng (Categories)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('brands')}
+            className={`ml-8 py-3 font-semibold ${activeTab === 'brands' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          >
+            Thương hiệu (Brands)
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="py-8 text-center text-gray-400">Đang tải dữ liệu...</div>
+          ) : items.length === 0 ? (
+            <div className="py-8 text-center text-gray-400">Chưa có dữ liệu nào.</div>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200 text-left text-xs font-bold uppercase text-gray-500">
+                  <th className="pb-3">Tên</th>
+                  <th className="pb-3 text-center">Số lượng sản phẩm</th>
+                  <th className="pb-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {items.map((item) => (
+                  <tr key={item.name} className="hover:bg-gray-50">
+                    <td className="py-3 font-medium text-gray-800">
+                      {editingName === item.name ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={newNameInput}
+                            onChange={(e) => setNewNameInput(e.target.value)}
+                            className="rounded border border-blue-500 px-2 py-1 text-sm focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRename(item.name)}
+                            className="font-bold text-blue-600 hover:underline"
+                          >
+                            Lưu
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingName('')}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      ) : (
+                        item.name
+                      )}
+                    </td>
+                    <td className="py-3 text-center">
+                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+                        {item.productCount} Sản phẩm
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      {editingName !== item.name && (
+                        <div className="flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingName(item.name);
+                              setNewNameInput(item.name);
+                            }}
+                            className="text-gray-500 hover:text-blue-600"
+                            title="Đổi tên"
+                          >
+                            <Icon name="edit" size={18} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            className="text-gray-500 hover:text-red-600"
+                            title="Xóa / Gỡ khỏi sản phẩm"
+                          >
+                            <Icon name="delete" size={18} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-gray-200 px-5 py-2 font-semibold text-gray-700 hover:bg-gray-300"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ==================== PRODUCT DETAIL PANEL ==================== */
 const SummaryBar = ({ row }) => {
   const items = [
     { label: 'Mã SP', value: row.productCode || row.id },
-    { label: 'Tên SP', value: row.name || row.productName },
+    { label: 'Tên SP', value: row.productName || row.name },
     { label: 'Giá bán', value: `${fmtMoney(row.salePrice)} đ` },
     { label: 'Giá vốn', value: `${fmtMoney(row.costPrice)} đ` },
-    { label: 'Tồn kho', value: row.actualStock ?? row.stock },
-    { label: 'Trạng thái', value: row.isActive ? 'Đang bán' : 'Ngừng bán' },
+    { label: 'Tồn kho', value: row.actualStock ?? row.stock ?? 0 },
+    {
+      label: 'Trạng thái',
+      value: row.isActive !== false && row.status !== 'inactive' ? 'Đang bán' : 'Ngừng bán',
+    },
   ];
   return (
     <div className="flex flex-wrap gap-x-8 gap-y-2 border-b border-slate-200 pb-4">
@@ -938,7 +998,7 @@ const InfoTabPanel = ({ row, loading }) => {
               row.image ||
               'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=300&auto=format&fit=crop'
             }
-            alt={row.name}
+            alt={row.productName || row.name}
             className="h-full w-full object-cover"
           />
         </div>
@@ -963,15 +1023,15 @@ const InfoTabPanel = ({ row, loading }) => {
       <div className="mb-6 grid grid-cols-1 gap-x-12 gap-y-6 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ['Mã hàng', row.productCode || row.id],
-          ['Mã vạch', row.barcode],
-          ['Tồn thực tế', row.actualStock ?? row.stock],
-          ['Tồn khả dụng', row.availableStock ?? row.stock],
+          ['Mã vạch', row.barcode || 'Chưa có'],
+          ['Tồn thực tế', row.actualStock ?? row.stock ?? 0],
+          ['Tồn khả dụng', row.availableStock ?? row.stock ?? 0],
           ['Giá vốn', `${fmtMoney(row.costPrice)} đ`],
           ['Giá bán', `${fmtMoney(row.salePrice)} đ`],
           ['Thương hiệu', row.brandName || row.brand || 'Chưa có'],
           ['Vị trí', row.shelfLocation || row.location || 'Chưa có'],
-          ['Trọng lượng', row.weight ? `${row.weight} ${row.weightUnit}` : 'Chưa có'],
-          ['Kích thước', row.specificationDetail || 'Chưa có'],
+          ['Trọng lượng', row.weight ? `${row.weight} ${row.weightUnit || 'g'}` : 'Chưa có'],
+          ['Kích thước', row.specification || row.specificationDetail || 'Chưa có'],
         ].map(([label, value]) => (
           <div key={label} className="space-y-1 border-b border-slate-100 pb-3">
             <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">
@@ -1071,7 +1131,7 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onDelete?.(row.productId || row.id);
+            onDelete?.(row.id || row.productId);
           }}
           className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-red-600"
         >
@@ -1107,7 +1167,9 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
               >
-                {row.isActive !== false ? 'Ngừng kinh doanh' : 'Mở bán lại'}
+                {row.isActive !== false && row.status !== 'inactive'
+                  ? 'Ngừng kinh doanh'
+                  : 'Mở bán lại'}
               </button>
             </div>
           )}
@@ -1116,7 +1178,7 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
       <StatusToggleModal
         open={statusModalOpen}
         onClose={() => setStatusModalOpen(false)}
-        isActive={row.isActive}
+        isActive={row.isActive !== false && row.status !== 'inactive'}
         onConfirm={() => onToggleStatus?.(row.id || row.productId, row.isActive)}
       />
     </div>
@@ -1137,18 +1199,11 @@ const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) => {
     setFullData((prev) => ({
       ...prev,
       ...row,
-      productName: row.name || prev.productName,
-      productCode: row.productCode || row.id || prev.productCode,
-      actualStock: row.stock ?? prev.actualStock,
-      availableStock: row.availableStock ?? row.stock ?? prev.availableStock,
-      isActive: row.isActive !== undefined ? row.isActive : prev.isActive,
-      salePrice: row.salePrice ?? prev.salePrice,
-      costPrice: row.costPrice ?? prev.costPrice,
     }));
     const fetchDetail = async () => {
-      const currentId = row?.productId || row?.id;
+      const currentId = row?.id || row?.productId;
       if (!currentId) return;
-      if (!fullData?.productName) setLoading(true);
+      setLoading(true);
       try {
         const res = await getProduct(currentId);
         if (res?.success && res?.data) setFullData((prev) => ({ ...prev, ...res.data }));
@@ -1159,11 +1214,8 @@ const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) => {
       }
     };
     fetchDetail();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row]);
-  useEffect(() => {
-    setFullData((prev) => ({ ...prev, ...row }));
-  }, [row]);
+
   return (
     <div className="overflow-hidden border-l-4 border-blue-500 bg-[#f8fbff] p-4 sm:p-6">
       <SummaryBar row={fullData} />
@@ -1214,14 +1266,14 @@ const ProductTable = ({
 }) => {
   const isAllSelected = rows.length > 0 && selectedIds.length === rows.length;
   const columns = [
-    ['Mã hàng', 'id', 'w-[140px]'],
+    ['Mã hàng', 'code', 'w-[140px]'],
     ['Tên hàng', 'name', 'w-[240px]'],
-    ['Đơn vị', 'unit', 'w-[90px]'],
-    ['Thương hiệu', 'brand', 'w-[130px]'],
-    ['Giá bán', 'salePrice', 'w-[110px]'],
-    ['Giá vốn', 'costPrice', 'w-[110px]'],
+    ['Đơn vị', '', 'w-[90px]'],
+    ['Thương hiệu', '', 'w-[130px]'],
+    ['Giá bán', 'saleprice', 'w-[110px]'],
+    ['Giá vốn', 'costprice', 'w-[110px]'],
     ['Tồn kho', 'stock', 'w-[110px]'],
-    ['Vị trí kho', 'location', 'w-[110px]'],
+    ['Vị trí kho', '', 'w-[110px]'],
     ['Hoạt động', '', 'w-[90px]'],
     ['Thời gian tạo', 'createdat', 'w-[160px]'],
   ];
@@ -1266,14 +1318,14 @@ const ProductTable = ({
       </thead>
       <tbody className="divide-y divide-slate-100 text-sm">
         {rows.map((row) => {
-          const isExpanded = expandedId === row.id;
-          const currentId = row.productId || row.id;
+          const isExpanded = expandedId === (row.id || row.productId);
+          const currentId = row.id || row.productId;
           const isSelected = selectedIds.includes(currentId);
           return (
-            <Fragment key={row.id}>
+            <Fragment key={currentId}>
               <tr
                 className={`group cursor-pointer transition-colors hover:bg-blue-50 ${isExpanded || isSelected ? 'bg-blue-50' : ''}`}
-                onClick={() => onToggleExpand?.(row.id)}
+                onClick={() => onToggleExpand?.(currentId)}
               >
                 <td className="px-4 py-3 text-center">
                   <input
@@ -1297,10 +1349,10 @@ const ProductTable = ({
                 <td className="overflow-hidden px-4 py-3">
                   <div className="flex items-center gap-3 overflow-hidden">
                     <div className="flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100">
-                      {row.image ? (
+                      {row.imageUrl || row.image ? (
                         <img
-                          src={row.image}
-                          alt={row.name}
+                          src={row.imageUrl || row.image}
+                          alt={row.productName || row.name}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -1312,12 +1364,14 @@ const ProductTable = ({
                     </span>
                   </div>
                 </td>
-                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-700">{row.name}</td>
+                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-700">
+                  {row.productName || row.name}
+                </td>
                 <td className="truncate whitespace-nowrap px-4 py-3 text-slate-600">
                   {row.unit || '---'}
                 </td>
                 <td className="truncate whitespace-nowrap px-4 py-3 text-slate-600">
-                  {row.brand || '---'}
+                  {row.brandName || row.brand || '---'}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-800">
                   {fmtMoney(row.salePrice)}
@@ -1326,24 +1380,23 @@ const ProductTable = ({
                   {fmtMoney(row.costPrice)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-slate-900">
-                  {row.stock}
+                  {row.actualStock ?? row.stock ?? 0}
                 </td>
                 <td className="truncate whitespace-nowrap px-4 py-3 text-slate-500">
-                  {row.location || '---'}
+                  {row.shelfLocation || row.location || '---'}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-center">
                   <label className="relative inline-flex cursor-pointer items-center">
                     <input
                       type="checkbox"
                       className="peer sr-only"
-                      checked={
-                        row.isActive === true ||
-                        row.productStatus === 'active' ||
-                        row.status === 'active'
-                      }
+                      checked={row.isActive !== false && row.status !== 'inactive'}
                       onChange={(e) => {
                         e.stopPropagation();
-                        onToggleStatus?.(row.id || row.productId, row.isActive);
+                        onToggleStatus?.(
+                          currentId,
+                          row.isActive !== false && row.status !== 'inactive'
+                        );
                       }}
                     />
                     <div className="peer h-5 w-9 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
@@ -1375,25 +1428,11 @@ const ProductTable = ({
 
 /* ==================== FILTER SIDEBAR ==================== */
 const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
-  const triToggle = (val, set) => (
-    <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-      {['all', 'yes', 'no'].map((v) => (
-        <button
-          key={v}
-          type="button"
-          className={`flex-1 rounded-lg py-1.5 text-sm font-medium ${val === v ? 'bg-blue-600 font-bold text-white' : 'text-slate-600'}`}
-          onClick={() => set(v)}
-        >
-          {v === 'all' ? 'Tất cả' : v === 'yes' ? 'Có' : 'Không'}
-        </button>
-      ))}
-    </div>
-  );
   const {
     groupKeyword,
     setGroupKeyword,
-    stockFilter,
-    setStockFilter,
+    brandKeyword,
+    setBrandKeyword,
     estimatedStockOutFilter,
     estimatedSelectedLabel,
     estimatedQuickOpen,
@@ -1414,24 +1453,14 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
     setCreatedQuickOpen,
     supplierKeyword,
     setSupplierKeyword,
-    locationKeyword,
-    setLocationKeyword,
-    itemTypeKeyword,
-    setItemTypeKeyword,
-    directSaleFilter,
-    setDirectSaleFilter,
-    salesChannelFilter,
-    setSalesChannelFilter,
     productStatusFilter,
     setProductStatusFilter,
-    statusDropdownOpen,
-    setStatusDropdownOpen,
-    statusDropdownRef,
     handleEstimatedPreset,
     handleCreatedPreset,
     setEstimatedSelectedLabel,
     setCreatedSelectedLabel,
   } = filters;
+
   return (
     <>
       <button
@@ -1458,58 +1487,54 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
             className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
             onClick={() => {
               setGroupKeyword('');
-              setStockFilter('all');
+              setBrandKeyword?.('');
               setEstimatedStockOutFilter('allTime');
               setEstimatedSelectedLabel('Toàn thời gian');
               setCreatedTimeFilter('allTime');
               setCreatedSelectedLabel('Toàn thời gian');
               setSupplierKeyword('');
-              setLocationKeyword('');
-              setItemTypeKeyword('');
-              setDirectSaleFilter('all');
-              setSalesChannelFilter('all');
               setProductStatusFilter('active');
             }}
           >
             <Icon name="cached" size={16} />
           </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setProductStatusFilter('draft')}
-          className="flex w-full items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-100"
-        >
-          <Icon name="description" size={16} /> Bản nháp
-        </button>
-        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-2">
-          <h3 className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhóm hàng</h3>
-          <button
-            type="button"
-            onClick={() => alert('Tính năng đang phát triển')}
-            className="text-xs font-bold text-blue-900 hover:underline"
-          >
-            Tạo mới
-          </button>
-        </div>
-        <input
-          className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
-          placeholder="Chọn nhóm hàng"
-          value={groupKeyword}
-          onChange={(e) => setGroupKeyword(e.target.value)}
-        />
-        <div className="mb-6 mt-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Tồn kho</p>
+
+        <div className="space-y-2">
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
+            Trạng thái hàng hóa
+          </p>
           <select
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
-            value={stockFilter}
-            onChange={(e) => setStockFilter(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            value={productStatusFilter}
+            onChange={(e) => setProductStatusFilter(e.target.value)}
           >
-            <option value="all">Tất cả</option>
-            <option value="inStock">Còn hàng</option>
-            <option value="outStock">Hết hàng</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Ngừng hoạt động</option>
           </select>
         </div>
-        <div className="relative mb-6 space-y-2" ref={estimatedRef}>
+
+        <div className="space-y-2">
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhóm hàng</p>
+          <input
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            placeholder="Lọc theo danh mục..."
+            value={groupKeyword}
+            onChange={(e) => setGroupKeyword(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Thương hiệu</p>
+          <input
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            placeholder="Lọc theo thương hiệu..."
+            value={brandKeyword || ''}
+            onChange={(e) => setBrandKeyword?.(e.target.value)}
+          />
+        </div>
+
+        <div className="relative space-y-2" ref={estimatedRef}>
           <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
             Dự kiến hết hàng
           </p>
@@ -1570,20 +1595,16 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
             <DatePickerPopup
               onCancel={() => setEstimatedCustomOpen(false)}
               onApply={() => {
-                setEstimatedSelectedLabel('17/05/2026 - 17/05/2026');
+                setEstimatedSelectedLabel('01/05/2026 - 31/05/2026');
                 setEstimatedStockOutFilter('custom');
                 setEstimatedCustomOpen(false);
               }}
             />
           )}
         </div>
-        <div className="relative mb-6 space-y-2" ref={createdRef}>
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
-              Thời gian tạo
-            </p>
-            <div className="h-2 w-2 rounded-full bg-blue-600" />
-          </div>
+
+        <div className="relative space-y-2" ref={createdRef}>
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Thời gian tạo</p>
           {[
             {
               val: 'allTime',
@@ -1597,10 +1618,7 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
             },
             {
               val: 'custom',
-              label:
-                createdSelectedLabel === 'Toàn thời gian'
-                  ? '17/05/2026 - 17/05/2026'
-                  : createdSelectedLabel,
+              label: createdSelectedLabel === 'Toàn thời gian' ? 'Tùy chỉnh' : createdSelectedLabel,
               onChange: () => {
                 setCreatedTimeFilter('custom');
                 setCreatedQuickOpen(false);
@@ -1644,86 +1662,24 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
             <DatePickerPopup
               onCancel={() => setCreatedCustomOpen(false)}
               onApply={() => {
-                setCreatedSelectedLabel('17/05/2026 - 17/05/2026');
+                setCreatedSelectedLabel('01/05/2026 - 31/05/2026');
                 setCreatedTimeFilter('custom');
                 setCreatedCustomOpen(false);
               }}
             />
           )}
         </div>
-        <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhà cung cấp</p>
-          <select
-            className="w-full rounded-lg border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+
+        <div className="space-y-2">
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
+            Nhà cung cấp ID
+          </p>
+          <input
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            placeholder="Lọc theo Guid nhà cung cấp..."
             value={supplierKeyword}
             onChange={(e) => setSupplierKeyword(e.target.value)}
-          >
-            <option value="">Tất cả nhà cung cấp</option>
-          </select>
-        </div>
-        <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Vị trí</p>
-          <input
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm"
-            placeholder="Chọn vị trí"
-            value={locationKeyword}
-            onChange={(e) => setLocationKeyword(e.target.value)}
           />
-        </div>
-        <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Loại hàng</p>
-          <input
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm"
-            placeholder="Chọn loại hàng"
-            value={itemTypeKeyword}
-            onChange={(e) => setItemTypeKeyword(e.target.value)}
-          />
-        </div>
-        <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Bán trực tiếp</p>
-          {triToggle(directSaleFilter, setDirectSaleFilter)}
-        </div>
-        <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
-            Liên kết kênh bán
-          </p>
-          {triToggle(salesChannelFilter, setSalesChannelFilter)}
-        </div>
-        <div className="relative space-y-2" ref={statusDropdownRef}>
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
-            Trạng thái hàng hóa
-          </p>
-          <button
-            type="button"
-            className="flex w-full items-center justify-between rounded-lg border border-slate-300 px-3 py-2 text-left text-sm text-slate-800"
-            onClick={() => setStatusDropdownOpen((p) => !p)}
-          >
-            <span>{statusOptions.find((o) => o.value === productStatusFilter)?.label}</span>
-            <Icon
-              name={statusDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
-              className="text-[18px]"
-            />
-          </button>
-          {statusDropdownOpen && (
-            <div className="absolute left-0 right-0 top-[58px] z-30 rounded-lg border border-slate-200 bg-white py-2 shadow-2xl">
-              {statusOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-slate-800 hover:bg-slate-50"
-                  onClick={() => {
-                    setProductStatusFilter(opt.value);
-                    setStatusDropdownOpen(false);
-                  }}
-                >
-                  <span>{opt.label}</span>
-                  {productStatusFilter === opt.value && (
-                    <Icon name="check" className="text-[18px] text-blue-600" />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </aside>
     </>
@@ -1766,10 +1722,13 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                 <div className="col-span-12 lg:col-span-9">
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="text-label-md text-on-surface-variant">Mã hàng</label>
+                      <label className="text-label-md text-on-surface-variant">
+                        Mã hàng (Duy nhất)
+                      </label>
                       <input
-                        className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 focus:ring-0"
+                        className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 focus:ring-0 disabled:bg-gray-100"
                         type="text"
+                        disabled={!!product}
                         value={f.form.productCode || f.form.id || ''}
                         onChange={(e) => f.handleChange('productCode', e.target.value)}
                       />
@@ -1786,72 +1745,30 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                     </div>
                   </div>
                   <div className="mt-5 space-y-2">
-                    <label className="text-label-md text-on-surface-variant">Tên hàng</label>
+                    <label className="text-label-md text-on-surface-variant">Tên hàng (*)</label>
                     <input
                       className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 font-semibold focus:ring-0"
                       type="text"
+                      required
                       value={f.form.name || ''}
                       onChange={(e) => f.handleChange('name', e.target.value)}
                     />
                   </div>
                   <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-label-md text-on-surface-variant">
-                          Nhóm hàng / Danh mục
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            f.setNewGroupName('');
-                            f.setNewGroupParent('');
-                            f.setCreateGroupModalOpen(true);
-                          }}
-                          className="text-label-sm font-semibold text-primary hover:underline"
-                        >
-                          Tạo mới
-                        </button>
-                      </div>
-                      <select
-                        className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 focus:ring-0"
-                        value={f.form.group || ''}
-                        onChange={(e) => f.handleChange('group', e.target.value)}
-                      >
-                        <option value="">Chọn danh mục</option>
-                        {(Array.isArray(f.groups) ? f.groups : []).map((g) => (
-                          <option key={g} value={g}>
-                            {g}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-label-md text-on-surface-variant">Thương hiệu</label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            f.setNewBrandName('');
-                            f.setCreateBrandModalOpen(true);
-                          }}
-                          className="text-label-sm font-semibold text-primary hover:underline"
-                        >
-                          Tạo mới
-                        </button>
-                      </div>
-                      <select
-                        className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2.5 focus:ring-0"
-                        value={f.form.brand || ''}
-                        onChange={(e) => f.handleChange('brand', e.target.value)}
-                      >
-                        <option value="">Chọn thương hiệu</option>
-                        {(Array.isArray(f.brands) ? f.brands : []).map((b) => (
-                          <option key={b} value={b}>
-                            {b}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <AutocompleteInput
+                      label="Nhóm hàng / Danh mục"
+                      value={f.form.group}
+                      onChange={(val) => f.handleChange('group', val)}
+                      options={f.groups}
+                      placeholder="Chọn từ gợi ý hoặc gõ tên mới..."
+                    />
+                    <AutocompleteInput
+                      label="Thương hiệu"
+                      value={f.form.brand}
+                      onChange={(val) => f.handleChange('brand', val)}
+                      options={f.brands}
+                      placeholder="Chọn từ gợi ý hoặc gõ tên mới..."
+                    />
                   </div>
                 </div>
                 <div className="col-span-12 lg:col-span-3">
@@ -1868,11 +1785,15 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                   />
                 </div>
               </section>
-              <Section title="Tồn kho" subtitle="Quản lý số lượng tồn kho và định mức." defaultOpen>
+              <Section
+                title="Tồn kho ban đầu"
+                subtitle="Thiết lập số lượng tồn thực tế ban đầu."
+                defaultOpen
+              >
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className="text-label-md text-on-surface-variant">
-                      Tồn kho hiện tại
+                      Tồn thực tế ban đầu
                     </label>
                     <input
                       className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right font-semibold focus:ring-0"
@@ -1882,37 +1803,13 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       onChange={(e) => f.handleChange('stock', e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-label-md text-on-surface-variant">
-                      Định mức tồn thấp nhất
-                    </label>
-                    <input
-                      className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right focus:ring-0"
-                      type="number"
-                      min="0"
-                      value={f.form.minimumStock !== '' ? f.form.minimumStock : '0'}
-                      onChange={(e) => f.handleChange('minimumStock', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-label-md text-on-surface-variant">
-                      Định mức tồn cao nhất
-                    </label>
-                    <input
-                      className="text-body-md w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-right focus:ring-0"
-                      type="number"
-                      min="0"
-                      value={f.form.stockMax !== '' ? f.form.stockMax : '0'}
-                      onChange={(e) => f.handleChange('stockMax', e.target.value)}
-                    />
-                  </div>
                 </div>
               </Section>
               <Section title="Giá vốn, giá bán" defaultOpen>
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   {[
-                    ['Giá vốn', 'costPrice'],
-                    ['Giá bán', 'salePrice'],
+                    ['Giá vốn (*)', 'costPrice'],
+                    ['Giá bán (*)', 'salePrice'],
                   ].map(([label, field]) => (
                     <div key={field} className="space-y-2">
                       <label className="text-label-md text-on-surface-variant">{label}</label>
@@ -1929,11 +1826,6 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                           onChange={(e) => {
                             const raw = e.target.value.replace(/\./g, '');
                             f.handleChange(field, raw);
-                          }}
-                          onBlur={(e) => {
-                            const raw = e.target.value.replace(/\./g, '');
-                            if (raw !== '' && !Number.isNaN(Number(raw)))
-                              f.handleChange(field, raw);
                           }}
                         />
                         <span className="text-label-md absolute bottom-2 right-0 font-normal leading-[1.1] text-on-surface-variant">
@@ -1960,49 +1852,18 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                         Tạo mới
                       </button>
                     </div>
-                    <div className="relative">
-                      <select
-                        className="text-body-md w-full appearance-none rounded-[8px] border border-outline-variant bg-surface-container-lowest px-3 py-2.5 pr-9 focus:ring-0"
-                        value=""
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            f.addLocation(e.target.value);
-                            e.target.value = '';
-                          }
-                        }}
-                      >
-                        <option value="">Chọn vị trí có sẵn hoặc tạo mới...</option>
-                        {(Array.isArray(f.locations) ? f.locations : [])
-                          .filter((loc) => !(f.form.locations || []).includes(loc))
-                          .map((loc) => (
-                            <option key={loc} value={loc}>
-                              {loc}
-                            </option>
-                          ))}
-                      </select>
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Icon name="expand_more" size={16} />
-                      </span>
-                    </div>
-                    {(Array.isArray(f.form.locations) ? f.form.locations : []).length > 0 && (
-                      <div className="flex min-h-[44px] w-full flex-wrap items-center gap-2 rounded-[8px] border border-outline-variant bg-surface-container-lowest px-3 py-2.5 text-[15px]">
-                        {(Array.isArray(f.form.locations) ? f.form.locations : []).map((loc) => (
-                          <div
-                            key={loc}
-                            className="inline-flex items-center gap-1 rounded bg-gray-200 px-2 py-1 text-sm text-gray-800"
-                          >
-                            <span>{loc}</span>
-                            <button
-                              type="button"
-                              onClick={() => f.removeLocation(loc)}
-                              className="font-bold text-gray-600 hover:text-gray-800"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <select
+                      className="text-body-md w-full appearance-none rounded-[8px] border border-outline-variant bg-surface-container-lowest px-3 py-2.5 pr-9 focus:ring-0"
+                      value={f.form.shelfLocation || ''}
+                      onChange={(e) => f.handleChange('shelfLocation', e.target.value)}
+                    >
+                      <option value="">Chọn vị trí...</option>
+                      {(Array.isArray(f.locations) ? f.locations : []).map((loc) => (
+                        <option key={loc} value={loc}>
+                          {loc}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-label-md text-on-surface-variant">Trọng lượng</label>
@@ -2026,47 +1887,6 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-label-md text-on-surface-variant">Kích thước</label>
-                  <div className="max-w-lg">
-                    <div className="inline-flex w-full items-stretch overflow-hidden rounded-lg border border-[#dcdfe6] bg-white">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder="Rộng"
-                        value={f.form.width ?? ''}
-                        onChange={(e) => f.handleChange('width', e.target.value)}
-                        className="w-1/3 border-r border-[#e5e7eb] bg-white px-3 py-2 text-center text-[15px] placeholder-gray-400 focus:outline-none"
-                      />
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder="Dài"
-                        value={f.form.length ?? ''}
-                        onChange={(e) => f.handleChange('length', e.target.value)}
-                        className="w-1/3 border-r border-[#e5e7eb] bg-white px-3 py-2 text-center text-[15px] placeholder-gray-400 focus:outline-none"
-                      />
-                      <div className="relative w-1/3">
-                        <select
-                          value={
-                            ['mm', 'cm', 'm'].includes(f.form.sizeUnit) ? f.form.sizeUnit : 'mm'
-                          }
-                          onChange={(e) => f.handleChange('sizeUnit', e.target.value)}
-                          className="w-full appearance-none bg-white px-3 py-2 pr-7 text-left text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="mm">mm</option>
-                          <option value="cm">cm</option>
-                          <option value="m">m</option>
-                        </select>
-                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
-                          <Icon name="expand_more" size={16} />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </Section>
               <Section title="Quản lý theo đơn vị tính và thuộc tính" defaultOpen>
                 <UnitManagement f={f} />
@@ -2079,39 +1899,15 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
             <div>
               <div className="overflow-hidden rounded-md border border-[#dcdfe6] bg-white">
                 <div className="flex h-10 items-center gap-2 border-b border-gray-200 bg-[#f5f6f7] px-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-700">Mô tả</span>
-                    <select className="rounded border bg-transparent px-2 py-1 text-sm text-gray-700">
-                      <option>Format</option>
-                    </select>
-                  </div>
-                  <div className="mx-2 h-5 w-px bg-gray-300" />
-                  {['B', 'I', 'U'].map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      className="flex h-7 w-7 items-center justify-center rounded text-sm font-bold text-gray-600 hover:bg-gray-200"
-                    >
-                      {item}
-                    </button>
-                  ))}
+                  <span className="text-sm font-semibold text-gray-700">
+                    Mô tả kỹ thuật (Specification)
+                  </span>
                 </div>
                 <textarea
                   className="min-h-[160px] w-full resize-none bg-white p-4 text-[15px] leading-[1.4] outline-none"
-                  placeholder="Nhập mô tả sản phẩm"
-                  value={f?.form?.description ?? ''}
-                  onChange={(e) => f?.handleChange?.('description', e.target.value)}
-                />
-              </div>
-              <div className="mt-4 overflow-hidden rounded-md border border-[#dcdfe6]">
-                <div className="bg-[#f5f6f7] px-4 py-3 text-sm font-semibold text-gray-700">
-                  Mẫu ghi chú (hoá đơn, đặt hàng)
-                </div>
-                <textarea
-                  className="min-h-[120px] w-full resize-none border-none p-4 outline-none"
-                  placeholder="Nhập ghi chú"
-                  value={f?.form?.notes ?? ''}
-                  onChange={(e) => f?.handleChange?.('notes', e.target.value)}
+                  placeholder="Nhập mô tả sản phẩm / thông số kỹ thuật"
+                  value={f?.form?.specification ?? f?.form?.description ?? ''}
+                  onChange={(e) => f?.handleChange?.('specification', e.target.value)}
                 />
               </div>
             </div>
@@ -2120,17 +1916,19 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
         <footer className="sticky bottom-0 z-40 flex items-center justify-between border-t border-gray-200 bg-white px-6 py-4">
           <div className="flex items-center space-x-3">
             <input
-              checked={!!f.form.directSale}
+              checked={f.form.productStatus !== 'inactive'}
               type="checkbox"
-              id="footer-sell-direct"
+              id="footer-status-active"
               className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-              onChange={(e) => f.handleChange('directSale', e.target.checked)}
+              onChange={(e) =>
+                f.handleChange('productStatus', e.target.checked ? 'active' : 'inactive')
+              }
             />
             <label
               className="flex cursor-pointer items-center text-sm font-semibold text-gray-700"
-              htmlFor="footer-sell-direct"
+              htmlFor="footer-status-active"
             >
-              Bán trực tiếp
+              Đang hoạt động (Active)
             </label>
           </div>
           <div className="flex space-x-3">
@@ -2150,32 +1948,6 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
           </div>
         </footer>
       </form>
-      <CreateGroupModal
-        open={f.createGroupModalOpen}
-        groups={f.groups}
-        newGroupName={f.newGroupName}
-        setNewGroupName={f.setNewGroupName}
-        newGroupParent={f.newGroupParent}
-        setNewGroupParent={f.setNewGroupParent}
-        onClose={() => f.setCreateGroupModalOpen(false)}
-        onSave={() => {
-          f.saveNewGroup(f.newGroupName);
-          f.setCreateGroupModalOpen(false);
-          f.setNewGroupName('');
-          f.setNewGroupParent('');
-        }}
-      />
-      <CreateBrandModal
-        open={f.createBrandModalOpen}
-        newBrandName={f.newBrandName}
-        setNewBrandName={f.setNewBrandName}
-        onClose={() => f.setCreateBrandModalOpen(false)}
-        onSave={() => {
-          f.saveNewBrand(f.newBrandName);
-          f.setCreateBrandModalOpen(false);
-          f.setNewBrandName('');
-        }}
-      />
       <CreateLocationModal
         open={f.createLocationModalOpen}
         newLocationName={f.newLocationName}
@@ -2263,7 +2035,7 @@ const EditProductModal = (props) => {
   useEffect(() => {
     if (props.open && props.product) {
       setLoading(true);
-      getProduct(props.product.productId || props.product.id)
+      getProduct(props.product.id || props.product.productId)
         .then((res) => {
           setFullProduct(
             res?.success && res?.data ? { ...props.product, ...res.data } : props.product
@@ -2298,9 +2070,9 @@ export const ProductManagement = () => {
   const [expandedId, setExpandedId] = useState('');
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [initialEditTab, setInitialEditTab] = useState('info');
-  const [searchParams] = useSearchParams();
   const [selectedIds, setSelectedIds] = useState([]);
   const filters = useProductFilters();
 
@@ -2317,11 +2089,6 @@ export const ProductManagement = () => {
     refetch,
   } = useProductList(activeQueryParams);
 
-  useEffect(() => {
-    if (searchParams.get('status') === 'draft') filters.setProductStatusFilter('draft');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const {
     estimatedRef,
     setEstimatedQuickOpen,
@@ -2329,22 +2096,17 @@ export const ProductManagement = () => {
     createdRef,
     setCreatedQuickOpen,
     setCreatedCustomOpen,
-    statusDropdownRef,
-    setStatusDropdownOpen,
   } = filters;
 
   useEffect(() => {
     const onClickOutside = (e) => {
-      if (estimatedRef.current && !estimatedRef.current.contains(e.target)) {
-        setEstimatedQuickOpen(false);
-        setEstimatedCustomOpen(false);
+      if (estimatedRef?.current && !estimatedRef.current.contains(e.target)) {
+        setEstimatedQuickOpen?.(false);
+        setEstimatedCustomOpen?.(false);
       }
-      if (createdRef.current && !createdRef.current.contains(e.target)) {
-        setCreatedQuickOpen(false);
-        setCreatedCustomOpen(false);
-      }
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target)) {
-        setStatusDropdownOpen(false);
+      if (createdRef?.current && !createdRef.current.contains(e.target)) {
+        setCreatedQuickOpen?.(false);
+        setCreatedCustomOpen?.(false);
       }
     };
     document.addEventListener('mousedown', onClickOutside);
@@ -2356,8 +2118,6 @@ export const ProductManagement = () => {
     createdRef,
     setCreatedQuickOpen,
     setCreatedCustomOpen,
-    statusDropdownRef,
-    setStatusDropdownOpen,
   ]);
 
   const { currentPage, setCurrentPage, pageSize } = filters;
@@ -2376,7 +2136,6 @@ export const ProductManagement = () => {
       setEditModalOpen(false);
       setProductToEdit(null);
       refetch();
-      filters.setCurrentPage(1);
     });
   };
 
@@ -2390,7 +2149,7 @@ export const ProductManagement = () => {
   };
 
   const handleSelectAll = (isChecked, currentRows) => {
-    if (isChecked) setSelectedIds(currentRows.map((row) => row.productId || row.id));
+    if (isChecked) setSelectedIds(currentRows.map((row) => row.id || row.productId));
     else setSelectedIds([]);
   };
 
@@ -2398,7 +2157,7 @@ export const ProductManagement = () => {
     <div className="mt-2 w-full space-y-4 text-slate-800">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Hàng hóa</h1>
-        <p className="mt-1 text-gray-600">Quản lý danh sách hàng hóa và tồn kho</p>
+        <p className="mt-1 text-gray-600">Quản lý kho hàng hóa</p>
       </div>
 
       <div className="flex w-full">
@@ -2406,10 +2165,10 @@ export const ProductManagement = () => {
           className={`rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${apiStatus.isMock ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}
         >
           {apiStatus.loading
-            ? 'Đang đồng bộ dữ liệu API...'
+            ? 'Đang tải danh sách hàng hóa...'
             : apiStatus.isMock
-              ? '⚠ Hiển thị dữ liệu mẫu (chưa kết nối được API)'
-              : 'Đã đồng bộ dữ liệu sản phẩm từ API'}
+              ? '⚠ Đang hiển thị dữ liệu mẫu cục bộ (Chưa kết nối API Server)'
+              : '✔ Đã đồng bộ dữ liệu từ API Server'}
         </div>
       </div>
 
@@ -2422,19 +2181,16 @@ export const ProductManagement = () => {
 
         <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
           {selectedIds.length > 0 && (
-            <div className="animate-fade-in flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm transition-all">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-                <Icon name="check_circle" size={20} /> Đã chọn {selectedIds.length} hàng hóa trên
-                trang này
+                <Icon name="check_circle" size={20} /> Đã chọn {selectedIds.length} hàng hóa
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   className="flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
                   onClick={async () => {
-                    if (
-                      window.confirm(`Bạn muốn MỞ BÁN lại ${selectedIds.length} sản phẩm đã chọn?`)
-                    ) {
+                    if (window.confirm(`Mở bán ${selectedIds.length} sản phẩm?`)) {
                       const ok = await handleBulkToggleStatus(selectedIds, true);
                       if (ok) setSelectedIds([]);
                     }
@@ -2446,11 +2202,7 @@ export const ProductManagement = () => {
                   type="button"
                   className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700"
                   onClick={async () => {
-                    if (
-                      window.confirm(
-                        `Bạn muốn NGỪNG KINH DOANH ${selectedIds.length} sản phẩm đã chọn?`
-                      )
-                    ) {
+                    if (window.confirm(`Ngừng bán ${selectedIds.length} sản phẩm?`)) {
                       const ok = await handleBulkToggleStatus(selectedIds, false);
                       if (ok) setSelectedIds([]);
                     }
@@ -2458,24 +2210,17 @@ export const ProductManagement = () => {
                 >
                   <Icon name="block" size={18} /> Ngừng bán
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedIds([])}
-                  className="rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-200"
-                >
-                  Hủy bỏ
-                </button>
               </div>
             </div>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex flex-1 gap-3">
-              <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
+              <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1">
                 <Icon name="search" className="mr-2 text-slate-400" />
                 <input
                   className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
-                  placeholder="Theo mã, tên hàng..."
+                  placeholder="Tìm theo mã, tên hàng, mã vạch..."
                   value={filters.search}
                   onChange={(e) => {
                     filters.setSearch(e.target.value);
@@ -2487,25 +2232,21 @@ export const ProductManagement = () => {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                className="flex items-center gap-1 rounded-lg bg-[#004785] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black"
+                className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => setCategoryModalOpen(true)}
+              >
+                <Icon name="ListFilter" className="text-sm text-slate-500" /> Quản lý Nhóm & Thương
+                hiệu
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-1 rounded-lg bg-[#004785] px-4 py-2 text-sm font-bold text-white hover:bg-black"
                 onClick={() => {
                   setProductToEdit(null);
                   setEditModalOpen(true);
                 }}
               >
-                <Icon name="add" className="text-sm" /> Tạo mới
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
-              >
-                <Icon name="upload_file" className="text-sm" /> Import file
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
-              >
-                <Icon name="download" className="text-sm" /> Xuất file
+                <Icon name="add" className="text-sm" /> Thêm mới
               </button>
             </div>
           </div>
@@ -2538,12 +2279,11 @@ export const ProductManagement = () => {
                   <select
                     value={filters.pageSize}
                     onChange={(e) => filters.handlePageSizeChange(Number(e.target.value))}
-                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary focus:ring-primary"
+                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
                   >
-                    <option value={10}>10 dòng</option>
-                    <option value={15}>15 dòng</option>
-                    <option value={30}>30 dòng</option>
+                    <option value={20}>20 dòng</option>
                     <option value={50}>50 dòng</option>
+                    <option value={100}>100 dòng</option>
                   </select>
                 </div>
                 <span>{`${startRowNum} - ${endRowNum} trong tổng số ${totalCount} hàng hóa`}</span>
@@ -2553,7 +2293,7 @@ export const ProductManagement = () => {
                   type="button"
                   onClick={() => filters.setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={filters.currentPage <= 1}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                 >
                   <Icon name="chevron_left" className="text-[18px]" />
                 </button>
@@ -2564,7 +2304,7 @@ export const ProductManagement = () => {
                   type="button"
                   onClick={() => filters.setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
                   disabled={filters.currentPage >= totalPages}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                 >
                   <Icon name="chevron_right" className="text-[18px]" />
                 </button>
@@ -2576,7 +2316,7 @@ export const ProductManagement = () => {
 
       {editModalOpen && (
         <EditProductModal
-          key={productToEdit?.productId || productToEdit?.productCode || productToEdit?.id || 'new'}
+          key={productToEdit?.id || productToEdit?.productId || 'new'}
           open={editModalOpen}
           onClose={() => {
             setEditModalOpen(false);
@@ -2589,6 +2329,12 @@ export const ProductManagement = () => {
           title={productToEdit ? 'Sửa hàng hóa' : 'Thêm hàng hóa'}
         />
       )}
+
+      <CategoryBrandManagerModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 
-const StaffTable = ({ staffs, loading, currentUserId, onEdit, onToggleStatus, onDelete }) => {
+const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStatus, onDelete }) => {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
@@ -31,7 +31,6 @@ const StaffTable = ({ staffs, loading, currentUserId, onEdit, onToggleStatus, on
               </tr>
             ) : (
               staffs.map((staff) => {
-                // Kiểm tra tài khoản tự quản (Bảo vệ Owner không tự khóa/xóa chính mình)
                 const isSelf = currentUserId && staff.userId === currentUserId;
 
                 return (
@@ -51,7 +50,7 @@ const StaffTable = ({ staffs, loading, currentUserId, onEdit, onToggleStatus, on
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                         <Icon name="store" size={14} className="text-slate-500" />
-                        {staff.branchName || ''}
+                        {staff.branchName || 'Chi nhánh chính'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -81,12 +80,13 @@ const StaffTable = ({ staffs, loading, currentUserId, onEdit, onToggleStatus, on
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/*  ĐỔI NÚT SỬA THÀNH NÚT XEM CHI TIẾT (ICON CON MẮT) */}
                         <button
-                          onClick={() => onEdit(staff)}
-                          className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
-                          title="Chỉnh sửa nhân viên"
+                          onClick={() => onViewDetail(staff)}
+                          className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100"
+                          title="Xem chi tiết & Cập nhật nhân viên"
                         >
-                          <Icon name="edit" size={20} />
+                          <Icon name="visibility" size={18} />
                         </button>
 
                         <button

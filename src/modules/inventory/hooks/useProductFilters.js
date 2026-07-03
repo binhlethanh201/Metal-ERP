@@ -5,9 +5,10 @@ export const useProductFilters = () => {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdat', direction: 'desc' });
   const [groupKeyword, setGroupKeyword] = useState('');
+  const [brandKeyword, setBrandKeyword] = useState(''); // Bổ sung lọc theo thương hiệu chuẩn API
   const [supplierKeyword, setSupplierKeyword] = useState('');
   const [productStatusFilter, setProductStatusFilter] = useState('active');
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20); // Chuẩn API default là 20
   const [currentPage, setCurrentPage] = useState(1);
 
   const [estimatedStockOutFilter, setEstimatedStockOutFilter] = useState('allTime');
@@ -31,25 +32,28 @@ export const useProductFilters = () => {
   const createdRef = useRef(null);
   const statusDropdownRef = useRef(null);
 
+  // Chuẩn hóa 100% camelCase Query Params khớp bản API mới
   const queryParams = useMemo(() => {
     const params = {
-      PageNumber: currentPage,
-      PageSize: pageSize,
-      Sort: sortConfig.key,
-      Order: sortConfig.direction,
+      pageNumber: currentPage,
+      pageSize: pageSize,
+      sort: sortConfig.key,
+      order: sortConfig.direction,
     };
-    if (search.trim()) params.SearchTerm = search.trim();
-    if (groupKeyword.trim()) params.CategoryName = groupKeyword.trim();
+    if (search.trim()) params.searchTerm = search.trim();
+    if (groupKeyword.trim()) params.categoryName = groupKeyword.trim();
+    if (brandKeyword.trim()) params.brandName = brandKeyword.trim();
     if (supplierKeyword.trim()) params.supplierId = supplierKeyword.trim();
-    if (productStatusFilter === 'active') params.status = 'active';
-    if (productStatusFilter === 'inactive') params.status = 'inactive';
-
+    if (productStatusFilter === 'active' || productStatusFilter === 'inactive') {
+      params.status = productStatusFilter;
+    }
     return params;
   }, [
     currentPage,
     pageSize,
     search,
     groupKeyword,
+    brandKeyword,
     supplierKeyword,
     productStatusFilter,
     sortConfig,
@@ -81,6 +85,8 @@ export const useProductFilters = () => {
     getSortIcon,
     groupKeyword,
     setGroupKeyword,
+    brandKeyword,
+    setBrandKeyword,
     supplierKeyword,
     setSupplierKeyword,
     productStatusFilter,
@@ -90,8 +96,6 @@ export const useProductFilters = () => {
     handlePageSizeChange,
     currentPage,
     setCurrentPage,
-
-    // --- BỔ SUNG ĐẦY ĐỦ CÁC STATE BỊ THIẾU ĐỂ XÓA WARNING ---
     estimatedStockOutFilter,
     setEstimatedStockOutFilter,
     createdTimeFilter,
@@ -110,8 +114,6 @@ export const useProductFilters = () => {
     setSalesChannelFilter,
     stockFilter,
     setStockFilter,
-    // --------------------------------------------------------
-
     estimatedRef,
     createdRef,
     statusDropdownRef,
