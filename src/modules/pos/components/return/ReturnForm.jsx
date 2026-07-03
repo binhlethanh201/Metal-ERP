@@ -1,13 +1,13 @@
 /**
- * ReturnForm - Form tạo đơn đổi trả
- * Flow: nhập mã hóa đơn → tìm hóa đơn → chọn sản phẩm → tạo
+ * ReturnForm - Tạo đơn đổi trả
+ * Flow: nhập mã hóa đơn → tìm hóa đơn → chọn sản phẩm → chọn loại + lý do → tạo
  */
 import { useState } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { getOrders, createReturn, addReturnItem, finalizeReturn } from '../../services/posService';
+import { getOrders, getReturns, createReturn, addReturnItem } from '../../services/posService';
 
 const REFUND_METHODS = [
   { value: 'CASH', label: 'Tiền mặt' },
@@ -56,15 +56,12 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     setInvoiceLoading(true);
     setInvoiceError('');
     try {
-      // Tìm hóa đơn trong danh sách orders đã hoàn thành
-      const ordersData = await getOrders({ status: 'Completed', pageSize: 100 });
-      console.log('[ReturnForm] orders search:', ordersData);
+      const ordersData = await getOrders({ status: 'Completed', pageSize: 200 });
       const orders = Array.isArray(ordersData)
         ? ordersData
         : (ordersData?.items ?? ordersData?.data ?? []);
       const kw = invoiceCode.trim().toLowerCase();
 
-      // Tìm theo invoiceCode hoặc invoiceId
       const found = orders.find(
         (o) =>
           (o.invoiceCode || '').toLowerCase() === kw ||
@@ -73,10 +70,72 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       );
 
       if (found) {
-        setInvoice(found);
+        // Kiểm tra sản phẩm đã đổi trả từ các phiếu trước
+        const invId = found.invoiceId || found.invoiceCode || found.id;
+        const orderId = found.orderId || found.order_id || '';
+        console.log('[ReturnForm] Found invoice, invId:', invId, 'orderId:', orderId, 'Full invoice keys:', Object.keys(found));
+        let returnedMap = {};
+        try {
+          const returnsData = await getReturns({});
+          console.log('[ReturnForm] getReturns raw:', returnsData);
+          const allReturns = Array.isArray(returnsData)
+            ? returnsData
+            : (returnsData?.items ?? returnsData?.data ?? []);
+          console.log('[ReturnForm] All returns count:', allReturns.length);
+          if (allReturns.length > 0) {
+            console.log('[ReturnForm] First return keys:', Object.keys(allReturns[0]));
+            console.log('[ReturnForm] First return sample:', JSON.stringify(allReturns[0], null, 2));
+          }
+          // Lọc các phiếu đổi trả không bị hủy của hóa đơn này
+          const relatedReturns = allReturns.filter(
+            (r) => {
+              const rStatus = String(r.status || '').toUpperCase();
+              // Match bằng orderId (chính xác nhất) hoặc invoiceCode
+              const match = rStatus !== 'CANCELLED' && (
+                (r.orderId && r.orderId.toLowerCase() === orderId.toLowerCase()) ||
+                (r.invoiceCode && r.invoiceCode.toLowerCase() === invId.toLowerCase()) ||
+                (r.orderId && r.orderId.toLowerCase() === invId.toLowerCase())
+              );
+              if (match) console.log('[ReturnForm] Matched return:', r.returnCode, 'items:', r.items?.length);
+              return match;
+            }
+          );
+          console.log('[ReturnForm] Related returns:', relatedReturns.length);
+          relatedReturns.forEach((ret) => {
+            const items = ret.items || ret.returnItems || [];
+            items.forEach((item) => {
+              const pid = item.productId || item.id;
+              const qty = parseFloat(item.quantity || 0);
+              returnedMap[pid] = (returnedMap[pid] || 0) + qty;
+            });
+          });
+          console.log('[ReturnForm] Returned map:', returnedMap);
+        } catch (err) {
+          console.error('[ReturnForm] getReturns failed:', err);
+        }
+
+        // Tính số lượng còn lại có thể đổi trả cho từng sản phẩm
+        const invoiceItems = found.items || [];
+        const enrichedItems = invoiceItems.map((item) => {
+          const pid = item.productId || item.id;
+          const originalQty = parseFloat(item.quantity || 0);
+          const returnedQty = returnedMap[pid] || 0;
+          const remainingQty = Math.max(0, originalQty - returnedQty);
+          return { ...item, _remainingQty: remainingQty, _returnedQty: returnedQty };
+        });
+
+        const availableItems = enrichedItems.filter((item) => item._remainingQty > 0);
+
+        if (availableItems.length === 0) {
+          setInvoiceError('Tất cả sản phẩm trong hóa đơn này đã được đổi trả hết. Không thể tạo thêm phiếu.');
+          setInvoiceLoading(false);
+          return;
+        }
+
+        setInvoice({ ...found, items: enrichedItems });
         setStep(2);
       } else {
-        setInvoiceError('Không tìm thấy hóa đơn: ' + invoiceCode);
+        setInvoiceError(`Không tìm thấy hóa đơn "${invoiceCode}". Kiểm tra lại mã hoặc trạng thái đơn.`);
       }
     } catch (err) {
       setInvoiceError('Lỗi tìm hóa đơn: ' + (err.message || 'Không xác định'));
@@ -91,15 +150,16 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       if (idx >= 0) {
         return prev.filter((p) => p.productId !== product.productId);
       }
+      const remainingQty = product._remainingQty ?? parseFloat(product.quantity || 0);
       return [
         ...prev,
         {
           productId: product.productId,
           productName: product.productName || product.name,
-          productCode: product.productCode,
+          productCode: product.productCode || '',
           quantity: 1,
           sellPrice: product.unitPrice || product.retailPrice || 0,
-          maxQty: product.quantity || 99,
+          maxQty: remainingQty,
         },
       ];
     });
@@ -115,7 +175,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async () => {
     if (selectedProducts.length === 0) {
-      setSubmitError('Vui lòng chọn ít nhất một sản phẩm');
+      setSubmitError('Vui lòng chọn ít nhất một sản phẩm để đổi trả');
       return;
     }
     if (!reason.trim()) {
@@ -126,36 +186,65 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     setSubmitting(true);
     setSubmitError('');
     try {
-      // 1. Tạo phiếu đổi trả
-      const retData = await createReturn({
-        invoiceId: invoice.invoiceId || invoice.id,
+      const invId = invoice.invoiceId || invoice.invoiceCode || invoice.id;
+      const payload = {
+        invoiceId: invId,
         reason: reason.trim(),
         refundMethod: refundMethod,
-      });
+      };
+      if (notes.trim()) {
+        payload.notes = notes.trim();
+      }
+      payload.items = selectedProducts.map((p) => ({
+        productId: p.productId,
+        quantity: p.quantity,
+      }));
+
+      console.log('[ReturnForm] Payload:', payload);
+      const retData = await createReturn(payload);
+      console.log('[ReturnForm] Response:', retData);
       const returnId = retData.returnOrderId || retData.returnId || retData.return?.returnId || retData.id;
 
-      // 2. Thêm từng sản phẩm
-      await Promise.all(
-        selectedProducts.map((p) =>
-          addReturnItem(returnId, {
-            productId: p.productId,
-            quantity: p.quantity,
-            condition: 'Cũ',
-          })
-        )
-      );
-
-      // 3. Chốt phiếu hoàn tất
-      await finalizeReturn(returnId);
+      // Nếu backend không nhận items inline thì gọi thêm API addReturnItem
+      if (!retData.returnItems || retData.returnItems.length === 0) {
+        await Promise.all(
+          selectedProducts.map((p) =>
+            addReturnItem(returnId, {
+              productId: p.productId,
+              quantity: p.quantity,
+            })
+          )
+        );
+      }
 
       onSuccess?.();
       handleClose();
     } catch (err) {
-      setSubmitError('Không thể tạo phiếu đổi trả: ' + (err.message || 'Lỗi'));
+      console.error('[ReturnForm] Full error:', err);
+      console.error('[ReturnForm] Error data:', err.data);
+      const detail = err?.data?.errors
+        ? Object.values(err.data.errors).flat().join(', ')
+        : err?.data?.title || err?.message || 'Lỗi';
+      setSubmitError('Không thể tạo phiếu đổi trả: ' + detail);
     } finally {
       setSubmitting(false);
     }
   };
+
+  const renderStepIndicator = () => (
+    <div className="mb-6 flex items-center gap-2">
+      <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${step === 1 ? 'bg-[#004785] text-white' : 'bg-green-500 text-white'}`}>
+        {step === 1 ? '1' : '✓'}
+      </div>
+      <div className={`h-0.5 w-12 ${step === 2 ? 'bg-green-500' : 'bg-slate-200'}`} />
+      <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${step === 2 ? 'bg-[#004785] text-white' : 'bg-slate-200 text-slate-500'}`}>
+        2
+      </div>
+      <span className="ml-2 text-sm text-slate-500">
+        {step === 1 ? 'Tìm hóa đơn gốc' : 'Chọn sản phẩm & lý do'}
+      </span>
+    </div>
+  );
 
   return (
     <Modal
@@ -166,9 +255,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       footer={
         step === 1 ? (
           <>
-            <Button variant="secondary" onClick={handleClose}>
-              Hủy
-            </Button>
+            <Button variant="secondary" onClick={handleClose}>Hủy</Button>
             <Button
               variant="primary"
               onClick={handleFindInvoice}
@@ -180,9 +267,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           </>
         ) : (
           <>
-            <Button variant="secondary" onClick={() => setStep(1)}>
-              Quay lại
-            </Button>
+            <Button variant="secondary" onClick={() => setStep(1)}>Quay lại</Button>
             <Button variant="primary" onClick={handleSubmit} loading={submitting}>
               Tạo đơn đổi trả
             </Button>
@@ -190,6 +275,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         )
       }
     >
+      {renderStepIndicator()}
+
       {step === 1 && (
         <div className="space-y-4">
           <div>
@@ -204,9 +291,13 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 setInvoiceError('');
               }}
               error={invoiceError}
+              onKeyDown={(e) => e.key === 'Enter' && handleFindInvoice()}
             />
           </div>
-          {invoiceError && <p className="text-sm text-red-500">{invoiceError}</p>}
+          <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+            Nhập mã hóa đơn đã hoàn thành để tạo yêu cầu đổi/trả hàng.
+            Hệ thống sẽ kiểm tra hóa đơn và hiển thị danh sách sản phẩm có thể đổi trả.
+          </div>
         </div>
       )}
 
@@ -245,29 +336,41 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           {/* Product selection */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">
-              Sản phẩm có thể đổi trả
+              Sản phẩm đổi trả <span className="text-red-500">*</span>
             </label>
-            <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+            <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 rounded-lg border border-slate-200">
               {(invoice.items || []).map((item) => {
                 const selected = selectedProducts.find((p) => p.productId === item.productId);
+                const remainingQty = item._remainingQty ?? parseFloat(item.quantity || 0);
+                const returnedQty = item._returnedQty || 0;
+
+                // Ẩn sản phẩm đã đổi trả hết
+                if (remainingQty <= 0 && !selected) return null;
+
                 return (
                   <div
                     key={item.invoiceItemId || item.productId}
-                    className={`flex items-center gap-3 p-3 ${selected ? 'bg-blue-50' : ''}`}
+                    className={`flex items-center gap-3 p-3 transition-colors ${selected ? 'bg-blue-50' : remainingQty <= 0 ? 'bg-slate-50 opacity-50' : 'hover:bg-slate-50'}`}
                   >
                     <input
                       type="checkbox"
                       checked={!!selected}
-                      onChange={() => toggleProduct(item)}
+                      disabled={remainingQty <= 0}
+                      onChange={() => toggleProduct({ ...item, quantity: remainingQty })}
                       className="h-4 w-4 rounded border-slate-300 text-[#004785]"
                     />
                     <div className="flex-1">
                       <p className="text-sm font-medium">{item.productName || item.productId}</p>
                       <p className="text-xs text-slate-500">
-                        {item.productCode || '-'} · Đơn giá: {formatCurrency(item.unitPrice || 0)}
+                        {item.productCode || '-'} · Đơn giá: {formatCurrency(item.unitPrice || 0)} · Đã mua: {item.quantity}
                       </p>
+                      {returnedQty > 0 && (
+                        <p className="text-xs text-amber-600">
+                          Đã đổi trả: {returnedQty} · Còn lại: <span className="font-semibold">{remainingQty}</span>
+                        </p>
+                      )}
                     </div>
-                    {selected && (
+                    {selected && remainingQty > 0 && (
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -286,8 +389,11 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                         >
                           +
                         </button>
-                        <span className="text-xs text-slate-400">/ {item.quantity}</span>
+                        <span className="text-xs text-slate-400">/ {remainingQty}</span>
                       </div>
+                    )}
+                    {remainingQty <= 0 && (
+                      <span className="text-xs font-medium text-red-500">Đã đổi trả hết</span>
                     )}
                   </div>
                 );
@@ -305,14 +411,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             </label>
             <textarea
               rows={2}
-              placeholder="VD: Sản phẩm bị lỗi, khách không hài lòng..."
+              placeholder="VD: Sản phẩm bị lỗi kỹ thuật, khách không hài lòng, sai quy cách..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
             />
           </div>
 
-          {/* Refund */}
+          {/* Refund method + amount */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -331,7 +437,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Số tiền hoàn</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Số tiền hoàn dự kiến
+              </label>
               <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2">
                 <span className="text-lg font-bold text-green-700">
                   {formatCurrency(totalRefund)}
@@ -340,7 +448,23 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
-          {submitError && <p className="text-sm text-red-500">{submitError}</p>}
+          {/* Notes */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
+            <textarea
+              rows={2}
+              placeholder="Ghi chú thêm (không bắt buộc)..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+            />
+          </div>
+
+          {submitError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {submitError}
+            </div>
+          )}
         </div>
       )}
     </Modal>

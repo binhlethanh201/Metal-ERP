@@ -70,7 +70,8 @@ export const apiClient = async (endpoint, options = {}) => {
         throw error403;
       }
       const errorData = await response.json().catch(() => ({}));
-      const error = new Error(errorData.message || `HTTP ${response.status}`);
+      const msg = errorData.message || errorData.title || errorData.detail || `HTTP ${response.status}`;
+      const error = new Error(msg);
       error.status = response.status;
       error.data = errorData;
       throw error;

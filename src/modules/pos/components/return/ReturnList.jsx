@@ -1,6 +1,6 @@
 /**
  * ReturnList - Danh sách phiếu đổi trả
- * API: /pos/returns - GET list
+ * API: GET /pos/returns
  */
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Table } from '../../../../shared/components/Table';
@@ -16,56 +16,20 @@ const STATUS_CONFIG = {
   CANCELLED: { label: 'Đã hủy', variant: 'danger' },
 };
 
-// Map API return
 const mapReturn = (r) => ({
   id: r.returnOrderId || r.returnId || r.id,
   returnId: r.returnOrderId || r.returnId || r.id,
   returnCode: r.returnCode || r.returnOrderId || r.id,
   invoiceId: r.invoiceId || '',
+  invoiceCode: r.invoiceCode || '',
   customerName: r.customerName || 'Khách lẻ',
   status: (r.status || 'PENDING').toUpperCase(),
   totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
   refundMethod: (r.refundMethod || r.method || 'CASH').toUpperCase(),
   reason: r.reason || '',
   createdAt: r.createdAt || r.createdAt,
-  ...r,
+  userName: r.userName || r.createdBy || '-',
 });
-
-const mockReturns = [
-  {
-    returnId: 'ret-001',
-    returnCode: 'RET-20240629-0001',
-    invoiceId: 'inv-001',
-    customerName: 'Nguyễn Văn A',
-    status: 'COMPLETED',
-    totalRefund: 150000,
-    refundMethod: 'CASH',
-    reason: 'Sản phẩm bị lỗi',
-    createdAt: '2026-06-29T10:00:00Z',
-  },
-  {
-    returnId: 'ret-002',
-    returnCode: 'RET-20240629-0002',
-    invoiceId: 'inv-002',
-    customerName: 'Trần Thị B',
-    status: 'PENDING',
-    totalRefund: 50000,
-    refundMethod: 'TRANSFER',
-    reason: 'Khách không hài lòng',
-    createdAt: '2026-06-29T14:30:00Z',
-  },
-  {
-    returnId: 'ret-003',
-    returnCode: 'RET-20240628-0003',
-    invoiceId: 'inv-003',
-    customerName: 'Lê Văn C',
-    status: 'CANCELLED',
-    totalRefund: 80000,
-    refundMethod: 'CASH',
-    reason: 'Sản phẩm không đúng mẫu',
-    createdAt: '2026-06-28T09:15:00Z',
-  },
-];
 
 const ReturnList = ({ onSelect, refreshKey = 0 }) => {
   const [returns, setReturns] = useState([]);
@@ -80,14 +44,12 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
     setFetchError(null);
     try {
       const data = await getReturns({});
-      console.log('[ReturnList] API response:', data);
       const raw = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
       const items = Array.isArray(raw) ? raw.map(mapReturn) : [];
       setReturns(items);
     } catch (err) {
-      console.error('Lỗi lấy danh sách đổi trả:', err);
-      setFetchError(err.message);
-      setReturns(mockReturns.map(mapReturn));
+      setFetchError(err.message || 'Không thể tải danh sách đổi trả');
+      setReturns([]);
     } finally {
       setLoading(false);
     }
@@ -214,16 +176,30 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
           <option value="CANCELLED">Đã hủy</option>
         </select>
         <Button variant="secondary" size="sm" onClick={fetchReturns}>
-          Tìm
+          Tải lại
         </Button>
       </div>
+
+      {/* Error banner */}
+      {fetchError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {fetchError}
+          <button
+            type="button"
+            onClick={fetchReturns}
+            className="ml-3 font-medium underline hover:text-red-800"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       <Table
         columns={columns}
         data={filtered}
         loading={loading}
-        emptyMessage={fetchError ? `Lỗi: ${fetchError}` : 'Chưa có phiếu đổi trả nào'}
+        emptyMessage="Chưa có phiếu đổi trả nào"
       />
     </div>
   );

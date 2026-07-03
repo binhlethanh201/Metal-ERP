@@ -68,6 +68,7 @@ const PosLayout = () => {
       <PosHeader
         search={search}
         onSearchChange={setSearch}
+        isMainScreen={isMainPosScreen}
         onBarcodeScan={() => {
           navigate('/pos');
           setTimeout(() => showNotice('Đang mở chế độ quét mã'), 300);

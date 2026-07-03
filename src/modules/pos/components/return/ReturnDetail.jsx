@@ -1,6 +1,6 @@
 /**
  * ReturnDetail - Chi tiết phiếu đổi trả + actions
- * API: /pos/returns/:id - GET
+ * Hiển thị ngay dữ liệu từ danh sách, sau đó refresh từ API để có đầy đủ items
  */
 import { useState, useEffect } from 'react';
 import { Card } from '../../../../shared/components/Card';
@@ -21,20 +21,9 @@ const REFUND_METHOD_LABELS = {
   CARD: 'Thẻ',
 };
 
-// Map API return detail
-const mapReturnDetail = (r) => ({
-  returnId: r.returnOrderId || r.returnId || r.id,
-  returnCode: r.returnCode || r.returnOrderId || r.returnId || r.id,
-  invoiceCode: r.invoiceCode || r.invoiceId || '',
-  customerName: r.customerName || 'Khách lẻ',
-  userName: r.userName || r.createdBy || '-',
-  status: (r.status || 'PENDING').toUpperCase(),
-  reason: r.reason || '',
-  notes: r.notes || '',
-  totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
-  refundMethod: (r.refundMethod || r.method || 'CASH').toUpperCase(),
-  createdAt: r.createdAt || r.createdAt,
-  returnItems: (r.returnItems || r.items || []).map((item) => ({
+const mapApiDetail = (r) => {
+  if (!r) return null;
+  const items = (r.returnItems || r.items || []).map((item) => ({
     returnItemId: item.returnItemId || item.id,
     productId: item.productId || item.id,
     productName: item.productName || 'Sản phẩm',
@@ -42,32 +31,56 @@ const mapReturnDetail = (r) => ({
     quantity: parseFloat(item.quantity || 1),
     sellPrice: parseFloat(item.sellPrice || item.unitPrice || item.price || 0),
     refundAmount: parseFloat(item.refundAmount || 0),
-  })),
-});
+  }));
 
-const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
-  const [detail, setDetail] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  return {
+    returnId: r.returnOrderId || r.returnId || r.id,
+    returnCode: r.returnCode || r.returnOrderId || r.returnId || r.id,
+    invoiceCode: r.invoiceCode || r.invoiceId || '',
+    customerName: r.customerName || 'Khách lẻ',
+    userName: r.userName || r.createdBy || '-',
+    status: (r.status || 'PENDING').toUpperCase(),
+    reason: r.reason || '',
+    notes: r.notes || '',
+    totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
+    refundMethod: (r.refundMethod || r.method || 'CASH').toUpperCase(),
+    createdAt: r.createdAt || r.createdAt,
+    returnItems: items.length > 0 ? items : (r.returnItems || r.items || []),
+  };
+};
+
+const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
+  const [detail, setDetail] = useState(() => mapApiDetail(initialData));
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
   const [finalizing, setFinalizing] = useState(false);
 
+  const returnId = initialData?.returnId || initialData?.id;
+
   useEffect(() => {
-    if (!returnId) return;
+    if (!returnId) {
+      setApiLoading(false);
+      return;
+    }
+    let cancelled = false;
     const load = async () => {
-      setLoading(true);
-      setError(null);
+      setApiLoading(true);
+      setApiError(null);
       try {
         const raw = await getReturn(returnId);
-        console.log('[ReturnDetail] API response:', raw);
         const data = raw?.data || raw;
-        setDetail(mapReturnDetail(data));
+        if (!cancelled) {
+          const fresh = mapApiDetail(data);
+          if (fresh) setDetail(fresh);
+        }
       } catch (err) {
-        setError(err.message || 'Không thể tải chi tiết');
+        if (!cancelled) setApiError(err.message || 'Không thể tải chi tiết');
       } finally {
-        setLoading(false);
+        if (!cancelled) setApiLoading(false);
       }
     };
     load();
+    return () => { cancelled = true; };
   }, [returnId]);
 
   const handleFinalize = async () => {
@@ -75,7 +88,7 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
     setFinalizing(true);
     try {
       await finalizeReturn(returnId);
-      setDetail((prev) => ({ ...prev, status: 'COMPLETED' }));
+      setDetail((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
       onUpdated?.();
     } catch (err) {
       alert('Không thể hoàn tiền: ' + (err.message || 'Lỗi'));
@@ -89,7 +102,7 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
     setFinalizing(true);
     try {
       await cancelReturn(returnId);
-      setDetail((prev) => ({ ...prev, status: 'CANCELLED' }));
+      setDetail((prev) => (prev ? { ...prev, status: 'CANCELLED' } : prev));
       onUpdated?.();
     } catch (err) {
       alert('Không thể hủy: ' + (err.message || 'Lỗi'));
@@ -98,18 +111,10 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#004785]" />
-      </div>
-    );
-  }
-
-  if (error) {
+  if (!detail) {
     return (
       <div className="py-8 text-center">
-        <p className="text-red-500">{error}</p>
+        <p className="text-slate-400">Không có dữ liệu chi tiết</p>
         <Button variant="secondary" className="mt-4" onClick={onBack}>
           Quay lại
         </Button>
@@ -117,32 +122,32 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
     );
   }
 
-  if (!detail) return null;
-
   const statusCfg = STATUS_CONFIG[detail.status] || { label: detail.status, variant: 'secondary' };
+  const hasItems = Array.isArray(detail.returnItems) && detail.returnItems.length > 0;
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+      {/* Back + refresh indicator */}
+      <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={onBack}
           className="flex items-center gap-1 text-sm text-slate-500 hover:text-[#004785]"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Quay lại
+          Quay lại danh sách
         </button>
+        {apiLoading && (
+          <span className="text-xs text-slate-400">Đang tải chi tiết...</span>
+        )}
+        {apiError && (
+          <span className="text-xs text-amber-500">Không đồng bộ được dữ liệu mới nhất</span>
+        )}
       </div>
 
-      {/* Main info */}
+      {/* Main info card */}
       <Card>
         <div className="space-y-4">
           <div className="flex items-start justify-between">
@@ -163,9 +168,7 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
               <p className="mt-1 font-semibold">{detail.customerName}</p>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                Hóa đơn gốc
-              </p>
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Hóa đơn gốc</p>
               <p className="mt-1 font-mono text-sm font-semibold">{detail.invoiceCode || '-'}</p>
             </div>
             <div>
@@ -176,18 +179,16 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
 
           {detail.reason && (
             <div className="rounded-lg bg-amber-50 p-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-amber-600">
-                Lý do đổi trả
-              </p>
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-600">Lý do đổi trả</p>
               <p className="mt-1 text-sm text-amber-800">{detail.reason}</p>
             </div>
           )}
         </div>
       </Card>
 
-      {/* Items */}
+      {/* Items card */}
       <Card header="Sản phẩm đổi trả">
-        {detail.returnItems?.length > 0 ? (
+        {hasItems ? (
           <div className="divide-y divide-slate-100">
             {detail.returnItems.map((item, i) => (
               <div key={item.returnItemId || i} className="flex items-center justify-between py-3">
@@ -205,24 +206,22 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
             ))}
           </div>
         ) : (
-          <p className="py-4 text-center text-sm text-slate-400">Không có sản phẩm</p>
+          <p className="py-4 text-center text-sm text-slate-400">
+            {apiLoading ? 'Đang tải danh sách sản phẩm...' : 'Không có sản phẩm'}
+          </p>
         )}
 
         <div className="mt-4 border-t border-slate-200 pt-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                  Tổng tiền hoàn
-                </p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng tiền hoàn</p>
                 <p className="text-2xl font-extrabold text-green-600">
                   {formatCurrency(detail.totalRefund)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                  Phương thức
-                </p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Phương thức</p>
                 <p className="mt-1 font-semibold">
                   {REFUND_METHOD_LABELS[detail.refundMethod] || detail.refundMethod}
                 </p>
@@ -236,9 +235,9 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
       {detail.status === 'PENDING' && (
         <div className="flex gap-3">
           <Button variant="success" onClick={handleFinalize} loading={finalizing}>
-            Tiếp tục hoàn tiền
+            Hoàn tiền
           </Button>
-          <Button variant="danger" onClick={handleCancel} loading={finalizing}>
+          <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={handleCancel}>
             Hủy phiếu
           </Button>
         </div>

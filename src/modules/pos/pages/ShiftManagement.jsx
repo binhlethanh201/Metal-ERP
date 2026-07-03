@@ -782,7 +782,7 @@ export const ShiftManagement = () => {
         isOpen={showEndModal}
         onClose={() => setShowEndModal(false)}
         title=""
-        size="md"
+        size="2xl"
         footer={
           <div className="flex w-full gap-3">
             <Button
@@ -1084,7 +1084,7 @@ export const ShiftManagement = () => {
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
         title={`Chi tiết ca - ${selectedShift?.dateLabel || selectedShift?.date || ''}`}
-        size="2xl"
+        size="4xl"
         footer={
           <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
             Đóng
