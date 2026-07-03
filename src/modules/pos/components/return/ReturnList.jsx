@@ -18,14 +18,14 @@ const STATUS_CONFIG = {
 
 // Map API return
 const mapReturn = (r) => ({
-  id: r.returnId || r.id,
-  returnId: r.returnId || r.id,
-  returnCode: r.returnCode || r.id,
+  id: r.returnOrderId || r.returnId || r.id,
+  returnId: r.returnOrderId || r.returnId || r.id,
+  returnCode: r.returnCode || r.returnOrderId || r.id,
   invoiceId: r.invoiceId || '',
   customerName: r.customerName || 'Khách lẻ',
-  status: r.status || 'PENDING',
+  status: (r.status || 'PENDING').toUpperCase(),
   totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
-  refundMethod: r.refundMethod || r.method || 'CASH',
+  refundMethod: (r.refundMethod || r.method || 'CASH').toUpperCase(),
   reason: r.reason || '',
   createdAt: r.createdAt || r.createdAt,
   ...r,

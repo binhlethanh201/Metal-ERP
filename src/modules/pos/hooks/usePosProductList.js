@@ -68,21 +68,21 @@ const normalizePosProduct = (p) => ({
   retailPrice: parseFloat(p.retailPrice || p.unitPrice || p.salePrice || p.price || 0),
   availableStock: parseFloat(p.availableStock || p.quantity || p.stock || 0),
   categoryName: p.categoryName || p.category || '',
-  image: p.image || '',
+  image: p.imageUrl || p.image || '',
   status: (p.availableStock || p.quantity || p.stock || 0) > 0 ? 'Còn hàng' : 'Hết hàng',
 });
 
-export const usePosProductList = () => {
+export const usePosProductList = (searchTerm = '') => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isMock, setIsMock] = useState(false);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (term) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getPosProducts();
+      const response = await getPosProducts(term ? { search: term } : {});
       const items = Array.isArray(response) ? response : response?.items || response?.data || [];
 
       if (items.length > 0) {
@@ -103,8 +103,14 @@ export const usePosProductList = () => {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    const handler = setTimeout(() => {
+      fetchProducts(searchTerm);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm, fetchProducts]);
 
   return {
     products,

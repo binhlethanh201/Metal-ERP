@@ -63,7 +63,7 @@ const POSScreen = () => {
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
 
-  const { products: posApiProducts, loading: productsLoading } = usePosProductList();
+  const { products: posApiProducts, loading: productsLoading } = usePosProductList(search);
   const posProducts = useMemo(() => posApiProducts.map(mapToPosProduct), [posApiProducts]);
 
   const cart = usePosCart([]);
@@ -424,7 +424,6 @@ const POSScreen = () => {
         onQuickFill={handleQuickFill}
         onSelectMethod={(method) => showNotice('Đã chọn: ' + method)}
         onOpenQR={() => showNotice('Tính năng đang phát triển')}
-        onOpenDebt={() => showNotice('Tính năng đang phát triển')}
       />
 
       <SuccessModal

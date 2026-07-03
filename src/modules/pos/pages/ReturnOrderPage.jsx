@@ -14,6 +14,7 @@ const ReturnOrderPage = () => {
   const [view, setView] = useState('list'); // 'list' | 'detail'
   const [selectedReturn, setSelectedReturn] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSelect = (ret) => {
     setSelectedReturn(ret);
@@ -27,6 +28,7 @@ const ReturnOrderPage = () => {
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
+    setRefreshKey((prev) => prev + 1);
   };
 
   return (
@@ -47,7 +49,7 @@ const ReturnOrderPage = () => {
           </div>
 
           <Card padding="p-4">
-            <ReturnList onSelect={handleSelect} />
+            <ReturnList onSelect={handleSelect} refreshKey={refreshKey} />
           </Card>
         </>
       )}

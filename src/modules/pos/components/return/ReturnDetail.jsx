@@ -7,7 +7,7 @@ import { Card } from '../../../../shared/components/Card';
 import { Badge } from '../../../../shared/components/Badge';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { getReturn, finalizeReturn } from '../../services/posService';
+import { getReturn, finalizeReturn, cancelReturn } from '../../services/posService';
 
 const STATUS_CONFIG = {
   PENDING: { label: 'Chờ duyệt', variant: 'warning' },
@@ -23,16 +23,16 @@ const REFUND_METHOD_LABELS = {
 
 // Map API return detail
 const mapReturnDetail = (r) => ({
-  returnId: r.returnId || r.id,
-  returnCode: r.returnCode || r.returnId || r.id,
+  returnId: r.returnOrderId || r.returnId || r.id,
+  returnCode: r.returnCode || r.returnOrderId || r.returnId || r.id,
   invoiceCode: r.invoiceCode || r.invoiceId || '',
   customerName: r.customerName || 'Khách lẻ',
   userName: r.userName || r.createdBy || '-',
-  status: r.status || 'PENDING',
+  status: (r.status || 'PENDING').toUpperCase(),
   reason: r.reason || '',
   notes: r.notes || '',
   totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
-  refundMethod: r.refundMethod || r.method || 'CASH',
+  refundMethod: (r.refundMethod || r.method || 'CASH').toUpperCase(),
   createdAt: r.createdAt || r.createdAt,
   returnItems: (r.returnItems || r.items || []).map((item) => ({
     returnItemId: item.returnItemId || item.id,
@@ -79,6 +79,20 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
       onUpdated?.();
     } catch (err) {
       alert('Không thể hoàn tiền: ' + (err.message || 'Lỗi'));
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!window.confirm('Xác nhận hủy phiếu đổi trả này?')) return;
+    setFinalizing(true);
+    try {
+      await cancelReturn(returnId);
+      setDetail((prev) => ({ ...prev, status: 'CANCELLED' }));
+      onUpdated?.();
+    } catch (err) {
+      alert('Không thể hủy: ' + (err.message || 'Lỗi'));
     } finally {
       setFinalizing(false);
     }
@@ -222,7 +236,10 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
       {detail.status === 'PENDING' && (
         <div className="flex gap-3">
           <Button variant="success" onClick={handleFinalize} loading={finalizing}>
-            Hoàn tiền
+            Tiếp tục hoàn tiền
+          </Button>
+          <Button variant="danger" onClick={handleCancel} loading={finalizing}>
+            Hủy phiếu
           </Button>
         </div>
       )}

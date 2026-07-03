@@ -7,7 +7,7 @@ import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { getOrders, createReturn, addReturnItem } from '../../services/posService';
+import { getOrders, createReturn, addReturnItem, finalizeReturn } from '../../services/posService';
 
 const REFUND_METHODS = [
   { value: 'CASH', label: 'Tiền mặt' },
@@ -132,7 +132,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         reason: reason.trim(),
         refundMethod: refundMethod,
       });
-      const returnId = retData.returnId || retData.return?.returnId || retData.id;
+      const returnId = retData.returnOrderId || retData.returnId || retData.return?.returnId || retData.id;
 
       // 2. Thêm từng sản phẩm
       await Promise.all(
@@ -144,6 +144,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           })
         )
       );
+
+      // 3. Chốt phiếu hoàn tất
+      await finalizeReturn(returnId);
 
       onSuccess?.();
       handleClose();
