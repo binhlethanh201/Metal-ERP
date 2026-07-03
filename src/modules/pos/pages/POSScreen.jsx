@@ -4,6 +4,7 @@
  */
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
+import { useAuth } from '../../../shared/hooks/useAuth';
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
@@ -21,9 +22,8 @@ import {
   createPayment,
   finalizeInvoice,
 } from '../services/posService';
-import { initialCart } from '../data/posMockData';
 
-const PAYMENT_LABELS = { cash: 'Tiền mặt', card: 'Thẻ', transfer: 'Chuyển khoản' };
+const PAYMENT_LABELS = { cash: 'Tiền mặt', transfer: 'Chuyển khoản' };
 const newPaymentLine = (method = 'cash') => ({ id: Date.now(), method, amount: 0 });
 
 // Map API product sang format POS cart
@@ -45,6 +45,7 @@ const POSScreen = () => {
   const { search, showNotice, quickAddCust, setDrafts, setFooterInfo } = useOutletContext();
   const location = useLocation();
   const draftData = location.state?.draft;
+  const preselectedCustomer = location.state?.selectedCustomer;
   const loadedDraft = useRef(null);
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -59,11 +60,13 @@ const POSScreen = () => {
   const [showQuickAddCust, setShowQuickAddCust] = useState(false);
   const [isSplitPay, setIsSplitPay] = useState(false);
   const prevQuickAdd = useRef(quickAddCust);
+  const { user } = useAuth();
+  const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
 
   const { products: posApiProducts, loading: productsLoading } = usePosProductList();
   const posProducts = useMemo(() => posApiProducts.map(mapToPosProduct), [posApiProducts]);
 
-  const cart = usePosCart(initialCart);
+  const cart = usePosCart([]);
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
   const handleAddToCart = useCallback((p) => cart.addToCart(p), [cart]);
@@ -86,6 +89,16 @@ const POSScreen = () => {
       setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
     }
   }, [draftData, cart, setDrafts]);
+
+  // ---- Chon khach hang tu trang Khach hang ----
+  useEffect(() => {
+    if (preselectedCustomer) {
+      setSelectedCustomer(preselectedCustomer);
+      showNotice('Đã chọn: ' + preselectedCustomer.name);
+      // Clear state để không chọn lại nếu người dùng tự đổi
+      window.history.replaceState({}, document.title);
+    }
+  }, [preselectedCustomer, showNotice]);
 
   // ---- Thêm nhanh khách hàng ----
   useEffect(() => {
@@ -129,12 +142,24 @@ const POSScreen = () => {
   const processOrder = async (lines, totalPaidAmount) => {
     setPaying(true);
     try {
-      // 1. Tạo hóa đơn
+      // 1. Tạo hóa đơn — kèm shiftId nếu có ca đang mở
+      const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
       const invoice = await createInvoice({
         customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
         customerName: selectedCustomer?.name || null,
         note: '',
+        shiftId: activeShift?.id || undefined,
+        cashierName: staffName,
+        createdBy: staffName,
       });
+
+      // Lưu tên thu ngân cho đơn hàng này
+      const invoiceId = invoice.invoiceCode || invoice.invoiceId || invoice.id;
+      if (invoiceId) {
+        const map = JSON.parse(localStorage.getItem('pos_order_cashiers') || '{}');
+        map[invoiceId] = staffName;
+        localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
+      }
 
       // 2. Thêm từng sản phẩm vào hóa đơn
       await Promise.all(
@@ -149,16 +174,74 @@ const POSScreen = () => {
 
       // 3. Tạo thanh toán
       // Backend C# expect: Cash, Transfer, Card (PascalCase)
-      const paymentMethods = { cash: 'Cash', card: 'Card', transfer: 'Transfer' };
+      const PAYMENT_LABELS_VN = { cash: 'Tiền mặt', transfer: 'Chuyển khoản' };
+      const paymentMethods = { cash: 'Cash', transfer: 'Transfer' };
+      const payMethodsVN = [];
       for (const line of lines) {
-        await createPayment(invoice.invoiceId, {
-          method: paymentMethods[line.method] || 'Cash',
+        const method = paymentMethods[line.method] || 'Cash';
+        const vnMethod = PAYMENT_LABELS_VN[line.method] || method;
+        console.log('[POS] Creating payment:', {
+          invoiceId: invoice.invoiceId,
+          method,
+          vnMethod,
           amount: line.amount,
         });
+        payMethodsVN.push({ method: vnMethod, amount: line.amount });
+        const pmBody = { method, amount: line.amount };
+        try {
+          await createPayment(invoice.invoiceId, pmBody);
+        } catch (pmErr) {
+          console.warn('[POS] createPayment error:', pmErr.data || pmErr.message);
+          // Thử các format khác nhau
+          const attempts = [
+            { paymentMethod: method, amount: line.amount },
+            { method: method.toLowerCase(), amount: line.amount },
+            { Method: method, Amount: line.amount },
+          ];
+          let lastErr = pmErr;
+          for (const attempt of attempts) {
+            try {
+              console.log('[POS] Retry payment with:', attempt);
+              await createPayment(invoice.invoiceId, attempt);
+              lastErr = null;
+              break;
+            } catch (e) {
+              lastErr = e;
+              console.warn('[POS] Retry failed:', e.data || e.message);
+            }
+          }
+          if (lastErr) {
+            // Vẫn lưu thông tin thanh toán để hiển thị trong order history
+            console.warn('[POS] All payment attempts failed, saving to localStorage only');
+          }
+        }
+      }
+
+      // Lưu phương thức thanh toán vào localStorage (tiếng Việt kèm số tiền)
+      if (invoiceId) {
+        console.log('[POS] Saving payment to localStorage:', invoiceId, payMethodsVN);
+        const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
+        savedPM[invoiceId] = JSON.stringify(payMethodsVN);
+        localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
       }
 
       // 4. Finalize hóa đơn (chuyển sang Completed, trừ kho)
-      await finalizeInvoice(invoice.invoiceId);
+      try {
+        await finalizeInvoice(invoice.invoiceId);
+      } catch (finalErr) {
+        console.warn('[POS] finalizeInvoice error:', finalErr);
+      }
+
+      // Cập nhật realtime cho ca đang mở (cộng dồn vào sessionStorage)
+      try {
+        const shiftData = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        if (shiftData) {
+          shiftData.orderCount = (shiftData.orderCount || 0) + 1;
+          shiftData.totalSales = (shiftData.totalSales || 0) + cart.total;
+          shiftData.totalRevenue = shiftData.totalSales;
+          sessionStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
+        }
+      } catch (_) {}
 
       // Hiển thị thành công
       const order = {
@@ -219,21 +302,11 @@ const POSScreen = () => {
       return;
     }
     if (isSplitPay) {
-      const m =
-        cart.paymentMethod === 'Tiền mặt'
-          ? 'cash'
-          : cart.paymentMethod === 'Thẻ'
-            ? 'card'
-            : 'transfer';
+      const m = cart.paymentMethod === 'Tiền mặt' ? 'cash' : 'transfer';
       setPayLines([{ ...newPaymentLine(m), amount: 0 }]);
       setShowPayModal(true);
     } else {
-      const m =
-        cart.paymentMethod === 'Tiền mặt'
-          ? 'cash'
-          : cart.paymentMethod === 'Thẻ'
-            ? 'card'
-            : 'transfer';
+      const m = cart.paymentMethod === 'Tiền mặt' ? 'cash' : 'transfer';
       processOrder([{ method: m, amount: cart.total }], cart.total);
     }
   };
@@ -247,18 +320,23 @@ const POSScreen = () => {
   };
 
   // ---- Pay lines ----
-  const handleAddPayLine = () => setPayLines((prev) => [...prev, newPaymentLine('transfer')]);
+  const handleAddPayLine = () =>
+    setPayLines((prev) => (prev.length >= 2 ? prev : [...prev, newPaymentLine('transfer')]));
   const handleRemovePayLine = (id) =>
     setPayLines((prev) => (prev.length > 1 ? prev.filter((l) => l.id !== id) : prev));
   const handlePayLineChange = (id, field, value) => {
     setPayLines((prev) =>
-      prev.map((l) =>
-        l.id !== id
-          ? l
-          : field === 'method'
-            ? { ...l, method: value, amount: 0 }
-            : { ...l, amount: Number(value) }
-      )
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        if (field === 'method') return { ...l, method: value, amount: 0 };
+        // Không cho nhập vượt quá số tiền còn thiếu + dòng hiện tại
+        const otherTotal = prev
+          .filter((o) => o.id !== id)
+          .reduce((s, o) => s + (Number(o.amount) || 0), 0);
+        const maxAllowed = Math.max(0, cart.total - otherTotal);
+        const newAmount = Math.min(Number(value) || 0, maxAllowed);
+        return { ...l, amount: newAmount };
+      })
     );
   };
   const handleQuickFill = (id) =>
@@ -327,6 +405,9 @@ const POSScreen = () => {
         onPayMethodChange={cart.setPaymentMethod}
         isSplitPay={isSplitPay}
         onToggleSplitPay={setIsSplitPay}
+        onOpenHeldOrders={() => showNotice('Tính năng đang phát triển')}
+        onOpenPriceCheck={() => showNotice('Tính năng đang phát triển')}
+        onOpenStockCheck={() => showNotice('Tính năng đang phát triển')}
       />
 
       <PaymentModal
@@ -344,6 +425,9 @@ const POSScreen = () => {
         onRemoveLine={handleRemovePayLine}
         onLineChange={handlePayLineChange}
         onQuickFill={handleQuickFill}
+        onSelectMethod={(method) => showNotice('Đã chọn: ' + method)}
+        onOpenQR={() => showNotice('Tính năng đang phát triển')}
+        onOpenDebt={() => showNotice('Tính năng đang phát triển')}
       />
 
       <SuccessModal

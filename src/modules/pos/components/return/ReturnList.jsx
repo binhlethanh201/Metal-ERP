@@ -80,12 +80,10 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
     setFetchError(null);
     try {
       const data = await getReturns({});
-      const items = Array.isArray(data) ? data : data?.items || [];
-      if (items.length > 0) {
-        setReturns(items.map(mapReturn));
-      } else {
-        setReturns(mockReturns.map(mapReturn));
-      }
+      console.log('[ReturnList] API response:', data);
+      const raw = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
+      const items = Array.isArray(raw) ? raw.map(mapReturn) : [];
+      setReturns(items);
     } catch (err) {
       console.error('Lỗi lấy danh sách đổi trả:', err);
       setFetchError(err.message);

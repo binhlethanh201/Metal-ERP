@@ -11,7 +11,7 @@ import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { getOrders } from '../services/posService';
+import { getOrders, getInvoice } from '../services/posService';
 
 // Mock data fallback — dùng khi API chưa có dữ liệu
 const MOCK_ORDERS = [
@@ -127,8 +127,154 @@ const MOCK_ORDERS = [
   },
 ];
 
-const PAYMENT_VARIANTS = { 'Tiền mặt': 'warning', The: 'info', 'Chuyển khoản': 'primary' };
-const PAYMENT_LABELS = { CASH: 'Tiền mặt', TRANSFER: 'Chuyển khoản', CARD: 'Thẻ' };
+const PAYMENT_VARIANTS = {
+  'Tiền mặt': 'warning',
+  Thẻ: 'info',
+  'Chuyển khoản': 'primary',
+  Cash: 'warning',
+  Card: 'info',
+  Transfer: 'primary',
+  CASH: 'warning',
+  CARD: 'info',
+  TRANSFER: 'primary',
+};
+const PAYMENT_LABELS = {
+  CASH: 'Tiền mặt',
+  TRANSFER: 'Chuyển khoản',
+  CARD: 'Thẻ',
+  Cash: 'Tiền mặt',
+  Transfer: 'Chuyển khoản',
+  Card: 'Thẻ',
+};
+const translatePayment = (method) => PAYMENT_LABELS[method] || method || '-';
+
+// Map API order/invoice sang format chuẩn cho UI
+const mapOrder = (o) => {
+  // Xử lý paymentMethod: map không phân biệt hoa thường
+  let paymentMethod = o.paymentMethod || o.paymentType || '';
+  if (!paymentMethod) {
+    // Thử từ payments array
+    const paymentLines = o.payLines || o.payments || o.paymentLines || [];
+    if (paymentLines.length > 0) {
+      const pm = paymentLines[0].method || paymentLines[0].paymentMethod || '';
+      paymentMethod = pm;
+    }
+  }
+  // Chuẩn hóa: Cash → CASH, card → CARD, Chuyển khoản → giữ nguyên
+  const normalizedPM = PAYMENT_LABELS[paymentMethod]
+    ? paymentMethod
+    : PAYMENT_LABELS[paymentMethod.toUpperCase()]
+      ? paymentMethod.toUpperCase()
+      : paymentMethod;
+
+  // Tra từ localStorage nếu API không trả về
+  const invoiceId = o.invoiceCode || o.invoiceId || o.id;
+  const lines = o.payLines || o.payments || o.paymentLines || [];
+  if (!normalizedPM && invoiceId) {
+    try {
+      const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
+      const raw = savedPM[invoiceId];
+      console.log('[OrderHistory] localStorage payment lookup:', invoiceId, raw);
+      if (raw) {
+        // Parse: có thể là [{method, amount}] (mới) hoặc ["Tiền mặt"] (cũ)
+        try {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr) && arr.length > 0) {
+            if (typeof arr[0] === 'string') {
+              // Legacy: ["Tiền mặt", "Chuyển khoản"]
+              paymentMethod = arr.join(', ');
+              arr.forEach((m) => {
+                if (!lines.some((l) => l.method === m)) lines.push({ method: m, amount: 0 });
+              });
+            } else if (typeof arr[0] === 'object') {
+              // Mới: [{method: "Tiền mặt", amount: 50000}, ...]
+              paymentMethod = arr.map((p) => p.method).join(', ');
+              arr.forEach((p) => {
+                const pMethod = PAYMENT_LABELS[p.method] || p.method; // chuẩn hóa Tiền mặt→Tiền mặt, Cash→Tiền mặt
+                const exists = lines.some((l) => {
+                  const lMethod = PAYMENT_LABELS[l.method] || l.method;
+                  return lMethod === pMethod;
+                });
+                if (!exists) lines.push(p);
+              });
+            }
+          }
+        } catch {
+          // Legacy format: raw string "Cash"
+          paymentMethod = PAYMENT_LABELS[raw] || raw;
+        }
+      }
+    } catch {}
+  }
+  console.log('[OrderHistory] mapOrder result:', {
+    invoiceId,
+    paymentMethod,
+    linesCount: lines.length,
+  });
+
+  // Xử lý createdBy: có thể là string (ID/name) hoặc object {id, name}
+  let cashierName = '-';
+  if (o.userName) cashierName = o.userName;
+  else if (o.cashier) cashierName = o.cashier;
+  else if (o.cashierName) cashierName = o.cashierName;
+  else if (typeof o.createdBy === 'string') cashierName = o.createdBy;
+  else if (typeof o.createdBy === 'object' && o.createdBy?.name) cashierName = o.createdBy.name;
+  else if (typeof o.createdBy === 'object' && o.createdBy?.fullName)
+    cashierName = o.createdBy.fullName;
+  else {
+    // Tra từ localStorage (lưu khi tạo đơn ở POSScreen)
+    const invoiceId = o.invoiceCode || o.invoiceId || o.id;
+    if (invoiceId) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('pos_order_cashiers') || '{}');
+        cashierName = saved[invoiceId] || '-';
+      } catch {}
+    }
+  }
+
+  return {
+    id: o.invoiceCode || o.invoiceId || o.id || '',
+    invoiceCode: o.invoiceCode || o.id || '',
+    date: o.createdAt || o.date || o.invoiceDate || '',
+    createdAt: o.createdAt || o.date || o.invoiceDate || '',
+    customerName: o.customerName || o.customer || 'Khách lẻ',
+    customer: o.customerName || o.customer || 'Khách lẻ',
+    cashier: cashierName,
+    userName: cashierName,
+    items: (o.items || o.lineItems || []).map((item) => ({
+      productId: item.productId || item.id || '',
+      productCode: item.productCode || '',
+      productName: item.productName || item.name || item.productName || '',
+      name: item.productName || item.name || item.productName || '',
+      quantity: item.quantity || 0,
+      unitPrice: parseFloat(item.unitPrice || item.price || item.retailPrice || 0),
+      price: parseFloat(item.unitPrice || item.price || item.retailPrice || 0),
+      totalPrice: parseFloat(
+        item.totalPrice ||
+          item.lineTotal ||
+          (item.unitPrice || item.price || 0) * (item.quantity || 0)
+      ),
+    })),
+    itemCount: (o.items || o.lineItems || []).length || o.itemCount || 0,
+    subtotal: parseFloat(o.subtotal || o.subTotal || 0),
+    discount: parseFloat(o.discountAmount || o.discount || 0),
+    vat: parseFloat(o.taxAmount || o.vat || o.tax || 0),
+    totalAmount: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
+    total: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
+    paymentMethod: normalizedPM || paymentMethod,
+    payLines:
+      lines.length > 0
+        ? lines.map((pl) => ({
+            method: pl.method || pl.paymentMethod || pl.paymentType || '',
+            amount: parseFloat(pl.amount || 0),
+          }))
+        : [],
+    changeAmount: parseFloat(o.changeAmount || o.change || 0),
+    discountAmount: parseFloat(o.discountAmount || o.discount || 0),
+    taxAmount: parseFloat(o.taxAmount || o.vat || o.tax || 0),
+    note: o.note || o.notes || '',
+  };
+};
 
 const OrderHistory = () => {
   const navigate = useNavigate();
@@ -139,7 +285,6 @@ const OrderHistory = () => {
   const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
-  const [selected, setSelected] = useState(null);
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
@@ -155,8 +300,16 @@ const OrderHistory = () => {
     setFetchError(null);
     try {
       const data = await getOrders({ status: 'Completed' });
-      // Backend trả về PageResultDto hoặc mảng trực tiếp
-      const items = Array.isArray(data) ? data : (data?.items ?? []);
+      console.log('[OrderHistory] API response:', data);
+      // Backend trả về PageResultDto hoặc mảng trực tiếp hoặc {data: [...]}
+      const raw = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
+      const items = Array.isArray(raw) ? raw.map(mapOrder) : [];
+      console.log('[OrderHistory] mapped orders:', items.length, items[0]);
+      if (items.length > 0)
+        console.log(
+          '[OrderHistory] raw first item keys:',
+          Object.keys(Array.isArray(raw) ? raw[0] : [])
+        );
       setOrders(items);
     } catch (err) {
       console.error('Lỗi khi lấy danh sách đơn hàng:', err);
@@ -172,11 +325,36 @@ const OrderHistory = () => {
     fetchOrders();
   }, [fetchOrders]);
 
+  // Fetch chi tiết hóa đơn khi chọn xem
+  const [selected, setSelected] = useState(null);
+  const [selectedLoading, setSelectedLoading] = useState(false);
+  const handleSelectOrder = async (row) => {
+    setSelected(row);
+    setSelectedLoading(true);
+    // Thử lấy chi tiết hóa đơn từ API (có thể có payments, items đầy đủ)
+    const invoiceId = row.invoiceCode || row.id;
+    if (invoiceId) {
+      try {
+        const detail = await getInvoice(invoiceId);
+        if (detail) {
+          setSelected((prev) =>
+            prev?.id === (row.invoiceCode || row.id) ? { ...prev, ...mapOrder(detail) } : prev
+          );
+        }
+      } catch (_) {}
+    }
+    setSelectedLoading(false);
+  };
+
   const handlePrintOrder = (order) => {
     const printWindow = window.open('', '_blank', 'width=420,height=800');
     if (!printWindow) return;
 
-    const payLines = Array.isArray(order.payLines) ? order.payLines : [];
+    const payLines = Array.isArray(order.payLines)
+      ? order.payLines
+      : Array.isArray(order.payments)
+        ? order.payments
+        : [];
     const totalPaid =
       payLines.length > 0
         ? payLines.reduce((s, pl) => s + pl.amount, 0)
@@ -187,10 +365,10 @@ const OrderHistory = () => {
         ? payLines
             .map(
               (pl) =>
-                `<tr><td>${pl.method}</td><td class="r">${formatCurrency(pl.amount)}</td></tr>`
+                `<tr><td>${translatePayment(pl.method)}</td><td class="r">${formatCurrency(pl.amount)}</td></tr>`
             )
             .join('')
-        : `<tr><td>${order.paymentMethod || '-'}</td><td class="r">${formatCurrency(totalPaid)}</td></tr>`;
+        : `<tr><td>${translatePayment(order.paymentMethod)}</td><td class="r">${formatCurrency(totalPaid)}</td></tr>`;
 
     printWindow.document.write(`<!DOCTYPE html>
 <html>
@@ -242,10 +420,34 @@ const OrderHistory = () => {
 </div>
 <hr>
 <table>
-  <tr><td>So mon</td><td class="r">${order.items} mon</td></tr>
-  <tr><td>Thu ngan</td><td class="r">${order.cashier}</td></tr>
+  <tr><td>So mon</td><td class="r">${order.items?.length || order.itemCount || 0} mon</td></tr>
+  <tr><td>Thu ngan</td><td class="r">${order.cashier || order.userName || '-'}</td></tr>
 </table>
 <hr>
+<!-- DS san pham -->
+${
+  Array.isArray(order.items) && order.items.length > 0
+    ? `
+<table>
+  <tr style="font-size:12px;font-weight:700;color:#555;">
+    <td style="padding-bottom:4px;">San pham</td>
+    <td class="r" style="padding-bottom:4px;">SL</td>
+    <td class="r" style="padding-bottom:4px;">Tien</td>
+  </tr>
+  ${order.items
+    .map(
+      (item) => `<tr>
+    <td style="font-size:13px;">${item.productName || item.name || 'SP'}</td>
+    <td class="r" style="font-size:13px;">${item.quantity || 0}</td>
+    <td class="r" style="font-size:13px;">${formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 0))}</td>
+  </tr>`
+    )
+    .join('')}
+</table>
+<hr>
+`
+    : ''
+}
 <table>
   <tr><td>Tam tinh</td><td class="r">${formatCurrency(order.subtotal)}</td></tr>
   ${order.discount > 0 ? `<tr><td style="color:#c62828;">Giam gia</td><td class="r" style="color:#c62828;">-${formatCurrency(order.discount)}</td></tr>` : ''}
@@ -338,28 +540,32 @@ const OrderHistory = () => {
       key: 'items',
       header: 'Món',
       width: '50px',
-      render: (v, row) => <span className="text-slate-600">{v?.length ?? row.items ?? 0}</span>,
+      render: (v, row) => (
+        <span className="text-slate-600">{v?.length ?? row.items ?? row.itemCount ?? 0}</span>
+      ),
     },
     {
       key: 'paymentMethod',
       header: 'Thanh toán',
       width: '160px',
       render: (v, row) => {
-        // API format: v là string | mock format: row.payLines là array
-        if (Array.isArray(row.payLines)) {
+        // Ưu tiên payLines/payments array từ API
+        const lines = row.payLines || row.payments || [];
+        if (lines.length > 0) {
           return (
             <div className="flex flex-wrap gap-1">
-              {row.payLines.map((pl, i) => (
+              {lines.map((pl, i) => (
                 <Badge key={i} variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
-                  {pl.method}
+                  {translatePayment(pl.method)}
                 </Badge>
               ))}
             </div>
           );
         }
-        const label = PAYMENT_LABELS[v] || v || row.paymentMethod || '-';
+        // API trả về paymentMethod dạng enum: CASH, TRANSFER, CARD
+        const label = translatePayment(v);
         return (
-          <Badge variant={PAYMENT_VARIANTS[v] || 'secondary'} size="sm">
+          <Badge variant={PAYMENT_VARIANTS[label] || 'secondary'} size="sm">
             {label}
           </Badge>
         );
@@ -377,7 +583,9 @@ const OrderHistory = () => {
     {
       key: 'userName',
       header: 'Thu ngân',
-      render: (v, row) => <span className="text-xs text-slate-500">{v || row.cashier || '-'}</span>,
+      render: (v, row) => (
+        <span className="text-xs text-slate-500">{v || row.cashier || row.createdBy || '-'}</span>
+      ),
     },
     {
       key: 'actions',
@@ -386,7 +594,7 @@ const OrderHistory = () => {
       render: (_, row) => (
         <button
           type="button"
-          onClick={() => setSelected(row)}
+          onClick={() => handleSelectOrder(row)}
           className="text-xs font-medium text-[#004785] hover:underline"
         >
           Chi tiết
@@ -415,7 +623,7 @@ const OrderHistory = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-[#004785]">{todayCount}</div>
@@ -444,19 +652,8 @@ const OrderHistory = () => {
               </p>
             </div>
           </Card>
-          <Card padding="p-4">
-            <div className="text-center">
-              <div className="text-xl font-extrabold text-orange-600">
-                {formatCurrency(totalRevenue)}
-              </div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
-                Tổng tháng
-              </p>
-            </div>
-          </Card>
         </div>
 
-        {/* Drafts - Đơn nháp chưa thanh toán */}
         {drafts.length > 0 && (
           <Card header={`Đơn nháp (${drafts.length})`} padding="p-0">
             <div className="divide-y divide-slate-100">
@@ -587,7 +784,7 @@ const OrderHistory = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Thu ngân</span>
-                  <span>{selected.userName || selected.cashier || '-'}</span>
+                  <span>{selected.userName || selected.cashier || selected.createdBy || '-'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Số món</span>
@@ -599,31 +796,72 @@ const OrderHistory = () => {
             </div>
           </Card>
 
-          <Card header="Thanh toán">
-            <div className="space-y-2">
-              {/* Mock: payLines array | API: paymentMethod string */}
-              {selected.payLines ? (
-                selected.payLines.map((pl, i) => (
-                  <div key={i} className="flex justify-between rounded-lg bg-slate-50 p-2 text-sm">
-                    <Badge variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
-                      {pl.method}
-                    </Badge>
-                    <span className="font-bold">{formatCurrency(pl.amount)}</span>
+          {/* Danh sách sản phẩm đã mua */}
+          <Card header={`Sản phẩm (${selected.items?.length || selected.itemCount || 0})`}>
+            <div className="space-y-3">
+              {selected.items && selected.items.length > 0 ? (
+                selected.items.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-900">
+                        {item.productName ||
+                          item.name ||
+                          item.productCode ||
+                          `SP #${item.productId || item.id || ''}`}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {formatCurrency(item.unitPrice || item.price || 0)} x {item.quantity || 0}
+                      </p>
+                    </div>
+                    <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
+                      {formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 0))}
+                    </span>
                   </div>
                 ))
               ) : (
-                <div className="flex justify-between rounded-lg bg-slate-50 p-2 text-sm">
-                  <Badge
-                    variant={PAYMENT_VARIANTS[selected.paymentMethod] || 'secondary'}
-                    size="sm"
-                  >
-                    {PAYMENT_LABELS[selected.paymentMethod] || selected.paymentMethod || '-'}
-                  </Badge>
-                  <span className="font-bold">
-                    {formatCurrency(selected.totalAmount || selected.total || 0)}
-                  </span>
-                </div>
+                <p className="text-sm text-slate-400">Không có chi tiết sản phẩm</p>
               )}
+            </div>
+          </Card>
+
+          <Card header="Chi tiết thanh toán">
+            <div className="space-y-3">
+              {/* payLines từ mock | payments từ API | paymentMethod string */}
+              {(() => {
+                const payLines = selected.payLines || selected.payments || [];
+                if (payLines.length > 0) {
+                  return payLines.map((pl, i) => (
+                    <div key={i} className="rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <Badge variant={PAYMENT_VARIANTS[pl.method] || 'secondary'} size="sm">
+                          {translatePayment(pl.method)}
+                        </Badge>
+                        <span className="text-sm font-bold text-green-700">
+                          {formatCurrency(pl.amount)}
+                        </span>
+                      </div>
+                    </div>
+                  ));
+                }
+                return (
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="flex items-center justify-between">
+                      <Badge
+                        variant={PAYMENT_VARIANTS[selected.paymentMethod] || 'secondary'}
+                        size="sm"
+                      >
+                        {translatePayment(selected.paymentMethod)}
+                      </Badge>
+                      <span className="text-sm font-bold text-green-700">
+                        {formatCurrency(selected.totalAmount || selected.total || 0)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="space-y-1 border-t border-slate-200 pt-2">
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Tạm tính</span>

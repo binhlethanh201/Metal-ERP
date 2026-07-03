@@ -31,7 +31,7 @@ export const inventoryMenuGroups = [
       { label: 'Nhà cung cấp', icon: 'groups' },
     ],
   },
-  { title: 'KẾT NỐI & DỮ LIỆU', items: [{ label: 'Diễn đàn B2B', icon: 'forum', path: '/forum' }] },
+  { title: 'KẾT NỐI & DỮ LIỆU', items: [] },
 ];
 
 /* ========== Top Tabs / Navigation ========== */

@@ -187,12 +187,32 @@ export const CustomerManagement = () => {
   // ---- Validation ----
   const validateForm = (data) => {
     const errs = {};
-    if (!data.name.trim()) errs.name = 'Vui lòng nhập tên khách hàng';
-    if (!data.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại';
-    else if (!isValidPhone(data.phone.trim()))
-      errs.phone = 'SĐT không hợp lệ (bắt đầu 03/05/07/08/09, 10 số)';
-    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
-      errs.email = 'Email không hợp lệ';
+    const name = data.name.trim();
+    const phone = data.phone.trim();
+    const email = data.email.trim();
+
+    // Tên: bắt buộc, 2-100 ký tự
+    if (!name) errs.name = 'Vui lòng nhập tên khách hàng';
+    else if (name.length < 2) errs.name = 'Tên phải có ít nhất 2 ký tự';
+    else if (name.length > 100) errs.name = 'Tên không được quá 100 ký tự';
+
+    // SĐT: bắt buộc, validate
+    if (!phone) errs.phone = 'Vui lòng nhập số điện thoại';
+    else if (!/^\d+$/.test(phone)) errs.phone = 'SĐT chỉ được chứa số';
+    else if (!isValidPhone(phone))
+      errs.phone = 'SĐT không hợp lệ (bắt đầu 03/05/07/08/09, đúng 10 số)';
+
+    // Email: không bắt buộc, nếu có thì validate
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      errs.email = 'Email không đúng định dạng (vd: abc@domain.com)';
+
+    // Địa chỉ: không bắt buộc, giới hạn độ dài
+    if (data.address && data.address.length > 200)
+      errs.address = 'Địa chỉ không được quá 200 ký tự';
+
+    // Ghi chú: giới hạn độ dài
+    if (data.notes && data.notes.length > 500) errs.notes = 'Ghi chú không được quá 500 ký tự';
+
     return errs;
   };
 
@@ -223,7 +243,11 @@ export const CustomerManagement = () => {
       setCustomers((prev) => [mapCustomer(result), ...prev]);
       setShowAddModal(false);
     } catch (err) {
-      alert('Lỗi: ' + (err.message || 'Không thể thêm khách hàng'));
+      if (err.status === 409) {
+        alert('Số điện thoại đã tồn tại cho khách hàng khác. Vui lòng kiểm tra lại.');
+      } else {
+        alert('Lỗi: ' + (err.message || 'Không thể thêm khách hàng'));
+      }
     } finally {
       setSaving(false);
     }
@@ -265,7 +289,11 @@ export const CustomerManagement = () => {
       setSelected(updated);
       setShowEditModal(false);
     } catch (err) {
-      alert('Lỗi: ' + (err.message || 'Không thể cập nhật khách hàng'));
+      if (err.status === 409) {
+        alert('Số điện thoại đã tồn tại cho khách hàng khác. Vui lòng kiểm tra lại.');
+      } else {
+        alert('Lỗi: ' + (err.message || 'Không thể cập nhật khách hàng'));
+      }
     } finally {
       setSaving(false);
     }
@@ -331,36 +359,28 @@ export const CustomerManagement = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 overflow-hidden md:grid-cols-3">
           <Card padding="p-4">
             <div className="text-center">
-              <div className="text-xl font-extrabold text-[#004785]">{totalCustomers}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <div className="truncate text-xl font-extrabold text-[#004785]">{totalCustomers}</div>
+              <p className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
                 Tổng khách hàng
               </p>
             </div>
           </Card>
           <Card padding="p-4">
             <div className="text-center">
-              <div className="text-xl font-extrabold text-green-600">{activeCustomers.length}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <div className="truncate text-xl font-extrabold text-green-600">
+                {activeCustomers.length}
+              </div>
+              <p className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
                 Khách đã mua hàng
               </p>
             </div>
           </Card>
           <Card padding="p-4">
             <div className="text-center">
-              <div className="text-xl font-extrabold text-green-600">
-                {formatCurrency(totalRevenue)}
-              </div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
-                Tổng doanh thu
-              </p>
-            </div>
-          </Card>
-          <Card padding="p-4">
-            <div className="text-center">
-              <div className="text-xl font-extrabold text-purple-600">
+              <div className="truncate text-xl font-extrabold text-purple-600">
                 {activeCustomers.length > 0
                   ? formatCurrency(totalRevenue / activeCustomers.length)
                   : '0 ₫'}
@@ -487,33 +507,37 @@ export const CustomerManagement = () => {
           {/* Thống kê */}
           <Card header="Thống kê mua hàng">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-green-50 p-3 text-center">
-                <p className="text-lg font-extrabold text-green-700">
+              <div className="overflow-hidden rounded-lg bg-green-50 p-3 text-center">
+                <p className="truncate text-lg font-extrabold text-green-700">
                   {formatCurrency(selected.totalSpent)}
                 </p>
-                <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-green-600">
+                <p className="truncate text-[11px] font-bold uppercase tracking-[0.05em] text-green-600">
                   Tổng chi tiêu
                 </p>
               </div>
-              <div className="rounded-lg bg-blue-50 p-3 text-center">
-                <p className="text-lg font-extrabold text-blue-700">{selected.orderCount}</p>
-                <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-blue-600">
+              <div className="overflow-hidden rounded-lg bg-blue-50 p-3 text-center">
+                <p className="truncate text-lg font-extrabold text-blue-700">
+                  {selected.orderCount}
+                </p>
+                <p className="truncate text-[11px] font-bold uppercase tracking-[0.05em] text-blue-600">
                   Số đơn hàng
                 </p>
               </div>
-              <div className="rounded-lg bg-purple-50 p-3 text-center">
-                <p className="text-lg font-extrabold text-purple-700">
+              <div className="overflow-hidden rounded-lg bg-purple-50 p-3 text-center">
+                <p className="truncate text-lg font-extrabold text-purple-700">
                   {selected.orderCount > 0
                     ? formatCurrency(selected.totalSpent / selected.orderCount)
                     : '0 ₫'}
                 </p>
-                <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-purple-600">
+                <p className="truncate text-[11px] font-bold uppercase tracking-[0.05em] text-purple-600">
                   Bình quân/đơn
                 </p>
               </div>
-              <div className="rounded-lg bg-amber-50 p-3 text-center">
-                <p className="text-lg font-extrabold text-amber-700">{selected.lastVisit}</p>
-                <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-amber-600">
+              <div className="overflow-hidden rounded-lg bg-amber-50 p-3 text-center">
+                <p className="truncate text-lg font-extrabold text-amber-700">
+                  {selected.lastVisit}
+                </p>
+                <p className="truncate text-[11px] font-bold uppercase tracking-[0.05em] text-amber-600">
                   Ghé lần cuối
                 </p>
               </div>
@@ -567,6 +591,8 @@ export const CustomerManagement = () => {
               label="SĐT *"
               placeholder="VD: 0903123456"
               value={form.phone}
+              inputMode="numeric"
+              maxLength={10}
               onChange={(e) => {
                 setForm((f) => ({ ...f, phone: e.target.value }));
                 setFormErrors((p) => ({ ...p, phone: '' }));
@@ -585,6 +611,7 @@ export const CustomerManagement = () => {
           />
           <Input
             label="Địa chỉ"
+            maxLength={200}
             placeholder="Nhập địa chỉ"
             value={form.address}
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
@@ -608,10 +635,26 @@ export const CustomerManagement = () => {
             <textarea
               rows={3}
               placeholder="Ghi chú về khách hàng"
+              maxLength={500}
               value={form.notes}
-              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
+              onChange={(e) => {
+                const v = e.target.value;
+                setForm((f) => ({ ...f, notes: v }));
+                setFormErrors((p) => ({
+                  ...p,
+                  notes: v.length > 500 ? 'Ghi chú không được quá 500 ký tự' : '',
+                }));
+              }}
+              className={
+                formErrors.notes
+                  ? 'w-full rounded-lg border border-red-500 px-3 py-2 focus:border-red-500 focus:outline-none'
+                  : 'w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none'
+              }
             />
+            <div className="mt-1 flex justify-between text-xs">
+              <span className="text-red-500">{formErrors.notes || ''}</span>
+              <span className="text-slate-400">{form.notes.length}/500</span>
+            </div>
           </div>
         </div>
       </Modal>
@@ -650,6 +693,8 @@ export const CustomerManagement = () => {
               label="SĐT *"
               placeholder="VD: 0903123456"
               value={form.phone}
+              inputMode="numeric"
+              maxLength={10}
               onChange={(e) => {
                 setForm((f) => ({ ...f, phone: e.target.value }));
                 setFormErrors((p) => ({ ...p, phone: '' }));
@@ -668,6 +713,7 @@ export const CustomerManagement = () => {
           />
           <Input
             label="Địa chỉ"
+            maxLength={200}
             placeholder="Nhập địa chỉ"
             value={form.address}
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
@@ -691,6 +737,7 @@ export const CustomerManagement = () => {
             <textarea
               rows={3}
               placeholder="Ghi chú"
+              maxLength={500}
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"

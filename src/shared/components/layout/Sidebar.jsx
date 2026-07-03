@@ -10,7 +10,6 @@ const navSections = [
     items: [
       { icon: 'dashboard', label: 'Tổng quan', path: '/inventory/dashboard' },
       { icon: 'inventory_2', label: 'Hàng hóa', path: '/inventory/products' },
-      { icon: 'forum', label: 'Diễn đàn', path: '/forum' },
       { icon: 'analytics', label: 'Báo cáo', path: '/inventory/reports' },
       { icon: 'badge', label: 'Quản lý nhân viên', path: '/admin' },
     ],
@@ -26,7 +25,6 @@ export const Sidebar = () => {
     if (path === '/inventory/dashboard')
       return location.pathname.startsWith('/inventory/dashboard');
     if (path === '/inventory/reports') return location.pathname.startsWith('/inventory/reports');
-    if (path === '/forum') return location.pathname.startsWith('/forum');
     if (path === '/admin') return location.pathname.startsWith('/admin');
     return location.pathname === path;
   };

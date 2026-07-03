@@ -24,17 +24,14 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse }) => {
     Khách: '/pos/customers',
     'Quản lý ca bán': '/pos/shift',
     'Đổi trả': '/pos/returns',
-    'Cài đặt': '/pos/settings',
   };
 
   const menuItems = [
     ['shopping_cart', 'Máy bán hàng'],
     ['assignment', 'Đơn hàng'],
-    ['assignment_return', 'Đổi trả hàng'],
     ['groups', 'Khách'],
     ['assessment', 'Quản lý ca bán'],
     ['swap_horiz', 'Đổi trả'],
-    ['settings', 'Cài đặt'],
   ];
 
   // Hàm xử lý hiệu ứng chuyển vùng về Tổng kho

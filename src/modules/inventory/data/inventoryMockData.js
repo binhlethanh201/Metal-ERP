@@ -1,6 +1,6 @@
 /**
  * Mock data cho trang Tổng kho MetalERP
- * Dữ liệu bám theo Figma/HTML: KPI, tài chính, biểu đồ, tin diễn đàn, giao dịch, quỹ tiền.
+ * Dữ liệu bám theo Figma/HTML: KPI, tài chính, biểu đồ, giao dịch, quỹ tiền.
  */
 
 export const dashboardKpis = [
@@ -68,40 +68,6 @@ export const inventoryTrend = [
   { day: 'T6', value: '8.9K', height: 80 },
   { day: 'T7', value: '10.2K', height: 95 },
   { day: 'CN', value: '9.4K', height: 85 },
-];
-
-export const forumProducts = [
-  {
-    id: 1,
-    name: 'Sơn chống thấm KOVA thế hệ mới',
-    image:
-      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=300&auto=format&fit=crop',
-    alt: 'Sơn chống thấm KOVA',
-  },
-  {
-    id: 2,
-    name: 'Máy khoan Bosch chính hãng GSB',
-    image:
-      'https://images.unsplash.com/photo-1504148455328-c376907d081c?q=80&w=300&auto=format&fit=crop',
-    alt: 'Máy khoan Bosch',
-  },
-];
-
-export const forumReports = [
-  {
-    id: 1,
-    title: 'Dự báo giá thép Q4',
-    desc: 'Phân tích biến động thị trường ASEAN',
-    level: 'Cao',
-    tone: 'red',
-  },
-  {
-    id: 2,
-    title: 'Xu hướng vật liệu xanh 2024',
-    desc: 'Tiêu chuẩn xây dựng bền vững mới',
-    level: 'Trung bình',
-    tone: 'green',
-  },
 ];
 
 export const recentTransactions = [
@@ -375,8 +341,6 @@ const mockData = {
   dashboardKpis,
   financeKpis,
   inventoryTrend,
-  forumProducts,
-  forumReports,
   recentTransactions,
   cashSummary,
   inventoryRows,

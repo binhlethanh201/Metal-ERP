@@ -8,8 +8,6 @@ import {
   dashboardKpis,
   financeKpis,
   inventoryTrend,
-  forumProducts,
-  forumReports,
   recentTransactions,
   cashSummary,
 } from '../data/inventoryMockData';
@@ -55,9 +53,9 @@ const InventoryDashboard = () => {
         ))}
       </section>
 
-      {/* 2. Biểu đồ xu hướng và Tin tức Diễn đàn B2B */}
+      {/* 2. Biểu đồ xu hướng */}
       <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 grid grid-cols-1 gap-6 lg:col-span-8 lg:grid-cols-2">
+        <div className="col-span-12 grid grid-cols-1 gap-6 lg:col-span-12 lg:grid-cols-2">
           {/* Xu hướng tồn kho */}
           <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <h4 className="mb-4 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
@@ -113,66 +111,6 @@ const InventoryDashboard = () => {
             </div>
           </article>
         </div>
-
-        {/* Diễn đàn B2B */}
-        <article className="col-span-12 flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:col-span-4">
-          <div className="mb-6 flex items-center justify-between">
-            <h4 className="text-[11px] font-bold uppercase tracking-[0.05em] text-primary">
-              TIN TỨC & XU HƯỚNG DIỄN ĐÀN
-            </h4>
-            <Icon name="forum" className="text-2xl text-primary" />
-          </div>
-          <div className="flex flex-1 flex-col gap-6">
-            <section>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                SẢN PHẨM MỚI
-              </p>
-              <div className="space-y-4">
-                {forumProducts.map((p) => (
-                  <div key={p.id} className="flex items-center gap-4">
-                    <img alt={p.alt} className="h-12 w-12 rounded-xl object-cover" src={p.image} />
-                    <div className="flex-1">
-                      <p className="text-sm font-bold leading-snug text-slate-900">{p.name}</p>
-                      <button
-                        type="button"
-                        className="text-xs font-bold text-primary hover:underline"
-                      >
-                        Xem chi tiết
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-            <section className="mt-2">
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                BÁO CÁO XU HƯỚNG
-              </p>
-              <div className="space-y-3">
-                {forumReports.map((r) => (
-                  <div
-                    key={r.id}
-                    className={`flex items-start justify-between rounded-xl border p-4 ${r.tone === 'red' ? 'border-blue-100/50 bg-blue-50/50' : 'border-green-100/50 bg-green-50/50'}`}
-                  >
-                    <div className="flex-1">
-                      <h5
-                        className={`text-sm font-bold ${r.tone === 'red' ? 'text-primary' : 'text-green-900'}`}
-                      >
-                        {r.title}
-                      </h5>
-                      <p className="mt-1 text-[11px] text-slate-500">{r.desc}</p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${r.tone === 'red' ? 'bg-red-100 text-red-600' : 'bg-green-200 text-green-800'}`}
-                    >
-                      {r.level}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-        </article>
       </div>
 
       {/* 3. Nhật ký Giao dịch và Dòng tiền mặt */}

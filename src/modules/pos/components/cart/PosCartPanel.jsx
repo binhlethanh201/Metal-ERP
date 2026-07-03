@@ -28,7 +28,6 @@ const PosCartPanel = ({
 }) => {
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
-    ['credit_card', 'Thẻ'],
     ['account_balance', 'Chuyển khoản'],
   ];
   return (
@@ -147,7 +146,7 @@ const PosCartPanel = ({
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-4 gap-2">
+        <div className="mb-4 grid grid-cols-3 gap-2">
           {paymentMethods.map(([icon, method]) => (
             <button
               key={method}

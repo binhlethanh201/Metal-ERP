@@ -83,21 +83,18 @@ export const usePosProductList = () => {
     setError(null);
     try {
       const response = await getPosProducts();
-      // API trả về mảng trực tiếp hoặc { items: [...] }
       const items = Array.isArray(response) ? response : response?.items || response?.data || [];
 
       if (items.length > 0) {
         setProducts(items.map(normalizePosProduct));
         setIsMock(false);
       } else {
-        // API trả rỗng → dùng mock
         setProducts(MOCK_POS_PRODUCTS.map(normalizePosProduct));
         setIsMock(true);
       }
     } catch (err) {
       console.error('Lỗi lấy sản phẩm POS:', err);
       setError(err.message || 'Không thể tải sản phẩm');
-      // Fallback: dùng mock data
       setProducts(MOCK_POS_PRODUCTS.map(normalizePosProduct));
       setIsMock(true);
     } finally {

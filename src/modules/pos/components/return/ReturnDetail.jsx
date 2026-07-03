@@ -57,7 +57,9 @@ const ReturnDetail = ({ returnId, onBack, onUpdated }) => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getReturn(returnId);
+        const raw = await getReturn(returnId);
+        console.log('[ReturnDetail] API response:', raw);
+        const data = raw?.data || raw;
         setDetail(mapReturnDetail(data));
       } catch (err) {
         setError(err.message || 'Không thể tải chi tiết');

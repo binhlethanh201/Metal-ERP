@@ -14,7 +14,6 @@ const ROUTE_TO_MENU = {
   '/pos/customers': 'Khách',
   '/pos/shift': 'Quản lý ca bán',
   '/pos/returns': 'Đổi trả',
-  '/pos/settings': 'Cài đặt',
 };
 
 const PosLayout = () => {

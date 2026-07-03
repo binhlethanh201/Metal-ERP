@@ -12,7 +12,6 @@ import { getOrders, createReturn, addReturnItem } from '../../services/posServic
 const REFUND_METHODS = [
   { value: 'CASH', label: 'Tiền mặt' },
   { value: 'TRANSFER', label: 'Chuyển khoản' },
-  { value: 'CARD', label: 'Thẻ' },
 ];
 
 const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
@@ -59,7 +58,10 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     try {
       // Tìm hóa đơn trong danh sách orders đã hoàn thành
       const ordersData = await getOrders({ status: 'Completed', pageSize: 100 });
-      const orders = Array.isArray(ordersData) ? ordersData : (ordersData?.items ?? []);
+      console.log('[ReturnForm] orders search:', ordersData);
+      const orders = Array.isArray(ordersData)
+        ? ordersData
+        : (ordersData?.items ?? ordersData?.data ?? []);
       const kw = invoiceCode.trim().toLowerCase();
 
       // Tìm theo invoiceCode hoặc invoiceId

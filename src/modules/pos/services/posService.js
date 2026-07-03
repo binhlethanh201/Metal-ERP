@@ -179,18 +179,6 @@ export const cancelReturn = (returnId) => {
   return apiPosPatch(ENDPOINTS.POS.CANCEL_RETURN(returnId), {});
 };
 
-// ============ Settings ============
-// GET /pos/settings → BranchSettingsDto
-// PUT /pos/settings → BranchSettingsDto
-
-export const getSettings = () => {
-  return apiPosGet(ENDPOINTS.POS.GET_SETTINGS);
-};
-
-export const updateSettings = (data) => {
-  return apiPosPut(ENDPOINTS.POS.UPDATE_SETTINGS, data);
-};
-
 export default {
   // Products
   getPosProducts,
@@ -229,7 +217,4 @@ export default {
   addReturnItem,
   finalizeReturn,
   cancelReturn,
-  // Settings
-  getSettings,
-  updateSettings,
 };

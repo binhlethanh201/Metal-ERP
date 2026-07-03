@@ -42,9 +42,6 @@ const OrderHistory = lazy(() => import('./modules/pos/pages/OrderHistory'));
 const ShiftManagement = lazy(() => import('./modules/pos/pages/ShiftManagement'));
 const CustomerManagement = lazy(() => import('./modules/pos/pages/CustomerManagement'));
 const ReturnOrderPage = lazy(() => import('./modules/pos/pages/ReturnOrderPage'));
-const SettingsPage = lazy(() => import('./modules/pos/pages/SettingsPage'));
-
-
 
 // Admin Module
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
@@ -79,6 +76,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* PRIVATE & PROTECTED ROUTES */}
+
           {/* MODULE POS */}
           <Route element={<PrivateRoute allowedRoles={['Owner', 'SalesStaff']} />}>
             <Route path="/pos" element={<PosLayout />}>
@@ -88,7 +86,6 @@ function App() {
               <Route path="shift" element={<ShiftManagement />} />
               <Route path="customers" element={<CustomerManagement />} />
               <Route path="returns" element={<ReturnOrderPage />} />
-              <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>
 
