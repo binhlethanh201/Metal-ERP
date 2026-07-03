@@ -1,44 +1,67 @@
 /**
- * Sidebar Tổng kho nâng cấp - Menu điều hướng trái sử dụng flat data từ sidebarItems.
- * Đã hạ mục Diễn đàn xuống chân trang thay thế nút Cài đặt và tích hợp hiệu ứng loading chuyển vùng có chữ.
- * Tích hợp Phân quyền (RBAC): Tự động ẩn HOÀN TOÀN các menu không thuộc thẩm quyền của User.
+ * Sidebar Tổng kho
+ * Tinh chỉnh lùi lề menu con sang trái để hiển thị trọn vẹn chữ mà không đổi kích thước sidebar.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import Logo from '../../../../shared/components/Logo';
 import { sidebarItems } from '../../data/inventoryPageData';
-import { useAuth } from '../../../../shared/hooks/useAuth'; // Import hook xác thực
+import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const InventorySidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth(); // Lấy thông tin user hiện tại
-  const [isSwitching, setIsSwitching] = useState(false);
+  const { user } = useAuth();
+  const [expandedMenus, setExpandedMenus] = useState({});
 
-  // Chuẩn hóa mảng roles của user (Xử lý cả trường hợp API trả về chuỗi "role" hoặc mảng "roles")
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
-
-  // Kiểm tra xem User có mang role Owner hay không
   const isOwner = userRoles.includes('Owner');
 
-  // Lọc danh sách menu: Xóa sổ hoàn toàn các menu Owner khỏi DOM nếu không đủ quyền
-  const visibleMenuItems = sidebarItems.filter((item) => {
-    // Nếu menu đánh cờ ownerOnly = true MÀ user KHÔNG PHẢI Owner -> Ẩn đi (return false)
-    if (item.ownerOnly && !isOwner) {
-      return false;
+  // Lọc menu theo quyền (RBAC)
+  const visibleMenuItems = useMemo(() => {
+    // Hàm kiểm tra xem 1 item có được hiển thị với user hiện tại không
+    const checkPermission = (item) => {
+      // Nếu là mục dành riêng cho Owner mà user không phải Owner -> Ẩn
+      if (item.ownerOnly && !isOwner) return false;
+      // Nếu là mục dành riêng cho Staff (không phải Owner) mà user lại là Owner -> Ẩn
+      if (item.staffOnly && isOwner) return false;
+      return true;
+    };
+
+    return sidebarItems.filter(checkPermission).map((item) => {
+      if (item.children) {
+        return {
+          ...item,
+          children: item.children.filter(checkPermission),
+        };
+      }
+      return item;
+    });
+  }, [isOwner]);
+
+  // Tự động mở menu cha nếu URL đang ở trang con
+  useEffect(() => {
+    visibleMenuItems.forEach((item) => {
+      if (item.children) {
+        const isChildActive = item.children.some(
+          (child) => child.path && location.pathname.startsWith(child.path)
+        );
+        if (isChildActive) {
+          setExpandedMenus((prev) => ({ ...prev, [item.label]: true }));
+        }
+      }
+    });
+  }, [location.pathname, visibleMenuItems]);
+
+  const toggleParentMenu = (label, path) => {
+    if (path) {
+      navigate(path);
+    } else {
+      setExpandedMenus((prev) => ({ ...prev, [label]: !prev[label] }));
     }
+  };
 
-    // Nếu sau này bạn xài thêm allowedRoles thì check ở đây
-    if (item.allowedRoles && item.allowedRoles.length > 0) {
-      return item.allowedRoles.some((r) => userRoles.includes(r));
-    }
-
-    // Còn lại là public menu, cho hiển thị
-    return true;
-  });
-
-  // Hàm check xem item nào đang active dựa trên URL hiện tại
   const isItemActive = (path) => {
     if (!path) return false;
     if (path === '/inventory/dashboard')
@@ -47,87 +70,94 @@ const InventorySidebar = () => {
     if (path === '/inventory/owner-reports')
       return location.pathname.startsWith('/inventory/owner-reports');
 
-    return location.pathname === path;
-  };
-
-  // Hàm xử lý kích hoạt hiệu ứng loading chuyển sang Diễn đàn
-  const handleSwitchToForum = () => {
-    setIsSwitching(true);
-    setTimeout(() => {
-      setIsSwitching(false);
-      navigate('/forum');
-    }, 1800);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   return (
-    <>
-      {isSwitching && (
-        <div className="animate-fadeIn fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm">
-          <div className="flex max-w-sm flex-col items-center rounded-2xl bg-white p-8 text-center shadow-2xl">
-            <div className="relative mb-4 flex h-12 w-12 items-center justify-center">
-              <div className="absolute inset-0 animate-spin rounded-full border-4 border-slate-100 border-t-primary" />
-              <Icon name="forum" className="animate-pulse text-primary" size={20} />
-            </div>
-            <h3 className="text-base font-bold text-slate-900">Đang kết nối cộng đồng</h3>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
-              Tải bảng tin thị trường, cập nhật xu hướng kim khí và diễn đàn thảo luận ...
-            </p>
-          </div>
-        </div>
-      )}
+    <aside className="fixed left-0 top-0 z-40 flex h-full w-[260px] select-none flex-col border-r border-slate-200 bg-white p-3.5">
+      {/* Khối Logo thương hiệu */}
+      <div className="mb-6 px-2.5">
+        <Logo moduleName="Tổng Kho" />
+      </div>
 
-      {/* CẤU TRÚC SIDEBAR TỔNG KHO CHUẨN MỰC */}
-      <aside className="fixed left-0 top-0 z-40 flex h-full w-[260px] flex-col border-r border-slate-200 bg-white p-4">
-        {/* Khối Logo thương hiệu */}
-        <div className="mb-8 px-2">
-          <Logo moduleName="Tổng Kho" />
-        </div>
+      {/* Vùng điều hướng Menu chính */}
+      <nav className="no-scrollbar flex-1 space-y-1.5 overflow-y-auto pr-0.5">
+        {visibleMenuItems.map((item) => {
+          const hasChildren = item.children && item.children.length > 0;
+          const isParentExpanded = expandedMenus[item.label];
+          const active = isItemActive(item.path);
 
-        {/* Vùng điều hướng Menu chính (Đã được lọc qua quyền) */}
-        <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto pr-1">
-          {visibleMenuItems.map((item) => {
-            const active = isItemActive(item.path);
-            return (
+          const isAnyChildActive = hasChildren && item.children.some((c) => isItemActive(c.path));
+
+          return (
+            <div key={item.label} className="flex flex-col">
+              {/* MENU CHA */}
               <button
-                key={item.label}
                 type="button"
-                onClick={() => item.path && navigate(item.path)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-200 ${
+                onClick={() => toggleParentMenu(item.label, item.path)}
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors duration-200 ${
                   active
-                    ? 'bg-blue-50 font-semibold text-blue-900'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-blue-50 font-bold text-[#004785]'
+                    : isAnyChildActive
+                      ? 'bg-slate-100 font-bold text-[#004785]'
+                      : 'font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
-                <Icon name={item.icon} />
-                <span className="text-sm">{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon name={item.icon} size={22} className="shrink-0" />
+                  <span className="text-[15px] leading-none">{item.label}</span>
+                </div>
+
+                {hasChildren && (
+                  <svg
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      isParentExpanded ? 'rotate-180 text-[#004785]' : 'text-slate-400'
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                )}
               </button>
-            );
-          })}
-        </nav>
 
-        {/* TIỆN ÍCH CHÂN TRANG */}
-        <div className="mt-auto space-y-4 border-t border-slate-100 pt-4">
-          <button
-            type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#004785] py-3 font-bold text-white shadow-sm shadow-blue-900/10 transition-all active:scale-95"
-          >
-            <Icon name="bolt" className="text-sm" />
-            <span>Hỗ trợ AI</span>
-          </button>
-
-          <div className="my-2 h-px w-full bg-slate-500/60" />
-
-          <button
-            type="button"
-            onClick={handleSwitchToForum}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border-[2px] border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-semibold text-slate-600 transition-colors duration-150 hover:bg-slate-100 active:scale-95"
-          >
-            <Icon name="forum" className="text-slate-500" />
-            <span>Diễn đàn </span>
-          </button>
-        </div>
-      </aside>
-    </>
+              {/* DANH SÁCH MENU CON: Lùi lề trái từ pl-9 thành pl-5 để mở rộng không gian chữ */}
+              {hasChildren && isParentExpanded && (
+                <div className="animate-fadeIn mt-1 flex flex-col space-y-1 pl-5 pr-1">
+                  {item.children.map((child) => {
+                    const childActive = isItemActive(child.path);
+                    return (
+                      <button
+                        key={child.label}
+                        type="button"
+                        onClick={() => child.path && navigate(child.path)}
+                        className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-150 ${
+                          childActive
+                            ? 'bg-blue-50 font-bold text-[#004785]'
+                            : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                            childActive ? 'bg-[#004785]' : 'bg-slate-300'
+                          }`}
+                        />
+                        {/* Loại bỏ truncate, dùng whitespace-normal để hiển thị hết chữ */}
+                        <span className="whitespace-normal break-words leading-snug">
+                          {child.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+    </aside>
   );
 };
 

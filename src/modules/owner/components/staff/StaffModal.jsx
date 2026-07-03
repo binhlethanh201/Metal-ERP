@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const initialFormState = {
@@ -7,51 +7,83 @@ const initialFormState = {
   email: '',
   password: '',
   phoneNumber: '',
-  defaultRoleType: 'SalesStaff', // 🌟 Đặt "Nhân viên Bán hàng" làm mặc định
+  defaultRoleType: 'SalesStaff',
   isActive: 1,
   permissionCodes: [],
 };
 
-// 🌟 ĐỊNH NGHĨA CÁC NHÓM QUYỀN VÀ MỐI LIÊN HỆ VỚI ROLE
+// Định nghĩa các nhóm quyền chuẩn theo PermissionConstants của Backend
 const PERMISSION_GROUPS = [
   {
-    label: 'Quản lý Bán hàng & Thu ngân (POS)',
-    prefixes: ['SALE', 'PAYMENT', 'PRINT', 'SHIFT', 'PROMOTION', 'LOYALTY'],
-    roles: ['SalesStaff', 'Staff'], // Nhóm này hiển thị cho SalesStaff và Staff (Quản lý)
+    label: 'Sale / POS & Thu ngân',
+    prefixes: ['SALE_', 'CUSTOMER_', 'LOYALTY_', 'PAYMENT_', 'PRINT_', 'PROMOTION_', 'SHIFT_'],
   },
   {
-    label: 'Quản lý Khách hàng',
-    prefixes: ['CUSTOMER'],
-    roles: ['SalesStaff', 'Staff'],
+    label: 'Kho hàng & Kiểm kê (Stock / Inventory)',
+    prefixes: ['STOCK_'],
   },
   {
-    label: 'Quản lý Kho & Kiểm kê',
-    prefixes: ['STOCK'],
-    roles: ['InventoryStaff', 'Staff'], // Nhóm này hiển thị cho InventoryStaff và Staff
+    label: 'Sản phẩm (Product)',
+    prefixes: ['PRODUCT_'],
   },
   {
-    label: 'Quản lý Sản phẩm',
-    prefixes: ['PRODUCT'],
-    roles: ['InventoryStaff', 'Staff'],
+    label: 'Nhà cung cấp & Công nợ (Supplier)',
+    prefixes: ['SUPPLIER_'],
   },
   {
-    label: 'Nhà cung cấp & Công nợ',
-    prefixes: ['SUPPLIER'],
-    roles: ['InventoryStaff', 'Staff'],
+    label: 'Nhân sự & Phân quyền (Staff)',
+    prefixes: ['STAFF_'],
   },
   {
-    label: 'Hệ thống & Nhân sự',
-    prefixes: ['STAFF', 'OWNER', 'SYSTEM', 'REPORT'],
-    roles: ['Staff'], // Chỉ Staff (cấp quản lý/admin) mới thấy nhóm này
+    label: 'Hệ thống & Báo cáo (System / Owner)',
+    prefixes: ['OWNER_', 'SYSTEM_', 'REPORT_'],
   },
 ];
 
-const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
+// Gợi ý bộ quyền chuẩn cho từng Role (Để hỗ trợ người dùng chọn nhanh / biết Role đó có gì)
+const DEFAULT_ROLE_PERMISSIONS = {
+  SalesStaff: [
+    'CUSTOMER_VIEW',
+    'CUSTOMER_CREATE',
+    'CUSTOMER_UPDATE',
+    'SALE_VIEW',
+    'SALE_CREATE',
+    'SALE_UPDATE',
+    'LOYALTY_VIEW',
+    'PAYMENT_VIEW',
+    'PAYMENT_CREATE',
+    'PRINT_VIEW',
+    'PROMOTION_VIEW',
+    'SHIFT_VIEW',
+    'PRODUCT_VIEW',
+    'STOCK_VIEW',
+  ],
+  InventoryStaff: [
+    'SUPPLIER_VIEW',
+    'SUPPLIER_CREATE',
+    'SUPPLIER_UPDATE',
+    'PRODUCT_VIEW',
+    'PRODUCT_CREATE',
+    'PRODUCT_UPDATE',
+    'STOCK_VIEW',
+    'STOCK_INWARD_CREATE',
+    'STOCK_INWARD_UPDATE',
+    'STOCK_OUTWARD_CREATE',
+    'STOCK_OUTWARD_UPDATE',
+    'STOCK_CHECK_VIEW',
+    'STOCK_CHECK_CREATE',
+  ],
+  Staff: [], // Cấp quản lý/Toàn quyền -> Thường sẽ chọn tất cả hoặc theo cấu hình hệ thống
+};
+
+const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
   const [form, setForm] = useState(initialFormState);
+  const [isCustomizing, setIsCustomizing] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (staff) {
+        // Chế độ UPDATE (PUT)
         setForm({
           ...staff,
           password: '',
@@ -59,15 +91,33 @@ const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
             ? 'InventoryStaff'
             : staff.roles?.includes('Staff')
               ? 'Staff'
-              : 'SalesStaff', // Mặc định là Sales nếu không xác định được
+              : staff.roles?.includes('SalesStaff')
+                ? 'SalesStaff'
+                : '',
           isActive: staff.isActive !== undefined ? staff.isActive : 1,
           permissionCodes: staff.permissionCodes || [],
         });
+        // Khi Update, mặc định coi như đang chỉnh sửa bộ quyền hiện tại của Staff
+        setIsCustomizing((staff.permissionCodes || []).length > 0);
       } else {
+        // Chế độ CREATE (POST)
         setForm(initialFormState);
+        setIsCustomizing(false); // Mặc định để customPermissionCodes rỗng (Backend tự nhận theo Role)
       }
     }
   }, [isOpen, staff]);
+
+  // Phân nhóm permissions tải từ API vào các Group hiển thị UI
+  const groupedPermissions = useMemo(() => {
+    if (!permissions.length) return [];
+
+    return PERMISSION_GROUPS.map((group) => {
+      const items = permissions.filter((p) =>
+        group.prefixes.some((prefix) => p.permissionCode.startsWith(prefix))
+      );
+      return { ...group, items };
+    }).filter((g) => g.items.length > 0);
+  }, [permissions]);
 
   if (!isOpen) return null;
 
@@ -78,45 +128,70 @@ const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
       return;
     }
 
-    if (staff && form.permissionCodes.length === 0) {
+    // Kiểm tra và xác nhận hành vi của PUT (Full Replace)
+    if (staff && isCustomizing && form.permissionCodes.length === 0) {
       if (
         !window.confirm(
-          'Bạn không chọn quyền nào. Nhân viên này sẽ mất toàn bộ quyền truy cập. Bạn có chắc chắn?'
+          'CẢNH BÁO: Bạn đã bỏ chọn tất cả quyền. Khi lưu, toàn bộ quyền cũ của nhân viên sẽ bị xóa sạch. Tiếp tục?'
         )
-      )
+      ) {
         return;
+      }
     }
 
-    onSave(form);
+    // Chuẩn bị payload nộp lên trang cha
+    const submitData = { ...form };
+    if (!staff && !isCustomizing && form.defaultRoleType) {
+      // Khi Tạo mới và dùng quyền mặc định theo Role -> gửi mảng rỗng để Backend tự động áp dụng
+      submitData.permissionCodes = [];
+    }
+
+    onSave(submitData);
   };
 
   const handleTogglePermission = (code) => {
+    setIsCustomizing(true);
     setForm((prev) => {
       const current = prev.permissionCodes;
-      if (current.includes(code)) {
-        return { ...prev, permissionCodes: current.filter((c) => c !== code) };
-      } else {
-        return { ...prev, permissionCodes: [...current, code] };
-      }
+      const next = current.includes(code) ? current.filter((c) => c !== code) : [...current, code];
+      return { ...prev, permissionCodes: next };
     });
   };
 
-  // 🌟 Hàm xử lý khi đổi Role: Reset lại mảng quyền để tránh bị lưu quyền ẩn
+  // Chọn nhanh toàn bộ quyền mẫu của Role (Để ghi đè thủ công)
+  const handleApplyRoleDefaults = () => {
+    setIsCustomizing(true);
+    if (form.defaultRoleType === 'Staff') {
+      // Chọn tất cả quyền khả dụng từ API
+      setForm((prev) => ({
+        ...prev,
+        permissionCodes: permissions.map((p) => p.permissionCode),
+      }));
+    } else {
+      const defaults = DEFAULT_ROLE_PERMISSIONS[form.defaultRoleType] || [];
+      const validDefaults = permissions
+        .filter((p) => defaults.includes(p.permissionCode))
+        .map((p) => p.permissionCode);
+
+      setForm((prev) => ({
+        ...prev,
+        permissionCodes: validDefaults,
+      }));
+    }
+  };
+
   const handleRoleChange = (e) => {
-    setForm({
-      ...form,
-      defaultRoleType: e.target.value,
-      permissionCodes: [], // Clear hết các ô đã tick khi đổi chức danh
-    });
+    const newRole = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      defaultRoleType: newRole,
+      permissionCodes: [],
+    }));
+    setIsCustomizing(false);
   };
-
-  // Lọc ra các group được phép hiển thị theo Role đang chọn
-  const visibleGroups = PERMISSION_GROUPS.filter((group) =>
-    group.roles.includes(form.defaultRoleType)
-  );
 
   const inputCss =
-    'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors';
+    'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors disabled:bg-slate-100 disabled:text-slate-500';
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
@@ -143,7 +218,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
                 <input
                   type="text"
                   required
-                  placeholder="VD: nguyenvan_a"
+                  placeholder="VD: nguyenvan_a (Unique)"
                   className={inputCss}
                   value={form.username || ''}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -188,7 +263,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
               <input
                 type="email"
                 required
-                placeholder="VD: nguyenvana@gmail.com"
+                placeholder="VD: nguyenvana@gmail.com (Unique)"
                 className={inputCss}
                 value={form.email || ''}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -200,7 +275,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
               </label>
               <input
                 type="text"
-                placeholder="VD: 0912345678"
+                placeholder="VD: 0912345678 (Unique nếu có)"
                 className={inputCss}
                 value={form.phoneNumber || ''}
                 onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
@@ -209,13 +284,24 @@ const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
 
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                Vai trò mặc định
+                {staff ? 'Vai trò hiện tại' : 'Vai trò mặc định'}
               </label>
-              <select className={inputCss} value={form.defaultRoleType} onChange={handleRoleChange}>
-                <option value="SalesStaff">Nhân viên Bán hàng</option>
-                <option value="InventoryStaff">Nhân viên Kho</option>
-                <option value="Staff">Quản lý / Admin (Toàn quyền)</option>
+              <select
+                className={inputCss}
+                value={form.defaultRoleType}
+                onChange={handleRoleChange}
+                disabled={!!staff} // API PUT không cho đổi Role
+              >
+                <option value="SalesStaff">Sales Staff (Nhân viên Bán hàng)</option>
+                <option value="InventoryStaff">Inventory Staff (Nhân viên Kho)</option>
+                <option value="Staff">Staff (Nhân viên)</option>
+                {!staff && <option value="">-- Không gán vai trò (Tuỳ chỉnh) --</option>}
               </select>
+              {staff && (
+                <span className="mt-1 block text-xs italic text-slate-400">
+                  * API cập nhật không hỗ trợ đổi chức danh/vai trò.
+                </span>
+              )}
             </div>
 
             {staff && (
@@ -228,86 +314,124 @@ const StaffModal = ({ isOpen, onClose, staff, permissions, onSave }) => {
                   value={form.isActive}
                   onChange={(e) => setForm({ ...form, isActive: Number(e.target.value) })}
                 >
-                  <option value={1}>Đang hoạt động</option>
-                  <option value={0}>Khóa tài khoản</option>
+                  <option value={1}>Đang hoạt động (ACTIVE)</option>
+                  <option value={0}>Khóa tài khoản (INACTIVE)</option>
                 </select>
               </div>
             )}
           </div>
 
-          {/* 🌟 VÙNG RENDER PHÂN QUYỀN ĐÃ ĐƯỢC CHIA NHÓM VÀ LỌC */}
-          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/50 p-5">
-            <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
-              <label className="text-base font-bold text-slate-800">
-                <Icon
-                  name="vpn_key"
-                  size={20}
-                  className="mr-2 inline align-text-bottom text-blue-600"
-                />
-                Tùy chỉnh phân quyền chi tiết
-              </label>
-              <span className="rounded-md bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
-                Chế độ xem:{' '}
-                {form.defaultRoleType === 'SalesStaff'
-                  ? 'Bán hàng'
-                  : form.defaultRoleType === 'InventoryStaff'
-                    ? 'Kho'
-                    : 'Tất cả quyền'}
-              </span>
+          {/* VÙNG QUẢN LÝ PHÂN QUYỀN (Dựa trên API /available-permissions) */}
+          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60 p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              <div>
+                <label className="text-base font-bold text-slate-800">
+                  <Icon
+                    name="Key_Icon"
+                    size={20}
+                    className="mr-2 inline align-text-bottom text-blue-600"
+                  />
+                  Phân quyền chi tiết
+                </label>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {!staff
+                    ? 'Chế độ tạo mới: Tùy chỉnh quyền sẽ ghi đè hoàn toàn quyền mặc định của vai trò.'
+                    : 'Chế độ cập nhật: Ghi đè bộ quyền hiện tại của nhân viên.'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {!staff && form.defaultRoleType && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomizing(!isCustomizing)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+                      !isCustomizing
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                    }`}
+                  >
+                    {!isCustomizing ? '✓ Dùng quyền mặc định' : 'Chuyển sang quyền mặc định'}
+                  </button>
+                )}
+
+                {(isCustomizing || staff) && form.defaultRoleType && (
+                  <button
+                    type="button"
+                    onClick={handleApplyRoleDefaults}
+                    className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                  >
+                    Chọn nhanh mẫu của {form.defaultRoleType}
+                  </button>
+                )}
+              </div>
             </div>
 
-            {!permissions || permissions.length === 0 ? (
-              <p className="flex items-center gap-2 text-sm italic text-slate-500">
-                <Icon name="sync" className="animate-spin" /> Đang tải danh sách quyền...
+            {!permissions.length ? (
+              <p className="flex items-center gap-2 py-4 text-sm italic text-slate-500">
+                <Icon name="sync" className="animate-spin" /> Đang tải danh sách quyền từ hệ
+                thống...
               </p>
+            ) : !isCustomizing && !staff && form.defaultRoleType ? (
+              <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-6 text-center">
+                <Icon name="verified_user" size={32} className="mx-auto mb-2 text-blue-600" />
+                <h4 className="text-sm font-bold text-blue-900">
+                  Đang áp dụng bộ quyền tự động cho chức danh [{form.defaultRoleType}]
+                </h4>
+                <p className="mx-auto mt-1 max-w-lg text-xs text-blue-700">
+                  Nhân viên sẽ tự động nhận đầy đủ các quyền chuẩn được thiết lập sẵn trong hệ thống
+                  khi khởi tạo.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomizing(true)}
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-800 underline hover:text-black"
+                >
+                  <Icon name="edit" size={14} /> Tôi muốn tự chọn / ghi đè quyền thủ công
+                </button>
+              </div>
             ) : (
               <div className="space-y-6">
-                {visibleGroups.map((group) => {
-                  // Lọc ra các permission thuộc về group này dựa trên prefix
-                  const groupPerms = permissions.filter((p) =>
-                    group.prefixes.some((prefix) => p.permissionCode.startsWith(prefix))
-                  );
-
-                  if (groupPerms.length === 0) return null;
-
-                  return (
-                    <div key={group.label}>
-                      <h4 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-600">
-                        {group.label}
-                      </h4>
-                      <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-100 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
-                        {groupPerms.map((perm) => (
+                {groupedPermissions.map((group) => (
+                  <div key={group.label}>
+                    <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                      {group.label}
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
+                      {group.items.map((perm) => {
+                        const isChecked = form.permissionCodes.includes(perm.permissionCode);
+                        return (
                           <label
                             key={perm.permissionId}
-                            className="group flex cursor-pointer items-start gap-2.5"
+                            className="group flex cursor-pointer items-start gap-2.5 rounded p-1 hover:bg-slate-50"
                           >
                             <input
                               type="checkbox"
                               className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 transition-colors focus:ring-blue-500"
-                              checked={form.permissionCodes.includes(perm.permissionCode)}
+                              checked={isChecked}
                               onChange={() => handleTogglePermission(perm.permissionCode)}
                             />
-                            <span
-                              className="text-sm font-medium text-slate-700 transition-colors group-hover:text-blue-700"
-                              title={perm.permissionCode}
-                            >
-                              {perm.permissionName || perm.permissionCode}
-                            </span>
+                            <div className="flex flex-col">
+                              <span
+                                className={`text-sm font-medium transition-colors ${
+                                  isChecked
+                                    ? 'font-semibold text-blue-700'
+                                    : 'text-slate-700 group-hover:text-black'
+                                }`}
+                              >
+                                {perm.permissionName || perm.permissionCode}
+                              </span>
+                              <span className="font-mono text-[11px] text-slate-400">
+                                {perm.permissionCode}
+                              </span>
+                            </div>
                           </label>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
-            )}
-
-            {!staff && (
-              <p className="mt-4 rounded border border-orange-100 bg-orange-50 p-2 text-xs font-medium text-orange-600">
-                <Icon name="info" size={14} className="mr-1 inline align-text-bottom" />
-                Lưu ý: Nếu bạn chọn thủ công các quyền ở đây, hệ thống sẽ <b>ghi đè</b> toàn bộ
-                quyền mặc định của vai trò đã chọn.
-              </p>
             )}
           </div>
 

@@ -1,23 +1,16 @@
-/**
- * Topbar Tổng kho nâng cấp - Cấu trúc 2 tầng thông minh tự động điều chỉnh theo trang.
- * Tích hợp Phân quyền UI (Role-based) và Dropdown Đăng xuất.
- */
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
-import { horizontalNav } from '../../data/inventoryPageData';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
-const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
+const InventoryTopbar = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user, logout } = useAuth(); // Hook lấy thông tin user và hàm logout
+  const { user, logout } = useAuth();
 
   const [isSwitching, setIsSwitching] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Xử lý click ra ngoài để đóng dropdown avatar
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -28,25 +21,13 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // --- LOGIC PHÂN QUYỀN HIỂN THỊ ---
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
 
-  // Xử lý Đăng xuất
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  // Hiển thị Tầng 2 ở trang Dashboard và Products
-  const shouldShowSecondaryNav =
-    location.pathname === '/inventory/dashboard' ||
-    location.pathname === '/inventory/products' ||
-    location.pathname.startsWith('/inventory/goods-issue') ||
-    location.pathname.startsWith('/inventory/inventory-summary') ||
-    location.pathname.startsWith('/inventory/import') ||
-    location.pathname.startsWith('/inventory/inventory-count') ||
-    location.pathname.startsWith('/inventory/orders');
 
   const handleSwitchToPos = () => {
     setIsSwitching(true);
@@ -58,7 +39,6 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
 
   return (
     <>
-      {/* MÀN HÌNH CHUYỂN VÙNG CAO CẤP */}
       {isSwitching && (
         <div className="animate-fadeIn fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm">
           <div className="flex max-w-sm flex-col items-center rounded-2xl bg-white p-8 text-center shadow-2xl">
@@ -68,122 +48,74 @@ const InventoryTopbar = ({ activeHubKey, setActiveHubKey }) => {
             </div>
             <h3 className="text-base font-bold text-slate-900">Khởi tạo thiết bị bán hàng</h3>
             <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
-              Đang đồng bộ cổng dữ liệu SKU và kết nối máy quét vạch...
+              Đang đồng bộ dữ liệu và kết nối máy quét mã vạch...
             </p>
           </div>
         </div>
       )}
 
-      <header className="fixed left-0 right-0 top-0 z-30 flex flex-col border-b border-slate-200 bg-white lg:left-[260px]">
-        {/* TẦNG 1: SEARCH & ACTIONS */}
-        <div className="flex h-16 items-center justify-between gap-4 px-6">
-          <div className="flex max-w-xl flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
-            <Icon name="search" className="mr-2 text-slate-400" />
-            <input
-              className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
-              placeholder="Tìm kiếm sản phẩm, đơn hàng..."
-              type="text"
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* CHỈ HIỂN THỊ NÚT POS NẾU LÀ OWNER */}
-            {isOwner && (
-              <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
-                <button
-                  type="button"
-                  onClick={handleSwitchToPos}
-                  className="flex items-center gap-1 rounded-lg border border-[#004785] px-4 py-2 text-sm font-bold text-[#004785] transition-all hover:bg-blue-50 active:scale-95"
-                >
-                  <Icon name="point_of_sale" className="text-sm" />
-                  <span>Máy bán hàng</span>
-                </button>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3">
+      {/* TOPBAR CHỈ CÒN 1 TẦNG (H-16) GỌN GÀNG - ĐÃ XÓA SEARCH */}
+      <header className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-end gap-4 border-b border-slate-200 bg-white px-6 lg:left-[260px]">
+        {/* HÀNH ĐỘNG & USER */}
+        <div className="flex items-center gap-4">
+          {isOwner && (
+            <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
               <button
                 type="button"
-                className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                onClick={handleSwitchToPos}
+                className="flex items-center gap-1.5 rounded-lg border border-[#004785] px-3.5 py-1.5 text-sm font-bold text-[#004785] transition-all hover:bg-blue-50 active:scale-95"
               >
-                <Icon name="notifications" />
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-error" />
+                <Icon name="point_of_sale" size={18} />
+                <span>Máy bán hàng</span>
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100"
+            >
+              <Icon name="notifications" size={20} />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
+            </button>
+
+            {/* USER PROFILE DROPDOWN */}
+            <div className="relative pl-1" ref={dropdownRef}>
+              <button
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 transition-transform focus:outline-none active:scale-95"
+              >
+                <img
+                  alt="User Avatar"
+                  className="h-9 w-9 rounded-lg border border-slate-200 object-cover shadow-sm"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFo3D0VhkjDp6wYi7A3G3rtT-HeBeV9_Irw1MncCf1By9FiWAzrrW0Y1o_eR0BIqouI4JLwKyzpxHiyhHrOxhP1gc2OrbrKeKagYERgHPSLqIeqXh7iopYQYZFpQ3HRo32q_gQG4t9lU6JywKA9r6XbGmBU0YhjbyNzuCTVz8W4Q6FKwogP_fwDpM6p_EySDffHLbP5e-WRjoesCtXL6OJytbDZySk5VBmPYWb9eQM2XahiNm9R3AHtYeKbU3QQiT82T6wAgP0MXo"
+                />
               </button>
 
-              {/* DROPDOWN AVATAR */}
-              <div className="relative pl-2" ref={dropdownRef}>
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-3 transition-transform focus:outline-none active:scale-95"
-                >
-                  <img
-                    alt="User Profile Avatar"
-                    className="h-10 w-10 rounded-lg border border-slate-200 object-cover shadow-sm"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFo3D0VhkjDp6wYi7A3G3rtT-HeBeV9_Irw1MncCf1By9FiWAzrrW0Y1o_eR0BIqouI4JLwKyzpxHiyhHrOxhP1gc2OrbrKeKagYERgHPSLqIeqXh7iopYQYZFpQ3HRo32q_gQG4t9lU6JywKA9r6XbGmBU0YhjbyNzuCTVz8W4Q6FKwogP_fwDpM6p_EySDffHLbP5e-WRjoesCtXL6OJytbDZySk5VBmPYWb9eQM2XahiNm9R3AHtYeKbU3QQiT82T6wAgP0MXo"
-                  />
-                </button>
-
-                {/* MENU DROPDOWN */}
-                {isProfileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
-                    <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-                      <p className="text-sm font-bold text-slate-800">
-                        {user?.fullName || 'Người dùng'}
-                      </p>
-                      <p className="mt-0.5 truncate text-[11px] font-semibold uppercase text-slate-500">
-                        {userRoles.join(', ')}
-                      </p>
-                    </div>
-                    <div className="p-1">
-                      <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
-                      >
-                        <Icon name="log_out" size={16} /> Đăng xuất
-                      </button>
-                    </div>
+              {isProfileOpen && (
+                <div className="animate-fadeIn absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                  <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+                    <p className="text-sm font-bold text-slate-800">
+                      {user?.fullName || 'Người dùng'}
+                    </p>
+                    <p className="mt-0.5 truncate text-[11px] font-semibold uppercase text-slate-500">
+                      {userRoles.join(', ')}
+                    </p>
                   </div>
-                )}
-              </div>
+                  <div className="p-1">
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
+                    >
+                      <Icon name="log_out" size={16} /> Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        {/* TẦNG 2: NAVIGATION NGANG */}
-        {shouldShowSecondaryNav && (
-          <div className="animate-fadeIn flex h-12 items-center border-t border-slate-100 bg-[#faf9fc] px-6">
-            <nav className="no-scrollbar flex h-10 w-full items-center gap-8 overflow-x-auto rounded-lg border border-slate-200 bg-white px-3 shadow-sm">
-              {horizontalNav.map((item) => {
-                const isTabActive =
-                  activeHubKey === item.key || (item.path && location.pathname === item.path);
-
-                return (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => {
-                      if (item.key) setActiveHubKey(item.key);
-                      if (item.path) navigate(item.path);
-                    }}
-                    className={`group relative flex h-full items-center gap-2 px-2 transition-colors ${
-                      isTabActive
-                        ? 'font-semibold text-primary'
-                        : 'text-slate-600 hover:text-primary'
-                    }`}
-                  >
-                    <Icon name={item.icon} className="text-[20px]" />
-                    <span className="whitespace-nowrap text-sm font-medium">{item.label}</span>
-                    <span
-                      className={`absolute bottom-0 left-2 right-2 h-0.5 bg-primary transition-transform duration-200 ${
-                        isTabActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                      }`}
-                    />
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        )}
       </header>
     </>
   );

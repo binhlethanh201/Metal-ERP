@@ -3,13 +3,14 @@ import Icon from '../../../shared/components/Icon';
 import { useStaffManager } from '../hooks/useStaffManager';
 import StaffTable from '../components/staff/StaffTable';
 import StaffModal from '../components/staff/StaffModal';
-import AssignBranchModal from '../components/staff/AssignBranchModal';
+
+// Ghi chú: Có thể lấy currentUserId từ store/context auth (VD: useAuth() hook) để truyền cho Table.
+// Ở đây giả định hook useStaffManager hoặc store của bạn có thể cung cấp currentUserId của Owner đang đăng nhập.
 
 const StaffManagement = () => {
   const {
     staffs,
-    branches,
-    permissions, // 🌟 Lấy thêm danh sách quyền
+    permissions,
     loading,
     search,
     setSearch,
@@ -19,30 +20,12 @@ const StaffManagement = () => {
     handleCreateStaff,
     handleUpdateStaff,
     handleToggleStatus,
-    handleDeleteStaff, // 🌟 Lấy thêm hàm xóa
-    handleAssignBranch,
-    handleUnassignBranch,
+    handleDeleteStaff,
+    currentUserId, // Khuyến nghị: Lấy ID của owner đang đăng nhập từ auth state để xử lý bảo vệ self-action
   } = useStaffManager();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
-
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [assigningStaff, setAssigningStaff] = useState(null);
-
-  const openAssignModal = (staff) => {
-    setAssigningStaff(staff);
-    setIsAssignModalOpen(true);
-  };
-
-  const closeAssignModal = () => {
-    setIsAssignModalOpen(false);
-    setAssigningStaff(null);
-  };
-
-  const onConfirmAssign = (staffId, branchId) => {
-    handleAssignBranch(staffId, branchId, closeAssignModal);
-  };
 
   const openModal = (staff = null) => {
     setEditingStaff(staff);
@@ -54,29 +37,29 @@ const StaffManagement = () => {
     setEditingStaff(null);
   };
 
-  // 🌟 SỬA LẠI HÀM ONSAVE ĐỂ MAP CHUẨN PAYLOAD API
+  // Map chuẩn payload theo tài liệu API:
+  // - PUT /api/owner/staffs/{id}: email, phoneNumber, fullName, isActive, password, permissionCodes
+  // - POST /api/owner/staffs: username, email, fullName, password, phoneNumber, defaultRoleType, customPermissionCodes
   const onSave = (formData) => {
     if (editingStaff) {
-      // Payload cho PUT /api/owner/staffs/{id}
       const payload = {
-        fullName: formData.fullName,
-        email: formData.email,
+        fullName: formData.fullName || null,
+        email: formData.email || null,
         phoneNumber: formData.phoneNumber || null,
         password: formData.password || undefined,
         isActive: formData.isActive,
-        permissionCodes: formData.permissionCodes, // Ghi đè toàn bộ quyền
+        permissionCodes: formData.permissionCodes || [],
       };
       handleUpdateStaff(editingStaff.userId, payload, closeModal);
     } else {
-      // Payload cho POST /api/owner/staffs
       const payload = {
         username: formData.username,
         email: formData.email,
         fullName: formData.fullName,
         password: formData.password,
         phoneNumber: formData.phoneNumber || null,
-        defaultRoleType: formData.defaultRoleType,
-        customPermissionCodes: formData.permissionCodes, // Backend dùng tên field này khi tạo
+        defaultRoleType: formData.defaultRoleType || null,
+        customPermissionCodes: formData.permissionCodes || [],
       };
       handleCreateStaff(payload, closeModal);
     }
@@ -87,7 +70,9 @@ const StaffManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Nhân sự</h1>
-          <p className="mt-1 text-gray-600">Tạo tài khoản và phân bổ chi nhánh cho nhân viên</p>
+          <p className="mt-1 text-gray-600">
+            Tạo tài khoản và phân quyền cho nhân viên (Chế độ đơn chi nhánh)
+          </p>
         </div>
         <button
           onClick={() => openModal()}
@@ -102,7 +87,7 @@ const StaffManagement = () => {
         <Icon name="search" className="text-slate-400" />
         <input
           type="text"
-          placeholder="Tìm theo tên hoặc email..."
+          placeholder="Tìm theo tên, email, SĐT..."
           className="w-full bg-transparent text-sm focus:outline-none"
           value={search}
           onChange={(e) => {
@@ -115,11 +100,10 @@ const StaffManagement = () => {
       <StaffTable
         staffs={staffs}
         loading={loading}
+        currentUserId={currentUserId}
         onEdit={openModal}
         onToggleStatus={handleToggleStatus}
-        onDelete={handleDeleteStaff} // 🌟 Truyền hàm xóa xuống Table
-        onAssign={openAssignModal}
-        onUnassign={handleUnassignBranch}
+        onDelete={handleDeleteStaff}
       />
 
       {paginationMeta.totalPages > 1 && (
@@ -150,14 +134,6 @@ const StaffManagement = () => {
         staff={editingStaff}
         permissions={permissions}
         onSave={onSave}
-      />
-
-      <AssignBranchModal
-        isOpen={isAssignModalOpen}
-        onClose={closeAssignModal}
-        staff={assigningStaff}
-        branches={branches}
-        onSave={onConfirmAssign}
       />
     </div>
   );

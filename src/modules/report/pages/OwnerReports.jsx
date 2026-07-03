@@ -17,6 +17,9 @@ import { getSuppliers } from '../../inventory/services/supplierService';
 import { useReport } from '../hooks/useReport';
 import { getProducts } from '../../inventory/services/productService';
 
+// Import Lucide React Icons
+import { Download, Filter, AlertTriangle } from 'lucide-react';
+
 // Import Recharts
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -114,6 +117,34 @@ const PAYMENT_COLUMNS = [
   { key: 'note', header: 'Ghi chú' },
 ];
 
+// ============ HÀM XUẤT FILE CSV THUẦN FE (HỖ TRỢ UTF-8 BOM) ============
+const exportToCSV = (data, columns, fileName) => {
+  if (!data || !data.length) return;
+
+  const headers = columns.map((col) => `"${col.header}"`).join(',');
+
+  const rows = data.map((row) => {
+    return columns
+      .map((col) => {
+        let val = row[col.key];
+        if (val === null || val === undefined) val = '';
+        const stringVal = String(val).replace(/"/g, '""');
+        return `"${stringVal}"`;
+      })
+      .join(',');
+  });
+
+  const csvContent = '\uFEFF' + [headers, ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${fileName}_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 export const OwnerReports = () => {
   const defaultToDate = new Date().toISOString().split('T')[0];
   const defaultFromDate = new Date(new Date().setDate(new Date().getDate() - 30))
@@ -121,7 +152,7 @@ export const OwnerReports = () => {
     .split('T')[0];
   const defaultDate = new Date().toISOString().split('T')[0];
 
-  // ============ STATES (Giữ nguyên) ============
+  // ============ STATES ============
   const [selectedReport, setSelectedReport] = useState('daily-end');
   const [reportDate, setReportDate] = useState(defaultDate);
   const [fromDate, setFromDate] = useState(defaultFromDate);
@@ -141,7 +172,7 @@ export const OwnerReports = () => {
   const [purchaseFromDate, setPurchaseFromDate] = useState('');
   const [purchaseToDate, setPurchaseToDate] = useState('');
 
-  // ============ HOOKS (Giữ nguyên) ============
+  // ============ HOOKS ============
   const {
     data: dailyEndData,
     isLoading: loadingDailyEnd,
@@ -278,18 +309,56 @@ export const OwnerReports = () => {
     return supplierDetailData.paymentHistory || supplierDetailData.payments || [];
   }, [supplierDetailData]);
 
-  // ============ EFFECTS (Giữ nguyên) ============
+  // Kiểm tra xem báo cáo hiện tại có dữ liệu để xuất Excel không
+  const hasDataToExport = useMemo(() => {
+    if (selectedReport === 'stock-movement') return (movementData?.items?.length || 0) > 0;
+    if (selectedReport === 'revenue-by-time') return (revenueData?.tableData?.length || 0) > 0;
+    if (selectedReport === 'low-stock') return (lowStockData?.items?.length || 0) > 0;
+    if (selectedReport === 'product-profit') return (productProfitItems?.length || 0) > 0;
+    if (selectedReport === 'supplier-detail') return (supplierPurchaseHistory?.length || 0) > 0;
+    return false;
+  }, [
+    selectedReport,
+    movementData,
+    revenueData,
+    lowStockData,
+    productProfitItems,
+    supplierPurchaseHistory,
+  ]);
+
+  // Xử lý tải xuống CSV theo báo cáo tương ứng
+  const handleDownload = () => {
+    if (selectedReport === 'stock-movement' && movementData?.items) {
+      exportToCSV(movementData.items, STOCK_COLUMNS, 'Bao_Cao_Xuat_Nhap_Ton');
+    } else if (selectedReport === 'revenue-by-time' && revenueData?.tableData) {
+      const revColumns = [
+        { key: 'date', header: 'Ngày' },
+        { key: 'timeKey', header: 'Thời gian' },
+        { key: 'revenue', header: 'Doanh thu' },
+        { key: 'orders', header: 'Số đơn' },
+        { key: 'averageValue', header: 'Giá trị TB' },
+        { key: 'growthPercent', header: 'Tăng trưởng (%)' },
+      ];
+      exportToCSV(revenueData.tableData, revColumns, 'Bao_Cao_Doanh_Thu_Theo_Thoi_Gian');
+    } else if (selectedReport === 'low-stock' && lowStockData?.items) {
+      exportToCSV(lowStockData.items, LOW_STOCK_COLUMNS, 'Bao_Cao_Ton_Kho_Sap_Het');
+    } else if (selectedReport === 'product-profit' && productProfitItems?.length > 0) {
+      exportToCSV(productProfitItems, PRODUCT_PROFIT_COLUMNS, 'Bao_Cao_Loi_Nhuan_San_Pham');
+    } else if (selectedReport === 'supplier-detail' && supplierPurchaseHistory?.length > 0) {
+      exportToCSV(supplierPurchaseHistory, PURCHASE_COLUMNS, 'Lich_Su_Nhap_Hang_NCC');
+    }
+  };
+
+  // ============ EFFECTS ============
   useEffect(() => {
     let isMounted = true;
     const loadStaticData = async () => {
-      // 1. Load danh sách chi nhánh
       try {
         const branchResponse = await getBranches();
         if (isMounted && branchResponse?.success && branchResponse.data) {
           const list = branchResponse.data.items || branchResponse.data || [];
           setBranches(list);
 
-          // ---> BỔ SUNG: Tự động gán chi nhánh đầu tiên làm mặc định <---
           if (list.length > 0) {
             setBranchId(list[0].branchId || list[0].id);
           }
@@ -298,7 +367,6 @@ export const OwnerReports = () => {
         console.error('Không tải được danh sách chi nhánh:', error);
       }
 
-      // 2. Load danh sách nhà cung cấp (Giữ nguyên như cũ)
       try {
         const supplierResponse = await getSuppliers({
           pageNumber: 1,
@@ -323,7 +391,6 @@ export const OwnerReports = () => {
     };
   }, []);
 
-  // 1. TẢI DANH MỤC (Chỉ phụ thuộc vào Chi nhánh)
   useEffect(() => {
     let isMounted = true;
     const loadCategories = async () => {
@@ -342,7 +409,6 @@ export const OwnerReports = () => {
           const catMap = new Map();
 
           productList.forEach((p) => {
-            // Fallback: Vì API đang thiếu categoryId, ta dùng tạm categoryName làm ID để Dropdown không bị lỗi
             const id = p.categoryId || p.categoryName;
 
             if (id && p.categoryName && !catMap.has(id)) {
@@ -363,21 +429,18 @@ export const OwnerReports = () => {
     };
   }, [branchId]);
 
-  // 2. TẢI SẢN PHẨM (Lọc qua API mỗi khi Chi nhánh hoặc Danh mục thay đổi)
   useEffect(() => {
     let isMounted = true;
     const loadFilteredProducts = async () => {
       try {
-        // Tìm tên danh mục (categoryName) dựa vào ID đang chọn trên Dropdown
         const selectedCatName = categories.find((c) => c.id === categoryId)?.name;
 
-        // Gọi API productService kèm các params lọc
         const res = await getProducts({
           pageNumber: 1,
           pageSize: 200,
           status: 'active',
           branchId: branchId || undefined,
-          categoryName: selectedCatName || undefined, // Truyền đúng param API yêu cầu
+          categoryName: selectedCatName || undefined,
         });
 
         if (isMounted && res?.success && res.data) {
@@ -473,14 +536,11 @@ export const OwnerReports = () => {
   };
 
   useEffect(() => {
-    // Nếu chuyển vào tab Nhà cung cấp mà chưa kịp có ID thì bỏ qua, chờ effect bên dưới
     if (selectedReport === 'supplier-detail' && !supplierId) return;
-
     loadReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedReport]);
 
-  // 2. Tự động load khi CHỌN NHÀ CUNG CẤP (hoặc khi gán ID mặc định thành công)
   useEffect(() => {
     if (selectedReport === 'supplier-detail' && supplierId) {
       loadReport();
@@ -732,15 +792,27 @@ export const OwnerReports = () => {
             </>
           )}
 
-          {/* Action Button */}
-          <div className="ml-auto w-full sm:w-auto">
+          {/* Action Buttons: Tải Excel & Lọc Dữ Liệu */}
+          <div className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto">
+            {selectedReport !== 'daily-end' && (
+              <Button
+                variant="secondary"
+                className="flex h-[38px] flex-1 items-center justify-center border border-slate-300 bg-white sm:flex-none"
+                onClick={handleDownload}
+                disabled={!hasDataToExport || selectedLoading}
+              >
+                <Download className="mr-1.5 h-4 w-4 text-slate-600" />
+                <span>Tải về</span>
+              </Button>
+            )}
             <Button
               variant="primary"
-              className="h-[38px] w-full sm:w-auto"
+              className="flex h-[38px] flex-1 items-center justify-center sm:flex-none"
               onClick={loadReport}
               disabled={selectedLoading}
             >
-              {selectedLoading ? 'Đang truy xuất...' : 'Lọc Dữ Liệu'}
+              <Filter className="mr-1.5 h-4 w-4 text-white" />
+              <span>{selectedLoading ? 'Đang truy xuất...' : 'Lọc Dữ Liệu'}</span>
             </Button>
           </div>
         </div>
@@ -748,8 +820,9 @@ export const OwnerReports = () => {
 
       {/* Error State */}
       {selectedError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 shadow-sm">
-          🚨 {selectedError}
+        <div className="flex items-center rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 shadow-sm">
+          <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0 text-red-600" />
+          <span>{selectedError}</span>
         </div>
       )}
 
@@ -1015,8 +1088,8 @@ export const OwnerReports = () => {
               padding="p-5"
               className="flex items-center gap-4 border-l-4 border-l-rose-500 bg-rose-50/50"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-xl text-rose-600">
-                ⚠️
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-rose-100">
+                <AlertTriangle className="h-6 w-6 text-rose-600" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-rose-800">

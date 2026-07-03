@@ -37,17 +37,73 @@ const LOW_STOCK_COLUMNS = [
   {
     key: 'severity',
     header: 'Mức độ',
-    render: (v) => (
-      <span
-        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-          v === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-        }`}
-      >
-        {v}
-      </span>
-    ),
+    render: (v) => {
+      // Từ điển ánh xạ màu sắc và nhãn hiển thị tiếng Việt
+      const severityMap = {
+        Critical: {
+          label: 'Nguy cấp',
+          className: 'bg-red-100 text-red-700 border border-red-200',
+        },
+        Warning: {
+          label: 'Cảnh báo',
+          className: 'bg-amber-100 text-amber-700 border border-amber-200',
+        },
+        Low: {
+          label: 'Thấp',
+          className: 'bg-blue-100 text-blue-700 border border-blue-200',
+        },
+      };
+
+      // Lấy cấu hình tương ứng, nếu không khớp thì dùng mặc định
+      const config = severityMap[v] || {
+        label: v || 'Bình thường',
+        className: 'bg-slate-100 text-slate-700 border border-slate-200',
+      };
+
+      return (
+        <span
+          className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm ${config.className}`}
+        >
+          {config.label}
+        </span>
+      );
+    },
   },
 ];
+
+// ============ HÀM HỖ TRỢ XUẤT FILE CSV PURE FE ============
+const exportToCSV = (data, columns, fileName) => {
+  if (!data || !data.length) return;
+
+  // 1. Tạo dòng Header từ danh sách cột
+  const headers = columns.map((col) => `"${col.header}"`).join(',');
+
+  // 2. Tạo các dòng dữ liệu (Rows)
+  const rows = data.map((row) => {
+    return columns
+      .map((col) => {
+        let val = row[col.key];
+        if (val === null || val === undefined) val = '';
+        // Thoát ký tự nháy kép nếu trong văn bản có chứa nháy kép
+        const stringVal = String(val).replace(/"/g, '""');
+        return `"${stringVal}"`;
+      })
+      .join(',');
+  });
+
+  // 3. Ghép Header và Rows lại, thêm '\uFEFF' (BOM) để Microsoft Excel hiển thị chuẩn tiếng Việt UTF-8
+  const csvContent = '\uFEFF' + [headers, ...rows].join('\n');
+
+  // 4. Tạo Blob và tự động bấm tải file
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${fileName}_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 export const InventoryReports = () => {
   const defaultToDate = new Date().toISOString().split('T')[0];
@@ -103,7 +159,6 @@ export const InventoryReports = () => {
   }, [selectedReport, loadingStockMovement, loadingLowStock]);
 
   // ============ EFFECTS ============
-  // 1. TẢI DANH MỤC SẢN PHẨM
   useEffect(() => {
     let isMounted = true;
     const loadCategories = async () => {
@@ -134,7 +189,6 @@ export const InventoryReports = () => {
     };
   }, []);
 
-  // 2. TẢI DANH SÁCH SẢN PHẨM (Phụ thuộc vào Danh mục được chọn)
   useEffect(() => {
     let isMounted = true;
     const loadFilteredProducts = async () => {
@@ -161,7 +215,6 @@ export const InventoryReports = () => {
     };
   }, [categoryId, categories]);
 
-  // 3. TẢI BÁO CÁO
   const loadReport = async () => {
     switch (selectedReport) {
       case 'stock-movement': {
@@ -169,12 +222,11 @@ export const InventoryReports = () => {
         if (categoryId) movementPayload.categoryId = categoryId;
         if (productId) movementPayload.productId = productId;
 
-        // Cố tình không truyền branchId để Backend lấy từ Token của InventoryStaff
         await fetchStockMovement(movementPayload);
         break;
       }
       case 'low-stock':
-        await fetchLowStock({ includeZeroStock }); // Không truyền branchId
+        await fetchLowStock({ includeZeroStock });
         break;
       default:
         break;
@@ -185,6 +237,21 @@ export const InventoryReports = () => {
     loadReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedReport]);
+
+  // ============ HANDLERS TẢI FILE ============
+  const handleDownload = () => {
+    if (selectedReport === 'stock-movement' && movementData?.items) {
+      exportToCSV(movementData.items, STOCK_COLUMNS, 'Bao_Cao_Xuat_Nhap_Ton');
+    } else if (selectedReport === 'low-stock' && lowStockData?.items) {
+      exportToCSV(lowStockData.items, LOW_STOCK_COLUMNS, 'Bao_Cao_Ton_Kho_Sap_Het');
+    }
+  };
+
+  const hasDataToExport = useMemo(() => {
+    if (selectedReport === 'stock-movement') return (movementData?.items?.length || 0) > 0;
+    if (selectedReport === 'low-stock') return (lowStockData?.items?.length || 0) > 0;
+    return false;
+  }, [selectedReport, movementData, lowStockData]);
 
   return (
     <div className="space-y-6">
@@ -303,11 +370,19 @@ export const InventoryReports = () => {
             </div>
           )}
 
-          {/* Action Button */}
-          <div className="ml-auto w-full sm:w-auto">
+          {/* Action Buttons: Lọc & Xuất File */}
+          <div className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto">
+            <Button
+              variant="secondary"
+              className="h-[38px] flex-1 border border-slate-300 bg-white sm:flex-none"
+              onClick={handleDownload}
+              disabled={!hasDataToExport || selectedLoading}
+            >
+              Tải về
+            </Button>
             <Button
               variant="primary"
-              className="h-[38px] w-full sm:w-auto"
+              className="h-[38px] flex-1 sm:flex-none"
               onClick={loadReport}
               disabled={selectedLoading}
             >
