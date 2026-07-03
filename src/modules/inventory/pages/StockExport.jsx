@@ -1,13 +1,18 @@
 /**
- * Trang Xuất kho - Form tạo phiếu xuất kho.
+ * Trang Xuất kho - Form tạo phiếu xuất kho & Tích hợp Lịch sử có thao tác Hủy chuẩn API mới.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
-import { Table } from '../../../shared/components/Table';
-import { createExport, getExports, getProducts } from '../services/inventoryService';
+import {
+  createOutwardInventory,
+  confirmOutwardInventory,
+  getOutwardInventories,
+  getProducts,
+} from '../services/inventoryService';
+import { InventoryHistoryCard } from '../components/stock/InventoryHistoryCard';
 
 const extractList = (response) => {
   if (Array.isArray(response)) return response;
@@ -18,26 +23,27 @@ const extractList = (response) => {
   return [];
 };
 
-const normalizeExportRow = (item, index) => ({
-  id: item?.id || item?.Id || item?.exportId || item?.ExportId || `EXP-${index + 1}`,
-  productName:
-    item?.productName ||
-    item?.ProductName ||
-    item?.product?.name ||
-    item?.Product?.ProductName ||
-    '',
-  quantity: item?.quantity ?? item?.Quantity ?? item?.amount ?? item?.Amount ?? 0,
-  date: item?.date || item?.Date || item?.createdAt || item?.CreatedAt || '',
-  reason: item?.reason || item?.Reason || item?.note || item?.Note || '',
-});
+// Chuẩn hóa dữ liệu đảm bảo truyền đủ stockTicketId và cancelReason cho thao tác Hủy
+const normalizeExportRow = (item, index) => {
+  const itemsList = Array.isArray(item?.items) ? item.items : [];
+  const totalQuantity = itemsList.reduce((acc, curr) => acc + Number(curr?.quantity || 0), 0);
+  const firstProductName = itemsList[0]?.productName || 'Sản phẩm xuất kho';
 
-const buildExportPayload = (form) => ({
-  ProductId: form.productId || null,
-  ProductName: form.productName || '',
-  Quantity: Number(form.quantity || 0),
-  Date: form.date || new Date().toISOString(),
-  Reason: form.reason || '',
-});
+  return {
+    id: item?.stockTicketId || item?.id || `EXP-${index + 1}`,
+    stockTicketId: item?.stockTicketId || item?.id,
+    ticketCode: item?.ticketCode || `EX-${index + 1}`,
+    productName:
+      itemsList.length > 1
+        ? `${firstProductName} (...và ${itemsList.length - 1} khác)`
+        : firstProductName,
+    quantity: totalQuantity || item?.quantity || 0,
+    date: item?.createdAt || item?.Date || '',
+    reason: item?.reason || item?.Reason || '',
+    status: item?.status || 'COMPLETED',
+    cancelReason: item?.cancelReason || '',
+  };
+};
 
 export const StockExport = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,60 +51,54 @@ export const StockExport = () => {
   const [products, setProducts] = useState([]);
   const [isRemoteData, setIsRemoteData] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+
   const [form, setForm] = useState({
-    productId: '',
+    outwardType: 1, // 1 = ReturnToSupplier, 2 = WriteOff, 3 = Transfer
+    branchProductId: '',
     productName: '',
     quantity: '',
-    date: '',
     reason: '',
+    note: '',
   });
 
-  const exportColumns = [
-    { key: 'id', header: 'ID', width: '10%' },
-    { key: 'productName', header: 'Sản phẩm', width: '30%' },
-    { key: 'quantity', header: 'Số lượng', width: '15%' },
-    { key: 'date', header: 'Ngày', width: '20%' },
-    { key: 'reason', header: 'Lý do', width: '25%' },
-  ];
+  // Hàm loadData nhận filterParams
+  const loadData = async (filterParams = {}) => {
+    setIsLoading(true);
+    try {
+      const queryParams = {
+        pageNumber: 1,
+        pageSize: 50,
+        ...filterParams, // Nối bộ lọc người dùng chọn vào query
+      };
+
+      const [exportsResponse, productsResponse] = await Promise.all([
+        getOutwardInventories(queryParams),
+        getProducts({ pageNumber: 1, pageSize: 100 }),
+      ]);
+
+      const exportItems = extractList(exportsResponse).map(normalizeExportRow).filter(Boolean);
+      const productItems = extractList(productsResponse);
+
+      setExports(exportItems);
+      setProducts(productItems);
+      setIsRemoteData(true);
+      setStatusMessage('Đã đồng bộ dữ liệu xuất kho từ API');
+    } catch (error) {
+      setExports([]);
+      setProducts([]);
+      setIsRemoteData(false);
+      setStatusMessage(
+        error?.status === 401 ? 'API xuất kho yêu cầu JWT' : 'Đang dùng dữ liệu cục bộ'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let active = true;
-
-    const loadData = async () => {
-      try {
-        const [exportsResponse, productsResponse] = await Promise.all([
-          getExports({ Page: 1, PageSize: 50 }),
-          getProducts({ Page: 1, PageSize: 100 }),
-        ]);
-
-        if (!active) return;
-
-        const exportItems = extractList(exportsResponse).map(normalizeExportRow).filter(Boolean);
-        const productItems = extractList(productsResponse);
-
-        setExports(exportItems);
-        setProducts(productItems);
-        setIsRemoteData(true);
-        setStatusMessage('Đã đồng bộ dữ liệu xuất kho từ API');
-      } catch (error) {
-        if (!active) return;
-
-        setExports([]);
-        setProducts([]);
-        setIsRemoteData(false);
-        setStatusMessage(
-          error?.status === 401 ? 'API xuất kho yêu cầu JWT' : 'Đang dùng dữ liệu cục bộ'
-        );
-      } finally {
-        if (active) setIsLoading(false);
-      }
-    };
-
     loadData();
-    return () => {
-      active = false;
-    };
   }, []);
 
   const summary = useMemo(() => {
@@ -110,37 +110,77 @@ export const StockExport = () => {
     };
   }, [exports]);
 
+  // Luồng 2 bước: Tạo phiếu (PENDING) -> Xác nhận (Trừ kho)
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsSubmitting(true);
+    setStatusMessage('');
 
-    const nextRow = {
-      id: `EXP-${Date.now()}`,
-      productName:
-        form.productName ||
-        products.find((product) => String(product.id || product.Id) === String(form.productId))
-          ?.productName ||
-        products.find((product) => String(product.id || product.Id) === String(form.productId))
-          ?.ProductName ||
-        'Sản phẩm chưa đặt tên',
-      quantity: Number(form.quantity || 0),
-      date: form.date || new Date().toISOString().slice(0, 10),
-      reason: form.reason || '',
-    };
+    if (!form.branchProductId && isRemoteData) {
+      setStatusMessage('Lỗi: Vui lòng chọn một sản phẩm từ danh sách');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       if (isRemoteData) {
-        await createExport(buildExportPayload(form));
-        const response = await getExports({ Page: 1, PageSize: 50 });
-        setExports(extractList(response).map(normalizeExportRow).filter(Boolean));
+        const payload = {
+          outwardType: Number(form.outwardType),
+          reason: form.reason || 'Xuất kho',
+          note: form.note || form.reason || '',
+          items: [
+            {
+              branchProductId: form.branchProductId,
+              quantity: Number(form.quantity || 0),
+            },
+          ],
+        };
+
+        setStatusMessage('Đang tạo phiếu xuất kho (Trạng thái chờ)...');
+        const createRes = await createOutwardInventory(payload);
+        const ticketId = createRes?.data?.ticketId || createRes?.data?.stockTicketId;
+
+        if (ticketId) {
+          setStatusMessage('Đang xác nhận để trừ tồn kho...');
+          await confirmOutwardInventory(ticketId);
+          setStatusMessage('Xuất kho thành công! Đã trừ tồn kho.');
+        } else {
+          setStatusMessage('Tạo phiếu thành công.');
+        }
+
+        await loadData();
       } else {
+        const nextRow = {
+          id: `EXP-${Date.now()}`,
+          stockTicketId: `EXP-${Date.now()}`,
+          ticketCode: `EX-${exports.length + 1}`,
+          productName: form.productName || 'Sản phẩm cục bộ',
+          quantity: Number(form.quantity || 0),
+          date: new Date().toISOString(),
+          reason: form.reason || '',
+          status: 'COMPLETED',
+        };
         setExports((prev) => [nextRow, ...prev]);
+        setStatusMessage('Đã lưu phiếu xuất kho cục bộ');
       }
 
-      setStatusMessage('Đã lưu phiếu xuất kho');
-      setForm({ productId: '', productName: '', quantity: '', date: '', reason: '' });
+      setForm({
+        outwardType: 1,
+        branchProductId: '',
+        productName: '',
+        quantity: '',
+        reason: '',
+        note: '',
+      });
       setIsModalOpen(false);
     } catch (error) {
-      setStatusMessage(error?.message || 'Không thể lưu phiếu xuất kho');
+      const errorMsgList = error?.response?.data?.errors;
+      const fallbackMessage = Array.isArray(errorMsgList)
+        ? errorMsgList.join(' | ')
+        : error?.message || 'Không thể tạo hoặc xác nhận phiếu xuất kho';
+      setStatusMessage(`Lỗi: ${fallbackMessage}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,7 +189,7 @@ export const StockExport = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Xuất kho</h1>
-          <p className="mt-1 text-gray-600">Ghi nhận hàng xuất từ kho</p>
+          <p className="mt-1 text-gray-600">Ghi nhận và quản lý các phiếu xuất từ kho</p>
         </div>
         <Button
           variant="primary"
@@ -162,7 +202,13 @@ export const StockExport = () => {
         </Button>
       </div>
 
-      <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
+      <div
+        className={`w-fit rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
+          statusMessage.includes('Lỗi:')
+            ? 'border-rose-200 bg-rose-50 text-rose-700'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        }`}
+      >
         {isLoading
           ? 'Đang tải dữ liệu xuất kho...'
           : statusMessage || 'Sẵn sàng tạo phiếu xuất mới'}
@@ -172,13 +218,13 @@ export const StockExport = () => {
         <Card>
           <div className="py-4 text-center">
             <div className="text-3xl font-bold text-blue-600">{summary.totalExports}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng lần xuất</p>
+            <p className="mt-1 text-sm text-gray-600">Tổng phiếu xuất</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
             <div className="text-3xl font-bold text-green-600">{summary.totalQuantity}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng số lượng</p>
+            <p className="mt-1 text-sm text-gray-600">Tổng số lượng xuất</p>
           </div>
         </Card>
         <Card>
@@ -189,24 +235,52 @@ export const StockExport = () => {
         </Card>
       </div>
 
-      <Card header="Lịch sử xuất kho">
-        <Table columns={exportColumns} data={exports} emptyMessage="Chưa có lần xuất nào" />
-      </Card>
+      {/*  INVENTORY HISTORY CARD */}
+      <InventoryHistoryCard
+        title="Lịch sử phiếu xuất kho"
+        type="OUTWARD"
+        tickets={exports}
+        isLoading={isLoading}
+        onReload={loadData}
+        onNotify={(notifyObj) => setStatusMessage(notifyObj.message)}
+      />
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Xuất kho" size="lg">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Tạo phiếu xuất kho"
+        size="lg"
+      >
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Chọn sản phẩm</label>
+            <label className="text-sm font-medium text-gray-700">Loại xuất kho</label>
             <select
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
-              value={form.productId}
+              value={form.outwardType}
+              onChange={(event) =>
+                setForm((curr) => ({ ...curr, outwardType: Number(event.target.value) }))
+              }
+            >
+              <option value={1}>Trả hàng cho Nhà cung cấp (ReturnToSupplier)</option>
+              <option value={2}>Xuất hủy / Hao hụt (WriteOff)</option>
+              <option value={3}>Xuất sử dụng nội bộ / Điều chuyển (Transfer)</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Chọn sản phẩm xuất *</label>
+            <select
+              required
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
+              value={form.branchProductId}
               onChange={(event) => {
+                const targetId = event.target.value;
                 const selectedProduct = products.find(
-                  (product) => String(product.id || product.Id) === event.target.value
+                  (p) => String(p.branchProductId || p.id || p.Id) === targetId
                 );
                 setForm((current) => ({
                   ...current,
-                  productId: event.target.value,
+                  branchProductId: targetId,
                   productName:
                     selectedProduct?.productName ||
                     selectedProduct?.ProductName ||
@@ -214,54 +288,57 @@ export const StockExport = () => {
                 }));
               }}
             >
-              <option value="">Chọn từ danh sách</option>
-              {products.map((product) => (
-                <option key={product.id || product.Id} value={product.id || product.Id}>
-                  {product.productName || product.ProductName || product.name || product.Name}
-                </option>
-              ))}
+              <option value="">-- Chọn sản phẩm từ chi nhánh --</option>
+              {products.map((product) => {
+                const idValue = product.branchProductId || product.id || product.Id;
+                return (
+                  <option key={idValue} value={idValue}>
+                    {product.productName || product.ProductName} (Mã: {product.productCode || 'N/A'}
+                    )
+                  </option>
+                );
+              })}
             </select>
           </div>
+
           <Input
-            label="Tên sản phẩm"
-            placeholder="Nhập tên nếu chưa có trong danh sách"
-            value={form.productName}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, productName: event.target.value }))
-            }
-          />
-          <Input
-            label="Số lượng *"
+            label="Số lượng xuất *"
             type="number"
-            placeholder="0"
+            placeholder="Nhập số lượng > 0"
             min="1"
+            required
             value={form.quantity}
             onChange={(event) =>
               setForm((current) => ({ ...current, quantity: event.target.value }))
             }
           />
+
           <Input
-            label="Ngày xuất *"
-            type="date"
-            value={form.date}
-            onChange={(event) => setForm((current) => ({ ...current, date: event.target.value }))}
-          />
-          <Input
-            label="Lý do xuất"
-            placeholder="VD: Bán hàng, hư hỏng, mất..."
+            label="Lý do xuất kho *"
+            placeholder="VD: Trả lô hàng hết hạn lô 001 cho NCC"
+            required
             value={form.reason}
             onChange={(event) => setForm((current) => ({ ...current, reason: event.target.value }))}
           />
-          <div className="flex justify-end gap-2 pt-2">
+
+          <Input
+            label="Ghi chú thêm"
+            placeholder="Ghi chú chi tiết (không bắt buộc)"
+            value={form.note}
+            onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))}
+          />
+
+          <div className="flex justify-end gap-2 pt-4">
             <button
               type="button"
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700"
+              disabled={isSubmitting}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
               onClick={() => setIsModalOpen(false)}
             >
               Hủy
             </button>
-            <Button type="submit" variant="primary">
-              Lưu phiếu xuất
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Đang xử lý...' : 'Xác nhận xuất kho'}
             </Button>
           </div>
         </form>

@@ -13,7 +13,7 @@ export const sidebarItems = [
     children: [
       { label: 'Danh sách hàng hóa', path: '/inventory/products' },
       { label: 'Nhập kho', path: '/inventory/import' },
-      { label: 'Xuất kho', path: '/inventory/goods-issue' },
+      { label: 'Xuất kho', path: '/inventory/export' },
       { label: 'Kiểm kê kho', path: '/inventory/inventory-check' },
       { label: 'Tổng hợp tồn kho', path: '/inventory/inventory-summary' },
       { label: 'Lịch sử Xuất/Nhập', path: '/inventory/transactions', ownerOnly: true },

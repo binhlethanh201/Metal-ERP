@@ -1,12 +1,6 @@
 /**
- * Inventory Service - API calls cho module Tổng kho. Gọi qua apiClient tập trung.
- * Gồm: Dashboard, Products, Stock, Import/Export, Alerts, Reports.
+ * Inventory Service - API calls cho module Tổng kho
  */
-/**
- * Inventory Service - Tất cả API calls cho module Tổng kho
- * Gọi đến apiClient và endpoints tập trung
- */
-
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../../services/apiClient';
 import ENDPOINTS from '../../../services/endpoints';
 
@@ -78,11 +72,7 @@ export const getImport = (id) => {
   return apiGet(ENDPOINTS.INVENTORY.GET_IMPORT(id));
 };
 
-export const createInwardInventory = (payload) => {
-  return apiPost(ENDPOINTS.INVENTORY.CREATE_INWARD_INVENTORY, payload);
-};
-
-// ============ Inward Inventory (API) ============
+// ============ Inward Inventory  ============
 export const getInwardInventories = (filters = {}) => {
   return apiGet(`${ENDPOINTS.INVENTORY.GET_INWARD_INVENTORIES}${buildQueryString(filters)}`);
 };
@@ -91,15 +81,27 @@ export const getInwardInventory = (id) => {
   return apiGet(ENDPOINTS.INVENTORY.GET_INWARD_INVENTORY(id));
 };
 
+export const createInwardInventory = (payload) => {
+  return apiPost(ENDPOINTS.INVENTORY.CREATE_INWARD_INVENTORY, payload);
+};
+
 export const updateInwardInventory = (id, data) => {
   return apiPut(ENDPOINTS.INVENTORY.UPDATE_INWARD_INVENTORY(id), data);
+};
+
+export const confirmInwardInventory = (id) => {
+  return apiPost(`${ENDPOINTS.INVENTORY.GET_INWARD_INVENTORY(id)}/confirm`, {});
+};
+
+export const cancelInwardInventory = (id, cancelReason = '') => {
+  return apiPost(`${ENDPOINTS.INVENTORY.GET_INWARD_INVENTORY(id)}/cancel`, { cancelReason });
 };
 
 export const deleteInwardInventory = (id) => {
   return apiDelete(ENDPOINTS.INVENTORY.DELETE_INWARD_INVENTORY(id));
 };
 
-// ============ Outward Inventory (API) ============
+// ============ Outward Inventory ============
 export const getOutwardInventories = (filters = {}) => {
   return apiGet(`${ENDPOINTS.INVENTORY.GET_OUTWARD_INVENTORIES}${buildQueryString(filters)}`);
 };
@@ -108,25 +110,28 @@ export const getOutwardInventory = (id) => {
   return apiGet(ENDPOINTS.INVENTORY.GET_OUTWARD_INVENTORY(id));
 };
 
+// API Tạo phiếu xuất kho (Trạng thái PENDING)
+export const createOutwardInventory = (payload) => {
+  return apiPost(ENDPOINTS.INVENTORY.CREATE_OUTWARD_INVENTORY || '/OutwardInventory', payload);
+};
+
 export const updateOutwardInventory = (id, data) => {
   return apiPut(ENDPOINTS.INVENTORY.UPDATE_OUTWARD_INVENTORY(id), data);
 };
 
+// API Xác nhận phiếu xuất (Trừ kho & Validate real-time)
+export const confirmOutwardInventory = (id) => {
+  return apiPost(`${ENDPOINTS.INVENTORY.GET_OUTWARD_INVENTORY(id)}/confirm`, {});
+};
+
+// API Hủy phiếu xuất chuẩn theo tài liệu mới (Hoàn lại kho nếu đã COMPLETED)
+export const cancelOutwardInventory = (id, cancelReason = '') => {
+  return apiPost(`${ENDPOINTS.INVENTORY.GET_OUTWARD_INVENTORY(id)}/cancel`, { cancelReason });
+};
+
+// (Deprecated) Legacy Delete giữ lại theo tài liệu
 export const deleteOutwardInventory = (id) => {
   return apiDelete(ENDPOINTS.INVENTORY.DELETE_OUTWARD_INVENTORY(id));
-};
-
-// ============ Stock Export ============
-export const getExports = (filters = {}) => {
-  return apiGet(`${ENDPOINTS.INVENTORY.GET_EXPORTS}${buildQueryString(filters)}`);
-};
-
-export const createExport = (exportData) => {
-  return apiPost(ENDPOINTS.INVENTORY.CREATE_EXPORT, exportData);
-};
-
-export const getExport = (id) => {
-  return apiGet(ENDPOINTS.INVENTORY.GET_EXPORT(id));
 };
 
 // ============ Alerts & Warnings ============
@@ -160,19 +165,21 @@ const inventoryService = {
   getImports,
   createImport,
   getImport,
-  getExports,
-  createExport,
-  getExport,
   // Inward Inventory API
   getInwardInventories,
   getInwardInventory,
   createInwardInventory,
   updateInwardInventory,
+  confirmInwardInventory,
+  cancelInwardInventory,
   deleteInwardInventory,
   // Outward Inventory API
   getOutwardInventories,
   getOutwardInventory,
+  createOutwardInventory,
   updateOutwardInventory,
+  confirmOutwardInventory,
+  cancelOutwardInventory,
   deleteOutwardInventory,
   // Others
   getLowStockAlerts,
