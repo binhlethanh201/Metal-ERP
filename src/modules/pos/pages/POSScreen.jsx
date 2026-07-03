@@ -405,9 +405,6 @@ const POSScreen = () => {
         onPayMethodChange={cart.setPaymentMethod}
         isSplitPay={isSplitPay}
         onToggleSplitPay={setIsSplitPay}
-        onOpenHeldOrders={() => showNotice('Tính năng đang phát triển')}
-        onOpenPriceCheck={() => showNotice('Tính năng đang phát triển')}
-        onOpenStockCheck={() => showNotice('Tính năng đang phát triển')}
       />
 
       <PaymentModal
