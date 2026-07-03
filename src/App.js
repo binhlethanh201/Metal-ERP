@@ -44,29 +44,13 @@ const CustomerManagement = lazy(() => import('./modules/pos/pages/CustomerManage
 const ReturnOrderPage = lazy(() => import('./modules/pos/pages/ReturnOrderPage'));
 const SettingsPage = lazy(() => import('./modules/pos/pages/SettingsPage'));
 
-// Forum Module
-const ForumLayout = lazy(() => import('./modules/forum/layouts/ForumLayout'));
-const ForumHome = lazy(() => import('./modules/forum/pages/ForumHome'));
-const PostDetail = lazy(() => import('./modules/forum/pages/PostDetail'));
-const CreatePost = lazy(() => import('./modules/forum/pages/CreatePost'));
-const ForumCategory = lazy(() => import('./modules/forum/pages/ForumCategory'));
-const ForumNews = lazy(() => import('./modules/forum/pages/ForumNews'));
-const ForumTrends = lazy(() => import('./modules/forum/pages/ForumTrends'));
-const ForumSupply = lazy(() => import('./modules/forum/pages/ForumSupply'));
-const ForumMyPosts = lazy(() => import('./modules/forum/pages/ForumMyPosts'));
-const ForumSaved = lazy(() => import('./modules/forum/pages/ForumSaved'));
-const ForumTopProducts = lazy(() => import('./modules/forum/pages/ForumTopProducts'));
-const ForumNewProducts = lazy(() => import('./modules/forum/pages/ForumNewProducts'));
-const ForumImportSuggest = lazy(() => import('./modules/forum/pages/ForumImportSuggest'));
-const ForumProfile = lazy(() => import('./modules/forum/pages/ForumProfile'));
-const ForumDiscussion = lazy(() => import('./modules/forum/pages/ForumDiscussion'));
+
 
 // Admin Module
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
-const UserAccountsManagement = lazy(() => import('./modules/admin/pages/UserAccountsManagement'));
-const CategoryManagement = lazy(() => import('./modules/admin/pages/CategoryManagement'));
-const PostModeration = lazy(() => import('./modules/admin/pages/PostModeration'));
+const OwnerAccountsManagement = lazy(() => import('./modules/admin/pages/OwnerAccountsManagement'));
+const StoreApprovals = lazy(() => import('./modules/admin/pages/StoreApprovals'));
 const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotifications'));
 const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
 
@@ -95,26 +79,6 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* PRIVATE & PROTECTED ROUTES */}
-          {/* MODULE FORUM */}
-          <Route element={<PrivateRoute />}>
-            <Route path="/forum" element={<ForumLayout />}>
-              <Route index element={<ForumHome />} />
-              <Route path="post/:id" element={<PostDetail />} />
-              <Route path="create" element={<CreatePost />} />
-              <Route path="category/:id" element={<ForumCategory />} />
-              <Route path="news" element={<ForumNews />} />
-              <Route path="discussion" element={<ForumDiscussion />} />
-              <Route path="trends" element={<ForumTrends />} />
-              <Route path="source" element={<ForumSupply />} />
-              <Route path="my-posts" element={<ForumMyPosts />} />
-              <Route path="saved" element={<ForumSaved />} />
-              <Route path="top-products" element={<ForumTopProducts />} />
-              <Route path="new-products" element={<ForumNewProducts />} />
-              <Route path="import-suggest" element={<ForumImportSuggest />} />
-              <Route path="profile" element={<ForumProfile />} />
-            </Route>
-          </Route>
-
           {/* MODULE POS */}
           <Route element={<PrivateRoute allowedRoles={['Owner', 'SalesStaff']} />}>
             <Route path="/pos" element={<PosLayout />}>
@@ -153,9 +117,8 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={['Admin']} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<UserAccountsManagement />} />
-              <Route path="categories" element={<CategoryManagement />} />
-              <Route path="moderation" element={<PostModeration />} />
+              <Route path="users" element={<OwnerAccountsManagement />} />
+              <Route path="approvals" element={<StoreApprovals />} />
               <Route path="notifications" element={<SystemNotifications />} />
               <Route path="logs" element={<SystemLog />} />
             </Route>

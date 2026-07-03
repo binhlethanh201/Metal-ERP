@@ -103,20 +103,15 @@ const AdminLayout = () => {
       ],
     },
     {
-      title: 'TÀI KHOẢN & PHÂN QUYỀN',
-      items: [{ label: 'Quản lý Người dùng', path: '/admin/users', badge: null, icon: 'groups' }],
-    },
-    {
-      title: 'CỘNG ĐỒNG & NỘI DUNG',
+      title: 'Quản trị Người dùng',
       items: [
-        { label: 'Cây danh mục', path: '/admin/categories', badge: null, icon: 'folder' },
-        { label: 'Kiểm duyệt bài viết', path: '/admin/moderation', badge: null, icon: 'gpp_maybe' },
+        { label: 'Quản lý Chủ Cửa Hàng', path: '/admin/users', badge: null, icon: 'groups' },
       ],
     },
     {
-      title: 'DUYỆT ĐỐI TÁC',
+      title: 'Quản trị Cửa hàng',
       items: [
-        { label: 'Duyệt Cửa hàng mới', path: '/admin/store-approvals', badge: null, icon: 'store' },
+        { label: 'Duyệt Cửa hàng mới', path: '/admin/approvals', badge: null, icon: 'store' },
       ],
     },
     {

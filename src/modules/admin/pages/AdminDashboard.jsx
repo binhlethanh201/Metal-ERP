@@ -173,22 +173,22 @@ const AdminDashboard = () => {
         </h3>
         <div className="flex flex-wrap gap-3">
           <button
+            onClick={() => navigate('/admin/approvals')}
+            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
+          >
+            <Icon name="store" size={14} className="text-primary" /> Duyệt cấp Cửa hàng
+          </button>
+          <button
             onClick={() => navigate('/admin/users')}
             className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
           >
-            <Icon name="user_plus" size={14} className="text-primary" /> Duyệt cấp Cửa hàng
+            <Icon name="groups" size={14} className="text-emerald-700" /> Quản lý Chủ Cửa Hàng
           </button>
           <button
             onClick={() => navigate('/admin/notifications')}
             className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
           >
             <Icon name="megaphone" size={14} className="text-error" /> Phát tin khẩn cấp
-          </button>
-          <button
-            onClick={() => navigate('/admin/categories')}
-            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
-          >
-            <Icon name="folder_plus" size={14} className="text-emerald-700" /> Cập nhật Nhóm hàng
           </button>
           <button
             onClick={() => navigate('/admin/logs')}

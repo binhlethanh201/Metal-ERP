@@ -108,33 +108,45 @@ export const ENDPOINTS = {
     UPDATE_SETTINGS: '/pos/settings',
   },
 
-  // ============ FORUM (Diễn đàn) ============
-  FORUM: {
-    // Categories
-    GET_CATEGORIES: '/forum/categories',
-    GET_CATEGORY: (id) => `/forum/categories/${id}`,
+  // ============ ADMIN (Quản trị hệ thống) ============
+  ADMIN: {
+    // Dashboard
+    DASHBOARD_STATS: '/api/admin/dashboard/stats',
+    DASHBOARD_REVENUE: '/api/admin/dashboard/revenue-chart',
+    DASHBOARD_EVENTS: '/api/admin/dashboard/recent-events',
+    DASHBOARD_EXPORT: '/api/admin/dashboard/export',
 
-    // Posts
-    GET_POSTS: '/forum/posts',
-    GET_POST: (id) => `/forum/posts/${id}`,
-    CREATE_POST: '/forum/posts',
-    UPDATE_POST: (id) => `/forum/posts/${id}`,
-    DELETE_POST: (id) => `/forum/posts/${id}`,
+    // Owner Accounts (Quản lý Chủ cửa hàng)
+    OWNER_LIST: '/api/admin/owners',
+    OWNER_DETAIL: (id) => `/api/admin/owners/${id}`,
+    OWNER_CREATE: '/api/admin/owners',
+    OWNER_UPDATE: (id) => `/api/admin/owners/${id}`,
+    OWNER_STATUS: (id) => `/api/admin/owners/${id}/status`,
+    OWNER_BAN: (id) => `/api/admin/owners/${id}/ban`,
 
-    // Comments
-    GET_COMMENTS: (postId) => `/forum/posts/${postId}/comments`,
-    CREATE_COMMENT: (postId) => `/forum/posts/${postId}/comments`,
-    UPDATE_COMMENT: (commentId) => `/forum/comments/${commentId}`,
-    DELETE_COMMENT: (commentId) => `/forum/comments/${commentId}`,
+    // RBAC - Phân quyền toàn cục
+    RBAC_PERMISSIONS: '/api/admin/rbac/permissions',
+    RBAC_ROLES: '/api/admin/rbac/roles',
+    RBAC_ROLE_PERMISSIONS: (id) => `/api/admin/rbac/roles/${id}/permissions`,
 
-    // Votes/Likes
-    VOTE_POST: (postId) => `/forum/posts/${postId}/votes`,
-    UNVOTE_POST: (postId) => `/forum/posts/${postId}/votes`,
+    // Store Approvals
+    APPROVAL_LIST: '/api/admin/store-approvals',
+    APPROVAL_DETAIL: (id) => `/api/admin/store-approvals/${id}`,
+    APPROVAL_APPROVE: (id) => `/api/admin/store-approvals/${id}/approve`,
+    APPROVAL_REJECT: (id) => `/api/admin/store-approvals/${id}/reject`,
 
-    // Trends & Insights
-    GET_TRENDS: '/forum/trends',
-    GET_PRODUCT_SUGGESTIONS: '/forum/suggestions/products',
-    GET_TRENDING_CATEGORIES: '/forum/categories/trending',
+    // System Notifications
+    NOTIF_LIST: '/api/admin/notifications',
+    NOTIF_CREATE: '/api/admin/notifications',
+    NOTIF_UPDATE: (id) => `/api/admin/notifications/${id}`,
+    NOTIF_SEND: (id) => `/api/admin/notifications/${id}/send`,
+    NOTIF_CANCEL: (id) => `/api/admin/notifications/${id}/cancel`,
+    NOTIF_DELETE: (id) => `/api/admin/notifications/${id}`,
+
+    // System Logs
+    LOG_LIST: '/api/admin/system-logs',
+    LOG_DETAIL: (id) => `/api/admin/system-logs/${id}`,
+    LOG_EXPORT: '/api/admin/system-logs/export',
   },
 
   // ============ AUTH (Xác thực) ============
