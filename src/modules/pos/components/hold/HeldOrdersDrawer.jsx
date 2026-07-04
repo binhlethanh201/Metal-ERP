@@ -1,0 +1,134 @@
+/**
+ * HeldOrdersDrawer - Drawer hiển thị các đơn đang treo.
+ * TODO (FE): Kết nối API GET /pos/invoices?status=OnHold khi BE sẵn sàng.
+ * Hiện nhận heldOrders từ prop (local state ở POSScreen).
+ */
+import { useState } from 'react';
+import { Modal } from '../../../../shared/components/Modal';
+import { Button } from '../../../../shared/components/Button';
+import Icon from '../../../../shared/components/Icon';
+import { Badge } from '../../../../shared/components/Badge';
+import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+
+const HeldOrdersDrawer = ({ isOpen, onClose, onResume, heldOrders = [] }) => {
+  // heldOrders: truyền từ POSScreen (local state)
+  // TODO (FE): thay bằng API call khi kết nối BE
+  const [resuming, setResuming] = useState(null);
+
+  const handleResume = (invoice) => {
+    // TODO (FE): gọi API POST /pos/invoices/{id}/resume trước khi resume
+    setResuming(invoice.id || invoice.invoiceId);
+    try {
+      onResume && onResume(invoice);
+    } finally {
+      setResuming(null);
+    }
+  };
+
+  const getHeldDuration = (heldAt) => {
+    if (!heldAt) return '';
+    const diff = Date.now() - new Date(heldAt).getTime();
+    const hours = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    if (hours > 0) return `${hours}h ${mins}p trước`;
+    return `${mins} phút trước`;
+  };
+
+  const getExpiryLabel = (heldAt) => {
+    if (!heldAt) return '';
+    const expiry = new Date(heldAt).getTime() + 24 * 3600000;
+    const remaining = expiry - Date.now();
+    if (remaining <= 0) return { label: 'Đã hết hạn', variant: 'danger' };
+    const hours = Math.floor(remaining / 3600000);
+    if (hours < 2) return { label: `Còn ${hours}h`, variant: 'danger' };
+    if (hours < 6) return { label: `Còn ${hours}h`, variant: 'warning' };
+    return { label: `Còn ${hours}h`, variant: 'info' };
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Đơn đang treo"
+      size="lg"
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          Đóng
+        </Button>
+      }
+    >
+      <div className="space-y-3">
+        {heldOrders.length === 0 && (
+          <div className="text-center py-10 text-gray-400">
+            <Icon name="pause_circle" size={40} className="mx-auto mb-3 opacity-30" />
+            <p className="font-medium text-gray-500">Không có đơn treo nào</p>
+            <p className="text-sm mt-1">Các hóa đơn được treo sẽ hiển thị tại đây</p>
+          </div>
+        )}
+
+        {heldOrders.map((inv) => {
+          const id = inv.id || inv.invoiceId;
+          const held = inv.createdAt || inv.heldAt;
+          const duration = getHeldDuration(held);
+          const totalAmt = inv.cartItems
+            ? inv.cartItems.reduce((s, i) => s + (i.price ?? 0) * i.quantity, 0)
+            : inv.totalAmount || 0;
+          return (
+            <div
+              key={id}
+              className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-gray-900">{id}</span>
+                    <Badge variant="warning">Treo</Badge>
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                    {inv.customerName && (
+                      <span className="flex items-center gap-1">
+                        <Icon name="person" size={12} />
+                        {inv.customerName}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Icon name="access_time" size={12} />
+                      {duration}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Icon name="receipt" size={12} />
+                      {formatCurrency(totalAmt)}
+                    </span>
+                  </div>
+                  {inv.holdNote && (
+                    <p className="mt-2 text-sm text-gray-600 italic bg-gray-50 px-2 py-1 rounded">
+                      <Icon name="note" size={12} className="inline mr-1" />
+                      {inv.holdNote}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={resuming === id}
+                  onClick={() => handleResume(inv)}
+                >
+                  <Icon name="play_arrow" size={14} />
+                  Khôi phục
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+
+        {heldOrders.length > 0 && (
+          <p className="text-xs text-gray-400 text-center">
+            Đơn treo sẽ tự động hủy sau <strong>24 giờ</strong>
+          </p>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
+export default HeldOrdersDrawer;

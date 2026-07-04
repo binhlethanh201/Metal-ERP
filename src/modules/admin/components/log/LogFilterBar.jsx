@@ -11,7 +11,7 @@ const LogFilterBar = ({ searchTerm, onSearchChange, filterLevel, onFilterChange 
         </span>
         <input
           type="text"
-          placeholder="Tra cứu source, message..."
+          placeholder="Tra cứu source, nội dung..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full rounded-md border border-outline-variant bg-surface-container-low px-3 py-2 pl-9 text-xs font-semibold outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest"

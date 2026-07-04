@@ -2,41 +2,40 @@ import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const CategoryModal = ({ isOpen, onClose, onSave, initialData, categories }) => {
-  const [formData, setFormData] = useState({ name: '', slug: '', parentId: 'root' });
+  const [formData, setFormData] = useState({ categoryName: '', description: '', parentId: '' });
 
   // Reset hoặc nạp dữ liệu khi mở modal
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        setFormData(initialData);
+        setFormData({
+          categoryName: initialData.categoryName || '',
+          description: initialData.description || '',
+          parentId: initialData.parentId || '',
+        });
       } else {
-        setFormData({ name: '', slug: '', parentId: 'root' });
+        setFormData({ categoryName: '', description: '', parentId: '' });
       }
     }
   }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
-  // Tự động chuẩn hóa chuỗi text thành URL Slug
-  const handleNameChange = (e) => {
-    const rawName = e.target.value;
-    const autoSlug = rawName
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Bỏ dấu tiếng Việt
-      .replace(/[^a-z0-9 ]/g, '') // Bỏ ký tự đặc biệt
-      .replace(/\s+/g, '-'); // Thay khoảng trắng bằng dấu gạch ngang
-
-    setFormData({ ...formData, name: rawName, slug: autoSlug });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
+    if (!formData.categoryName.trim()) {
       alert('Vui lòng nhập tên danh mục.');
       return;
     }
-    onSave(formData);
+    const payload = {
+      categoryName: formData.categoryName.trim(),
+      description: formData.description?.trim() || null,
+      parentId: formData.parentId || null,
+    };
+    if (!initialData) {
+      payload.sortOrder = 0;
+    }
+    onSave(payload);
   };
 
   const isEditMode = !!initialData;
@@ -60,8 +59,8 @@ const CategoryModal = ({ isOpen, onClose, onSave, initialData, categories }) => 
             </label>
             <input
               type="text"
-              value={formData.name}
-              onChange={handleNameChange}
+              value={formData.categoryName}
+              onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
               className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-2.5 text-sm font-semibold text-on-surface outline-none focus:border-primary"
               placeholder="Ví dụ: Thiết bị Xây dựng"
             />
@@ -69,17 +68,15 @@ const CategoryModal = ({ isOpen, onClose, onSave, initialData, categories }) => 
 
           <div>
             <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
-              URL Slug (Tạo tự động)
+              Mô tả danh mục
             </label>
-            <input
-              type="text"
-              value={formData.slug}
-              readOnly
-              className="w-full rounded-md border border-outline-variant bg-surface-container p-2.5 font-mono text-sm text-on-surface-variant outline-none"
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows="3"
+              className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-2.5 text-sm text-on-surface outline-none focus:border-primary"
+              placeholder="Mô tả ngắn về danh mục (tùy chọn)"
             />
-            <p className="mt-1 text-[10px] text-on-surface-variant">
-              * BR-50: Tự động loại bỏ dấu và ký tự đặc biệt.
-            </p>
           </div>
 
           <div>
@@ -91,10 +88,10 @@ const CategoryModal = ({ isOpen, onClose, onSave, initialData, categories }) => 
               onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
               className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-2.5 text-sm font-semibold text-on-surface outline-none focus:border-primary"
             >
-              <option value="root">-- Đây là Danh mục Gốc (Root) --</option>
+              <option value="">-- Đây là Danh mục Gốc (Root) --</option>
               {categories?.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
+                <option key={cat.categoryId} value={cat.categoryId}>
+                  {cat.categoryName}
                 </option>
               ))}
             </select>

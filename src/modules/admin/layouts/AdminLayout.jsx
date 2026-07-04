@@ -1,19 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import * as signalR from '@microsoft/signalr';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import Icon from '../../../shared/components/Icon';
 import Logo from '../../../shared/components/Logo';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5100';
+const HUB_URL = `${API_BASE}/r/mepHub`;
+
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  // Giả định useAuth có cung cấp hàm logout
   const { user, logout } = useAuth();
   const [currentTime, setCurrentTime] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [toasts, setToasts] = useState([]);
   const dropdownRef = useRef(null);
+  const hubRef = useRef(null);
+  const toastTimerRef = useRef(null);
 
-  // Xử lý đồng hồ thời gian thực
+  // ---- Toast helpers ----
+  const addToast = useCallback((message, type = 'info') => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  }, []);
+
+  // ---- Real-time clock ----
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -24,7 +39,7 @@ const AdminLayout = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Xử lý click ra ngoài để đóng dropdown profile
+  // ---- Click outside to close dropdown ----
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -35,6 +50,46 @@ const AdminLayout = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // ---- SignalR real-time connection ----
+  useEffect(() => {
+    const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    if (!token) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(HUB_URL, { accessTokenFactory: () => token })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    hubRef.current = connection;
+
+    // Cửa hàng mới đăng ký chờ duyệt
+    connection.on('StoreApprovalPending', (data) => {
+      addToast(
+        `Cửa hàng mới "${data.storeName || data.storeName || '—'}" vừa đăng ký — chờ duyệt`,
+        'warning'
+      );
+    });
+
+    // Thông báo hệ thống gửi đến admin
+    connection.on('SystemNotification', (data) => {
+      addToast(`${data.title || 'Thông báo mới'}`, 'info');
+    });
+
+    // Violation được báo cáo
+    connection.on('ViolationReported', (data) => {
+      addToast(`Báo cáo vi phạm: "${data.reportedContent || data.postTitle || '—'}"`, 'error');
+    });
+
+    connection.start().catch((err) => {
+      console.warn('SignalR không thể kết nối:', err.message);
+    });
+
+    return () => {
+      connection.stop().catch(() => {});
+    };
+  }, [addToast]);
+
   const handleLogout = () => {
     if (logout) logout();
     navigate('/login');
@@ -44,41 +99,58 @@ const AdminLayout = () => {
     {
       title: 'TỔNG QUAN',
       items: [
-        { label: 'Dashboard hệ thống', path: '/admin', badge: null, icon: 'layout_dashboard' },
+        { label: 'Dashboard hệ thống', path: '/admin', badge: null, icon: 'dashboard' },
       ],
     },
     {
-      title: 'TÀI KHOẢN & PHÂN QUYỀN',
-      items: [{ label: 'Quản lý Người dùng', path: '/admin/users', badge: null, icon: 'users' }],
+      title: 'Quản trị Người dùng',
+      items: [
+        { label: 'Quản lý Chủ Cửa Hàng', path: '/admin/users', badge: null, icon: 'groups' },
+      ],
     },
     {
-      title: 'CỘNG ĐỒNG & NỘI DUNG',
+      title: 'Quản trị Cửa hàng',
       items: [
-        { label: 'Cây danh mục', path: '/admin/categories', badge: null, icon: 'folder_tree' },
-        {
-          label: 'Kiểm duyệt bài viết',
-          path: '/admin/moderation',
-          badge: '5',
-          icon: 'shield_alert',
-        },
+        { label: 'Duyệt Cửa hàng mới', path: '/admin/approvals', badge: null, icon: 'store' },
       ],
     },
     {
       title: 'VẬN HÀNH & HỆ THỐNG',
       items: [
-        {
-          label: 'Thông báo hệ thống',
-          path: '/admin/notifications',
-          badge: null,
-          icon: 'bell_ring',
-        },
+        { label: 'Thông báo hệ thống', path: '/admin/notifications', badge: null, icon: 'campaign' },
         { label: 'Nhật ký máy chủ (Log)', path: '/admin/logs', badge: null, icon: 'terminal' },
       ],
     },
   ];
 
+  const TOAST_STYLES = {
+    info:    'bg-blue-50 border-blue-300 text-blue-800',
+    warning: 'bg-amber-50 border-amber-300 text-amber-800',
+    error:   'bg-red-50 border-red-300 text-red-800',
+    success: 'bg-green-50 border-green-300 text-green-800',
+  };
+  const TOAST_ICONS = {
+    info:    'info',
+    warning: 'warning',
+    error:   'dangerous',
+    success: 'check_circle',
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-surface-container-low font-sans text-on-surface antialiased">
+      {/* Toast notifications */}
+      <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-2">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`flex min-w-72 max-w-sm items-center gap-3 rounded-lg border px-4 py-3 shadow-lg ${TOAST_STYLES[t.type] || TOAST_STYLES.info}`}
+          >
+            <Icon name={TOAST_ICONS[t.type] || 'info'} size={16} className="flex-shrink-0" />
+            <p className="text-sm font-medium">{t.message}</p>
+          </div>
+        ))}
+      </div>
+
       {/* LEFT SIDEBAR */}
       <aside className="z-50 flex w-64 shrink-0 flex-col border-r border-outline-variant bg-surface-container-lowest">
         <div className="flex h-14 items-center gap-2.5 border-b border-outline-variant bg-surface-container-lowest px-4">
@@ -105,11 +177,7 @@ const AdminLayout = () => {
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <span
-                            className={
-                              isActive ? 'text-on-primary' : 'text-outline group-hover:text-primary'
-                            }
-                          >
+                          <span className={isActive ? 'text-on-primary' : 'text-outline group-hover:text-primary'}>
                             <Icon name={item.icon} size={16} />
                           </span>
                           <span>{item.label}</span>
@@ -138,44 +206,39 @@ const AdminLayout = () => {
             </span>
 
             <button className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-high">
-              <Icon name="bell" size={16} />
+              <Icon name="notifications" size={16} />
               <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-error" />
             </button>
 
-            <div className="h-6 w-px bg-outline-variant"></div>
+            <div className="h-6 w-px bg-outline-variant" />
 
-            {/*  PROFILE DROPDOWN */}
+            {/* PROFILE DROPDOWN */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest p-1 pr-2 transition-colors hover:bg-surface-container-high"
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-primary-container text-xs font-bold text-on-primary-container">
-                  {user?.name?.charAt(0) || 'A'}
+                  {(user?.name || user?.fullName || 'A').charAt(0).toUpperCase()}
                 </div>
-                <span className="text-xs font-bold text-on-surface">{user?.name || 'Admin'}</span>
-                <span className="text-outline">
-                  <Icon name="chevron_down" size={14} />
-                </span>
+                <span className="text-xs font-bold text-on-surface">{user?.name || user?.fullName || 'Admin'}</span>
+                <span className="text-outline"><Icon name="chevron_down" size={14} /></span>
               </button>
 
               {isProfileOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-md border border-outline-variant bg-surface-container-lowest shadow-lg">
                   <div className="border-b border-surface-container-high px-4 py-3">
-                    <p className="text-xs font-bold text-on-surface">{user?.name || 'Admin'}</p>
+                    <p className="text-xs font-bold text-on-surface">{user?.name || user?.fullName || 'Admin'}</p>
                     <p className="truncate text-[10px] font-semibold text-on-surface-variant">
                       {user?.email || 'admin@mep.system'}
                     </p>
                   </div>
                   <div className="p-1">
                     <button
-                      onClick={() => {
-                        navigate('/change-password');
-                        setIsProfileOpen(false);
-                      }}
+                      onClick={() => { navigate('/change-password'); setIsProfileOpen(false); }}
                       className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-container-low"
                     >
-                      <Icon name="key" size={14} /> Đổi mật khẩu
+                      <Icon name="lock" size={14} /> Đổi mật khẩu
                     </button>
                     <button
                       onClick={handleLogout}

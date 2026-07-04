@@ -50,28 +50,33 @@ export const Modal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop - Nền mờ để làm tối các thành phần đằng sau */}
+    <div className="fixed inset-0 z-50">
+      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-70 transition-opacity"
         onClick={handleClose}
       />
 
       {/* Modal */}
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="flex min-h-screen items-center justify-center px-4 pb-8 pt-16">
         <div
-          className={`relative rounded-lg bg-white shadow-xl ${sizes[size]} w-full`}
+          className={`relative flex max-h-[75vh] flex-col rounded-lg bg-white shadow-xl ${sizes[size]} w-full`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          {/* Header - cố định */}
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
             <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
             {closeButton && (
               <button
                 onClick={handleClose}
                 className="text-slate-400 hover:text-slate-500 focus:outline-none"
               >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="pointer-events-none h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -83,12 +88,12 @@ export const Modal = ({
             )}
           </div>
 
-          {/* Body */}
-          <div className="px-6 py-4">{children}</div>
+          {/* Body - scroll được */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">{children}</div>
 
-          {/* Footer */}
+          {/* Footer - cố định */}
           {footer && (
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+            <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
               {footer}
             </div>
           )}

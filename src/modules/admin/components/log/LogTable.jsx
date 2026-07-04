@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LogTable = ({ logs }) => {
+const LogTable = ({ logs, onRowClick }) => {
   return (
     <div className="overflow-hidden rounded-lg border border-outline-variant bg-inverse-surface shadow-sm">
       <div className="min-h-[400px] overflow-x-auto">
@@ -15,9 +15,15 @@ const LogTable = ({ logs }) => {
           </thead>
           <tbody className="divide-y divide-outline/20">
             {logs.map((log) => (
-              <tr key={log.id} className="transition-colors hover:bg-on-surface/50">
+              <tr
+                key={log.logId}
+                onClick={() => onRowClick?.(log)}
+                className="cursor-pointer transition-colors hover:bg-on-surface/50"
+              >
                 <td className="whitespace-nowrap px-4 py-3 text-secondary-fixed-dim opacity-80">
-                  {log.time}
+                  {log.timestamp
+                    ? new Date(log.timestamp).toLocaleString('vi-VN', { hour12: false })
+                    : '—'}
                 </td>
                 <td className="px-4 py-3">
                   <span
@@ -33,9 +39,11 @@ const LogTable = ({ logs }) => {
                   </span>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 font-bold text-primary-fixed-dim">
-                  {log.source}
+                  {log.source || '—'}
                 </td>
-                <td className="px-4 py-3 leading-relaxed opacity-90">{log.message}</td>
+                <td className="px-4 py-3 leading-relaxed opacity-90">
+                  {log.description || log.action}
+                </td>
               </tr>
             ))}
 

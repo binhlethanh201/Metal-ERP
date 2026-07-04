@@ -8,12 +8,19 @@ import PosSidebar from '../components/layout/PosSidebar';
 import PosHeader from '../components/layout/PosHeader';
 import PosFooter from '../components/layout/PosFooter';
 
+const ROUTE_TO_MENU = {
+  '/pos': 'Máy bán hàng',
+  '/pos/orders': 'Đơn hàng',
+  '/pos/customers': 'Khách',
+  '/pos/shift': 'Quản lý ca bán',
+  '/pos/returns': 'Đổi trả',
+};
+
 const PosLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [search, setSearch] = useState('');
-  const [activeMenu, setActiveMenu] = useState('Máy bán hàng');
   const [notice, setNotice] = useState('');
   const [quickAddCust, setQuickAddCust] = useState(0);
   const [drafts, setDrafts] = useState([]);
@@ -24,6 +31,13 @@ const PosLayout = () => {
   });
   const noticeTimer = useRef(null);
 
+  // Derive active menu from current route
+  const currentPath = location.pathname.replace(/\/$/, '');
+  const activeMenu = ROUTE_TO_MENU[currentPath] || 'Máy bán hàng';
+
+  // Cart panel chỉ hiển thị ở màn hình POS chính + checkout
+  const isMainPosScreen = currentPath === '/pos' || currentPath === '/pos/checkout';
+
   const showNotice = useCallback((message) => {
     setNotice(message);
     clearTimeout(noticeTimer.current);
@@ -31,16 +45,8 @@ const PosLayout = () => {
   }, []);
 
   const handleMenuSelect = (label) => {
-    setActiveMenu(label);
-    if (label === 'Máy bán hàng') navigate('/pos');
-    else if (label === 'Đơn hàng') navigate('/pos/orders');
-    else if (label === 'Quản lý ca bán') navigate('/pos/shift');
-    else if (label === 'Khách') navigate('/pos/customers');
-    else showNotice(`${label} đang ở giao diện demo`);
+    // activeMenu được derive từ route, không cần setState ở đây
   };
-
-  // Kiểm tra xem có phải màn hình bán hàng chính thức không
-  const isMainPosScreen = location.pathname === '/pos' || location.pathname === '/pos/';
 
   return (
     <div className="h-screen overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 antialiased">
@@ -62,6 +68,7 @@ const PosLayout = () => {
       <PosHeader
         search={search}
         onSearchChange={setSearch}
+        isMainScreen={isMainPosScreen}
         onBarcodeScan={() => {
           navigate('/pos');
           setTimeout(() => showNotice('Đang mở chế độ quét mã'), 300);

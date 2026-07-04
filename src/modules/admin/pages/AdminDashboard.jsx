@@ -1,39 +1,83 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
+import {
+  getDashboardStats,
+  getRevenueChart,
+  getRecentEvents,
+  exportDashboard,
+} from '../services/adminService';
+
+const formatCurrency = (value) => {
+  if (value == null) return '—';
+  const n = Number(value);
+  if (Number.isNaN(n)) return '—';
+  return n.toLocaleString('vi-VN');
+};
+
+const formatMonth = (m) => new Date(2000, m - 1, 1).toLocaleDateString('vi-VN', { month: 'short' });
+
+const formatDateTime = (value) => {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('vi-VN', { hour12: false });
+};
+
+const levelClass = (level) => {
+  switch ((level || '').toUpperCase()) {
+    case 'ERROR':
+    case 'WARN':
+      return 'bg-error-container text-error';
+    case 'INFO':
+      return 'bg-primary-fixed text-on-primary-fixed-variant';
+    default:
+      return 'bg-surface-container-highest text-on-surface';
+  }
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const AUDIT_LOGS = [
-    {
-      time: '19:52:10',
-      action: 'Duyệt Đại lý',
-      details: 'Cấp trạng thái VERIFIED_OK cho "Kim Khí Gia Bảo"',
-      admin: 'Trần Văn B',
-      type: 'success',
-    },
-    {
-      time: '19:40:15',
-      action: 'Khóa Thảo luận',
-      details: 'Khóa comment luồng bài viết giá ảo của "Cơ khí Nam Định"',
-      admin: 'Hệ thống (AI)',
-      type: 'system',
-    },
-    {
-      time: '19:12:44',
-      action: 'Phát Thông báo',
-      details: 'Đẩy thông báo khẩn bảo trì hệ thống OCR quý 2',
-      admin: 'Nguyễn Văn A',
-      type: 'info',
-    },
-    {
-      time: '18:30:22',
-      action: 'Phạt Vi phạm',
-      details: 'Ẩn bài đăng sai danh mục của shop "Thép Miền Nam"',
-      admin: 'Lê Hoàng M',
-      type: 'danger',
-    },
-  ];
+  const [stats, setStats] = useState(null);
+  const [chart, setChart] = useState([]);
+  const [recentEvents, setRecentEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      getDashboardStats(),
+      getRevenueChart(new Date().getFullYear()),
+      getRecentEvents(20),
+    ])
+      .then(([statsData, chartData, eventsData]) => {
+        setStats(statsData);
+        setChart(Array.isArray(chartData) ? chartData : []);
+        setRecentEvents(Array.isArray(eventsData) ? eventsData : []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Dashboard API error:', err);
+        setError(err.message || 'Không tải được dữ liệu dashboard');
+        setLoading(false);
+      });
+  }, []);
+
+  const handleExport = async () => {
+    try {
+      const blob = await exportDashboard();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mep-dashboard-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error:', err);
+    }
+  };
+
+  const maxRevenue = chart.reduce((max, p) => (p && p.revenue > max ? p.revenue : max), 0);
 
   return (
     <div className="space-y-6 text-on-surface">
@@ -44,59 +88,83 @@ const AdminDashboard = () => {
             Hệ thống Phân tích Chỉ số &amp; Vận hành Lõi
           </h1>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Giám sát thời gian thực trạng thái phân hệ cửa hàng và luồng thông tin B2B
+            Giám sát thời gian thực trạng phân hệ cửa hàng và luồng thông tin B2B
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-md bg-surface-container-high px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-outline-variant">
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-2 rounded-md bg-surface-container-high px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-outline-variant"
+        >
           <Icon name="download" size={16} /> Xuất Báo Cáo (.CSV)
         </button>
       </div>
 
       {/* 4 CARDS SỐ LIỆU TỔNG QUAN */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
-          <div>
-            <div className="text-sm font-semibold text-on-surface-variant">Shop Đang Hoạt Động</div>
-            <div className="mt-2 text-3xl font-black text-on-surface">1,402</div>
-          </div>
-          <div className="mt-4 w-fit rounded-md bg-tertiary-fixed px-2 py-1 text-xs font-bold text-on-tertiary-fixed-variant">
-            +12 mở mới tuần này
-          </div>
+      {error && (
+        <div className="rounded-md bg-error-container p-3 text-xs font-semibold text-error">
+          {error}
         </div>
-
-        <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
-          <div>
-            <div className="text-sm font-semibold text-on-surface-variant">Doanh Thu Thuê Bao</div>
-            <div className="mt-2 flex items-baseline gap-1">
-              <span className="text-3xl font-black text-primary">850.5</span>
-              <span className="text-sm font-bold text-on-surface-variant">Triệu</span>
+      )}
+      {!loading && !error && stats && (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
+            <div>
+              <div className="text-sm font-semibold text-on-surface-variant">
+                Shop Đang Hoạt Động
+              </div>
+              <div className="mt-2 text-3xl font-black text-on-surface">
+                {formatCurrency(stats.activeTenants)}
+              </div>
+            </div>
+            <div className="mt-4 w-fit rounded-md bg-tertiary-fixed px-2 py-1 text-xs font-bold text-on-tertiary-fixed-variant">
+              Owner có IsActive = 1
             </div>
           </div>
-          <div className="mt-4 w-fit rounded-md bg-tertiary-fixed px-2 py-1 text-xs font-bold text-on-tertiary-fixed-variant">
-            92% Kế hoạch tháng
-          </div>
-        </div>
 
-        <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
-          <div>
-            <div className="text-sm font-semibold text-on-surface-variant">Báo Cáo Tồn Đọng</div>
-            <div className="mt-2 text-3xl font-black text-on-surface">24</div>
+          <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
+            <div>
+              <div className="text-sm font-semibold text-on-surface-variant">
+                Doanh Thu Hóa Đơn (30 ngày)
+              </div>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-3xl font-black text-primary">
+                  {formatCurrency(stats.subscriptionRevenue)}
+                </span>
+                <span className="text-sm font-bold text-on-surface-variant">VNĐ</span>
+              </div>
+            </div>
+            <div className="mt-4 w-fit rounded-md bg-tertiary-fixed px-2 py-1 text-xs font-bold text-on-tertiary-fixed-variant">
+              Invoice COMPLETED 30d
+            </div>
           </div>
-          <div className="mt-4 w-fit rounded-md bg-surface-container-highest px-2 py-1 text-xs font-bold text-on-surface-variant">
-            Cần xử lý trong 24h
-          </div>
-        </div>
 
-        <div className="flex flex-col justify-between rounded-lg border-l-4 border-outline-variant border-l-error bg-error-container/20 p-5 shadow-sm">
-          <div>
-            <div className="text-sm font-semibold text-error">Nợ Cước Nguy Hiểm</div>
-            <div className="mt-2 text-3xl font-black text-error">03</div>
+          <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
+            <div>
+              <div className="text-sm font-semibold text-on-surface-variant">
+                Hoa Hồng B2B (1% Transfer)
+              </div>
+              <div className="mt-2 text-3xl font-black text-on-surface">
+                {formatCurrency(stats.b2bCommission)}
+              </div>
+            </div>
+            <div className="mt-4 w-fit rounded-md bg-surface-container-highest px-2 py-1 text-xs font-bold text-on-surface-variant">
+              Tính trên Order TRANSFER
+            </div>
           </div>
-          <div className="mt-4 w-fit rounded-md bg-error-container px-2 py-1 text-xs font-bold text-on-error-container">
-            Chờ lệnh đình chỉ
+
+          <div className="flex flex-col justify-between rounded-lg border-l-4 border-outline-variant border-l-error bg-error-container/20 p-5 shadow-sm">
+            <div>
+              <div className="text-sm font-semibold text-on-surface-variant">Cảnh Báo Công Nợ</div>
+              <div className="mt-2 text-3xl font-black text-error">
+                {formatCurrency(stats.overdueAlerts)}
+              </div>
+            </div>
+            <div className="mt-4 w-fit rounded-md bg-error-container px-2 py-1 text-xs font-bold text-on-error-container">
+              Khách vượt DebtLimit
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* QUICK ACTIONS BOARD */}
       <div className="rounded-lg border border-outline-variant bg-surface-container-low p-4 shadow-sm">
@@ -105,22 +173,22 @@ const AdminDashboard = () => {
         </h3>
         <div className="flex flex-wrap gap-3">
           <button
+            onClick={() => navigate('/admin/approvals')}
+            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
+          >
+            <Icon name="store" size={14} className="text-primary" /> Duyệt cấp Cửa hàng
+          </button>
+          <button
             onClick={() => navigate('/admin/users')}
             className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
           >
-            <Icon name="user_plus" size={14} className="text-primary" /> Duyệt cấp Cửa hàng
+            <Icon name="groups" size={14} className="text-emerald-700" /> Quản lý Chủ Cửa Hàng
           </button>
           <button
             onClick={() => navigate('/admin/notifications')}
             className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
           >
             <Icon name="megaphone" size={14} className="text-error" /> Phát tin khẩn cấp
-          </button>
-          <button
-            onClick={() => navigate('/admin/categories')}
-            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
-          >
-            <Icon name="folder_plus" size={14} className="text-emerald-700" /> Cập nhật Nhóm hàng
           </button>
           <button
             onClick={() => navigate('/admin/logs')}
@@ -136,49 +204,33 @@ const AdminDashboard = () => {
         {/* CHART */}
         <section className="flex min-h-[380px] flex-col rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm xl:col-span-2">
           <div className="mb-4 flex items-center justify-between border-b border-surface-container-high pb-2">
-            <h3 className="text-base font-bold text-on-surface">
-              Phân tích Hiệu suất Doanh thu &amp; Gói cước
-            </h3>
-            <span className="text-xs font-bold text-primary">Dữ liệu năm 2026</span>
+            <h3 className="text-base font-bold text-on-surface">Phân tích Hiệu suất Doanh thu</h3>
+            <span className="text-xs font-bold text-primary">
+              Dữ liệu năm {new Date().getFullYear()}
+            </span>
           </div>
 
-          <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-3">
-            {/* MAIN CHART */}
-            <div className="flex flex-col rounded-md border border-dashed border-outline-variant bg-surface-container-low p-4 md:col-span-2">
-              <span className="mb-2 text-xs font-bold text-on-surface-variant">
-                Xu hướng doanh thu thuê bao
-              </span>
-              <div className="flex flex-1 items-center justify-center text-on-surface-variant/60">
-                <div className="text-center">
-                  <Icon name="bar_chart_3" size={28} className="mx-auto mb-1 opacity-50" />
-                  <p className="text-xs font-medium">[ Biểu đồ miền / Cột Chart.js ]</p>
-                </div>
-              </div>
-            </div>
-
-            {/* SUBCRIPTION */}
-            <div className="flex flex-col rounded-md border border-dashed border-outline-variant bg-surface-container-low p-4">
-              <span className="mb-2 text-xs font-bold text-on-surface-variant">
-                Tỷ trọng Subscription
-              </span>
-              <div className="flex flex-1 items-center justify-center text-on-surface-variant/60">
-                <div className="text-center">
-                  <Icon name="pie_chart" size={28} className="mx-auto mb-1 opacity-50" />
-                  <p className="text-xs font-medium">[ Biểu đồ tròn ]</p>
-                  <div className="mt-3 space-y-1 text-left text-[10px] font-bold">
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-primary" /> Enterprise (15%)
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-secondary-container" /> Premium (45%)
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-outline" /> Basic (40%)
-                    </div>
+          <div className="grid flex-1 grid-cols-12 items-end gap-2 pt-4">
+            {chart.map((point) => {
+              const heightPct =
+                maxRevenue > 0 ? Math.max(2, Math.round((point.revenue / maxRevenue) * 100)) : 2;
+              return (
+                <div
+                  key={point.month}
+                  className="flex h-full flex-col items-center justify-end gap-1"
+                >
+                  <div
+                    className="w-full rounded-t bg-primary transition-all"
+                    style={{ height: `${heightPct}%` }}
+                    title={`${formatMonth(point.month)}: ${formatCurrency(point.revenue)} VNĐ (${point.orderCount} hóa đơn)`}
+                  />
+                  <div className="text-[10px] font-bold text-on-surface-variant">
+                    {formatMonth(point.month)}
                   </div>
+                  <div className="text-[9px] text-outline">{point.orderCount || 0}</div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </section>
 
@@ -189,35 +241,38 @@ const AdminDashboard = () => {
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-            {AUDIT_LOGS.map((log, index) => (
-              <div
-                key={index}
-                className="rounded-md bg-surface-container-low p-3 text-xs transition-colors hover:bg-surface-container-high"
-              >
-                <div className="flex items-center justify-between font-semibold">
-                  <span
-                    className={`rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${
-                      log.type === 'danger'
-                        ? 'bg-error-container text-error'
-                        : log.type === 'success'
-                          ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant'
-                          : log.type === 'info'
-                            ? 'bg-primary-fixed text-on-primary-fixed-variant'
-                            : 'bg-surface-container-highest text-on-surface'
-                    }`}
-                  >
-                    {log.action}
-                  </span>
-                  <span className="text-[11px] font-medium text-on-surface-variant">
-                    {log.time}
-                  </span>
-                </div>
-                <p className="mt-1.5 font-medium text-on-surface">{log.details}</p>
-                <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-on-surface-variant">
-                  <Icon name="user" size={10} /> Thao tác: {log.admin}
-                </div>
+            {loading && (
+              <div className="flex items-center justify-center py-8 text-xs text-on-surface-variant">
+                Đang tải...
               </div>
-            ))}
+            )}
+            {!loading && recentEvents.length === 0 && (
+              <div className="py-8 text-center text-xs text-on-surface-variant">
+                Chưa có hoạt động nào.
+              </div>
+            )}
+            {!loading &&
+              recentEvents.map((event) => (
+                <div
+                  key={event.logId}
+                  className="rounded-md bg-surface-container-low p-3 text-xs transition-colors hover:bg-surface-container-high"
+                >
+                  <div className="flex items-center justify-between font-semibold">
+                    <span
+                      className={`rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${levelClass(event.level)}`}
+                    >
+                      {event.action}
+                    </span>
+                    <span className="text-[11px] font-medium text-on-surface-variant">
+                      {formatDateTime(event.timestamp)}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 font-medium text-on-surface">{event.description || '—'}</p>
+                  <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-on-surface-variant">
+                    <Icon name="user" size={10} /> Thao tác: {event.userName || 'System'}
+                  </div>
+                </div>
+              ))}
           </div>
         </section>
       </div>

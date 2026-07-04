@@ -114,6 +114,12 @@ const staticIconMap = {
   workspace_premium: 'Crown',
   schedule: 'Clock',
   description: 'FileText',
+  pause_circle: 'PauseCircle',
+  play_arrow: 'Play',
+  receipt: 'Receipt',
+  receipt_long: 'FileText',
+  access_time: 'Clock',
+  note: 'FileText',
 };
 
 const toPascalCase = (str) => {

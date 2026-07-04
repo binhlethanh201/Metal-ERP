@@ -1,6 +1,6 @@
 /**
  * SpecEditorModal - Modal soạn thảo chi tiết kỹ thuật sản phẩm.
- * Dùng chung cho cả inventory (ProductInfoTab) và forum (CreatePostModal).
+ * Dùng chung cho inventory (ProductInfoTab).
  */
 import React from 'react';
 

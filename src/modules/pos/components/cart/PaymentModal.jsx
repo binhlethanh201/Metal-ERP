@@ -17,11 +17,16 @@ const PaymentModal = ({
   onRemoveLine,
   onLineChange,
   onQuickFill,
+  onSelectMethod,
+  onOpenQR,
+  onOpenDebt,
 }) => {
+  // 4 payment methods theo SRS: Cash, Transfer, Combined, Debt
   const allMethods = [
-    { id: 'cash', name: 'Tiền mặt', icon: '💵' },
-    { id: 'card', name: 'Thẻ', icon: '💳' },
-    { id: 'transfer', name: 'Chuyển khoản', icon: '📱' },
+    { id: 'Cash', name: 'Tiền mặt', icon: '💵' },
+    { id: 'Transfer', name: 'Chuyển khoản', icon: '📱' },
+    { id: 'Combined', name: 'Kết hợp', icon: '🔄' },
+    { id: 'Debt', name: 'Ghi nợ', icon: '📒', disabled: !selectedCustomer?.debtLimit },
   ];
 
   return (
@@ -29,7 +34,7 @@ const PaymentModal = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Thanh toán"
-      size="xl"
+      size="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -97,16 +102,18 @@ const PaymentModal = ({
         <div className="border-t border-slate-200 pt-4">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-700">Hình thức thanh toán</h3>
-            <button
-              type="button"
-              onClick={onAddLine}
-              className="rounded-lg border border-dashed border-[#004785] px-3 py-1.5 text-xs font-medium text-[#004785] hover:bg-blue-50"
-            >
-              + Thêm hình thức
-            </button>
+            {payLines.length < 2 && (
+              <button
+                type="button"
+                onClick={onAddLine}
+                className="rounded-lg border border-dashed border-[#004785] px-3 py-1.5 text-xs font-medium text-[#004785] hover:bg-blue-50"
+              >
+                + Thêm hình thức
+              </button>
+            )}
           </div>
 
-          <div className="space-y-4">
+          <div className="max-h-64 space-y-4 overflow-y-auto">
             {payLines.map((line) => (
               <div key={line.id} className="rounded-lg border border-slate-200 bg-white p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -145,7 +152,7 @@ const PaymentModal = ({
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-slate-500">Số tiền</label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="text"
                       inputMode="numeric"
@@ -156,9 +163,9 @@ const PaymentModal = ({
                         if (raw === '' || /^\d+$/.test(raw))
                           onLineChange(line.id, 'amount', raw === '' ? 0 : Number(raw));
                       }}
-                      className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-lg font-bold focus:border-[#004785] focus:outline-none"
+                      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-lg font-bold focus:border-[#004785] focus:outline-none"
                     />
-                    {remaining > 0 && line.amount === 0 && (
+                    {remaining > 0 && line.amount < remaining && (
                       <button
                         type="button"
                         onClick={() => onQuickFill(line.id)}
@@ -167,44 +174,46 @@ const PaymentModal = ({
                         Nhập nốt {formatCurrency(remaining)}
                       </button>
                     )}
+                    {line.amount > 0 && line.amount >= remaining && remaining > 0 && (
+                      <span className="shrink-0 rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
+                        ✅ Đủ
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-5 rounded-lg bg-slate-50 p-4">
+          <div className="mt-5 space-y-2 rounded-lg bg-slate-50 p-4">
             <div className="flex justify-between text-sm">
+              <span className="text-slate-500">Tổng đơn hàng</span>
+              <span className="font-bold text-slate-900">{formatCurrency(cart.total)}</span>
+            </div>
+            <div className="flex justify-between border-t border-slate-200 pt-2 text-sm">
               <span className="text-slate-500">Đã nhập</span>
               <span className="font-bold text-slate-900">{formatCurrency(totalPaid)}</span>
             </div>
-            {remaining > 0 && (
-              <div className="mt-2 flex justify-between text-sm">
+            {remaining > 0 ? (
+              <div className="flex justify-between text-sm">
                 <span className="font-medium text-red-500">Còn thiếu</span>
                 <span className="font-bold text-red-600">{formatCurrency(remaining)}</span>
               </div>
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-green-600">Đã nhập đủ</span>
+                <span className="font-bold text-green-600">✔</span>
+              </div>
             )}
-            {isPaymentValid && (
-              <div className="mt-2 flex justify-between border-t border-green-200 pt-2 text-sm">
-                <span className="font-semibold text-green-700">Khớp tổng tiền</span>
-                <span className="font-bold text-green-700">{formatCurrency(cart.total)}</span>
+            {totalPaid > cart.total && (
+              <div className="mt-2 flex justify-between rounded-lg border-2 border-green-400 bg-green-50 p-3 text-sm">
+                <span className="font-bold text-green-800">Tiền thừa trả khách</span>
+                <span className="font-bold text-green-700">
+                  + {formatCurrency(totalPaid - cart.total)}
+                </span>
               </div>
             )}
           </div>
-
-          {totalPaid > cart.total && (
-            <div className="mt-3 rounded-lg border-2 border-green-400 bg-green-50 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-green-800">Tiền thừa trả khách</p>
-                  <p className="text-xs text-green-600">Tổng tiền khách đưa nhiều hơn đơn hàng</p>
-                </div>
-                <p className="text-2xl font-extrabold text-green-700">
-                  + {formatCurrency(totalPaid - cart.total)}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </Modal>
