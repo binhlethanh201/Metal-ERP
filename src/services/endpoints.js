@@ -92,6 +92,24 @@ export const ENDPOINTS = {
     GET_NOTIFICATIONS: '/api/InventoryCheck/notifications',
     MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/read',
     INVENTORY_SUMMARY_REPORT: '/api/inventory/summary-report',
+
+    // ================= Stock =================
+    GET_STOCK: '/api/Stock',
+    GET_STOCK_BY_PRODUCT: (productId) => `/api/Stock/product/${productId}`,
+    UPDATE_STOCK: (productId) => `/api/Stock/${productId}`,
+
+    // ================= Stock Import (legacy) =================
+    GET_IMPORTS: '/api/StockImport',
+    CREATE_IMPORT: '/api/StockImport',
+    GET_IMPORT: (id) => `/api/StockImport/${id}`,
+
+    // ================= Alerts =================
+    GET_LOW_STOCK_ALERTS: '/api/inventory/low-stock-alerts',
+
+    // ================= Reports =================
+    GET_STOCK_REPORT: '/api/inventory/stock-report',
+    GET_MOVEMENT_REPORT: '/api/inventory/movement-report',
+    GET_IMPORT_SUGGESTIONS: '/api/inventory/import-suggestions',
   },
 
   // ============ POS (Bán hàng) ============

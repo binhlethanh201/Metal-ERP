@@ -5,7 +5,7 @@
  * LowStockAlert Component - Cảnh báo hàng sắp hết
  */
 
-import { Badge } from '../../../shared/components/Badge';
+import { Badge } from '../../../../shared/components/Badge';
 
 export const LowStockAlert = ({ products }) => {
   const lowStockProducts = products.filter((p) => p.stock > 0 && p.stock < p.minStock);

@@ -1195,17 +1195,18 @@ const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) => {
     { key: 'stock-card', label: 'Thẻ kho' },
     { key: 'inventory', label: 'Tồn kho' },
   ];
+  const productId = row?.id || row?.productId;
+
   useEffect(() => {
     setFullData((prev) => ({
       ...prev,
       ...row,
     }));
     const fetchDetail = async () => {
-      const currentId = row?.id || row?.productId;
-      if (!currentId) return;
+      if (!productId) return;
       setLoading(true);
       try {
-        const res = await getProduct(currentId);
+        const res = await getProduct(productId);
         if (res?.success && res?.data) setFullData((prev) => ({ ...prev, ...res.data }));
       } catch (err) {
         console.error('Lỗi tải chi tiết:', err);
@@ -1214,7 +1215,7 @@ const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) => {
       }
     };
     fetchDetail();
-  }, [row]);
+  }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="overflow-hidden border-l-4 border-blue-500 bg-[#f8fbff] p-4 sm:p-6">

@@ -1,11 +1,11 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { generateOrderData } from '../data/orderMockData';
 import { getQuickDateRange, formatDate } from '../utils/orderUtils';
 
-let ALL_ORDERS = generateOrderData(982);
-
 export const useOrderFilters = () => {
   const defaultRange = getQuickDateRange('Tháng này');
+  const allOrdersRef = useRef(generateOrderData(982));
+
   const [dateCriteria, setDateCriteria] = useState('Ngày giao hàng');
   const [quickDate, setQuickDate] = useState('Tháng này');
   const [fromDate, setFromDate] = useState(formatDate(defaultRange.from));
@@ -26,9 +26,8 @@ export const useOrderFilters = () => {
 
   const refreshData = useCallback(() => {
     setIsLoading(true);
-    // Simulate API call delay
     setTimeout(() => {
-      ALL_ORDERS = generateOrderData(982);
+      allOrdersRef.current = generateOrderData(982);
       setDataVersion((v) => v + 1);
       setPage(1);
       setIsLoading(false);
@@ -36,7 +35,7 @@ export const useOrderFilters = () => {
   }, []);
 
   const updateOrderReconciliation = useCallback((orderIds, voucherNo) => {
-    ALL_ORDERS = ALL_ORDERS.map((o) => {
+    allOrdersRef.current = allOrdersRef.current.map((o) => {
       if (orderIds.includes(o.id)) {
         return { ...o, reconciliationStatus: 'Đã đối soát', reconciliationNo: voucherNo };
       }
@@ -73,7 +72,7 @@ export const useOrderFilters = () => {
   };
 
   const filteredOrders = useMemo(() => {
-    let data = [...ALL_ORDERS];
+    let data = [...allOrdersRef.current];
     if (fromDate && toDate) {
       const from = new Date(fromDate);
       const to = new Date(toDate);
@@ -99,7 +98,7 @@ export const useOrderFilters = () => {
     });
     if (selectedTags.length > 0)
       data = data.filter((o) => o.tags && o.tags.some((t) => selectedTags.includes(t.label)));
-    void dataVersion; // trigger recompute on refreshData
+    void dataVersion;
     return data;
   }, [fromDate, toDate, dateCriteria, columnFilters, selectedTags, dataVersion]);
 

@@ -232,7 +232,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, branches = [], onSave }) 
                   </tr>
                 ) : (
                   filteredProducts.map((p) => {
-                    const id = p.productId || p.id;
+                    const id = p.branchProductId || p.productId || p.id;
                     const isSelected = selectedIds.includes(id);
                     const stock = p.actualStock ?? p.availableStock ?? 0;
                     return (

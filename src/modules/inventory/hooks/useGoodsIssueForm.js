@@ -148,7 +148,7 @@ export const useGoodsIssueForm = (initialData = null) => {
   }, [header, lines]);
 
   const handleSubmit = useCallback(async () => {
-    if (!isValid) return false;
+    if (!isValid || saving) return false;
     setSaving(true);
     try {
       const payload = buildIssuePayload(header, lines);

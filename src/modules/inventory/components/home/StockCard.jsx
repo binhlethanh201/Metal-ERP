@@ -5,7 +5,7 @@
  * StockCard Component - Thẻ hiển thị thông tin tồn kho
  */
 
-import { Badge } from '../../../shared/components/Badge';
+import { Badge } from '../../../../shared/components/Badge';
 
 const STOCK_STATUS = { IN_STOCK: 'IN_STOCK', LOW_STOCK: 'LOW_STOCK', OUT_OF_STOCK: 'OUT_OF_STOCK' };
 const STOCK_STATUS_LABELS = {

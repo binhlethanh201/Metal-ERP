@@ -58,9 +58,9 @@ export const Modal = ({
       />
 
       {/* Modal */}
-      <div className="flex min-h-screen items-center justify-center px-4 pb-8 pt-16">
+      <div className="flex min-h-screen items-start justify-center px-4 pb-8 pt-16">
         <div
-          className={`relative flex max-h-[75vh] flex-col rounded-lg bg-white shadow-xl ${sizes[size]} w-full`}
+          className={`relative flex max-h-[88vh] flex-col rounded-lg bg-white shadow-xl ${sizes[size]} w-full`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - cố định */}

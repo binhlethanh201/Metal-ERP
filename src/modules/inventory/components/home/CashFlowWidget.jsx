@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
-import { cashSummary } from '../data/inventoryMockData';
+import { cashSummary } from '../../data/inventoryMockData';
 
 const CashFlowWidget = () => {
   return (

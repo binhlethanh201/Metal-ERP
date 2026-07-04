@@ -61,7 +61,8 @@ const GoodsIssueList = () => {
     totalCount,
   } = useGoodsIssueList();
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const safeTotalCount = totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(safeTotalCount / pageSize));
   const safePage = Math.min(currentPage, totalPages);
   const startIdx = (safePage - 1) * pageSize;
   const pagedIssues = issues.slice(startIdx, startIdx + pageSize);

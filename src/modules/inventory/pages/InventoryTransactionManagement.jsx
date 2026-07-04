@@ -225,6 +225,18 @@ export const InventoryTransactionManagement = () => {
         if (outwardRes?.success && outwardRes?.data) {
           setOutwardData(outwardRes.data.items?.map(normalizeOutwardInventory) || []);
         }
+
+        const inwardTotal = inwardRes?.data?.totalCount || 0;
+        const outwardTotal = outwardRes?.data?.totalCount || 0;
+        setPagination((prev) => ({
+          ...prev,
+          totalItems: inwardTotal + outwardTotal,
+          totalPages: Math.max(
+            Math.ceil(inwardTotal / prev.pageSize),
+            Math.ceil(outwardTotal / prev.pageSize),
+            1
+          ),
+        }));
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
       } finally {
@@ -662,6 +674,9 @@ export const InventoryTransactionManagement = () => {
           <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
             <p className="text-sm text-slate-600">
               Hiển thị <span className="font-medium">{filteredData.length}</span> phiếu
+              {pagination.totalItems > 0 && (
+                <span className="text-slate-400"> / {pagination.totalItems} tổng</span>
+              )}
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -671,10 +686,12 @@ export const InventoryTransactionManagement = () => {
               >
                 &laquo;
               </button>
-              <span className="px-3 text-sm text-slate-600">Trang {pagination.currentPage}</span>
+              <span className="px-3 text-sm text-slate-600">
+                Trang {pagination.currentPage} / {pagination.totalPages}
+              </span>
               <button
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
-                disabled={filteredData.length < pagination.pageSize}
+                disabled={pagination.currentPage >= pagination.totalPages}
                 className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 &raquo;

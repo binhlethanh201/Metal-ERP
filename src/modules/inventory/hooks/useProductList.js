@@ -124,10 +124,23 @@ export const useProductList = (queryParams) => {
     );
     try {
       await toggleProductStatus(id, newStatus);
-    } catch {}
+    } catch {
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.productId === id || p.id === id
+            ? {
+                ...p,
+                isActive: currentIsActive,
+                productStatus: currentIsActive ? 'active' : 'inactive',
+              }
+            : p
+        )
+      );
+    }
   };
 
   const handleBulkToggleStatus = async (selectedIds, targetStatus) => {
+    const previousProducts = [...products];
     setProducts((prev) =>
       prev.map((p) =>
         selectedIds.includes(p.productId || p.id)
@@ -139,6 +152,7 @@ export const useProductList = (queryParams) => {
       await toggleProductStatusBulk(selectedIds, targetStatus);
     } catch (error) {
       console.error('Bulk toggle failed:', error);
+      setProducts(previousProducts);
     }
     return true;
   };
@@ -219,10 +233,13 @@ export const useProductList = (queryParams) => {
   const handleDeleteProduct = async (id) => {
     const confirmed = window.confirm('Bạn có chắc muốn xóa hàng hóa này?');
     if (!confirmed) return;
+    const previousProducts = [...products];
     setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
     try {
       await deleteProduct(id);
-    } catch {}
+    } catch {
+      setProducts(previousProducts);
+    }
   };
 
   return {

@@ -140,7 +140,7 @@ export const useStockImport = () => {
       reason: note,
       note: note,
       items: items.map((item) => ({
-        id: item.id,
+        id: item.branchProductId || item.productId || item.id,
         quantity: Number(item.quantity || 0),
         costPrice: Number(item.costPrice || 0),
         note: null,

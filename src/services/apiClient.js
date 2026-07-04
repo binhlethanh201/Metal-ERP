@@ -3,7 +3,7 @@
  * Sửa đổi tại đây sẽ ảnh hưởng đến toàn bộ ứng dụng
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5100/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5100';
 
 const API_CONFIG = {
   baseURL: API_BASE_URL,
@@ -42,7 +42,7 @@ export const apiClient = async (endpoint, options = {}) => {
 
   // Thêm body nếu là POST/PUT/PATCH
   if (options.body) {
-    config.body = JSON.stringify(options.body);
+    config.body = options.body instanceof FormData ? options.body : JSON.stringify(options.body);
   }
 
   // Thêm Authorization header nếu có token
@@ -70,7 +70,19 @@ export const apiClient = async (endpoint, options = {}) => {
         throw error403;
       }
       const errorData = await response.json().catch(() => ({}));
-      const msg = errorData.message || errorData.title || errorData.detail || `HTTP ${response.status}`;
+      const validationErrors = errorData.errors;
+      let detail = '';
+      if (validationErrors && typeof validationErrors === 'object') {
+        detail = Object.entries(validationErrors)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+          .join('; ');
+      }
+      const msg =
+        detail ||
+        errorData.message ||
+        errorData.title ||
+        errorData.detail ||
+        `HTTP ${response.status}`;
       const error = new Error(msg);
       error.status = response.status;
       error.data = errorData;

@@ -120,11 +120,14 @@ export const StockImport = () => {
     loadInitData();
   }, [loadInwardHistory]);
 
+  const getItemKey = (item) => item.branchProductId || item.productId || item.id;
+
   const addProductToTicket = useCallback((product) => {
     setItems((current) => {
-      const existing = current.find((i) => i.id === product.id);
+      const key = getItemKey(product);
+      const existing = current.find((i) => getItemKey(i) === key);
       if (existing) {
-        return current.map((i) => (i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
+        return current.map((i) => (getItemKey(i) === key ? { ...i, quantity: i.quantity + 1 } : i));
       }
       return [...current, { ...product, quantity: 1, costPrice: product.costPrice || 0 }];
     });
@@ -133,12 +136,14 @@ export const StockImport = () => {
 
   const updateItem = (id, field, value) => {
     setItems((curr) =>
-      curr.map((item) => (item.id === id ? { ...item, [field]: Number(value || 0) } : item))
+      curr.map((item) =>
+        getItemKey(item) === id ? { ...item, [field]: Number(value || 0) } : item
+      )
     );
   };
 
   const removeItem = (id) => {
-    setItems((curr) => curr.filter((i) => i.id !== id));
+    setItems((curr) => curr.filter((i) => getItemKey(i) !== id));
   };
 
   const totals = useMemo(
@@ -159,18 +164,15 @@ export const StockImport = () => {
       return;
     }
 
-    const parseGuid = (val) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(val))
-        ? String(val)
-        : null;
+    const parseId = (val) => (val != null && String(val).trim() ? String(val).trim() : null);
 
     const payload = {
       inwardType,
-      supplierId: parseGuid(selectedSupplier?.id),
+      supplierId: parseId(selectedSupplier?.id),
       reason: note || 'Nhập kho',
       note,
       items: items.map((i) => ({
-        id: parseGuid(i.id),
+        id: parseId(i.branchProductId || i.productId || i.id),
         quantity: Number(i.quantity || 0),
         costPrice: Number(i.costPrice || 0),
         note: '',
@@ -207,10 +209,21 @@ export const StockImport = () => {
       setItems([]);
       loadInwardHistory(); // Tải lại bảng lịch sử
     } catch (error) {
-      const errList = error?.response?.data?.errors;
-      const msg = Array.isArray(errList)
-        ? errList.join(' | ')
-        : error?.message || 'Lỗi khi tạo phiếu';
+      const errors = error?.data?.errors;
+      let msg;
+      if (errors) {
+        if (Array.isArray(errors)) {
+          msg = errors.join(' | ');
+        } else if (typeof errors === 'object') {
+          msg = Object.entries(errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join(' | ');
+        } else {
+          msg = String(errors);
+        }
+      } else {
+        msg = error?.message || 'Lỗi khi tạo phiếu';
+      }
       setStatus({ type: 'error', message: msg });
     } finally {
       setIsSubmitting(false);

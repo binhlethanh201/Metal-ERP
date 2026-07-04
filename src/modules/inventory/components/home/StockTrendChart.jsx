@@ -2,7 +2,7 @@
  * Biểu đồ Xu hướng tồn kho - Đường xu hướng tồn kho theo thời gian.
  */
 import React from 'react';
-import { inventoryTrend } from '../data/inventoryMockData';
+import { inventoryTrend } from '../../data/inventoryMockData';
 
 const StockTrendChart = () => {
   return (

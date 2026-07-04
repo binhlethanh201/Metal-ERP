@@ -53,7 +53,8 @@ export const useInventoryCheckManager = () => {
         })
         .catch((err) => console.error('Lỗi lấy chi nhánh:', err));
     }
-  }, [isOwner, branchId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOwner]);
 
   const fetchChecks = useCallback(async () => {
     // KHÓA API: Nếu là Owner mà chưa có branchId thì không gọi API để tránh lỗi

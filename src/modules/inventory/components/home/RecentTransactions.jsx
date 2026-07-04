@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
-import { recentTransactions } from '../data/inventoryMockData';
+import { recentTransactions } from '../../data/inventoryMockData';
 
 const iconByType = {
   export: { icon: 'north_east', box: 'bg-blue-50 text-blue-600' },

@@ -435,10 +435,7 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
 
   // ========== SUBMIT ==========
   const handleSubmit = useCallback(async () => {
-    if (!isValid) {
-      alert('Vui lòng nhập đầy đủ thông tin: Đối tượng + it nhat 1 dòng hang hoa co Số lượng > 0');
-      return false;
-    }
+    if (!isValid || saving) return false;
     setSaving(true);
     try {
       const payload = {

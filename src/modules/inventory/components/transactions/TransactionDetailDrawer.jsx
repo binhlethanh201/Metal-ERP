@@ -200,10 +200,11 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                                   e.target.nextSibling.style.display = 'flex';
                                 }}
                               />
-                            ) : null}
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-                              <Package className="h-5 w-5 text-slate-400" />
-                            </div>
+                            ) : (
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+                                <Package className="h-5 w-5 text-slate-400" />
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 font-mono text-slate-700">
                             {item.productCode || '-'}

@@ -33,6 +33,7 @@ const SupplierDebtManagement = () => {
     paginationMeta,
     fetchDebtDetail,
     handleExport,
+    refetch,
   } = useSupplierDebt();
 
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -59,8 +60,7 @@ const SupplierDebtManagement = () => {
     await createPayment(payload);
     alert('Tạo phiếu chi thành công!');
     setPaymentModalOpen(false);
-    // Reload lại trang công nợ để thấy Nợ bị trừ đi
-    window.location.reload();
+    refetch();
   };
 
   return (

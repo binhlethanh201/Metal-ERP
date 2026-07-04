@@ -121,7 +121,7 @@ export const TicketDetailModal = ({
       onReload && onReload();
       onClose();
     } catch (error) {
-      const errList = error?.response?.data?.errors;
+      const errList = error?.data?.errors;
       const msg = Array.isArray(errList)
         ? errList.join(' | ')
         : error?.message || 'Lỗi khi xác nhận phiếu';
@@ -181,7 +181,7 @@ export const TicketDetailModal = ({
         });
       onReload && onReload();
     } catch (error) {
-      const errList = error?.response?.data?.errors;
+      const errList = error?.data?.errors;
       const msg = Array.isArray(errList)
         ? errList.join(' | ')
         : error?.message || 'Lỗi khi cập nhật phiếu';

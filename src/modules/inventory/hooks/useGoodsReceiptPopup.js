@@ -327,9 +327,9 @@ export const useGoodsReceiptPopup = (onClose) => {
   const handleRemoveLine = useCallback(
     (id) => {
       setLines((p) => {
-        const d = p.filter((l) => l.isDirty);
-        if (d.length <= 1) return [emptyLine()];
-        return p.map((l) => (l.id === id ? emptyLine() : l));
+        const remaining = p.filter((l) => l.id !== id);
+        if (remaining.length === 0) return [emptyLine()];
+        return remaining;
       });
       markDirty();
     },
@@ -380,10 +380,7 @@ export const useGoodsReceiptPopup = (onClose) => {
 
   // --- Submit ---
   const handleSubmit = useCallback(async () => {
-    if (!isValid) {
-      alert('Vui lòng điền đầy đủ thông tin bắt buộc');
-      return false;
-    }
+    if (!isValid || saving) return false;
     setSaving(true);
     try {
       const payload = {

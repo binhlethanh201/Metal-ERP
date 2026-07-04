@@ -39,6 +39,8 @@ const staticIconMap = {
   campaign: 'Megaphone',
   card_giftcard: 'Gift',
   account_balance_wallet: 'Wallet',
+  add: 'Plus',
+  remove: 'Minus',
   south_west: 'ArrowDownLeft',
   menu_book: 'BookOpen',
   balance: 'Scale',
