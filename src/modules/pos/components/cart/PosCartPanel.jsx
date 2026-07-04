@@ -29,6 +29,7 @@ const PosCartPanel = ({
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
     ['account_balance', 'Chuyển khoản'],
+    ['sync', 'Kết hợp'],
   ];
   return (
     <aside className="fixed bottom-12 right-0 top-16 z-30 flex w-[400px] flex-col border-l border-slate-200 bg-white shadow-[-4px_0_15px_rgba(0,0,0,0.02)]">
@@ -164,17 +165,6 @@ const PosCartPanel = ({
               <span className="text-[10px] font-bold text-slate-600">{method}</span>
             </button>
           ))}
-          <button
-            onClick={() => onToggleSplitPay(true)}
-            className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2.5 transition-all active:scale-95 ${
-              isSplitPay
-                ? 'border-[#004785] bg-blue-50'
-                : 'border-slate-200 bg-white hover:border-slate-300'
-            }`}
-          >
-            <Icon name="add_circle" className="text-lg" />
-            <span className="text-[10px] font-bold text-slate-600">Kết hợp</span>
-          </button>
         </div>
 
         <div className="flex flex-col gap-y-2">

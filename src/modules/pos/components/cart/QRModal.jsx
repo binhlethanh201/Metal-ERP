@@ -1,16 +1,25 @@
 /**
  * QRModal - Hiển thị QR code VietQR cho thanh toán chuyển khoản
- * TODO (FE): Kết nối API GET /pos/payments/{paymentId}/qr khi BE sẵn sàng.
+ * Props:
+ *   - isOpen, onClose: Modal controls
+ *   - qrData: { paymentId, qrImageBase64, transactionContent, amount, bankAccountNumber, bankName }
+ *   - onConfirm: callback khi nhân viên xác nhận đã nhận tiền
+ *   - loading: trạng thái đang xác nhận
  */
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
-const QRModal = ({ isOpen, onClose, amount, invoiceCode }) => {
-  // TODO (FE): thêm paymentId prop và gọi API khi kết nối BE
+const QRModal = ({ isOpen, onClose, qrData, onConfirm, loading }) => {
+  if (!qrData) return null;
+
+  const { qrImageBase64, transactionContent, amount, bankAccountNumber, bankName, paymentId } =
+    qrData;
+
   const handleConfirm = () => {
-    // TODO (FE): gọi API POST /pos/payments/{paymentId}/confirm-transfer
-    onClose();
+    if (window.confirm('Xác nhận khách đã chuyển khoản thành công?')) {
+      onConfirm(paymentId);
+    }
   };
 
   return (
@@ -24,38 +33,64 @@ const QRModal = ({ isOpen, onClose, amount, invoiceCode }) => {
           <Button variant="secondary" onClick={onClose}>
             Đóng
           </Button>
-          <Button variant="success" onClick={handleConfirm}>
+          <Button variant="success" onClick={handleConfirm} loading={loading}>
             Xác nhận đã nhận tiền
           </Button>
         </div>
       }
     >
       <div className="space-y-4">
+        {/* Số tiền */}
         <div className="text-center">
           <p className="text-sm text-slate-500">Số tiền cần chuyển</p>
           <p className="text-3xl font-extrabold text-[#004785]">{formatCurrency(amount)}</p>
-          <p className="text-sm text-slate-500">Mã hóa đơn: {invoiceCode}</p>
         </div>
 
-        {/* Placeholder QR — TODO (FE): thay bằng QR thực tế từ API */}
+        {/* QR Code - Hiển thị từ Base64 */}
         <div className="flex flex-col items-center gap-3">
-          <div className="flex h-48 w-48 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50">
-            <div className="text-center">
-              <p className="text-4xl">📱</p>
-              <p className="mt-2 text-xs font-semibold text-slate-400">QR Code</p>
-              <p className="text-[10px] text-slate-300">TODO: gắn API</p>
-            </div>
+          <div className="flex items-center justify-center rounded-lg border-2 border-[#004785] bg-white p-2">
+            {qrImageBase64 ? (
+              <img src={qrImageBase64} alt="VietQR" className="h-48 w-48 object-contain" />
+            ) : (
+              <div className="flex h-48 w-48 items-center justify-center bg-slate-50">
+                <p className="text-sm text-slate-400">Không có mã QR</p>
+              </div>
+            )}
           </div>
-          <p className="text-xs text-slate-400 text-center">
-            Chuyển khoản theo thông tin ngân hàng<br />
-            Nội dung: <span className="font-mono font-bold">{invoiceCode}</span>
-          </p>
         </div>
 
+        {/* Thông tin chuyển khoản */}
+        <div className="space-y-2 rounded-lg bg-slate-50 p-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-500">Ngân hàng:</span>
+            <span className="font-semibold text-slate-900">{bankName || 'MB Bank'}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-500">Số tài khoản:</span>
+            <span className="font-mono font-bold text-slate-900">
+              {bankAccountNumber || '0975849675'}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-500">Nội dung:</span>
+            <span className="font-mono font-bold text-green-700">{transactionContent}</span>
+          </div>
+        </div>
+
+        {/* Hướng dẫn */}
         <div className="space-y-1 text-xs text-slate-500">
-          <p>1. Mở app ngân hàng</p>
-          <p>2. Quét mã QR hoặc chuyển khoản theo nội dung</p>
+          <p className="font-medium text-slate-700">Hướng dẫn:</p>
+          <p>1. Khách hàng mở app ngân hàng</p>
+          <p>2. Quét mã QR hoặc chuyển khoản theo nội dung trên</p>
           <p>3. Sau khi chuyển, bấm "Xác nhận đã nhận tiền"</p>
+        </div>
+
+        {/* Cảnh báo */}
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+          <p className="text-xs text-yellow-800">
+            <span className="font-semibold">Lưu ý:</span> Vui lòng kiểm tra điện thoại xác nhận đã
+            nhận tiền trước khi bấm xác nhận!
+          </p>
         </div>
       </div>
     </Modal>

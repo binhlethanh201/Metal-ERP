@@ -9,6 +9,7 @@ import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
 import PaymentModal from '../components/cart/PaymentModal';
+import QRModal from '../components/cart/QRModal';
 import SuccessModal from '../components/order/SuccessModal';
 import ReceiptModal from '../components/order/ReceiptModal';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
@@ -21,6 +22,7 @@ import {
   addInvoiceItem,
   createPayment,
   finalizeInvoice,
+  confirmTransfer,
 } from '../services/posService';
 
 const PAYMENT_LABELS = { cash: 'Tiền mặt', transfer: 'Chuyển khoản' };
@@ -59,6 +61,14 @@ const POSScreen = () => {
   const [showCustModal, setShowCustModal] = useState(false);
   const [showQuickAddCust, setShowQuickAddCust] = useState(false);
   const [isSplitPay, setIsSplitPay] = useState(false);
+
+  // QR Payment states
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrData, setQrData] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  // Lưu tạm invoiceId và paymentId để xử lý đơn treo
+  const [pendingInvoice, setPendingInvoice] = useState(null);
+
   const prevQuickAdd = useRef(quickAddCust);
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
@@ -296,27 +306,182 @@ const POSScreen = () => {
     }
   };
 
-  const handleOpenPay = () => {
+  const handleOpenPay = async () => {
     if (cart.cart.length === 0) {
       showNotice('Giỏ hàng đang trống');
       return;
     }
-    if (isSplitPay) {
-      const m = cart.paymentMethod === 'Tiền mặt' ? 'cash' : 'transfer';
-      setPayLines([{ ...newPaymentLine(m), amount: 0 }]);
+
+    // Nếu là Chuyển khoản → Hiển QR luôn (không cần modal)
+    if (cart.paymentMethod === 'Chuyển khoản' || cart.paymentMethod === 'Transfer') {
+      setPaying(true);
+      try {
+        const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const invoice = await createInvoice({
+          customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
+          customerName: selectedCustomer?.name || null,
+          note: '',
+          shiftId: activeShift?.id || undefined,
+          cashierName: staffName,
+          createdBy: staffName,
+        });
+        // Thêm sản phẩm
+        await Promise.all(
+          cart.cart.map((item) =>
+            addInvoiceItem(invoice.invoiceId, {
+              productId: item.productId || item.id,
+              quantity: item.quantity,
+              unitPrice: item.price,
+            })
+          )
+        );
+        // Lưu tên thu ngân
+        const invoiceId = invoice.invoiceId;
+        if (invoiceId) {
+          const map = JSON.parse(localStorage.getItem('pos_order_cashiers') || '{}');
+          map[invoiceId] = staffName;
+          localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
+        }
+        // Tạo payment Transfer và hiển QR
+        await handleOpenQRPayment(invoiceId, cart.total);
+      } catch (err) {
+        console.error('[POS] Quick Transfer error:', err);
+        showNotice('Lỗi: ' + (err.message || 'Không thể tạo thanh toán'));
+        setPaying(false);
+      }
+      return;
+    }
+
+    // Nếu là Kết hợp → Mở modal với 2 dòng
+    if (cart.paymentMethod === 'Kết hợp' || cart.paymentMethod === 'Combined') {
+      setPayLines([
+        { id: Date.now(), method: 'Cash', amount: 0 },
+        { id: Date.now() + 1, method: 'Transfer', amount: 0 },
+      ]);
+      setShowPayModal(true);
+      return;
+    }
+
+    // Tiền mặt hoặc mặc định
+    if (isSplitPay || cart.paymentMethod === 'Kết hợp') {
+      // Mở modal với 2 dòng Tiền mặt + Chuyển khoản
+      setPayLines([
+        { id: Date.now(), method: 'Cash', amount: 0 },
+        { id: Date.now() + 1, method: 'Transfer', amount: 0 },
+      ]);
       setShowPayModal(true);
     } else {
-      const m = cart.paymentMethod === 'Tiền mặt' ? 'cash' : 'transfer';
-      processOrder([{ method: m, amount: cart.total }], cart.total);
+      processOrder([{ method: 'Cash', amount: cart.total }], cart.total);
     }
   };
 
-  const handleProcessPayment = () => {
+  const handleProcessPayment = async () => {
     if (!isPaymentValid) return;
-    processOrder(
-      payLines.filter((l) => l.amount > 0),
-      totalPaid
-    );
+    const lines = payLines.filter((l) => l.amount > 0);
+    const hasTransfer = lines.some((l) => l.method === 'Transfer');
+    const hasCash = lines.some((l) => l.method === 'Cash');
+    const isCombined = hasTransfer && hasCash;
+
+    if (isCombined) {
+      // Combined: Tiền mặt + Chuyển khoản
+      setPaying(true);
+      try {
+        const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const invoice = await createInvoice({
+          customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
+          customerName: selectedCustomer?.name || null,
+          note: '',
+          shiftId: activeShift?.id || undefined,
+          cashierName: staffName,
+          createdBy: staffName,
+        });
+        // Lưu tên thu ngân
+        const invoiceId = invoice.invoiceId;
+        if (invoiceId) {
+          const map = JSON.parse(localStorage.getItem('pos_order_cashiers') || '{}');
+          map[invoiceId] = staffName;
+          localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
+        }
+        // Thêm sản phẩm
+        await Promise.all(
+          cart.cart.map((item) =>
+            addInvoiceItem(invoice.invoiceId, {
+              productId: item.productId || item.id,
+              quantity: item.quantity,
+              unitPrice: item.price,
+            })
+          )
+        );
+        // Tạo payment cho từng dòng (chỉ khi amount > 0)
+        // Chỉ tạo Cash ở đây, Transfer sẽ được tạo trong handleOpenQRPayment
+        for (const line of lines) {
+          if (line.amount <= 0) continue;
+          if (line.method === 'Cash') {
+            await createPayment(invoiceId, {
+              method: 'Cash',
+              amount: line.amount,
+              cashReceived: line.amount,
+            });
+          }
+          // Transfer sẽ được tạo trong handleOpenQRPayment để hiển QR
+        }
+        // Lấy payment Transfer để hiển QR
+        const transferLine = lines.find((l) => l.method === 'Transfer' && l.amount > 0);
+        if (transferLine) {
+          await handleOpenQRPayment(invoiceId, transferLine.amount);
+        } else {
+          // Không có Transfer → finalize luôn
+          await finalizeInvoice(invoiceId);
+          showNotice('Thanh toán thành công!');
+          setShowPayModal(false);
+          setPaying(false);
+        }
+      } catch (err) {
+        console.error('[POS] Process Combined error:', err);
+        showNotice('Lỗi: ' + (err.message || 'Không thể tạo thanh toán'));
+        setPaying(false);
+      }
+    } else if (hasTransfer) {
+      // Chỉ có Transfer (không có Cash)
+      setPaying(true);
+      try {
+        const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const invoice = await createInvoice({
+          customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
+          customerName: selectedCustomer?.name || null,
+          note: '',
+          shiftId: activeShift?.id || undefined,
+          cashierName: staffName,
+          createdBy: staffName,
+        });
+        // Lưu tên thu ngân
+        const invoiceId = invoice.invoiceId;
+        if (invoiceId) {
+          const map = JSON.parse(localStorage.getItem('pos_order_cashiers') || '{}');
+          map[invoiceId] = staffName;
+          localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
+        }
+        // Thêm sản phẩm
+        await Promise.all(
+          cart.cart.map((item) =>
+            addInvoiceItem(invoice.invoiceId, {
+              productId: item.productId || item.id,
+              quantity: item.quantity,
+              unitPrice: item.price,
+            })
+          )
+        );
+        // Tạo payment và hiển QR
+        await handleOpenQRPayment(invoice.invoiceId, cart.total);
+      } catch (err) {
+        console.error('[POS] Process Transfer error:', err);
+        showNotice('Lỗi: ' + (err.message || 'Không thể tạo thanh toán'));
+        setPaying(false);
+      }
+    } else {
+      // Thanh toán tiền mặt → xử lý bình thường
+      processOrder(lines, totalPaid);
+    }
   };
 
   // ---- Pay lines ----
@@ -351,6 +516,121 @@ const POSScreen = () => {
   const handleCloseReceipt = () => {
     setShowReceipt(false);
     setLastOrder(null);
+  };
+
+  // ---- QR Payment: Xác nhận chuyển khoản ----
+  const handleQRConfirm = async (paymentId) => {
+    if (!pendingInvoice) {
+      showNotice('Không tìm thấy hóa đơn đang chờ');
+      return;
+    }
+    setConfirmLoading(true);
+    try {
+      // 1. Xác nhận payment đã chuyển khoản
+      await confirmTransfer(paymentId);
+      // 2. Finalize hóa đơn (trừ kho)
+      await finalizeInvoice(pendingInvoice.invoiceId);
+      // 3. Cập nhật realtime ca
+      try {
+        const shiftData = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        if (shiftData) {
+          shiftData.orderCount = (shiftData.orderCount || 0) + 1;
+          shiftData.totalSales = (shiftData.totalSales || 0) + cart.total;
+          shiftData.totalRevenue = shiftData.totalSales;
+          sessionStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
+        }
+      } catch (_) {}
+      // 4. Hiển thị thành công
+      const order = {
+        id: pendingInvoice.invoiceCode || pendingInvoice.invoiceId,
+        date: new Date().toISOString(),
+        items: [...cart.cart],
+        subtotal: cart.subtotal,
+        discount: cart.discount,
+        vat: cart.vat,
+        total: cart.total,
+        payLines: [{ method: 'Chuyển khoản', amount: cart.total }],
+        totalPaid: cart.total,
+        change: 0,
+        customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
+      };
+      setLastOrder(order);
+      setShowQRModal(false);
+      setQrData(null);
+      setPendingInvoice(null);
+      // Xóa khỏi localStorage
+      try {
+        const pendingOrders = JSON.parse(localStorage.getItem('pos_pending_orders') || '[]');
+        const filtered = pendingOrders.filter((o) => o.paymentId !== paymentId);
+        localStorage.setItem('pos_pending_orders', JSON.stringify(filtered));
+      } catch (_) {}
+      // Lưu phương thức thanh toán để OrderHistory hiển thị
+      try {
+        const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
+        savedPM[pendingInvoice.invoiceId] = JSON.stringify([
+          { method: 'Chuyển khoản', amount: cart.total },
+        ]);
+        localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
+      } catch (_) {}
+      setShowPayModal(false);
+      setShowSuccess(true);
+      cart.clearCart();
+      setSelectedCustomer(null);
+      showNotice('Xác nhận thanh toán thành công!');
+    } catch (err) {
+      console.error('[POS] QR Confirm error:', err);
+      showNotice('Lỗi xác nhận: ' + (err.message || 'Không thể xác nhận'));
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
+  // ---- QR Payment: Mở modal QR ----
+  const handleOpenQRPayment = async (invoiceId, amount) => {
+    try {
+      // Tạo payment Transfer
+      const paymentRes = await createPayment(invoiceId, {
+        method: 'Transfer',
+        amount: amount,
+      });
+      const payment = paymentRes.data || paymentRes;
+      // Lưu thông tin QR để hiển thị
+      setQrData({
+        paymentId: payment.paymentId,
+        qrImageBase64: payment.qrImageBase64 || payment.QRImageBase64,
+        transactionContent: payment.transactionContent || payment.VietQRString,
+        amount: amount,
+        bankAccountNumber: payment.bankAccountNumber || '0975849675',
+        bankName: payment.bankName || 'MB Bank',
+      });
+      // Lưu tạm invoice để xử lý đơn treo
+      setPendingInvoice({ invoiceId, invoiceCode: `INV-${invoiceId.toString().slice(0, 8)}` });
+      // Lưu vào localStorage để có thể resume nếu browser đóng
+      try {
+        const pendingOrders = JSON.parse(localStorage.getItem('pos_pending_orders') || '[]');
+        pendingOrders.push({
+          invoiceId,
+          paymentId: payment.paymentId,
+          amount,
+          createdAt: new Date().toISOString(),
+          customer: selectedCustomer?.name || 'Khách lẻ',
+        });
+        localStorage.setItem('pos_pending_orders', JSON.stringify(pendingOrders));
+      } catch (_) {}
+      // Lưu phương thức thanh toán vào localStorage để OrderHistory hiển thị
+      try {
+        const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
+        savedPM[invoiceId] = JSON.stringify([{ method: 'Chuyển khoản', amount: amount }]);
+        localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
+      } catch (_) {}
+      setShowQRModal(true);
+      setShowPayModal(false);
+      setPaying(false); // Đã hiển thị QR, tắt loading
+    } catch (err) {
+      console.error('[POS] Create QR payment error:', err);
+      showNotice('Lỗi tạo QR: ' + (err.message || 'Không thể tạo mã QR'));
+      setPaying(false);
+    }
   };
 
   return (
@@ -424,6 +704,14 @@ const POSScreen = () => {
         onQuickFill={handleQuickFill}
         onSelectMethod={(method) => showNotice('Đã chọn: ' + method)}
         onOpenQR={() => showNotice('Tính năng đang phát triển')}
+      />
+
+      <QRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        qrData={qrData}
+        onConfirm={handleQRConfirm}
+        loading={confirmLoading}
       />
 
       <SuccessModal
