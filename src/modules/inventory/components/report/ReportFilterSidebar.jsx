@@ -2,6 +2,7 @@
  * ReportFilterSidebar - Bộ lọc cho Báo cáo Tổng hợp Tồn kho.
  * Style bám sát ProductFilterSidebar.
  */
+import React, { useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { reportPeriods, reportWarehouses } from '../../data/reportMockData';
 
@@ -22,30 +23,17 @@ const ReportFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
     onApply,
   } = filters;
 
-  const handlePeriod = (v) => {
-    setPeriod(v);
-    setTimeout(onApply, 0);
-  };
-  const handleDateFrom = (v) => {
-    setDateFrom(v);
-    setTimeout(onApply, 0);
-  };
-  const handleDateTo = (v) => {
-    setDateTo(v);
-    setTimeout(onApply, 0);
-  };
-  const handleWarehouse = (v) => {
-    onToggleWarehouse(v);
-    setTimeout(onApply, 0);
-  };
-  const handleMerge = (v) => {
-    setMergeWarehouses(v);
-    setTimeout(onApply, 0);
-  };
-  const handleMovement = (v) => {
-    setOnlyWithMovement(v);
-    setTimeout(onApply, 0);
-  };
+  const handlePeriod = (v) => setPeriod(v);
+  const handleDateFrom = (v) => setDateFrom(v);
+  const handleDateTo = (v) => setDateTo(v);
+  const handleWarehouse = (v) => onToggleWarehouse(v);
+  const handleMerge = (v) => setMergeWarehouses(v);
+  const handleMovement = (v) => setOnlyWithMovement(v);
+
+  // Auto-apply filters when any of them changes (runs after React state is updated)
+  useEffect(() => {
+    onApply();
+  }, [period, dateFrom, dateTo, selectedWarehouses, mergeWarehouses, onlyWithMovement, onApply]);
 
   return (
     <>
@@ -79,7 +67,6 @@ const ReportFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
               setPeriod('thisMonth');
               setMergeWarehouses(true);
               setOnlyWithMovement(false);
-              setTimeout(onApply, 0);
             }}
             title="Đặt lại"
           >

@@ -11,6 +11,8 @@ import { getSuppliers } from '../services/supplierService';
 import { ImportItemsTable } from '../components/stock/ImportItemsTable';
 import { ImportTicketForm } from '../components/stock/ImportTicketForm';
 import { InventoryHistoryCard } from '../components/stock/InventoryHistoryCard';
+import { EditProductModal } from './InventoryProduct';
+import { createProduct } from '../services/productService';
 
 const fallbackProducts = [
   {
@@ -66,12 +68,56 @@ const normalizeInwardRow = (item, index) => {
 export const StockImport = () => {
   const [products, setProducts] = useState(fallbackProducts);
   const [suppliers, setSuppliers] = useState(fallbackSuppliers);
-  const [selectedSupplier, setSelectedSupplier] = useState(fallbackSuppliers[0]);
-  const [items, setItems] = useState([{ ...fallbackProducts[0], quantity: 10 }]);
-  const [inwardType, setInwardType] = useState(1);
-  const [note, setNote] = useState('Nhập hàng định kỳ');
+
+  // Khôi phục Supplier nếu có
+  const [selectedSupplier, setSelectedSupplier] = useState(() => {
+    try {
+      const saved = localStorage.getItem('stockImport_supplier');
+      return saved ? JSON.parse(saved) : fallbackSuppliers[0];
+    } catch {
+      return fallbackSuppliers[0];
+    }
+  });
+
+  // Khôi phục danh sách sản phẩm đang chọn dở
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('stockImport_items');
+      return saved ? JSON.parse(saved) : []; // Mặc định là mảng rỗng, không tự thêm SP
+    } catch {
+      return [];
+    }
+  });
+
+  const [inwardType, setInwardType] = useState(
+    () => Number(localStorage.getItem('stockImport_type')) || 1
+  );
+  const [note, setNote] = useState(
+    () => localStorage.getItem('stockImport_note') || 'Nhập hàng định kỳ'
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+
+  // Lưu trạng thái mỗi khi có thay đổi
+  useEffect(() => {
+    localStorage.setItem('stockImport_items', JSON.stringify(items));
+  }, [items]);
+
+  useEffect(() => {
+    if (selectedSupplier) {
+      localStorage.setItem('stockImport_supplier', JSON.stringify(selectedSupplier));
+    }
+  }, [selectedSupplier]);
+
+  useEffect(() => {
+    localStorage.setItem('stockImport_type', inwardType);
+  }, [inwardType]);
+
+  useEffect(() => {
+    localStorage.setItem('stockImport_note', note);
+  }, [note]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // State lịch sử phiếu nhập
@@ -120,16 +166,20 @@ export const StockImport = () => {
     loadInitData();
   }, [loadInwardHistory]);
 
-  const getItemKey = (item) => item.branchProductId || item.productId || item.id;
+  const getItemKey = (item) => item?.branchProductId || item?.productId || item?.id || '';
 
   const addProductToTicket = useCallback((product) => {
     setItems((current) => {
       const key = getItemKey(product);
+      if (!key) return current;
+
       const existing = current.find((i) => getItemKey(i) === key);
       if (existing) {
-        return current.map((i) => (getItemKey(i) === key ? { ...i, quantity: i.quantity + 1 } : i));
+        return current.map((i) =>
+          getItemKey(i) === key ? { ...i, quantity: Number(i.quantity) + 1 } : i
+        );
       }
-      return [...current, { ...product, quantity: 1, costPrice: product.costPrice || 0 }];
+      return [...current, { ...product, id: key, quantity: 1, costPrice: product.costPrice || 0 }];
     });
     setStatus({ type: 'success', message: `Đã thêm/tăng số lượng cho ${product.productName}` });
   }, []);
@@ -137,7 +187,12 @@ export const StockImport = () => {
   const updateItem = (id, field, value) => {
     setItems((curr) =>
       curr.map((item) =>
-        getItemKey(item) === id ? { ...item, [field]: Number(value || 0) } : item
+        getItemKey(item) === id
+          ? {
+              ...item,
+              [field]: field === 'quantity' || field === 'costPrice' ? Number(value || 0) : value,
+            }
+          : item
       )
     );
   };
@@ -207,6 +262,7 @@ export const StockImport = () => {
       }
 
       setItems([]);
+      localStorage.removeItem('stockImport_items'); // Xóa cache sau khi hoàn tất
       loadInwardHistory(); // Tải lại bảng lịch sử
     } catch (error) {
       const errors = error?.data?.errors;
@@ -248,7 +304,7 @@ export const StockImport = () => {
           onAddProduct={addProductToTicket}
           onUpdateItem={updateItem}
           onRemoveItem={removeItem}
-          onAddSample={() => addProductToTicket(products[0] || fallbackProducts[0])}
+          onAddNewProduct={() => setIsProductModalOpen(true)}
           formatCurrency={formatCurrency}
         />
 
@@ -277,6 +333,37 @@ export const StockImport = () => {
         onReload={loadInwardHistory}
         onNotify={(noti) => setStatus({ type: noti.type, message: noti.message })}
       />
+
+      {isProductModalOpen && (
+        <EditProductModal
+          open={isProductModalOpen}
+          product={null}
+          initialTab="info"
+          onClose={() => setIsProductModalOpen(false)}
+          onSave={async (form) => {
+            try {
+              setStatus({ type: 'info', message: 'Đang tạo sản phẩm mới...' });
+              const res = await createProduct(form);
+              if (res?.success || res?.data) {
+                const newProduct = res.data || form;
+                addProductToTicket({
+                  id: newProduct.productId || newProduct.id || form.id,
+                  productCode: newProduct.productCode || form.productCode,
+                  productName: newProduct.productName || form.name,
+                  unitName: newProduct.baseUnit?.name || newProduct.unit || form.unit || 'Cái',
+                  costPrice: newProduct.costPrice || form.costPrice || 0,
+                });
+                setStatus({ type: 'success', message: 'Đã tạo và thêm sản phẩm vào phiếu!' });
+                setIsProductModalOpen(false);
+              } else {
+                setStatus({ type: 'error', message: 'Không thể tạo sản phẩm!' });
+              }
+            } catch (err) {
+              setStatus({ type: 'error', message: 'Lỗi khi tạo sản phẩm: ' + (err.message || '') });
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -71,13 +71,15 @@ const SelectDropdown = ({ options, value, onChange, placeholder }) => {
 };
 
 export const TransactionFilter = ({ onFilterChange, filters: initialFilters }) => {
+  const todayString = new Date().toISOString().split('T')[0];
+
   const [filters, setFilters] = useState({
     searchTerm: initialFilters?.searchTerm || '',
     searchBy: initialFilters?.searchBy || 'ticketCode',
     type: initialFilters?.type || 'ALL',
     status: initialFilters?.status || 'ALL',
     dateFrom: initialFilters?.dateFrom || '',
-    dateTo: initialFilters?.dateTo || '',
+    dateTo: initialFilters?.dateTo || todayString,
     createdBy: initialFilters?.createdBy || '',
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -95,7 +97,7 @@ export const TransactionFilter = ({ onFilterChange, filters: initialFilters }) =
       type: 'ALL',
       status: 'ALL',
       dateFrom: '',
-      dateTo: '',
+      dateTo: todayString,
       createdBy: '',
     };
     setFilters(defaultFilters);

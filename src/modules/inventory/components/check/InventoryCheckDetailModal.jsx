@@ -67,7 +67,7 @@ const InventoryCheckDetailModal = ({
         setActualValues(initialValues);
       };
 
-      if (ticketData) {
+      if (ticketData && (ticketData.details || ticketData.items)) {
         applyDetail(ticketData);
         setLoading(false);
         return;

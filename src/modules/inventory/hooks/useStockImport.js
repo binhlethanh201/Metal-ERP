@@ -12,7 +12,13 @@ const extractList = (response) => {
 };
 
 const normalizeProduct = (item) => ({
-  id: item?.id || item?.Id || item?.productId || item?.ProductId,
+  id:
+    item?.branchProductId ||
+    item?.BranchProductId ||
+    item?.productId ||
+    item?.ProductId ||
+    item?.id ||
+    item?.Id,
   productCode: item?.productCode || item?.ProductCode || item?.code || item?.Code || 'SP-000',
   productName: item?.productName || item?.ProductName || item?.name || item?.Name || 'Sản phẩm',
   unitName: item?.unitName || item?.UnitName || item?.unit || item?.Unit || 'Đơn vị',

@@ -141,7 +141,8 @@ export const useGoodsIssueList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [timePreset, setTimePreset] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const todayString = new Date().toISOString().split('T')[0];
+  const [dateTo, setDateTo] = useState(todayString);
   const [issueTypeFilter, setIssueTypeFilter] = useState('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
   const [syncStatusFilter, setSyncStatusFilter] = useState('all');

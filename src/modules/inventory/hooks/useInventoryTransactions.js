@@ -35,13 +35,15 @@ const normalizeTransaction = (item, type) => {
 };
 
 export const useInventoryTransactions = () => {
+  const todayString = new Date().toISOString().split('T')[0];
+
   const [filters, setFilters] = useState({
     searchTerm: '',
     searchBy: 'ticketCode',
     type: 'ALL',
     status: 'ALL',
     dateFrom: '',
-    dateTo: '',
+    dateTo: todayString,
     createdBy: '',
   });
 

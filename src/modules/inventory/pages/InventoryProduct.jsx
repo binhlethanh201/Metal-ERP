@@ -2030,7 +2030,7 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
 };
 
 /* ==================== EDIT PRODUCT MODAL - WRAPPER ==================== */
-const EditProductModal = (props) => {
+export const EditProductModal = (props) => {
   const [fullProduct, setFullProduct] = useState(null);
   const [loading, setLoading] = useState(!!props.product);
   useEffect(() => {

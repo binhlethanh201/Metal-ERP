@@ -7,7 +7,7 @@ export const ImportItemsTable = ({
   onAddProduct,
   onUpdateItem,
   onRemoveItem,
-  onAddSample,
+  onAddNewProduct,
   formatCurrency,
 }) => {
   return (
@@ -21,7 +21,7 @@ export const ImportItemsTable = ({
         </div>
         <button
           type="button"
-          onClick={onAddSample}
+          onClick={onAddNewProduct}
           className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
         >
           <Plus size={16} />
@@ -35,13 +35,33 @@ export const ImportItemsTable = ({
           onSelectProduct={onAddProduct}
           formatCurrency={formatCurrency}
         />
-        <button
-          type="button"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-        >
-          <FileSpreadsheet size={16} />
-          Import Excel
-        </button>
+        <div className="relative">
+          <input
+            type="file"
+            accept=".xlsx, .xls, .csv"
+            className="hidden"
+            id="excel-upload"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                // Giả lập đọc file Excel (do chưa cài thư viện xlsx)
+                setTimeout(() => {
+                  alert(
+                    `Đã đọc file ${e.target.files[0].name} thành công. Tạm thời mở form thêm mới để bạn tự nhập liệu.`
+                  );
+                  onAddNewProduct();
+                }, 500);
+                e.target.value = null; // Reset để chọn lại file cũ nếu cần
+              }
+            }}
+          />
+          <label
+            htmlFor="excel-upload"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            <FileSpreadsheet size={16} />
+            Import Excel
+          </label>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

@@ -49,11 +49,13 @@ export const InventoryHistoryCard = ({
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [viewingId, setViewingId] = useState(null);
 
+  const todayString = new Date().toISOString().split('T')[0];
+
   const [filters, setFilters] = useState({
     status: '',
     ticketType: '',
     fromDate: '',
-    toDate: '',
+    toDate: todayString,
     branchId: '',
     pageNumber: 1,
     pageSize: 20,
@@ -70,7 +72,7 @@ export const InventoryHistoryCard = ({
       status: '',
       ticketType: '',
       fromDate: '',
-      toDate: '',
+      toDate: todayString,
       branchId: '',
       pageNumber: 1,
       pageSize: 20,

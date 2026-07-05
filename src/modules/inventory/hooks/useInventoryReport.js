@@ -3,7 +3,7 @@
  * Xử lý: tham số báo cáo (kỳ, ngày, kho, gộp kho, chỉ phát sinh),
  * fetch/lọc dữ liệu, tính toán tồn cuối, tổng cộng.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { reportRows } from '../data/reportMockData';
 
 const getMonthRange = (preset) => {
@@ -97,7 +97,7 @@ export const useInventoryReport = () => {
     });
   };
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     setAppliedParams({
       period,
       dateFrom,
@@ -108,7 +108,7 @@ export const useInventoryReport = () => {
     });
     setApplied(true);
     setShowParams(false);
-  };
+  }, [period, dateFrom, dateTo, selectedWarehouses, mergeWarehouses, onlyWithMovement]);
 
   const handleOpenParams = () => {
     setPeriod(appliedParams.period);

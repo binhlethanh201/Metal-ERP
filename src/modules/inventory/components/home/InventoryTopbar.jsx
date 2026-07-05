@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import InventoryNotificationDropdown from './InventoryNotificationDropdown';
 
 const InventoryTopbar = () => {
   const navigate = useNavigate();
@@ -72,13 +73,8 @@ const InventoryTopbar = () => {
           )}
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100"
-            >
-              <Icon name="notifications" size={20} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-            </button>
+            {/* THÔNG BÁO DROPDOWN */}
+            <InventoryNotificationDropdown />
 
             {/* USER PROFILE DROPDOWN */}
             <div className="relative pl-1" ref={dropdownRef}>
