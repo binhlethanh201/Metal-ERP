@@ -84,11 +84,7 @@ export const CustomerManagement = () => {
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
 
   const fetchCustomers = useCallback(async () => {
-    if (isOwner) {
-      setCustomers(MOCK_CUSTOMERS);
-      setLoading(false);
-      return;
-    }
+
     setLoading(true);
     setError(null);
     try {
