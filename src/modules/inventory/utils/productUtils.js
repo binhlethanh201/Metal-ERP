@@ -135,10 +135,11 @@ export const createProductPayload = (form) => ({
   })),
 });
 
-// Chuẩn hóa Payload UPDATE (PUT không cập nhật productCode theo đúng Docs)
+// Chuẩn hóa Payload UPDATE (Backend yêu cầu ProductCode)
 export const updateProductPayload = (form) => {
   const base = createProductPayload(form);
-  delete base.productCode; // Không gửi mã sản phẩm khi update
+  // Giữ lại productCode từ sản phẩm gốc - Backend yêu cầu ProductCode bắt buộc
+  base.productCode = form.productCode || form.id || base.productCode || '';
   return base;
 };
 

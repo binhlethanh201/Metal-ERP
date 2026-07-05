@@ -7,7 +7,7 @@ export const useProductFilters = () => {
   const [groupKeyword, setGroupKeyword] = useState('');
   const [brandKeyword, setBrandKeyword] = useState(''); // Bổ sung lọc theo thương hiệu chuẩn API
   const [supplierKeyword, setSupplierKeyword] = useState('');
-  const [productStatusFilter, setProductStatusFilter] = useState('active');
+  const [productStatusFilter, setProductStatusFilter] = useState('all');
   const [pageSize, setPageSize] = useState(20); // Chuẩn API default là 20
   const [currentPage, setCurrentPage] = useState(1);
 
