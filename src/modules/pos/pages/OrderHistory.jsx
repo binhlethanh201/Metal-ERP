@@ -290,12 +290,7 @@ const OrderHistory = () => {
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
 
   const fetchOrders = useCallback(async () => {
-    // Owner không có quyền gọi POS API (backend chỉ hỗ trợ SalesStaff)
-    if (isOwner) {
-      setOrders(MOCK_ORDERS);
-      setLoading(false);
-      return;
-    }
+
     setLoading(true);
     setFetchError(null);
     try {

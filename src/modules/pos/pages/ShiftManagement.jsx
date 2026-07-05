@@ -155,14 +155,14 @@ export const ShiftManagement = () => {
           sessionStorage.removeItem('pos_active_shift');
         }
       } else {
-        console.warn('[ShiftManagement] API trả về rỗng, dùng mock');
-        setShifts(MOCK_SHIFTS.map(mapShift));
+        console.log('[ShiftManagement] API trả về rỗng');
+        setShifts([]);
         sessionStorage.removeItem('pos_active_shift');
       }
     } catch (err) {
       console.error('Lỗi load shifts:', err);
       setError(err.message);
-      setShifts(MOCK_SHIFTS.map(mapShift));
+      setShifts([]);
     } finally {
       setLoading(false);
     }
