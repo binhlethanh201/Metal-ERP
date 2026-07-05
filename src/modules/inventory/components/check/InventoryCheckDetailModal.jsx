@@ -342,7 +342,7 @@ const InventoryCheckDetailModal = ({
           {/* Nút Delete (Xóa nháp) */}
           {!isRejecting && canModify && (
             <button
-              onClick={() => onDeleteSubmit(ticketIdentifier)}
+              onClick={() => onDeleteSubmit(ticketIdentifier, onClose)}
               className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-700 transition-colors hover:bg-red-100"
             >
               <Icon name="delete" size={20} /> Xóa phiếu
@@ -351,7 +351,7 @@ const InventoryCheckDetailModal = ({
 
           {!isRejecting && isOwner && (isDraft || isWaiting) && (
             <button
-              onClick={() => onCancelSubmit(ticketIdentifier, '', onClose)}
+              onClick={() => onCancelSubmit(ticketIdentifier, onClose)}
               className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100"
             >
               <Icon name="Ban" size={20} /> Hủy phiếu
