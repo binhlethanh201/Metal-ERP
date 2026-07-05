@@ -220,7 +220,11 @@ export const InventoryHistoryCard = ({
                     </td>
                     <td className="px-3 py-3 text-xs text-slate-500">
                       {item.date || item.createdAt
-                        ? new Date(item.date || item.createdAt).toLocaleDateString('vi-VN')
+                        ? new Date(
+                            (item.date || item.createdAt).endsWith('Z')
+                              ? item.date || item.createdAt
+                              : `${item.date || item.createdAt}Z`
+                          ).toLocaleDateString('vi-VN')
                         : '---'}
                     </td>
                     <td className="px-3 py-3 text-slate-700">

@@ -11,7 +11,8 @@ const formatCurrency = (value) =>
 
 const formatDate = (dateString) => {
   if (!dateString) return '-';
-  const date = new Date(dateString);
+  const ds = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
+  const date = new Date(ds);
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -51,6 +52,137 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
       return sum + qty * price;
     }, 0) || 0;
 
+  const handlePrint = () => {
+    if (!transaction) return;
+
+    const printWindow = window.open('', '_blank', 'width=800,height=800');
+    if (!printWindow) return;
+
+    const typeLabel = transaction.type === 'INWARD' ? 'PHIẾU NHẬP KHO' : 'PHIẾU XUẤT KHO';
+    const partyLabel = transaction.type === 'INWARD' ? 'Nhà cung cấp' : 'Khách hàng';
+
+    const itemsHtml = transaction.items
+      ?.map(
+        (item, idx) => `
+      <tr>
+        <td class="c">${idx + 1}</td>
+        <td>${item.productCode || '-'}</td>
+        <td class="name">${item.productName || '-'}</td>
+        <td class="c">${item.unit || item.unitName || '-'}</td>
+        <td class="r">${Number(item.quantity || 0).toLocaleString('vi-VN')}</td>
+        <td class="r">${formatCurrency(item.costPrice || item.unitPrice || 0)}</td>
+        <td class="r">${formatCurrency(Number(item.quantity || 0) * Number(item.costPrice || item.unitPrice || 0))}</td>
+      </tr>`
+      )
+      .join('');
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>In ${typeLabel.toLowerCase()} ${transaction.ticketCode}</title>
+<style>
+  @page { size: A4; margin: 20mm; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Times New Roman', Times, serif;
+    font-size:14px;
+    color:#000;
+    background:#fff;
+    max-width:800px;
+    margin:0 auto;
+    padding:20px;
+    line-height:1.5;
+  }
+  .c{text-align:center}
+  .r{text-align:right}
+  .l{text-align:left}
+  .bold{font-weight:bold}
+  .header{display:flex;justify-content:space-between;margin-bottom:20px}
+  .header-left h1{font-size:18px;margin-bottom:4px}
+  .header-right{text-align:right}
+  .title{text-align:center;margin:30px 0 20px}
+  .title h2{font-size:24px;margin-bottom:5px;text-transform:uppercase}
+  .title p{font-style:italic}
+  .info{margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .info-full{grid-column:1/-1}
+  table{width:100%;border-collapse:collapse;margin-bottom:30px}
+  th,td{border:1px solid #000;padding:8px;vertical-align:middle}
+  th{background:#f0f0f0;font-weight:bold}
+  .footer{display:flex;justify-content:space-between;margin-top:50px;text-align:center}
+  .signature{min-height:100px}
+  @media print{
+    body{max-width:100%;padding:0}
+  }
+</style></head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <h1>CÔNG TY TNHH ABC</h1>
+      <p>Địa chỉ: 12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM</p>
+      <p>Chi nhánh: ${transaction.branchName || '-'}</p>
+    </div>
+    <div class="header-right">
+      <p class="bold">Mã phiếu: ${transaction.ticketCode || '-'}</p>
+      <p>Ngày in: ${new Date().toLocaleDateString('vi-VN')}</p>
+    </div>
+  </div>
+
+  <div class="title">
+    <h2>${typeLabel}</h2>
+    <p>Ngày tạo: ${formatDate(transaction.createdAt)}</p>
+  </div>
+
+  <div class="info">
+    <div class="info-full"><span class="bold">${partyLabel}:</span> ${transaction.partyName || '-'}</div>
+    <div class="info-full"><span class="bold">Lý do / Ghi chú:</span> ${transaction.reason || transaction.note || '-'}</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th width="5%">STT</th>
+        <th width="15%">Mã SP</th>
+        <th width="35%">Tên sản phẩm</th>
+        <th width="10%">ĐVT</th>
+        <th width="10%">SL</th>
+        <th width="10%">Đơn giá</th>
+        <th width="15%">Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemsHtml}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4" class="r bold">Tổng cộng:</td>
+        <td class="r bold">${totalQuantity.toLocaleString('vi-VN')}</td>
+        <td></td>
+        <td class="r bold">${formatCurrency(totalAmount)}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="footer">
+    <div class="signature">
+      <p class="bold">Người lập phiếu</p>
+      <p><i>(Ký, ghi rõ họ tên)</i></p>
+      <br><br><br>
+      <p>${transaction.createdByName || ''}</p>
+    </div>
+    <div class="signature">
+      <p class="bold">Người giao hàng</p>
+      <p><i>(Ký, ghi rõ họ tên)</i></p>
+    </div>
+    <div class="signature">
+      <p class="bold">Thủ kho</p>
+      <p><i>(Ký, ghi rõ họ tên)</i></p>
+    </div>
+  </div>
+  <script>window.onload=function(){window.print();}</script>
+</body>
+</html>`);
+    printWindow.document.close();
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -78,9 +210,7 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                /* TODO: Print handler */
-              }}
+              onClick={handlePrint}
               className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
             >
               <Printer className="h-4 w-4" />

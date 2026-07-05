@@ -21,7 +21,8 @@ const formatCurrency = (value) =>
 
 const formatDate = (dateString) => {
   if (!dateString) return '-';
-  const date = new Date(dateString);
+  const ds = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
+  const date = new Date(ds);
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
     month: '2-digit',

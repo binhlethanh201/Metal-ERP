@@ -325,8 +325,10 @@ export const StockExport = () => {
     return null;
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (event, isDraft = false) => {
+    if (event && event.preventDefault) {
+      event.preventDefault();
+    }
 
     const validationError = validateForm();
     if (validationError) {
@@ -356,9 +358,17 @@ export const StockExport = () => {
       const ticketId = createRes?.data?.ticketId || createRes?.data?.stockTicketId;
 
       if (ticketId) {
-        setStatusMessage('Đang xác nhận để trừ tồn kho...');
-        await confirmOutwardInventory(ticketId);
-        setStatusMessage(`Xuất kho thành công! Phiếu: ${createRes?.data?.ticketCode || ticketId}`);
+        if (isDraft) {
+          setStatusMessage(
+            `Đã tạo phiếu chờ duyệt thành công! Phiếu: ${createRes?.data?.ticketCode || ticketId}`
+          );
+        } else {
+          setStatusMessage('Đang xác nhận để trừ tồn kho...');
+          await confirmOutwardInventory(ticketId);
+          setStatusMessage(
+            `Xuất kho thành công! Phiếu: ${createRes?.data?.ticketCode || ticketId}`
+          );
+        }
       } else {
         setStatusMessage('Tạo phiếu thành công.');
       }
@@ -953,7 +963,20 @@ export const StockExport = () => {
             >
               Hủy
             </button>
-            <Button type="submit" variant="primary" disabled={isSubmitting || items.length === 0}>
+            <button
+              type="button"
+              disabled={isSubmitting || items.length === 0}
+              className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+              onClick={(e) => handleSubmit(e, true)}
+            >
+              Lưu chờ duyệt
+            </button>
+            <Button
+              type="button"
+              variant="primary"
+              disabled={isSubmitting || items.length === 0}
+              onClick={(e) => handleSubmit(e, false)}
+            >
               {isSubmitting ? 'Đang xử lý...' : 'Xác nhận xuất kho'}
             </Button>
           </div>
