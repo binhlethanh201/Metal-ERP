@@ -125,7 +125,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, branches = [], onSave }) 
             <h2 className="text-lg font-bold text-slate-800">
               Cập nhật Phiếu: <span className="text-blue-600">{detailData.ticketCode}</span>
             </h2>
-            <p className="mt-1 text-xs text-slate-500">Chi nhánh: {branchName}</p>
+            {/* <p className="mt-1 text-xs text-slate-500">Chi nhánh: {branchName}</p> */}
           </div>
           <button
             onClick={onClose}

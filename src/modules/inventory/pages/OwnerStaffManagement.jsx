@@ -454,7 +454,7 @@ const OwnerStaffManagement = () => {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Nhân viên</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Chi nhánh</th>
+                  {/* <th className="px-4 py-3 text-left font-medium text-slate-600">Chi nhánh</th> */}
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Vai trò</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Quyền hạn</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Trạng thái</th>
@@ -498,9 +498,9 @@ const OwnerStaffManagement = () => {
                         </td>
 
                         {/* Chi nhánh */}
-                        <td className="px-4 py-3 text-xs text-slate-600">
+                        {/* <td className="px-4 py-3 text-xs text-slate-600">
                           {st.branchName ?? <span className="text-slate-400">—</span>}
-                        </td>
+                        </td> */}
 
                         {/* Vai trò */}
                         <td className="px-4 py-3">
@@ -622,7 +622,7 @@ const OwnerStaffManagement = () => {
           {/* Tabs — only in edit mode */}
           {mode === 'edit' && (
             <div className="mb-4 flex gap-2 border-b border-slate-200 pb-2">
-              {['info', 'branch'].map((tab) => (
+              {['info'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -716,7 +716,7 @@ const OwnerStaffManagement = () => {
               )}
 
               {/* Chi nhánh hiện tại (chỉ hiện trong edit, dùng tab Branch để thay đổi) */}
-              {mode === 'edit' && (
+              {/* {mode === 'edit' && (
                 <div className="rounded border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                   🏢 Chi nhánh hiện tại:{' '}
                   <span className="font-medium text-slate-800">
@@ -726,7 +726,7 @@ const OwnerStaffManagement = () => {
                     <span className="ml-1 text-slate-400">({editStaff.branchId})</span>
                   )}
                 </div>
-              )}
+              )} */}
 
               <hr className="border-slate-200" />
 

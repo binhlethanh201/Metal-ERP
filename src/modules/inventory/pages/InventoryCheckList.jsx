@@ -39,10 +39,10 @@ const InventoryCheckList = () => {
 
   const openCreateModal = () => {
     // Chặn Owner nếu chưa chọn chi nhánh
-    if (isOwner && !branchId) {
-      alert('Vui lòng chọn chi nhánh trước khi tạo phiếu!');
-      return;
-    }
+    // if (isOwner && !branchId) {
+    //   alert('Vui lòng chọn chi nhánh trước khi tạo phiếu!');
+    //   return;
+    // }
     setIsCreateModalOpen(true);
   };
   const closeCreateModal = () => setIsCreateModalOpen(false);
@@ -77,7 +77,7 @@ const InventoryCheckList = () => {
       {/* KHU VỰC BỘ LỌC */}
       <div className="flex flex-wrap items-center gap-4">
         {/* Dropdown Chi nhánh (Chỉ hiện cho Owner) */}
-        {isOwner && (
+        {/* {isOwner && (
           <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
             <label className="text-sm font-semibold text-slate-600">Chi nhánh:</label>
             <select
@@ -93,7 +93,7 @@ const InventoryCheckList = () => {
               ))}
             </select>
           </div>
-        )}
+        )} */}
 
         <div className="flex w-fit items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
           <label className="text-sm font-semibold text-slate-600">Lọc trạng thái:</label>

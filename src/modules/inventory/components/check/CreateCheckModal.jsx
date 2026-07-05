@@ -128,7 +128,7 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
         <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* THÊM MỚI: BỘ LỌC CHI NHÁNH BÊN TRONG MODAL */}
-            {isOwner && (
+            {/* {isOwner && (
               <div className="col-span-1">
                 <label className="mb-2 block text-sm font-bold text-blue-700">
                   Kiểm kê tại Chi nhánh
@@ -145,9 +145,9 @@ const CreateCheckModal = ({ isOpen, onClose, initialBranchId, branches = [], onS
                   ))}
                 </select>
               </div>
-            )}
+            )} */}
 
-            <div className={isOwner ? 'col-span-1' : 'col-span-2'}>
+            <div className="col-span-3">
               <label className="mb-2 block text-sm font-bold text-slate-700">
                 Mục đích / Ghi chú
               </label>

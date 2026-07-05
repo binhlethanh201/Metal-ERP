@@ -89,9 +89,7 @@ const StaffManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Nhân sự</h1>
-          <p className="mt-1 text-gray-600">
-            Tạo tài khoản và phân quyền cho nhân viên (Chế độ đơn chi nhánh)
-          </p>
+          <p className="mt-1 text-gray-600">Tạo tài khoản và phân quyền cho nhân viên</p>
         </div>
         <button
           onClick={openCreateModal}

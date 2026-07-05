@@ -118,7 +118,7 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
     <div class="header-left">
       <h1>CÔNG TY TNHH ABC</h1>
       <p>Địa chỉ: 12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM</p>
-      <p>Chi nhánh: ${transaction.branchName || '-'}</p>
+      {/* <p>Chi nhánh: ${transaction.branchName || '-'}</p> */}
     </div>
     <div class="header-right">
       <p class="bold">Mã phiếu: ${transaction.ticketCode || '-'}</p>
@@ -283,10 +283,10 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                     </p>
                     <p className="font-medium text-slate-900">{transaction.partyName || '-'}</p>
                   </div>
-                  <div>
+                  {/* <div>
                     <p className="text-xs text-slate-500">Chi nhánh</p>
                     <p className="font-medium text-slate-900">{transaction.branchName || '-'}</p>
-                  </div>
+                  </div> */}
                   <div className="col-span-2">
                     <p className="text-xs text-slate-500">Lý do / Ghi chú</p>
                     <p className="font-medium text-slate-900">

@@ -60,13 +60,10 @@ export const sidebarItems = [
     ],
   },
   {
-    label: 'Hệ thống & Chi nhánh',
-    icon: 'store',
+    label: 'Hệ thống & Nhân sự',
+    icon: 'manage_accounts',
     ownerOnly: true,
-    children: [
-      { label: 'Quản lý chi nhánh', path: '/inventory/branches' },
-      { label: 'Quản lý nhân viên', path: '/inventory/employees' },
-    ],
+    children: [{ label: 'Quản lý nhân viên', path: '/inventory/employees' }],
   },
   {
     label: 'Báo cáo',

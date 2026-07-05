@@ -135,7 +135,7 @@ export const InventoryFilterBar = ({
           </div>
 
           {/* Lọc theo Chi nhánh (Chỉ hiển thị nếu truyền vào danh sách branches) */}
-          {branches && branches.length > 0 && (
+          {/* {branches && branches.length > 0 && (
             <div>
               <label className="mb-1 flex items-center gap-1 text-xs font-bold text-slate-600">
                 <Building2 size={13} /> Chi nhánh (Owner):
@@ -153,7 +153,7 @@ export const InventoryFilterBar = ({
                 ))}
               </select>
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>

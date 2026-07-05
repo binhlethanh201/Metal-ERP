@@ -10,7 +10,7 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
             <tr>
               <th className="px-6 py-4 font-bold">Nhân viên</th>
               <th className="px-6 py-4 font-bold">Liên hệ</th>
-              <th className="px-6 py-4 font-bold">Chi nhánh</th>
+              {/* <th className="px-6 py-4 font-bold">Chi nhánh</th> */}
               <th className="px-6 py-4 font-bold">Trạng thái</th>
               <th className="px-6 py-4 text-right font-bold">Thao tác</th>
             </tr>
@@ -47,12 +47,12 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
                         {staff.phoneNumber || 'Chưa cập nhật SĐT'}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                         <Icon name="store" size={14} className="text-slate-500" />
                         {staff.branchName || 'Chi nhánh chính'}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4">
                       <button
                         disabled={isSelf}
