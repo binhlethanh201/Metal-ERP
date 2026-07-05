@@ -13,6 +13,7 @@ import { ImportTicketForm } from '../components/stock/ImportTicketForm';
 import { InventoryHistoryCard } from '../components/stock/InventoryHistoryCard';
 import { EditProductModal } from './InventoryProduct';
 import { createProduct } from '../services/productService';
+import { Card } from '../../../shared/components/Card';
 
 const fallbackProducts = [
   {
@@ -286,6 +287,15 @@ export const StockImport = () => {
     }
   };
 
+  const summary = useMemo(() => {
+    const qty = inwardsList.reduce((total, item) => total + Number(item.quantity || 0), 0);
+    return {
+      totalImports: inwardsList.length,
+      totalQuantity: qty,
+      monthlyCount: inwardsList.length,
+    };
+  }, [inwardsList]);
+
   return (
     <div className="animate-in fade-in mt-8 w-full space-y-6 duration-200">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -322,6 +332,27 @@ export const StockImport = () => {
           onSubmit={handleFinish}
           formatCurrency={formatCurrency}
         />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-3xl font-bold text-blue-600">{summary.totalImports}</div>
+            <p className="mt-1 text-sm text-gray-600">Tổng phiếu nhập</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-3xl font-bold text-green-600">{summary.totalQuantity}</div>
+            <p className="mt-1 text-sm text-gray-600">Tổng số lượng nhập</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-3xl font-bold text-yellow-600">{summary.monthlyCount}</div>
+            <p className="mt-1 text-sm text-gray-600">Trong tháng</p>
+          </div>
+        </Card>
       </div>
 
       {/* Lịch sử nhập kho kèm nút Hủy chuẩn API */}

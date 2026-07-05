@@ -94,8 +94,11 @@ const InventoryCheckDetailModal = ({
   const ticketIdentifier =
     ticketId || detailData?.ticketId || detailData?.id || detailData?.stockTicketId;
 
-  // Theo rule: Chỉ assignee hoặc Owner mới được fill (Đếm kho)
+  // Theo rule API:
+  // - Fill: Chỉ assignee hoặc Owner
+  // - Delete/Edit: Chỉ người tạo (createdByUserId) hoặc Owner
   const canFill = isDraft && (isOwner || currentUserId === detailData?.assigneeUserId);
+  const canModify = isDraft && (isOwner || currentUserId === detailData?.createdByUserId);
 
   const handleFill = () => {
     // Validate Frontend: Kiểm tra xem có ô nào bị bỏ trống không
@@ -318,7 +321,7 @@ const InventoryCheckDetailModal = ({
                 {isDraft && canFill ? 'Đóng' : 'Đóng'}
               </button>
 
-              {isDraft && isOwner && (
+              {canModify && (
                 <button
                   onClick={() => onEditClick(detailData)} // Gọi ra ngoài truyền detailData
                   className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 text-sm font-bold text-blue-700 transition-colors hover:bg-blue-100"
@@ -336,8 +339,8 @@ const InventoryCheckDetailModal = ({
             </button>
           )}
 
-          {/* Nút Delete / Cancel cho Owner khi phiếu đang Draft hoặc Waiting */}
-          {!isRejecting && isOwner && isDraft && (
+          {/* Nút Delete (Xóa nháp) */}
+          {!isRejecting && canModify && (
             <button
               onClick={() => onDeleteSubmit(ticketIdentifier)}
               className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-700 transition-colors hover:bg-red-100"
