@@ -73,7 +73,11 @@ const POSScreen = () => {
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
 
-  const { products: posApiProducts, loading: productsLoading } = usePosProductList(search);
+  const {
+    products: posApiProducts,
+    loading: productsLoading,
+    refetch: refetchProducts,
+  } = usePosProductList(search);
   const posProducts = useMemo(() => posApiProducts.map(mapToPosProduct), [posApiProducts]);
 
   const cart = usePosCart([]);
@@ -274,6 +278,7 @@ const POSScreen = () => {
       cart.clearCart();
       setSelectedCustomer(null);
       showNotice('Tạo đơn hàng thành công!');
+      refetchProducts();
     } catch (err) {
       console.error('Lỗi tạo đơn:', err);
       showNotice('Lỗi: ' + (err.message || 'Không thể tạo đơn hàng'));
@@ -301,6 +306,7 @@ const POSScreen = () => {
       setShowSuccess(true);
       cart.clearCart();
       setSelectedCustomer(null);
+      refetchProducts();
     } finally {
       setPaying(false);
     }
@@ -577,6 +583,7 @@ const POSScreen = () => {
       cart.clearCart();
       setSelectedCustomer(null);
       showNotice('Xác nhận thanh toán thành công!');
+      refetchProducts();
     } catch (err) {
       console.error('[POS] QR Confirm error:', err);
       showNotice('Lỗi xác nhận: ' + (err.message || 'Không thể xác nhận'));

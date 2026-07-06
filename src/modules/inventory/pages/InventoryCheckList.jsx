@@ -31,10 +31,6 @@ import {
   Clock,
   FileEdit,
   XCircle,
-  Ban,
-  Trash2,
-  Send,
-  RotateCcw,
 } from 'lucide-react';
 
 // ==================== RENDER STATUS BADGE ====================
@@ -84,7 +80,6 @@ const formatDateTime = (dateString) => {
 const InventoryCheckList = () => {
   const { user } = useAuth();
   const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
-  const currentUserId = user?.userId || user?.id;
 
   // ---- Trạng thái danh sách ----
   const [checks, setChecks] = useState([]);
@@ -112,14 +107,14 @@ const InventoryCheckList = () => {
   // ---- Chi tiết phiếu ----
   const [selectedCheckId, setSelectedCheckId] = useState(null);
   const [selectedCheckData, setSelectedCheckData] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState('');
+  const [, setDetailLoading] = useState(false);
+  const [, setDetailError] = useState('');
 
   // ---- Form đếm thực tế ----
-  const [actualValues, setActualValues] = useState({});
+  const [, setActualValues] = useState({});
 
   // ---- Form reject (yêu cầu đếm lại) ----
-  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [, setShowRejectForm] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
   // ---- Modal sửa phiếu ----
@@ -363,16 +358,6 @@ const InventoryCheckList = () => {
   };
 
   // ==================== DERIVED STATE ====================
-  const currentStatus = selectedCheckData?.status;
-  const isDraft = currentStatus === 'Draft';
-  const isWaiting = currentStatus === 'WaitingForApproval';
-  const isCompleted = currentStatus === 'Completed';
-  const isCancelled = currentStatus === 'Cancelled';
-
-  // Check quyền fill: Draft + (Owner hoặc assignee)
-  const canFill = isDraft && (isOwner || currentUserId === selectedCheckData?.assigneeUserId);
-  // Check quyền modify/delete: Draft + (Owner hoặc người tạo)
-  const canModify = isDraft && (isOwner || currentUserId === selectedCheckData?.createdByUserId);
 
   // ==================== SUMMARY STATS ====================
   const summary = useMemo(() => {

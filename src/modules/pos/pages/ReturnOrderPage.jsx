@@ -4,6 +4,7 @@
  * Layout: Split panel (danh sách bên trái, chi tiết bên phải)
  */
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useAuth } from '../../../shared/hooks/useAuth';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
@@ -57,14 +58,48 @@ const STATUS_FILTERS = [
   { id: 'CANCELLED', label: 'Đã hủy' },
 ];
 
+const getCreatorName = (r) => {
+  if (!r) return '-';
+  // Các field phổ biến chứa tên người tạo
+  if (r.userName) return r.userName;
+  if (r.cashier) return r.cashier;
+  if (r.cashierName) return r.cashierName;
+  if (r.createdByName) return r.createdByName;
+  if (r.createdByUserName) return r.createdByUserName;
+  if (r.staffName) return r.staffName;
+  if (r.creatorName) return r.creatorName;
+  // createdBy có thể là string (tên) hoặc object {name, fullName}
+  if (typeof r.createdBy === 'string') return r.createdBy;
+  if (typeof r.createdBy === 'object') {
+    if (r.createdBy?.name) return r.createdBy.name;
+    if (r.createdBy?.fullName) return r.createdBy.fullName;
+    if (r.createdBy?.userName) return r.createdBy.userName;
+  }
+  // createdByUser có thể là object {name, fullName}
+  if (r.createdByUser) {
+    if (r.createdByUser?.name) return r.createdByUser.name;
+    if (r.createdByUser?.fullName) return r.createdByUser.fullName;
+    if (r.createdByUser?.userName) return r.createdByUser.userName;
+  }
+  // user object
+  if (r.user) {
+    if (typeof r.user === 'string') return r.user;
+    if (r.user?.name) return r.user.name;
+    if (r.user?.fullName) return r.user.fullName;
+    if (r.user?.userName) return r.user.userName;
+  }
+  return '-';
+};
+
 const mapReturn = (r) => ({
   id: r.returnOrderId || r.returnId || r.id,
   returnId: r.returnOrderId || r.returnId || r.id,
   returnCode: r.returnCode || r.returnOrderId || r.id,
   invoiceCode: r.invoiceCode || r.invoiceId || '',
   customerName: r.customerName || 'Khách lẻ',
-  userName: r.userName || r.createdBy || '-',
+  userName: getCreatorName(r),
   status: normalizeStatus(r.status),
+  returnType: r.returnType || 'RETURN',
   totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
   refundMethod: r.refundMethod || r.method || 'CASH',
   reason: r.reason || '',
@@ -89,18 +124,20 @@ const mapApiDetail = (r) => {
     returnCode: r.returnCode || r.returnOrderId || r.returnId || r.id,
     invoiceCode: r.invoiceCode || r.invoiceId || '',
     customerName: r.customerName || 'Khách lẻ',
-    userName: r.userName || r.createdBy || '-',
+    userName: getCreatorName(r),
     status: normalizeStatus(r.status),
+    returnType: r.returnType || 'RETURN',
     reason: r.reason || '',
     notes: r.notes || '',
     totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
     refundMethod: r.refundMethod || r.method || 'CASH',
     createdAt: r.createdAt || r.createdAt,
-    returnItems: items.length > 0 ? items : (r.returnItems || r.items || []),
+    returnItems: items.length > 0 ? items : r.returnItems || r.items || [],
   };
 };
 
 const ReturnOrderPage = () => {
+  const { user } = useAuth();
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -115,6 +152,14 @@ const ReturnOrderPage = () => {
   const [finalizing, setFinalizing] = useState(false);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // ---- Pagination ----
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
 
   // --- Fetch list ---
   const fetchReturns = useCallback(async () => {
@@ -160,6 +205,13 @@ const ReturnOrderPage = () => {
     }
     return list;
   }, [returns, search, statusFilter]);
+
+  // ---- Pagination computed ----
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
 
   // --- Select & load detail ---
   const handleSelect = useCallback(async (row) => {
@@ -220,7 +272,7 @@ const ReturnOrderPage = () => {
         setSelected((prev) => (prev ? { ...prev, ...fresh } : prev));
         setReturns((prev) =>
           prev.map((r) =>
-            r.returnId === detail.returnId ? { ...r, ...fresh } : r
+            r.returnId === detail.returnId ? { ...r, ...fresh, userName: r.userName } : r
           )
         );
       } else {
@@ -233,7 +285,9 @@ const ReturnOrderPage = () => {
           setSelected((prev) => (prev ? { ...prev, ...fresh } : prev));
           setReturns((prev) =>
             prev.map((r) =>
-              r.returnId === detail.returnId ? { ...r, ...fresh, status: fresh.status } : r
+              r.returnId === detail.returnId
+                ? { ...r, ...fresh, status: fresh.status, userName: r.userName }
+                : r
             )
           );
         }
@@ -245,10 +299,18 @@ const ReturnOrderPage = () => {
     }
   };
 
-  const handleCreateSuccess = useCallback(() => {
-    setShowCreateModal(false);
-    setRefreshKey((k) => k + 1);
-  }, []);
+  const handleCreateSuccess = useCallback(
+    (createdData) => {
+      setShowCreateModal(false);
+      if (createdData) {
+        const creatorName = user?.name || user?.fullName || user?.email || 'Người dùng';
+        const newReturn = mapReturn({ ...createdData, userName: creatorName });
+        setReturns((prev) => [newReturn, ...prev]);
+      }
+      setRefreshKey((k) => k + 1);
+    },
+    [user]
+  );
 
   // --- Column defs ---
   const columns = [
@@ -274,43 +336,50 @@ const ReturnOrderPage = () => {
       render: (v) => <span className="text-sm font-medium">{v || 'Khách lẻ'}</span>,
     },
     {
+      key: 'userName',
+      header: 'Người tạo',
+      render: (v) => <span className="text-xs text-slate-500">{v || '-'}</span>,
+    },
+    {
       key: 'totalRefund',
-      header: 'Tiền hoàn',
-      render: (v) => (
-        <span className="text-sm font-semibold text-green-600">{formatCurrency(v)}</span>
-      ),
+      header: 'Số tiền',
+      render: (v, row) =>
+        row?.returnType === 'EXCHANGE' ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
+            </svg>
+            Đổi hàng
+          </span>
+        ) : (
+          <span className="text-sm font-semibold text-green-600">{formatCurrency(v || 0)}</span>
+        ),
     },
     {
       key: 'status',
       header: 'Trạng thái',
-      render: (v) => (
-        <Badge variant={getStatusVariant(v)}>{getStatusLabel(v)}</Badge>
-      ),
+      render: (v) => <Badge variant={getStatusVariant(v)}>{getStatusLabel(v)}</Badge>,
     },
     {
       key: 'actions',
       header: '',
-      width: '140px',
+      width: '70px',
       render: (_, row) => (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); handleSelect(row); }}
-            className="text-xs font-medium text-[#004785] hover:underline"
-          >
-            Chi tiết
-          </button>
-          {row.status === 'PENDING' && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); handleCancel(row); }}
-              disabled={cancellingId === row.returnId}
-              className="text-xs font-medium text-red-500 hover:underline disabled:opacity-50"
-            >
-              {cancellingId === row.returnId ? '...' : 'Hủy'}
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSelect(row);
+          }}
+          className="whitespace-nowrap text-xs font-medium text-[#004785] hover:underline"
+        >
+          Chi tiết
+        </button>
       ),
     },
   ];
@@ -404,10 +473,68 @@ const ReturnOrderPage = () => {
         <Card padding="p-0">
           <Table
             columns={columns}
-            data={filtered}
+            data={paginatedData}
             loading={loading}
             emptyMessage="Chưa có phiếu đổi trả nào"
           />
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+              <span className="text-sm text-slate-500">
+                Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
+                {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} phiếu
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Trước
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    if (
+                      totalPages > 7 &&
+                      i !== 0 &&
+                      i !== totalPages - 1 &&
+                      Math.abs(currentPage - 1 - i) > 2
+                    ) {
+                      if (Math.abs(currentPage - 1 - i) === 3) {
+                        return (
+                          <span key={i} className="px-1 text-slate-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
+                          currentPage === i + 1
+                            ? 'bg-[#004785] text-white'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 
@@ -419,12 +546,32 @@ const ReturnOrderPage = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-mono text-sm font-bold text-[#004785]">{detail.returnCode}</h3>
+                  <h3 className="font-mono text-sm font-bold text-[#004785]">
+                    {detail.returnCode}
+                  </h3>
                   <p className="text-xs text-slate-400">
                     {detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '-'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {detail.returnType === 'EXCHANGE' && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                      </svg>
+                      Đổi hàng
+                    </span>
+                  )}
                   <Badge variant={getStatusVariant(detail.status)}>
                     {getStatusLabel(detail.status)}
                   </Badge>
@@ -434,7 +581,12 @@ const ReturnOrderPage = () => {
                     className="rounded p-1 text-slate-400 hover:bg-slate-100"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -454,14 +606,26 @@ const ReturnOrderPage = () => {
                   <span>{detail.userName}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Phương thức hoàn</span>
-                  <span className="font-semibold">{getRefundLabel(detail.refundMethod)}</span>
+                  <span className="text-slate-500">Loại</span>
+                  <span
+                    className={`font-semibold ${detail.returnType === 'EXCHANGE' ? 'text-blue-700' : ''}`}
+                  >
+                    {detail.returnType === 'EXCHANGE' ? 'Đổi hàng' : 'Trả hàng'}
+                  </span>
                 </div>
+                {detail.returnType !== 'EXCHANGE' && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Phương thức hoàn</span>
+                    <span className="font-semibold">{getRefundLabel(detail.refundMethod)}</span>
+                  </div>
+                )}
               </div>
 
               {detail.reason && (
                 <div className="rounded-lg bg-amber-50 p-3">
-                  <p className="text-xs font-bold uppercase tracking-wide text-amber-600">Lý do đổi trả</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-amber-600">
+                    Lý do đổi trả
+                  </p>
                   <p className="mt-1 text-sm text-amber-800">{detail.reason}</p>
                 </div>
               )}
@@ -482,13 +646,15 @@ const ReturnOrderPage = () => {
                         {item.productName}
                       </p>
                       <p className="text-xs text-slate-400">
-                        {item.productCode || '-'} · SL: {item.quantity} ·{' '}
-                        {formatCurrency(item.sellPrice)}
+                        {item.productCode || '-'} · SL: {item.quantity}
+                        {detail.returnType !== 'EXCHANGE' && ` · ${formatCurrency(item.sellPrice)}`}
                       </p>
                     </div>
-                    <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
-                      {formatCurrency(item.refundAmount || item.quantity * item.sellPrice)}
-                    </span>
+                    {detail.returnType !== 'EXCHANGE' && (
+                      <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
+                        {formatCurrency(item.refundAmount || item.quantity * item.sellPrice)}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -498,12 +664,33 @@ const ReturnOrderPage = () => {
               </p>
             )}
 
-            <div className="mt-3 border-t border-slate-200 pt-3">
-              <div className="flex justify-between font-bold text-[#004785]">
-                <span>Tổng tiền hoàn</span>
-                <span className="text-lg">{formatCurrency(detail.totalRefund)}</span>
+            {detail.returnType !== 'EXCHANGE' ? (
+              <div className="mt-3 border-t border-slate-200 pt-3">
+                <div className="flex justify-between font-bold text-[#004785]">
+                  <span>Tổng tiền hoàn</span>
+                  <span className="text-lg">{formatCurrency(detail.totalRefund)}</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-3 border-t border-slate-200 pt-3">
+                <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-3">
+                  <svg
+                    className="h-5 w-5 shrink-0 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                    />
+                  </svg>
+                  <p className="text-sm font-medium text-blue-800">Đổi hàng — không hoàn tiền</p>
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Notes */}
@@ -514,8 +701,23 @@ const ReturnOrderPage = () => {
           )}
 
           {/* Actions */}
-          {detail.status === 'PENDING' && (
-            <Button variant="success" className="w-full" onClick={handleFinalize} loading={finalizing}>
+          {detail.status === 'PENDING' && detail.returnType === 'EXCHANGE' && (
+            <Button
+              variant="success"
+              className="w-full"
+              onClick={handleFinalize}
+              loading={finalizing}
+            >
+              Xác nhận đổi hàng
+            </Button>
+          )}
+          {detail.status === 'PENDING' && detail.returnType !== 'EXCHANGE' && (
+            <Button
+              variant="success"
+              className="w-full"
+              onClick={handleFinalize}
+              loading={finalizing}
+            >
               Xác nhận hoàn tiền
             </Button>
           )}

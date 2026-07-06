@@ -485,7 +485,7 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
       alert(error?.message || 'Loi khi luu phiếu xuất');
       return false;
     }
-  }, [header, dirtyLines, isValid, isEditMode, editData?.id]);
+  }, [header, dirtyLines, isValid, saving, isEditMode, editData?.id]);
 
   // ========== QUICK ADD CUSTOMER ==========
   const handleQuickAddCustomer = useCallback(

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Filter, RotateCcw, Calendar, Building2, Tag, Layers } from 'lucide-react';
+import { Filter, RotateCcw, Calendar, Tag, Layers } from 'lucide-react';
 
 export const InventoryFilterBar = ({
   type = 'INWARD', // 'INWARD' hoặc 'OUTWARD'

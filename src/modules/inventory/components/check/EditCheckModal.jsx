@@ -21,8 +21,6 @@ const EditCheckModal = ({ isOpen, onClose, detailData, branches = [], onSave }) 
   const [loadingStaff, setLoadingStaff] = useState(false);
 
   const branchId = detailData?.branchId;
-  const branchName =
-    branches.find((b) => b.branchId === branchId)?.branchName || 'Chi nhánh hiện tại';
 
   // Khởi tạo dữ liệu từ detailData
   useEffect(() => {

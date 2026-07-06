@@ -5,7 +5,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
-import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
 import Icon from '../../../shared/components/Icon';
 import {
@@ -146,21 +145,6 @@ export const StockExport = () => {
     loadData();
   }, []);
 
-  const resetForm = () => {
-    const t = nowDateTime();
-    setTicketCode('');
-    setExportDate(t.date);
-    setExportTime(t.time);
-    setTargetType('Khách hàng');
-    setTargetName('');
-    setReasonType('Xuất bán hàng');
-    setReasonOther('');
-    setNote('');
-    setItems([]);
-    setSelectedProductId('');
-    setSelectedQuantity('');
-  };
-
   // Bộ đếm tự sinh mã phiếu
   const ticketSeqRef = useRef(1);
 
@@ -196,8 +180,6 @@ export const StockExport = () => {
   };
 
   const resolvedReason = reasonType === '__other__' ? reasonOther : reasonType;
-
-  const resolvedTarget = targetType === '__other__' ? targetName : targetName || targetType;
 
   // Lấy tồn kho khả dụng của sản phẩm
   const getProductStock = (product) => {
@@ -337,7 +319,6 @@ export const StockExport = () => {
     }
 
     const reasonText = resolvedReason.trim();
-    const targetText = resolvedTarget.trim();
 
     setIsSubmitting(true);
     setStatusMessage('');
