@@ -67,6 +67,12 @@ export const CustomerManagement = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('Tất cả');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, groupFilter]);
   const [selected, setSelected] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -266,6 +272,12 @@ export const CustomerManagement = () => {
     return list;
   }, [customers, search, groupFilter]);
 
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
+
   const activeCustomers = customers.filter((c) => c.orderCount > 0);
   const totalCustomers = customers.length;
   const totalRevenue = customers.reduce((s, c) => s + c.totalSpent, 0);
@@ -445,7 +457,60 @@ export const CustomerManagement = () => {
         </div>
 
         <Card padding="p-0">
-          <Table columns={columns} data={filtered} loading={loading} emptyMessage={error ? `Lỗi: ${error}` : 'Không tìm thấy khách hàng nào'} />
+          <Table columns={columns} data={paginatedData} loading={loading} emptyMessage={error ? `Lỗi: ${error}` : 'Không tìm thấy khách hàng nào'} />
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+              <span className="text-sm text-slate-500">
+                Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} khách hàng
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Trước
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    if (
+                      totalPages > 7 &&
+                      i !== 0 &&
+                      i !== totalPages - 1 &&
+                      Math.abs(currentPage - 1 - i) > 2
+                    ) {
+                      if (Math.abs(currentPage - 1 - i) === 3) {
+                        return <span key={i} className="px-1 text-slate-400">...</span>;
+                      }
+                      return null;
+                    }
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
+                          currentPage === i + 1
+                            ? 'bg-[#004785] text-white'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

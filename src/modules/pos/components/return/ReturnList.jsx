@@ -38,6 +38,12 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [cancellingId, setCancellingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
 
   const fetchReturns = useCallback(async () => {
     setLoading(true);
@@ -74,6 +80,12 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
     }
     return list;
   }, [returns, search, statusFilter]);
+
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
 
   const handleCancel = async (ret) => {
     if (!window.confirm(`Hủy phiếu đổi trả ${ret.returnCode}?`)) return;
@@ -197,10 +209,64 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
       {/* Table */}
       <Table
         columns={columns}
-        data={filtered}
+        data={paginatedData}
         loading={loading}
         emptyMessage="Chưa có phiếu đổi trả nào"
       />
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+          <span className="text-sm text-slate-500">
+            Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} đơn
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }).map((_, i) => {
+                if (
+                  totalPages > 7 &&
+                  i !== 0 &&
+                  i !== totalPages - 1 &&
+                  Math.abs(currentPage - 1 - i) > 2
+                ) {
+                  if (Math.abs(currentPage - 1 - i) === 3) {
+                    return <span key={i} className="px-1 text-slate-400">...</span>;
+                  }
+                  return null;
+                }
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
+                      currentPage === i + 1
+                        ? 'bg-[#004785] text-white'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -285,6 +285,12 @@ const OrderHistory = () => {
   const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, timeFilter]);
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
@@ -294,7 +300,8 @@ const OrderHistory = () => {
     setLoading(true);
     setFetchError(null);
     try {
-      const data = await getOrders({ status: 'Completed' });
+      // Fetch more orders to ensure local time filters (yesterday, week) work correctly
+      const data = await getOrders({ status: 'Completed', pageSize: 1000 });
       console.log('[OrderHistory] API response:', data);
       // Backend trả về PageResultDto hoặc mảng trực tiếp hoặc {data: [...]}
       const raw = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
@@ -494,6 +501,12 @@ ${
     }
     return list;
   }, [orders, search, timeFilter, loading]);
+
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
 
   const todayOrders = orders.filter((o) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -737,10 +750,61 @@ ${
         <Card padding="p-0">
           <Table
             columns={columns}
-            data={filtered}
+            data={paginatedData}
             loading={loading}
             emptyMessage={fetchError ? `Lỗi: ${fetchError}` : 'Không có đơn hàng nào'}
           />
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3">
+              <span className="text-sm text-slate-500">
+                Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} đơn hàng
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Trước
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    if (
+                      totalPages > 7 &&
+                      i !== 0 &&
+                      i !== totalPages - 1 &&
+                      Math.abs(currentPage - 1 - i) > 2
+                    ) {
+                      if (Math.abs(currentPage - 1 - i) === 3) {
+                        return <span key={i} className="px-1 text-slate-400">...</span>;
+                      }
+                      return null;
+                    }
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
+                          currentPage === i + 1
+                            ? 'bg-[#004785] text-white'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

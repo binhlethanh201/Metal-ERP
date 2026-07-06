@@ -126,6 +126,12 @@ export const ShiftManagement = () => {
   const [selectedShiftOrders, setSelectedShiftOrders] = useState([]);
   const [detailOrdersLoading, setDetailOrdersLoading] = useState(false);
   const [dateFilter, setDateFilter] = useState(() => toLocalDateStr(new Date()));
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilter]);
 
   const [startForm, setStartForm] = useState({ openingBalance: '1000000' });
   const [endForm, setEndForm] = useState({ actualCashCount: '', note: '' });
@@ -451,6 +457,12 @@ export const ShiftManagement = () => {
     return shifts.filter((s) => s.date === dateFilter);
   }, [shifts, dateFilter]);
 
+  const totalPages = Math.ceil(filteredShifts.length / pageSize);
+  const paginatedShifts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredShifts.slice(start, start + pageSize);
+  }, [filteredShifts, currentPage, pageSize]);
+
   // Thống kê dựa theo ngày đã chọn
   const statsShifts = filteredShifts.filter((s) => s.status === 'closed');
   const totalShifts = statsShifts.length;
@@ -726,10 +738,63 @@ export const ShiftManagement = () => {
       >
         <Table
           columns={columns}
-          data={filteredShifts}
+          data={paginatedShifts}
           loading={loading}
           emptyMessage={error ? `Lỗi: ${error}` : 'Chưa có ca làm việc nào'}
         />
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+            <span className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredShifts.length)} trên {filteredShifts.length} ca
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Trước
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  if (
+                    totalPages > 7 &&
+                    i !== 0 &&
+                    i !== totalPages - 1 &&
+                    Math.abs(currentPage - 1 - i) > 2
+                  ) {
+                    if (Math.abs(currentPage - 1 - i) === 3) {
+                      return <span key={i} className="px-1 text-slate-400">...</span>;
+                    }
+                    return null;
+                  }
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
+                        currentPage === i + 1
+                          ? 'bg-[#004785] text-white'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Sau
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Modal Mở ca */}
