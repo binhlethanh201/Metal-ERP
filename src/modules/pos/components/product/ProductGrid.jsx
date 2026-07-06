@@ -1,12 +1,12 @@
-/** Grid sản phẩm POS - Layout 3 cột, render ProductCard cho từng sản phẩm đã lọc. */
+/** Grid sản phẩm POS - Hỗ trợ dạng lưới (mặc định) và 1 cột ngang (singleColumn). */
 import ProductCard from './ProductCard';
 import Icon from '../../../../shared/components/Icon';
 
-const ProductGrid = ({ products, onAddToCart, loading, error }) => {
+const ProductGrid = ({ products, onAddToCart, loading, error, singleColumn }) => {
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-        <Icon name="error" size={40} className="text-red-400 mb-3" />
+        <Icon name="error" size={40} className="mb-3 text-red-400" />
         <p className="text-sm font-semibold text-red-500">{error}</p>
       </div>
     );
@@ -23,8 +23,18 @@ const ProductGrid = ({ products, onAddToCart, loading, error }) => {
   if (!products || products.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-        <Icon name="inventory_2" size={40} className="text-gray-300 mb-3" />
+        <Icon name="inventory_2" size={40} className="mb-3 text-gray-300" />
         <p className="text-sm font-semibold text-gray-400">Không có sản phẩm nào</p>
+      </div>
+    );
+  }
+
+  if (singleColumn) {
+    return (
+      <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} horizontal />
+        ))}
       </div>
     );
   }

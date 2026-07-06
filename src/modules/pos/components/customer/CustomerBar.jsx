@@ -43,23 +43,6 @@ const CustomerBar = ({ selectedCustomer, onOpenPicker, onClearCustomer }) => (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     </button>
-    {selectedCustomer && (
-      <button
-        type="button"
-        onClick={onClearCustomer}
-        className="shrink-0 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500"
-        title="Bỏ chọn khách hàng"
-      >
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-    )}
   </div>
 );
 

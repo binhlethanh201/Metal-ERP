@@ -44,7 +44,8 @@ const mapToPosProduct = (p) => ({
 });
 
 const POSScreen = () => {
-  const { search, showNotice, quickAddCust, setDrafts, setFooterInfo } = useOutletContext();
+  const { search, setSearch, showNotice, quickAddCust, setDrafts, setFooterInfo } =
+    useOutletContext();
   const location = useLocation();
   const draftData = location.state?.draft;
   const preselectedCustomer = location.state?.selectedCustomer;
@@ -642,57 +643,89 @@ const POSScreen = () => {
 
   return (
     <>
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <CustomerBar
-          selectedCustomer={selectedCustomer}
-          onOpenPicker={() => setShowCustModal(true)}
-          onClearCustomer={() => setSelectedCustomer(null)}
-        />
-        <div className="custom-scrollbar flex-1 overflow-y-auto pb-4">
-          <ProductGrid products={filteredProducts} onAddToCart={handleAddToCart} />
+      <div className="flex flex-1 gap-2 overflow-hidden p-3">
+        {/* Center: Cart panel */}
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <CustomerBar
+            selectedCustomer={selectedCustomer}
+            onOpenPicker={() => setShowCustModal(true)}
+            onClearCustomer={() => setSelectedCustomer(null)}
+          />
+          <div className="flex-1 overflow-hidden">
+            <PosCartPanel
+              cart={cart.cart}
+              voucher={cart.voucher}
+              onVoucherChange={cart.setVoucher}
+              onApplyVoucher={handleApplyVoucher}
+              subtotal={cart.subtotal}
+              discount={cart.discount}
+              vat={cart.vat}
+              total={cart.total}
+              onClearCart={handleClearCart}
+              onPay={handleOpenPay}
+              onSaveDraft={() => {
+                if (cart.cart.length === 0) {
+                  showNotice('Giỏ hàng trống, không có gì để lưu');
+                  return;
+                }
+                const draft = {
+                  id: 'draft-' + Date.now(),
+                  items: [...cart.cart],
+                  customer: selectedCustomer,
+                  subtotal: cart.subtotal,
+                  discount: cart.discount,
+                  vat: cart.vat,
+                  total: cart.total,
+                  createdAt: new Date().toISOString(),
+                };
+                setDrafts((prev) => [draft, ...prev]);
+                cart.clearCart();
+                setSelectedCustomer(null);
+                showNotice('Đã lưu đơn nháp. Vào Đơn hàng để tiếp tục.');
+              }}
+              onQtyChange={cart.changeQty}
+              onRemoveItem={cart.removeItem}
+              selectedCustomer={selectedCustomer}
+              onOpenCustomerPicker={() => setShowCustModal(true)}
+              payMethod={cart.paymentMethod}
+              onPayMethodChange={cart.setPaymentMethod}
+              isSplitPay={isSplitPay}
+              onToggleSplitPay={setIsSplitPay}
+              embedded
+            />
+          </div>
+        </div>
+
+        {/* Right: Product panel */}
+        <div className="flex w-[500px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="shrink-0 border-b border-slate-100 px-3 py-2">
+            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
+              <svg
+                className="mr-2 h-4 w-4 shrink-0 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm sản phẩm..."
+                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+          <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-2">
+            <ProductGrid products={filteredProducts} onAddToCart={handleAddToCart} singleColumn />
+          </div>
         </div>
       </div>
-
-      <PosCartPanel
-        cart={cart.cart}
-        voucher={cart.voucher}
-        onVoucherChange={cart.setVoucher}
-        onApplyVoucher={handleApplyVoucher}
-        subtotal={cart.subtotal}
-        discount={cart.discount}
-        vat={cart.vat}
-        total={cart.total}
-        onClearCart={handleClearCart}
-        onPay={handleOpenPay}
-        onSaveDraft={() => {
-          if (cart.cart.length === 0) {
-            showNotice('Giỏ hàng trống, không có gì để lưu');
-            return;
-          }
-          const draft = {
-            id: 'draft-' + Date.now(),
-            items: [...cart.cart],
-            customer: selectedCustomer,
-            subtotal: cart.subtotal,
-            discount: cart.discount,
-            vat: cart.vat,
-            total: cart.total,
-            createdAt: new Date().toISOString(),
-          };
-          setDrafts((prev) => [draft, ...prev]);
-          cart.clearCart();
-          setSelectedCustomer(null);
-          showNotice('Đã lưu đơn nháp. Vào Đơn hàng để tiếp tục.');
-        }}
-        onQtyChange={cart.changeQty}
-        onRemoveItem={cart.removeItem}
-        selectedCustomer={selectedCustomer}
-        onOpenCustomerPicker={() => setShowCustModal(true)}
-        payMethod={cart.paymentMethod}
-        onPayMethodChange={cart.setPaymentMethod}
-        isSplitPay={isSplitPay}
-        onToggleSplitPay={setIsSplitPay}
-      />
 
       <PaymentModal
         isOpen={showPayModal}

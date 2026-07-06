@@ -390,7 +390,7 @@ const ReturnOrderPage = () => {
   return (
     <div className="flex h-full gap-6">
       {/* ===== LEFT: Danh sách ===== */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-3">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Đổi trả hàng</h1>

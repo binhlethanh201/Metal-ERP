@@ -624,7 +624,9 @@ ${
   return (
     <div className="flex h-full gap-6">
       {/* LEFT: List */}
-      <div className={`flex flex-col gap-4 overflow-y-auto ${selected ? 'flex-1' : 'flex-1'}`}>
+      <div
+        className={`flex flex-col gap-4 overflow-y-auto ${selected ? 'flex-1 pr-3' : 'flex-1 pr-3'}`}
+      >
         {/* Header */}
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Đơn hàng</h1>

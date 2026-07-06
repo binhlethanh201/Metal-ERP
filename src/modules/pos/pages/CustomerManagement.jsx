@@ -551,7 +551,7 @@ export const CustomerManagement = () => {
   return (
     <div className="flex h-full gap-6">
       {/* ===== LEFT: Danh sách ===== */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-3">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Khách hàng</h1>
           <p className="mt-1 text-sm text-slate-500">
