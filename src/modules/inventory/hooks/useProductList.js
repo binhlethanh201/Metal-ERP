@@ -96,6 +96,12 @@ export const useProductList = (queryParams) => {
         }
       } catch (error) {
         if (!active) return;
+        // 401: JWT hết hạn/không hợp lệ -> không nên âm thầm hiện mock data.
+        if (error?.status === 401 || error?.response?.status === 401) {
+          setApiStatus({ loading: false, error: 'Phiên đăng nhập đã hết hạn.', isMock: false });
+          setProducts([]);
+          return;
+        }
         const filtered = filterMockProducts(queryParams);
         setProducts(filtered.map(normalizeProduct));
         setPaginationMeta({
@@ -124,7 +130,9 @@ export const useProductList = (queryParams) => {
     );
     try {
       await toggleProductStatus(id, newStatus);
-    } catch {
+    } catch (error) {
+      console.error('Toggle status failed:', error);
+      alert('Không thể cập nhật trạng thái sản phẩm. Vui lòng thử lại.');
       setProducts((prev) =>
         prev.map((p) =>
           p.productId === id || p.id === id
@@ -140,6 +148,10 @@ export const useProductList = (queryParams) => {
   };
 
   const handleBulkToggleStatus = async (selectedIds, targetStatus) => {
+    if (selectedIds.length > 500) {
+      alert('Chỉ được thao tác tối đa 500 sản phẩm mỗi lần. Vui lòng chọn ít hơn.');
+      return false;
+    }
     const previousProducts = [...products];
     setProducts((prev) =>
       prev.map((p) =>
@@ -149,19 +161,27 @@ export const useProductList = (queryParams) => {
       )
     );
     try {
-      await toggleProductStatusBulk(selectedIds, targetStatus);
+      const res = await toggleProductStatusBulk(selectedIds, targetStatus);
+      if (res?.data?.notFoundIds?.length) {
+        alert(
+          `Cập nhật thành công ${res.data.updatedCount} sản phẩm. ${res.data.notFoundIds.length} sản phẩm không thuộc chi nhánh hiện tại nên bị bỏ qua.`
+        );
+      }
+      return true;
     } catch (error) {
       console.error('Bulk toggle failed:', error);
+      alert('Không thể cập nhật trạng thái hàng loạt. Vui lòng thử lại.');
       setProducts(previousProducts);
+      return false;
     }
-    return true;
   };
 
   const handleSaveProduct = async (updatedForm, productToEdit, onSuccess) => {
     try {
       const prepared = { ...updatedForm };
 
-      // Chuyển đổi File sang Base64 cho ảnh
+      // Chuyển đổi File sang Base64 cho ảnh, và LUÔN đồng bộ ảnh đại diện
+      // với ảnh đầu tiên trong danh sách (tránh gửi blob: URL lên server).
       if (Array.isArray(prepared.images) && prepared.images.length > 0) {
         const mapped = await Promise.all(
           prepared.images.map(async (it) => {
@@ -177,7 +197,11 @@ export const useProductList = (queryParams) => {
           })
         );
         prepared.images = mapped;
-        if (!prepared.image && prepared.images.length > 0) prepared.image = prepared.images[0].url;
+        // Luôn ghi đè bằng ảnh đầu tiên đã convert xong (không chỉ khi rỗng),
+        // vì prepared.image có thể đang là blob: URL từ preview.
+        prepared.image = mapped[0]?.url || '';
+      } else {
+        prepared.image = '';
       }
 
       const isUpdate = Boolean(
@@ -188,12 +212,16 @@ export const useProductList = (queryParams) => {
       // Chuẩn hóa payload DTO bằng utility func
       const payload = isUpdate ? updateProductPayload(prepared) : createProductPayload(prepared);
 
-      // Validate phía FE trước khi gọi
+      // Validate phía FE trước khi gọi (khớp theo doc: costPrice/salePrice không âm)
       if (!payload.productName || !payload.unit) {
         alert('Tên sản phẩm và Đơn vị tính là bắt buộc!');
         return;
       }
-      if (payload.costPrice <= 0 && !isUpdate) {
+      if (payload.costPrice < 0 || payload.salePrice < 0) {
+        alert('Giá vốn và giá bán không được âm!');
+        return;
+      }
+      if (!isUpdate && payload.costPrice <= 0) {
         alert('Giá vốn khi tạo mới phải lớn hơn 0!');
         return;
       }
@@ -202,30 +230,28 @@ export const useProductList = (queryParams) => {
         return;
       }
 
-      try {
-        if (isUpdate) {
-          await updateProduct(productKey, payload);
-        } else {
-          await createProduct(payload);
-        }
-      } catch (err) {
-        // Fallback local nếu API chưa live
-        const normalized = normalizeProduct({ ...payload, id: productKey || `SP-${Date.now()}` });
-        setProducts((prev) => {
-          if (isUpdate) {
-            return prev.map((p) =>
-              p.productId === productKey || p.id === productKey ? { ...p, ...normalized } : p
-            );
-          }
-          return [normalized, ...prev];
-        });
+      // Gọi API thật - KHÔNG fallback giả khi lỗi, để catch bên ngoài báo lỗi thật cho user
+      if (isUpdate) {
+        await updateProduct(productKey, payload);
+      } else {
+        await createProduct(payload);
       }
+
+      // LƯU Ý: KHÔNG tự động gọi PATCH toggle-status ở đây nữa.
+      // ProductUpsertDto (POST/PUT) không có field trạng thái kinh doanh,
+      // và việc tự PATCH sau PUT đã gây bug "vừa Lưu xong thì tự chuyển Inactive".
+      // Đổi trạng thái kinh doanh phải luôn đi qua handleToggleStatus/handleBulkToggleStatus
+      // (nút/toggle riêng ngoài danh sách), tách biệt hoàn toàn khỏi luồng Lưu sản phẩm.
 
       onSuccess?.();
       refetch();
     } catch (error) {
       console.error('🚨 API Error Detail:', error);
-      const errorMsg = error?.data?.message || error?.message || 'Không thể lưu sản phẩm.';
+      const errorMsg =
+        error?.data?.errors?.join?.('\n') ||
+        error?.data?.message ||
+        error?.message ||
+        'Không thể lưu sản phẩm. Vui lòng kiểm tra lại thông tin và thử lại.';
       alert(errorMsg);
     }
   };
@@ -237,7 +263,9 @@ export const useProductList = (queryParams) => {
     setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
     try {
       await deleteProduct(id);
-    } catch {
+    } catch (error) {
+      console.error('Delete failed:', error);
+      alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
       setProducts(previousProducts);
     }
   };

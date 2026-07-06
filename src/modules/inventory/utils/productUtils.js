@@ -29,10 +29,20 @@ export const buildDimensionText = (product = {}) => {
   return sizeText || weightText || '';
 };
 
+/**
+ * ĐÚNG NGUỒN SỰ THẬT cho trạng thái kinh doanh của sản phẩm.
+ * API trả về `productStatus`: "active" | "inactive".
+ * KHÔNG dùng field `status` ("Sẵn hàng"/"Sắp hết"/"Hết hàng") để suy ra trạng thái này,
+ * vì đó là trạng thái TỒN KHO, khác hoàn toàn với trạng thái KINH DOANH.
+ */
+export const isProductActive = (row = {}) => row.productStatus !== 'inactive';
+
 export const normalizeProduct = (product = {}, index = 0) => {
   const id = product.id || product.productId || `API-${index + 1}`;
   const actualStock = Number(product.actualStock ?? 0);
   const availableStock = Number(product.availableStock ?? actualStock);
+  const productStatus =
+    product.productStatus || (product.status === 'inactive' ? 'inactive' : 'active');
 
   return {
     id,
@@ -67,9 +77,13 @@ export const normalizeProduct = (product = {}, index = 0) => {
     length: product.length || null,
     height: product.height || null,
     dimension: buildDimensionText(product) || 'Chưa có',
+    // status: trạng thái TỒN KHO (hiển thị dạng chữ + màu), không phải trạng thái kinh doanh
     status: product.status || (availableStock > 0 ? 'Sẵn hàng' : 'Hết hàng'),
     statusTone: product.statusTone || (availableStock > 0 ? 'green' : 'red'),
-    productStatus: product.productStatus || (product.status === 'inactive' ? 'inactive' : 'active'),
+    // productStatus: trạng thái KINH DOANH (active/inactive) - dùng cho toggle & filter
+    productStatus,
+    // isActive: cờ boolean tiện dùng trong JSX, LUÔN đồng bộ với productStatus
+    isActive: productStatus !== 'inactive',
     estimatedOutAt: product.estimatedOutAt || '',
     directSale: Boolean(product.directSale ?? true),
     salesChannelLinked: Boolean(product.salesChannelLinked ?? false),
@@ -123,10 +137,13 @@ export const createProductPayload = (form) => ({
   images: (form.images || [])
     .map((i) => (typeof i === 'string' ? i : i?.url || ''))
     .filter(Boolean),
-  attributes: (form.attributes || []).map((a) => ({
-    name: a.name || '',
-    value: a.value || '',
-  })),
+  // Lọc bỏ attribute rỗng tên (xảy ra khi 1 thuộc tính khả dụng bị xóa khỏi danh sách chung)
+  attributes: (form.attributes || [])
+    .filter((a) => (a?.name || '').trim())
+    .map((a) => ({
+      name: a.name || '',
+      value: a.value || '',
+    })),
   conversionUnits: (form.conversionUnits || []).map((u) => ({
     name: u.name || '',
     rate: Number(u.rate) || 1,

@@ -15,28 +15,10 @@ import {
 } from '../services/productService';
 import { useProductList } from '../hooks/useProductList';
 import { useEditProductForm } from '../hooks/useEditProductForm';
-import { formatMoney } from '../utils/productUtils';
+import { formatMoney, isProductActive } from '../utils/productUtils';
+import { getSuppliers } from '../services/supplierService';
 
 /* ==================== CONFIG / UTILITY ==================== */
-const estimatedQuickRanges = [
-  { label: 'Hôm nay', group: 'estimated' },
-  { label: 'Ngày mai', group: 'estimated' },
-  { label: '3 ngày tới', group: 'estimated' },
-  { label: '5 ngày tới', group: 'estimated' },
-  { label: '7 ngày tới', group: 'estimated' },
-  { label: '30 ngày tới', group: 'estimated' },
-  { label: 'Tháng này', group: 'estimated' },
-];
-
-const createdQuickRanges = [
-  { label: 'Hôm nay', group: 'created' },
-  { label: 'Hôm qua', group: 'created' },
-  { label: 'Tuần này', group: 'created' },
-  { label: 'Tuần trước', group: 'created' },
-  { label: 'Tháng này', group: 'created' },
-  { label: 'Tháng trước', group: 'created' },
-];
-
 const fmtMoney = (v) => formatMoney(v);
 const fmtDateTime = (dateStr) => {
   if (!dateStr) return '---';
@@ -49,75 +31,6 @@ const fmtDateTime = (dateStr) => {
     return dateStr;
   }
 };
-
-/* ==================== FILTER POPOVERS ==================== */
-const DatePickerPopup = ({ onCancel, onApply }) => (
-  <div className="absolute left-[calc(100%+10px)] top-14 z-30 w-[620px] rounded-xl border border-slate-200 bg-white shadow-2xl">
-    <div className="px-4 pb-3 pt-4">
-      <p className="text-sm text-slate-500">
-        Từ ngày: <span className="font-semibold text-slate-800">01/05/2026</span> - Đến ngày:{' '}
-        <span className="font-semibold text-slate-800">31/05/2026</span>
-      </p>
-    </div>
-    <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-      <button type="button" className="text-base font-semibold text-blue-600" onClick={onCancel}>
-        Hôm nay
-      </button>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="rounded-lg border border-slate-300 px-4 py-1.5 text-base font-semibold text-slate-600"
-          onClick={onCancel}
-        >
-          Bỏ qua
-        </button>
-        <button
-          type="button"
-          className="rounded-lg bg-blue-600 px-4 py-1.5 text-base font-semibold text-white"
-          onClick={onApply}
-        >
-          Áp dụng
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-const QuickRangePopover = ({ ranges, onSelect, onReset }) => (
-  <div
-    className="absolute left-[calc(100%+10px)] top-6 z-30 rounded-xl border border-slate-200 bg-white p-4 shadow-2xl"
-    style={{ width: ranges.length <= 3 ? '500px' : '740px' }}
-  >
-    <div className={`grid gap-4 ${ranges.length <= 3 ? 'grid-cols-3' : 'grid-cols-5'}`}>
-      {ranges.map((col) => (
-        <div key={col.title || col.label}>
-          <p className="mb-2 text-sm font-bold text-slate-800">{col.title || 'Mốc thời gian'}</p>
-          <div className="flex flex-col gap-2">
-            {(col.options || [col.label]).map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                className="rounded-full border border-slate-300 px-3 py-1.5 text-left text-sm text-slate-700 hover:border-blue-600 hover:text-blue-600"
-                onClick={() => onSelect(opt)}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-    <div className="mt-3 flex justify-end">
-      <button
-        type="button"
-        className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-bold text-white"
-        onClick={onReset}
-      >
-        Toàn thời gian
-      </button>
-    </div>
-  </div>
-);
 
 /* ==================== FORM COMPONENTS ==================== */
 const Section = ({ title, subtitle, defaultOpen = true, children }) => {
@@ -970,7 +883,7 @@ const SummaryBar = ({ row }) => {
     { label: 'Tồn kho', value: row.actualStock ?? row.stock ?? 0 },
     {
       label: 'Trạng thái',
-      value: row.isActive !== false && row.status !== 'inactive' ? 'Đang bán' : 'Ngừng bán',
+      value: isProductActive(row) ? 'Đang bán' : 'Ngừng bán',
     },
   ];
   return (
@@ -1125,6 +1038,7 @@ const StatusToggleModal = ({ open, onClose, onConfirm, isActive }) => {
 const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const currentActive = isProductActive(row);
   return (
     <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-4">
       <div className="flex gap-4">
@@ -1167,9 +1081,7 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
               >
-                {row.isActive !== false && row.status !== 'inactive'
-                  ? 'Ngừng kinh doanh'
-                  : 'Mở bán lại'}
+                {currentActive ? 'Ngừng kinh doanh' : 'Mở bán lại'}
               </button>
             </div>
           )}
@@ -1178,8 +1090,8 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
       <StatusToggleModal
         open={statusModalOpen}
         onClose={() => setStatusModalOpen(false)}
-        isActive={row.isActive !== false && row.status !== 'inactive'}
-        onConfirm={() => onToggleStatus?.(row.id || row.productId, row.isActive)}
+        isActive={currentActive}
+        onConfirm={() => onToggleStatus?.(row.id || row.productId, currentActive)}
       />
     </div>
   );
@@ -1322,6 +1234,7 @@ const ProductTable = ({
           const isExpanded = expandedId === (row.id || row.productId);
           const currentId = row.id || row.productId;
           const isSelected = selectedIds.includes(currentId);
+          const rowActive = isProductActive(row);
           return (
             <Fragment key={currentId}>
               <tr
@@ -1391,13 +1304,10 @@ const ProductTable = ({
                     <input
                       type="checkbox"
                       className="peer sr-only"
-                      checked={row.isActive !== false && row.status !== 'inactive'}
+                      checked={rowActive}
                       onChange={(e) => {
                         e.stopPropagation();
-                        onToggleStatus?.(
-                          currentId,
-                          row.isActive !== false && row.status !== 'inactive'
-                        );
+                        onToggleStatus?.(currentId, rowActive);
                       }}
                     />
                     <div className="peer h-5 w-9 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
@@ -1434,33 +1344,74 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
     setGroupKeyword,
     brandKeyword,
     setBrandKeyword,
-    estimatedStockOutFilter,
-    estimatedSelectedLabel,
-    estimatedQuickOpen,
-    estimatedCustomOpen,
-    estimatedRef,
-    setEstimatedStockOutFilter,
-    setEstimatedRange,
-    setEstimatedCustomOpen,
-    setEstimatedQuickOpen,
-    createdTimeFilter,
-    createdSelectedLabel,
-    createdQuickOpen,
-    createdCustomOpen,
-    createdRef,
-    setCreatedTimeFilter,
-    setCreatedRange,
-    setCreatedCustomOpen,
-    setCreatedQuickOpen,
     supplierKeyword,
     setSupplierKeyword,
     productStatusFilter,
     setProductStatusFilter,
-    handleEstimatedPreset,
-    handleCreatedPreset,
-    setEstimatedSelectedLabel,
-    setCreatedSelectedLabel,
   } = filters;
+
+  // Danh sách Nhóm hàng / Thương hiệu THẬT lấy từ API, để lọc equals-match
+  // đúng như tài liệu (categoryName/brandName lọc khớp chính xác, không phải "chứa").
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [brandOptions, setBrandOptions] = useState([]);
+  const [loadingMeta, setLoadingMeta] = useState(false);
+
+  // Danh sách Nhà cung cấp THẬT lấy từ GET /api/suppliers, để người dùng chọn
+  // theo TÊN thay vì phải tự dán GUID. CHỈ dùng API GET ở đây, không tạo/sửa/xoá
+  // NCC từ màn lọc hàng hóa này để tránh ảnh hưởng tới module Quản lý NCC/Công nợ.
+  const [supplierOptions, setSupplierOptions] = useState([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const loadMeta = async () => {
+      setLoadingMeta(true);
+      try {
+        const [catRes, brandRes] = await Promise.all([getCategories(), getBrands()]);
+        if (!active) return;
+        if (catRes?.success && Array.isArray(catRes?.data)) {
+          setCategoryOptions(catRes.data.map((item) => item.name).filter(Boolean));
+        }
+        if (brandRes?.success && Array.isArray(brandRes?.data)) {
+          setBrandOptions(brandRes.data.map((item) => item.name).filter(Boolean));
+        }
+      } catch (err) {
+        console.error('Lỗi tải danh sách nhóm hàng/thương hiệu:', err);
+      } finally {
+        if (active) setLoadingMeta(false);
+      }
+    };
+    loadMeta();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadSuppliers = async () => {
+      setLoadingSuppliers(true);
+      try {
+        // Chỉ cần danh sách để hiển thị dropdown -> lấy số lượng lớn, chỉ NCC đang active.
+        const res = await getSuppliers({ pageSize: 1000, status: 'active' });
+        if (!active) return;
+        const items = res?.data?.items || (Array.isArray(res?.data) ? res.data : []);
+        if (Array.isArray(items)) {
+          setSupplierOptions(
+            items.map((s) => ({ id: s.id, name: s.name, code: s.code })).filter((s) => s.id)
+          );
+        }
+      } catch (err) {
+        console.error('Lỗi tải danh sách nhà cung cấp:', err);
+      } finally {
+        if (active) setLoadingSuppliers(false);
+      }
+    };
+    loadSuppliers();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <>
@@ -1489,13 +1440,10 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
             onClick={() => {
               setGroupKeyword('');
               setBrandKeyword?.('');
-              setEstimatedStockOutFilter('allTime');
-              setEstimatedSelectedLabel('Toàn thời gian');
-              setCreatedTimeFilter('allTime');
-              setCreatedSelectedLabel('Toàn thời gian');
               setSupplierKeyword('');
-              setProductStatusFilter('active');
+              setProductStatusFilter('all');
             }}
+            title="Đặt lại bộ lọc"
           >
             <Icon name="cached" size={16} />
           </button>
@@ -1510,6 +1458,7 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
             value={productStatusFilter}
             onChange={(e) => setProductStatusFilter(e.target.value)}
           >
+            <option value="all">Tất cả</option>
             <option value="active">Đang hoạt động</option>
             <option value="inactive">Ngừng hoạt động</option>
           </select>
@@ -1517,170 +1466,56 @@ const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => {
 
         <div className="space-y-2">
           <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhóm hàng</p>
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
-            placeholder="Lọc theo danh mục..."
+          <select
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:ring-primary"
             value={groupKeyword}
             onChange={(e) => setGroupKeyword(e.target.value)}
-          />
+            disabled={loadingMeta}
+          >
+            <option value="">-- Tất cả nhóm hàng --</option>
+            {categoryOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-2">
           <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Thương hiệu</p>
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
-            placeholder="Lọc theo thương hiệu..."
+          <select
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:ring-primary"
             value={brandKeyword || ''}
             onChange={(e) => setBrandKeyword?.(e.target.value)}
-          />
-        </div>
-
-        <div className="relative space-y-2" ref={estimatedRef}>
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
-            Dự kiến hết hàng
-          </p>
-          {[
-            {
-              val: 'allTime',
-              label: estimatedSelectedLabel,
-              onChange: () => {
-                setEstimatedStockOutFilter('allTime');
-                setEstimatedRange(null);
-                setEstimatedCustomOpen(false);
-                setEstimatedQuickOpen((p) => !p);
-              },
-            },
-            {
-              val: 'custom',
-              label: 'Tùy chỉnh',
-              onChange: () => {
-                setEstimatedStockOutFilter('custom');
-                setEstimatedQuickOpen(false);
-                setEstimatedCustomOpen((p) => !p);
-              },
-            },
-          ].map((opt) => (
-            <label
-              key={opt.val}
-              className={`flex cursor-pointer items-center gap-3 rounded-lg bg-white p-2 ${estimatedStockOutFilter === opt.val ? 'border border-blue-900' : 'border border-slate-200'}`}
-            >
-              <input
-                type="radio"
-                name="estimatedStockOut"
-                checked={estimatedStockOutFilter === opt.val}
-                onChange={opt.onChange}
-                className="h-4 w-4 text-blue-900 focus:ring-blue-900"
-              />
-              <span className="flex w-full items-center justify-between text-sm text-slate-600">
-                {opt.label}
-                <Icon
-                  name={opt.val === 'custom' ? 'calendar_today' : 'chevron_right'}
-                  className="text-sm text-slate-400"
-                />
-              </span>
-            </label>
-          ))}
-          {estimatedQuickOpen && (
-            <QuickRangePopover
-              ranges={estimatedQuickRanges}
-              onSelect={handleEstimatedPreset}
-              onReset={() => {
-                setEstimatedSelectedLabel('Toàn thời gian');
-                setEstimatedRange(null);
-                setEstimatedStockOutFilter('allTime');
-                setEstimatedQuickOpen(false);
-              }}
-            />
-          )}
-          {estimatedCustomOpen && (
-            <DatePickerPopup
-              onCancel={() => setEstimatedCustomOpen(false)}
-              onApply={() => {
-                setEstimatedSelectedLabel('01/05/2026 - 31/05/2026');
-                setEstimatedStockOutFilter('custom');
-                setEstimatedCustomOpen(false);
-              }}
-            />
-          )}
-        </div>
-
-        <div className="relative space-y-2" ref={createdRef}>
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Thời gian tạo</p>
-          {[
-            {
-              val: 'allTime',
-              label: createdSelectedLabel,
-              onChange: () => {
-                setCreatedTimeFilter('allTime');
-                setCreatedRange(null);
-                setCreatedCustomOpen(false);
-                setCreatedQuickOpen((p) => !p);
-              },
-            },
-            {
-              val: 'custom',
-              label: createdSelectedLabel === 'Toàn thời gian' ? 'Tùy chỉnh' : createdSelectedLabel,
-              onChange: () => {
-                setCreatedTimeFilter('custom');
-                setCreatedQuickOpen(false);
-                setCreatedCustomOpen((p) => !p);
-              },
-            },
-          ].map((opt) => (
-            <label
-              key={opt.val}
-              className={`flex cursor-pointer items-center gap-3 rounded-lg bg-white p-2 ${createdTimeFilter === opt.val ? 'border border-blue-900' : 'border border-slate-200'}`}
-            >
-              <input
-                type="radio"
-                name="createdTime"
-                checked={createdTimeFilter === opt.val}
-                onChange={opt.onChange}
-                className="h-4 w-4 text-blue-900 focus:ring-blue-900"
-              />
-              <span className="flex w-full items-center justify-between text-sm text-slate-600">
-                {opt.label}
-                <Icon
-                  name={opt.val === 'custom' ? 'calendar_today' : 'chevron_right'}
-                  className="text-sm text-slate-400"
-                />
-              </span>
-            </label>
-          ))}
-          {createdQuickOpen && (
-            <QuickRangePopover
-              ranges={createdQuickRanges}
-              onSelect={handleCreatedPreset}
-              onReset={() => {
-                setCreatedSelectedLabel('Toàn thời gian');
-                setCreatedRange(null);
-                setCreatedTimeFilter('allTime');
-                setCreatedQuickOpen(false);
-              }}
-            />
-          )}
-          {createdCustomOpen && (
-            <DatePickerPopup
-              onCancel={() => setCreatedCustomOpen(false)}
-              onApply={() => {
-                setCreatedSelectedLabel('01/05/2026 - 31/05/2026');
-                setCreatedTimeFilter('custom');
-                setCreatedCustomOpen(false);
-              }}
-            />
-          )}
+            disabled={loadingMeta}
+          >
+            <option value="">-- Tất cả thương hiệu --</option>
+            {brandOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
-            Nhà cung cấp ID
-          </p>
-          <input
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Nhà cung cấp</p>
+          <select
             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:ring-primary"
-            placeholder="Lọc theo Guid nhà cung cấp..."
             value={supplierKeyword}
             onChange={(e) => setSupplierKeyword(e.target.value)}
-          />
+            disabled={loadingSuppliers}
+          >
+            <option value="">-- Tất cả nhà cung cấp --</option>
+            {supplierOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          {loadingSuppliers && (
+            <p className="text-[11px] text-slate-400">Đang tải danh sách nhà cung cấp...</p>
+          )}
         </div>
       </aside>
     </>
@@ -1920,16 +1755,18 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
               checked={f.form.productStatus !== 'inactive'}
               type="checkbox"
               id="footer-status-active"
-              className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-              onChange={(e) =>
-                f.handleChange('productStatus', e.target.checked ? 'active' : 'inactive')
-              }
+              disabled
+              className="h-5 w-5 cursor-not-allowed rounded border-gray-300 text-blue-600 opacity-70 focus:ring-blue-600"
             />
             <label
-              className="flex cursor-pointer items-center text-sm font-semibold text-gray-700"
+              className="flex cursor-not-allowed items-center text-sm font-semibold text-gray-500"
               htmlFor="footer-status-active"
+              title="Đổi trạng thái kinh doanh ở nút bật/tắt trong danh sách hàng hóa"
             >
               Đang hoạt động (Active)
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                — đổi trạng thái ở danh sách
+              </span>
             </label>
           </div>
           <div className="flex space-x-3">
@@ -2090,37 +1927,6 @@ export const ProductManagement = () => {
     refetch,
   } = useProductList(activeQueryParams);
 
-  const {
-    estimatedRef,
-    setEstimatedQuickOpen,
-    setEstimatedCustomOpen,
-    createdRef,
-    setCreatedQuickOpen,
-    setCreatedCustomOpen,
-  } = filters;
-
-  useEffect(() => {
-    const onClickOutside = (e) => {
-      if (estimatedRef?.current && !estimatedRef.current.contains(e.target)) {
-        setEstimatedQuickOpen?.(false);
-        setEstimatedCustomOpen?.(false);
-      }
-      if (createdRef?.current && !createdRef.current.contains(e.target)) {
-        setCreatedQuickOpen?.(false);
-        setCreatedCustomOpen?.(false);
-      }
-    };
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, [
-    estimatedRef,
-    setEstimatedQuickOpen,
-    setEstimatedCustomOpen,
-    createdRef,
-    setCreatedQuickOpen,
-    setCreatedCustomOpen,
-  ]);
-
   const { currentPage, setCurrentPage, pageSize } = filters;
   const totalPages = paginationMeta?.totalPages || 1;
   const totalCount = paginationMeta?.totalCount || 0;
@@ -2209,7 +2015,7 @@ export const ProductManagement = () => {
                     }
                   }}
                 >
-                  <Icon name="block" size={18} /> Ngừng bán
+                  <Icon name="Ban" size={18} /> Ngừng bán
                 </button>
               </div>
             </div>

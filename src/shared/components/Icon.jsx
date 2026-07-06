@@ -58,7 +58,6 @@ const staticIconMap = {
   thumb_up: 'ThumbsUp',
   thumb_down: 'ThumbsDown',
   flag: 'Flag',
-  add: 'Plus',
   payments: 'Banknote',
   account_balance: 'Landmark',
   qr_code_2: 'QrCode',

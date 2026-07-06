@@ -1,36 +1,15 @@
-import { useState, useRef, useMemo } from 'react';
-import { getCreatedPresetRange, getEstimatedPresetRange } from '../utils/productUtils';
+import { useState, useMemo } from 'react';
 
 export const useProductFilters = () => {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdat', direction: 'desc' });
   const [groupKeyword, setGroupKeyword] = useState('');
-  const [brandKeyword, setBrandKeyword] = useState(''); // Bổ sung lọc theo thương hiệu chuẩn API
+  const [brandKeyword, setBrandKeyword] = useState('');
   const [supplierKeyword, setSupplierKeyword] = useState('');
+  // Mặc định 'all' để KHÔNG lọc gì cả (khớp với option "Tất cả" trong UI).
   const [productStatusFilter, setProductStatusFilter] = useState('all');
   const [pageSize, setPageSize] = useState(20); // Chuẩn API default là 20
   const [currentPage, setCurrentPage] = useState(1);
-
-  const [estimatedStockOutFilter, setEstimatedStockOutFilter] = useState('allTime');
-  const [createdTimeFilter, setCreatedTimeFilter] = useState('allTime');
-  const [estimatedQuickOpen, setEstimatedQuickOpen] = useState(false);
-  const [createdQuickOpen, setCreatedQuickOpen] = useState(false);
-  const [estimatedCustomOpen, setEstimatedCustomOpen] = useState(false);
-  const [createdCustomOpen, setCreatedCustomOpen] = useState(false);
-  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
-  const [estimatedSelectedLabel, setEstimatedSelectedLabel] = useState('Toàn thời gian');
-  const [createdSelectedLabel, setCreatedSelectedLabel] = useState('Toàn thời gian');
-  const [estimatedRange, setEstimatedRange] = useState(null);
-  const [createdRange, setCreatedRange] = useState(null);
-  const [locationKeyword, setLocationKeyword] = useState('');
-  const [itemTypeKeyword, setItemTypeKeyword] = useState('');
-  const [directSaleFilter, setDirectSaleFilter] = useState('all');
-  const [salesChannelFilter, setSalesChannelFilter] = useState('all');
-  const [stockFilter, setStockFilter] = useState('all');
-
-  const estimatedRef = useRef(null);
-  const createdRef = useRef(null);
-  const statusDropdownRef = useRef(null);
 
   // Chuẩn hóa 100% camelCase Query Params khớp bản API mới
   const queryParams = useMemo(() => {
@@ -44,6 +23,7 @@ export const useProductFilters = () => {
     if (groupKeyword.trim()) params.categoryName = groupKeyword.trim();
     if (brandKeyword.trim()) params.brandName = brandKeyword.trim();
     if (supplierKeyword.trim()) params.supplierId = supplierKeyword.trim();
+    // status chỉ được gửi khi là 'active' hoặc 'inactive'; 'all' nghĩa là không lọc.
     if (productStatusFilter === 'active' || productStatusFilter === 'inactive') {
       params.status = productStatusFilter;
     }
@@ -96,52 +76,7 @@ export const useProductFilters = () => {
     handlePageSizeChange,
     currentPage,
     setCurrentPage,
-    estimatedStockOutFilter,
-    setEstimatedStockOutFilter,
-    createdTimeFilter,
-    setCreatedTimeFilter,
-    estimatedRange,
-    setEstimatedRange,
-    createdRange,
-    setCreatedRange,
-    locationKeyword,
-    setLocationKeyword,
-    itemTypeKeyword,
-    setItemTypeKeyword,
-    directSaleFilter,
-    setDirectSaleFilter,
-    salesChannelFilter,
-    setSalesChannelFilter,
-    stockFilter,
-    setStockFilter,
-    estimatedRef,
-    createdRef,
-    statusDropdownRef,
-    estimatedQuickOpen,
-    setEstimatedQuickOpen,
-    createdQuickOpen,
-    setCreatedQuickOpen,
-    statusDropdownOpen,
-    setStatusDropdownOpen,
-    estimatedCustomOpen,
-    setEstimatedCustomOpen,
-    createdCustomOpen,
-    setCreatedCustomOpen,
-    estimatedSelectedLabel,
-    setEstimatedSelectedLabel,
-    createdSelectedLabel,
-    setCreatedSelectedLabel,
-    handleEstimatedPreset: (label) => {
-      setEstimatedSelectedLabel(label);
-      setEstimatedRange(getEstimatedPresetRange(label));
-      setEstimatedStockOutFilter('custom');
-      setEstimatedQuickOpen(false);
-    },
-    handleCreatedPreset: (label) => {
-      setCreatedSelectedLabel(label);
-      setCreatedRange(getCreatedPresetRange(label));
-      setCreatedTimeFilter('custom');
-      setCreatedQuickOpen(false);
-    },
   };
 };
+
+export default useProductFilters;
