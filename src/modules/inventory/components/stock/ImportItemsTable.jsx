@@ -1,5 +1,8 @@
 import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react';
 import { ProductSearchInput } from './ProductSearchInput';
+import { Button } from '../../../../shared/components/Button';
+import IconButton from '../../../../shared/components/IconButton';
+import { Table } from '../../../../shared/components/Table';
 
 export const ImportItemsTable = ({
   items = [],
@@ -10,6 +13,71 @@ export const ImportItemsTable = ({
   onAddNewProduct,
   formatCurrency,
 }) => {
+  const columns = [
+    {
+      key: 'index',
+      header: 'STT',
+      width: 56,
+      render: (_, row) => items.findIndex((i) => i.id === row.id) + 1,
+    },
+    {
+      key: 'productCode',
+      header: 'Mã hàng',
+      render: (val) => <span className="font-bold text-slate-800">{val}</span>,
+    },
+    { key: 'productName', header: 'Tên hàng' },
+    { key: 'unitName', header: 'ĐVT' },
+    {
+      key: 'quantity',
+      header: 'Số lượng',
+      render: (val, row) => (
+        <input
+          type="number"
+          min="1"
+          value={val}
+          onChange={(e) => onUpdateItem(row.id, 'quantity', e.target.value)}
+          className="w-24 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm font-semibold outline-none focus:border-[#004785]"
+        />
+      ),
+    },
+    {
+      key: 'costPrice',
+      header: 'Đơn giá nhập',
+      render: (val, row) => (
+        <input
+          type="number"
+          min="0"
+          value={val}
+          onChange={(e) => onUpdateItem(row.id, 'costPrice', e.target.value)}
+          className="w-28 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-[#004785]"
+        />
+      ),
+    },
+    {
+      key: 'total',
+      header: 'Thành tiền',
+      render: (_, row) => (
+        <span className="font-bold text-slate-900">
+          {formatCurrency(Number(row.quantity || 0) * Number(row.costPrice || 0))}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (_, row) => (
+        <IconButton
+          icon={Trash2}
+          variant="ghost"
+          space="customer"
+          size="sm"
+          onClick={() => onRemoveItem(row.id)}
+          title="Xóa dòng này"
+        />
+      ),
+    },
+  ];
+
   return (
     <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -19,14 +87,15 @@ export const ImportItemsTable = ({
             Tìm nhanh bằng phím F3, chỉnh trực tiếp số lượng và đơn giá nhập.
           </p>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onAddNewProduct}
-          className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          className="flex items-center gap-2"
         >
           <Plus size={16} />
           Thêm sản phẩm
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row">
@@ -43,14 +112,13 @@ export const ImportItemsTable = ({
             id="excel-upload"
             onChange={(e) => {
               if (e.target.files && e.target.files.length > 0) {
-                // Giả lập đọc file Excel (do chưa cài thư viện xlsx)
                 setTimeout(() => {
                   alert(
                     `Đã đọc file ${e.target.files[0].name} thành công. Tạm thời mở form thêm mới để bạn tự nhập liệu.`
                   );
                   onAddNewProduct();
                 }, 500);
-                e.target.value = null; // Reset để chọn lại file cũ nếu cần
+                e.target.value = null;
               }
             }}
           />
@@ -64,74 +132,11 @@ export const ImportItemsTable = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-600">
-              <th className="px-3 py-3 font-semibold">STT</th>
-              <th className="px-3 py-3 font-semibold">Mã hàng</th>
-              <th className="px-3 py-3 font-semibold">Tên hàng</th>
-              <th className="px-3 py-3 font-semibold">ĐVT</th>
-              <th className="px-3 py-3 font-semibold">Số lượng</th>
-              <th className="px-3 py-3 font-semibold">Đơn giá nhập</th>
-              <th className="px-3 py-3 font-semibold">Thành tiền</th>
-              <th className="px-3 py-3 font-semibold"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="py-8 text-center text-slate-400">
-                  Chưa có sản phẩm nào. Hãy tìm kiếm ở ô trên hoặc bấm "Thêm sản phẩm".
-                </td>
-              </tr>
-            ) : (
-              items.map((item, index) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50"
-                >
-                  <td className="px-3 py-3 text-slate-600">{index + 1}</td>
-                  <td className="px-3 py-3 font-bold text-slate-800">{item.productCode}</td>
-                  <td className="px-3 py-3 font-medium text-slate-800">{item.productName}</td>
-                  <td className="px-3 py-3 text-slate-600">{item.unitName}</td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => onUpdateItem(item.id, 'quantity', e.target.value)}
-                      className="w-24 rounded-xl border border-slate-200 px-2.5 py-1.5 text-sm font-semibold outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="number"
-                      min="0"
-                      value={item.costPrice}
-                      onChange={(e) => onUpdateItem(item.id, 'costPrice', e.target.value)}
-                      className="w-28 rounded-xl border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="px-3 py-3 font-bold text-slate-900">
-                    {formatCurrency(Number(item.quantity || 0) * Number(item.costPrice || 0))}
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="rounded-xl p-2 text-rose-600 hover:bg-rose-50"
-                      title="Xóa dòng này"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table
+        columns={columns}
+        data={items}
+        emptyMessage='Chưa có sản phẩm nào. Hãy tìm kiếm ở ô trên hoặc bấm "Thêm sản phẩm".'
+      />
     </section>
   );
 };

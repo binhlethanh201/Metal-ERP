@@ -9,7 +9,7 @@ const INITIAL = { name: '', phone: '' };
 const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
   const [form, setForm] = useState(INITIAL);
   const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
+  const [, setSaving] = useState(false);
 
   const handleAdd = async () => {
     const errs = {};

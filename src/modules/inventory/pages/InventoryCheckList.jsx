@@ -1,23 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Icon from '../../../shared/components/Icon';
 import { Card } from '../../../shared/components/Card';
-import { useAuth } from '../../../shared/hooks/useAuth';
 import CreateCheckModal from '../components/check/CreateCheckModal';
 import InventoryCheckDetailModal from '../components/check/InventoryCheckDetailModal';
 import EditCheckModal from '../components/check/EditCheckModal';
 import {
   getInventoryChecks,
-  getInventoryCheckDetail,
   createInventoryCheck,
   updateInventoryCheck,
-  deleteInventoryCheck,
-  fillInventoryCheck,
-  approveInventoryCheck,
-  rejectInventoryCheck,
-  cancelInventoryCheck,
 } from '../services/inventoryCheckService';
-import { apiGet } from '../../../services/apiClient';
-import ENDPOINTS from '../../../services/endpoints';
 import {
   Filter,
   RefreshCw,
@@ -31,10 +22,6 @@ import {
   Clock,
   FileEdit,
   XCircle,
-  Ban,
-  Trash2,
-  Send,
-  RotateCcw,
 } from 'lucide-react';
 
 // ==================== RENDER STATUS BADGE ====================
@@ -82,10 +69,6 @@ const formatDateTime = (dateString) => {
 
 // ==================== MAIN COMPONENT ====================
 const InventoryCheckList = () => {
-  const { user } = useAuth();
-  const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
-  const currentUserId = user?.userId || user?.id;
-
   // ---- Trạng thái danh sách ----
   const [checks, setChecks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -103,42 +86,15 @@ const InventoryCheckList = () => {
   const [pageSize] = useState(20);
   const [paginationMeta, setPaginationMeta] = useState({ totalCount: 0, totalPages: 1 });
 
-  // ---- Chi nhánh (Owner) ----
-  const [branches, setBranches] = useState([]);
-
   // ---- Modal tạo phiếu ----
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // ---- Chi tiết phiếu ----
+  // selectedCheckId: mở modal detail; sau khi tạo mới cũng set id này để mở luôn
   const [selectedCheckId, setSelectedCheckId] = useState(null);
-  const [selectedCheckData, setSelectedCheckData] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState('');
-
-  // ---- Form đếm thực tế ----
-  const [actualValues, setActualValues] = useState({});
-
-  // ---- Form reject (yêu cầu đếm lại) ----
-  const [showRejectForm, setShowRejectForm] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
 
   // ---- Modal sửa phiếu ----
   const [editTicketData, setEditTicketData] = useState(null);
-
-  // ==================== FETCH BRANCHES ====================
-  useEffect(() => {
-    if (isOwner) {
-      apiGet(ENDPOINTS.OWNER.BRANCHES)
-        .then((res) => {
-          if (res?.success && res.data) {
-            const list = res.data.items || res.data;
-            setBranches(list);
-          }
-        })
-        .catch((err) => console.error('Lỗi lấy chi nhánh:', err));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOwner]);
 
   // ==================== FETCH LIST ====================
   const fetchChecks = useCallback(async () => {
@@ -182,178 +138,22 @@ const InventoryCheckList = () => {
     setPageNumber(1);
   }, [searchCode, statusFilter, startDate, endDate]);
 
-  // ==================== FETCH DETAIL ====================
-  const openDetail = async (row) => {
-    const checkId = row?.ticketId || row?.id || row?.inventoryCheckId;
-    if (!checkId) return;
-
-    setSelectedCheckId(checkId);
-    setSelectedCheckData(null);
-    setDetailLoading(true);
-    setDetailError('');
-    setShowRejectForm(false);
-    setRejectReason('');
-    setActualValues({});
-
-    try {
-      const res = await getInventoryCheckDetail(checkId);
-      if (res?.success && res.data) {
-        setSelectedCheckData(res.data);
-        // Init giá trị thực tế
-        const initValues = {};
-        (res.data.details || []).forEach((item) => {
-          initValues[item.detailId] = item.isCounted ? item.actualQuantity : '';
-        });
-        setActualValues(initValues);
-      } else {
-        setDetailError('Không thể tải chi tiết phiếu kiểm kê.');
-      }
-    } catch (err) {
-      setDetailError(err?.data?.message || err?.message || 'Lỗi khi tải chi tiết.');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  const closeDetail = () => {
-    setSelectedCheckId(null);
-    setSelectedCheckData(null);
-    setDetailLoading(false);
-    setDetailError('');
-    setShowRejectForm(false);
-    setRejectReason('');
-    setActualValues({});
-  };
-
   // ==================== ACTION HANDLERS ====================
 
-  const handleFillSubmit = async (ticketId, details, onCloseCallback) => {
-    if (!ticketId) return;
-
-    setDetailLoading(true);
-    setDetailError('');
-    try {
-      const res = await fillInventoryCheck(ticketId, details);
-      if (res?.success) {
-        alert('Đã gửi kết quả kiểm đếm thành công! Phiếu chuyển sang trạng thái Chờ duyệt.');
-        onCloseCallback?.();
-        fetchChecks();
-      }
-    } catch (err) {
-      setDetailError(err?.data?.message || err?.message || 'Lỗi khi gửi kết quả kiểm kê.');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  // Approve - Duyệt phiếu
-  const handleApprove = async (ticketId = selectedCheckId, onCloseCallback) => {
-    if (!ticketId) return;
-    if (
-      !window.confirm(
-        'Bạn có chắc chắn muốn duyệt phiếu này? Tồn kho sẽ được điều chỉnh ngay lập tức.'
-      )
-    )
-      return;
-
-    setDetailLoading(true);
-    setDetailError('');
-    try {
-      const res = await approveInventoryCheck(ticketId);
-      if (res?.success) {
-        alert('Đã duyệt phiếu kiểm kê! Tồn kho đã được cập nhật.');
-        onCloseCallback?.();
-        fetchChecks();
-      }
-    } catch (err) {
-      setDetailError(err?.data?.message || err?.message || 'Lỗi khi duyệt phiếu.');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  // Reject - Yêu cầu đếm lại
-  const handleReject = async (ticketId = selectedCheckId, reasonParam, onCloseCallback) => {
-    if (!ticketId) return;
-    const reason = typeof reasonParam === 'string' ? reasonParam : rejectReason;
-    if (!reason?.trim()) {
-      setDetailError('Vui lòng nhập lý do yêu cầu đếm lại!');
-      return;
-    }
-    if (!window.confirm('Xác nhận yêu cầu đếm lại phiếu này?')) return;
-
-    setDetailLoading(true);
-    setDetailError('');
-    try {
-      const res = await rejectInventoryCheck(ticketId, reason);
-      if (res?.success) {
-        alert('Đã yêu cầu đếm lại. Phiếu được chuyển về trạng thái Nháp.');
-        onCloseCallback?.();
-        fetchChecks();
-      }
-    } catch (err) {
-      setDetailError(err?.data?.message || err?.message || 'Lỗi khi yêu cầu đếm lại.');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  // Cancel - Hủy phiếu
-  const handleCancel = async (ticketId = selectedCheckId, onCloseCallback) => {
-    if (!ticketId) return;
-    if (!window.confirm('Bạn có chắc chắn muốn hủy phiếu kiểm kê này?')) return;
-
-    setDetailLoading(true);
-    setDetailError('');
-    try {
-      const res = await cancelInventoryCheck(ticketId);
-      if (res?.success) {
-        alert('Đã hủy phiếu kiểm kê thành công.');
-        onCloseCallback?.();
-        fetchChecks();
-      }
-    } catch (err) {
-      setDetailError(err?.data?.message || err?.message || 'Lỗi khi hủy phiếu.');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  // Delete - Xóa phiếu
-  const handleDelete = async (ticketId = selectedCheckId, onCloseCallback) => {
-    if (!ticketId) return;
-    if (
-      !window.confirm(
-        'Bạn có chắc chắn muốn xóa phiếu kiểm kê nháp này? Hành động này không thể hoàn tác.'
-      )
-    )
-      return;
-
-    setDetailLoading(true);
-    setDetailError('');
-    try {
-      const res = await deleteInventoryCheck(ticketId);
-      if (res?.success) {
-        alert('Đã xóa phiếu kiểm kê thành công.');
-        onCloseCallback?.();
-        fetchChecks();
-      }
-    } catch (err) {
-      setDetailError(err?.data?.message || err?.message || 'Lỗi khi xóa phiếu.');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  // Create - Tạo phiếu mới
+  // Create - Tạo phiếu mới, sau đó mở detail modal luôn
   const handleCreate = async (productIds, notes, assigneeUserId) => {
     setLoading(true);
     setGlobalError('');
     try {
       const res = await createInventoryCheck(productIds, notes, assigneeUserId);
-      if (res?.success) {
-        alert('Tạo phiếu kiểm kê thành công! (Trạng thái: Nháp)');
-        fetchChecks();
+      if (res?.success && res.data) {
+        setIsCreateModalOpen(false);
+        await fetchChecks();
+        // Mở detail modal ngay sau khi tạo thành công theo Flow 1 trong API doc
+        const newTicketId = res.data.ticketId;
+        if (newTicketId) {
+          setSelectedCheckId(newTicketId);
+        }
       }
     } catch (err) {
       setGlobalError(err?.data?.message || err?.message || 'Lỗi khi tạo phiếu kiểm kê.');
@@ -362,17 +162,13 @@ const InventoryCheckList = () => {
     }
   };
 
-  // ==================== DERIVED STATE ====================
-  const currentStatus = selectedCheckData?.status;
-  const isDraft = currentStatus === 'Draft';
-  const isWaiting = currentStatus === 'WaitingForApproval';
-  const isCompleted = currentStatus === 'Completed';
-  const isCancelled = currentStatus === 'Cancelled';
+  // ==================== DETAIL MODAL CALLBACKS ====================
+  // Các action phức tạp (fill, approve, reject, cancel, delete) được xử lý
+  // bên trong InventoryCheckDetailModal và truyền callback refresh về đây.
 
-  // Check quyền fill: Draft + (Owner hoặc assignee)
-  const canFill = isDraft && (isOwner || currentUserId === selectedCheckData?.assigneeUserId);
-  // Check quyền modify/delete: Draft + (Owner hoặc người tạo)
-  const canModify = isDraft && (isOwner || currentUserId === selectedCheckData?.createdByUserId);
+  const handleDetailActionSuccess = useCallback(() => {
+    fetchChecks();
+  }, [fetchChecks]);
 
   // ==================== SUMMARY STATS ====================
   const summary = useMemo(() => {
@@ -412,7 +208,7 @@ const InventoryCheckList = () => {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card>
           <div className="py-3 text-center">
-            <div className="text-2xl font-bold text-blue-600">{summary.total}</div>
+            <div className="text-2xl font-bold text-blue-600">{summary.totalCount}</div>
             <p className="mt-0.5 text-xs text-gray-600">Tổng phiếu</p>
           </div>
         </Card>
@@ -453,7 +249,7 @@ const InventoryCheckList = () => {
         </div>
       )}
 
-      {/* ==================== KHU VỰC 1: HEADER & FILTERS ==================== */}
+      {/* ==================== FILTERS ==================== */}
       <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           {/* Lọc trạng thái */}
@@ -516,22 +312,19 @@ const InventoryCheckList = () => {
           </div>
         </div>
 
-        {/* Hàng 2: Tìm kiếm + Lọc nâng cao */}
+        {/* Lọc nâng cao */}
         {showAdvanceFilters && (
-          <div className="grid grid-cols-1 gap-3 border-t border-slate-200/80 pt-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Tìm kiếm mã phiếu */}
+          <div className="grid grid-cols-1 gap-3 border-t border-slate-200/80 pt-3 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">Tìm mã phiếu:</label>
               <input
                 type="text"
-                placeholder="VD: PKK-001..."
+                placeholder="VD: KKK00001..."
                 value={searchCode}
                 onChange={(e) => setSearchCode(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-
-            {/* Ngày bắt đầu */}
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">Từ ngày:</label>
               <input
@@ -541,8 +334,6 @@ const InventoryCheckList = () => {
                 className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-
-            {/* Ngày kết thúc */}
             <div>
               <label className="mb-1 block text-xs font-bold text-slate-600">Đến ngày:</label>
               <input
@@ -556,7 +347,7 @@ const InventoryCheckList = () => {
         )}
       </div>
 
-      {/* ==================== KHU VỰC 2: BẢNG DANH SÁCH PHIẾU KIỂM KÊ ==================== */}
+      {/* ==================== BẢNG DANH SÁCH ==================== */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -587,12 +378,12 @@ const InventoryCheckList = () => {
                 </tr>
               ) : (
                 checks.map((row) => {
-                  const checkId = row.ticketId || row.id || row.inventoryCheckId || row.checkId;
+                  const checkId = row.ticketId || row.id || row.inventoryCheckId;
                   return (
                     <tr
                       key={checkId || row.ticketCode}
                       className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-blue-50/30"
-                      onClick={() => openDetail(row)}
+                      onClick={() => setSelectedCheckId(checkId)}
                     >
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1">
@@ -620,16 +411,18 @@ const InventoryCheckList = () => {
                       </td>
                       <td className="px-4 py-3 text-center">{renderStatusBadge(row.status)}</td>
                       <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDetail(row);
-                          }}
-                          className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50"
-                          title="Xem chi tiết"
-                        >
-                          <Eye size={14} /> Xem
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCheckId(checkId);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={14} /> Xem
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -671,46 +464,42 @@ const InventoryCheckList = () => {
       </div>
 
       {/* ==================== MODALS ==================== */}
+
+      {/* Modal tạo phiếu */}
       <CreateCheckModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSave={(productIds, notes, assigneeUserId) => {
-          handleCreate(productIds, notes, assigneeUserId);
-          setIsCreateModalOpen(false);
-        }}
+        onSave={handleCreate}
       />
 
+      {/* Modal chi tiết / fill / approve / reject / cancel / delete */}
       <InventoryCheckDetailModal
         isOpen={!!selectedCheckId}
-        onClose={closeDetail}
+        onClose={() => setSelectedCheckId(null)}
         ticketId={selectedCheckId}
-        ticketData={selectedCheckData}
-        onFillSubmit={handleFillSubmit}
-        onApproveSubmit={handleApprove}
-        onRejectSubmit={handleReject}
-        onCancelSubmit={handleCancel}
-        onDeleteSubmit={handleDelete}
+        onActionSuccess={handleDetailActionSuccess}
         onEditClick={(data) => {
+          setSelectedCheckId(null);
           setEditTicketData(data);
-          closeDetail();
         }}
       />
 
+      {/* Modal sửa phiếu (chỉ Draft) */}
       <EditCheckModal
         isOpen={!!editTicketData}
         onClose={() => setEditTicketData(null)}
         detailData={editTicketData}
-        branches={branches}
         onSave={(id, payload) => {
           updateInventoryCheck(id, payload)
             .then((res) => {
               if (res?.success) {
-                alert('Cập nhật phiếu kiểm kê thành công!');
+                setEditTicketData(null);
                 fetchChecks();
               }
             })
-            .catch((err) => alert(err?.data?.message || err?.message || 'Lỗi cập nhật phiếu.'));
-          setEditTicketData(null);
+            .catch((err) =>
+              setGlobalError(err?.data?.message || err?.message || 'Lỗi cập nhật phiếu.')
+            );
         }}
       />
     </div>

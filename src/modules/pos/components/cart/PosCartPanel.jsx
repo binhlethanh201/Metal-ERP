@@ -25,6 +25,7 @@ const PosCartPanel = ({
   onOpenHeldOrders,
   onOpenPriceCheck,
   onOpenStockCheck,
+  embedded,
 }) => {
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
@@ -32,7 +33,13 @@ const PosCartPanel = ({
     ['sync', 'Kết hợp'],
   ];
   return (
-    <aside className="fixed bottom-12 right-0 top-16 z-30 flex w-[400px] flex-col border-l border-slate-200 bg-white shadow-[-4px_0_15px_rgba(0,0,0,0.02)]">
+    <aside
+      className={`flex flex-col bg-white ${
+        embedded
+          ? 'h-full'
+          : 'fixed bottom-12 right-0 top-16 z-30 w-[400px] border-l border-slate-200 shadow-[-4px_0_15px_rgba(0,0,0,0.02)]'
+      }`}
+    >
       <div className="flex items-center justify-between border-b border-slate-100 p-4">
         <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">
           Giỏ hàng hiện tại
@@ -46,54 +53,68 @@ const PosCartPanel = ({
       <button
         type="button"
         onClick={onOpenCustomerPicker}
-        className="flex items-center justify-between border-b border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50"
+        className={`flex items-center justify-between border-b px-4 py-3.5 transition-all hover:opacity-90 ${
+          selectedCustomer ? 'border-blue-100 bg-blue-50' : 'border-slate-100'
+        }`}
       >
-        <div className="flex items-center gap-2">
-          <Icon name="person" className="text-slate-400" />
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-full ${
+              selectedCustomer ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
+            }`}
+          >
+            <Icon name="person" className="text-base" />
+          </div>
           {selectedCustomer ? (
             <div className="text-left">
-              <p className="text-sm font-semibold text-slate-900">{selectedCustomer.name}</p>
-              <p className="text-xs text-slate-400">{selectedCustomer.phone}</p>
+              <p className="text-sm font-bold text-blue-900">{selectedCustomer.name}</p>
+              <p className="text-xs text-blue-600">{selectedCustomer.phone}</p>
             </div>
           ) : (
-            <span className="text-sm text-slate-500">Khách lẻ</span>
+            <div>
+              <p className="text-sm font-bold text-slate-600">Khách lẻ</p>
+              <p className="text-xs text-slate-400">Nhấn để chọn khách hàng</p>
+            </div>
           )}
         </div>
-        <Icon name="chevron_right" className="text-slate-300" />
+        <Icon
+          name="chevron_right"
+          className={`${selectedCustomer ? 'text-blue-400' : 'text-slate-300'}`}
+        />
       </button>
 
       <div className="custom-scrollbar flex flex-1 flex-col gap-y-4 overflow-y-auto p-4">
         {cart.map((item) => (
-          <div key={item.id} className="flex items-center gap-x-3">
-            <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+          <div key={item.id} className="flex items-center gap-x-4">
+            <div className="h-[88px] w-[88px] flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
               <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
             </div>
             <div className="min-w-0 flex-1">
-              <h5 className="truncate text-xs font-bold text-slate-900">{item.name}</h5>
-              <div className="mt-1 text-xs font-black text-[#004785]">
+              <h5 className="truncate text-sm font-bold text-slate-900">{item.name}</h5>
+              <div className="mt-1.5 text-base font-black text-[#004785]">
                 {formatCurrency(item.price)}
               </div>
             </div>
             <div className="flex items-center gap-x-2">
               <button
                 onClick={() => onQtyChange(item.id, -1)}
-                className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
               >
                 -
               </button>
-              <span className="w-4 text-center text-xs font-bold">{item.quantity}</span>
+              <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
               <button
                 onClick={() => onQtyChange(item.id, 1)}
-                className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
               >
                 +
               </button>
             </div>
             <button
               onClick={() => onRemoveItem(item.id)}
-              className="ml-2 text-slate-300 hover:text-red-600 active:scale-95"
+              className="ml-2 text-base text-slate-300 hover:text-red-600 active:scale-95"
             >
-              <Icon name="close" className="text-sm" />
+              <Icon name="close" className="text-base" />
             </button>
           </div>
         ))}

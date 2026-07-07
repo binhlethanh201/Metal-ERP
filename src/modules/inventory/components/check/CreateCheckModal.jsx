@@ -4,13 +4,26 @@ import { getProducts } from '../../services/inventoryService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { getStaffs } from '../../../owner/services/staffService';
 
+// Import Shared Components
+import Modal from '../../../../shared/components/Modal';
+import Button from '../../../../shared/components/Button';
+import Input from '../../../../shared/components/Input';
+import Textarea from '../../../../shared/components/Textarea';
+import Table from '../../../../shared/components/Table';
+
+/**
+ * CreateCheckModal
+ * - Cho phép chọn sản phẩm từ kho chi nhánh hiện tại (backend tự resolve từ JWT)
+ * - Owner có thể chọn assignee; Staff tự gán cho chính mình
+ * - Gọi onSave(productIds, notes, assigneeUserId) khi submit
+ */
 const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
   const { user } = useAuth();
   const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
   const currentUserId = user?.userId || user?.id;
 
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [notes, setNotes] = useState('');
@@ -20,7 +33,10 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
   const [staffList, setStaffList] = useState([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
-  // Reset khi đóng modal, khởi tạo branchId khi mở
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  // Reset khi đóng modal
   useEffect(() => {
     if (!isOpen) {
       setSelectedIds([]);
@@ -29,21 +45,17 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       setSearch('');
       setProducts([]);
       setStaffList([]);
+      setError('');
+      setSubmitting(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Fetch sản phẩm khi mở modal hoặc đổi chi nhánh
+  // Fetch sản phẩm - backend tự resolve chi nhánh từ JWT, không cần truyền branchId
   useEffect(() => {
     if (!isOpen) return;
 
-    setLoading(true);
-    const params = {
-      pageSize: 200,
-      status: 'active',
-    };
-
-    getProducts(params)
+    setLoadingProducts(true);
+    getProducts({ pageSize: 200, status: 'active' })
       .then((res) => {
         if (res?.success && res.data) {
           setProducts(res.data.items || res.data || []);
@@ -55,10 +67,10 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         console.error('Lỗi lấy danh sách sản phẩm:', err);
         setProducts([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => setLoadingProducts(false));
   }, [isOpen]);
 
-  // Fetch danh sách nhân viên (chỉ Owner)
+  // Fetch staff - chỉ Owner mới cần; filter theo permission có STOCK_CHECK_CREATE
   useEffect(() => {
     if (!isOpen || !isOwner) return;
 
@@ -67,7 +79,8 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       .then((res) => {
         if (res?.success && res.data) {
           const allStaff = res.data.items || [];
-          const qualifiedStaff = allStaff.filter((staff) => {
+          // Chỉ hiển thị staff có quyền fill phiếu (STOCK_CHECK_CREATE) hoặc Owner
+          const qualified = allStaff.filter((staff) => {
             const hasInventoryRole =
               staff.roles?.includes('InventoryStaff') ||
               staff.roles?.includes('Owner') ||
@@ -77,7 +90,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
               staff.permissionCodes?.includes('STOCK_CHECK_APPROVE');
             return hasInventoryRole || hasPermission;
           });
-          setStaffList(qualifiedStaff);
+          setStaffList(qualified);
         } else {
           setStaffList([]);
         }
@@ -89,13 +102,11 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       .finally(() => setLoadingStaff(false));
   }, [isOpen, isOwner]);
 
-  // Staff tự gán cho mình
+  // Staff luôn tự gán cho chính mình
   useEffect(() => {
     if (!isOpen || isOwner) return;
     setAssigneeUserId(currentUserId);
   }, [isOpen, isOwner, currentUserId]);
-
-  if (!isOpen) return null;
 
   const filteredProducts = products.filter(
     (p) =>
@@ -107,201 +118,214 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
+  // Khi chọn tất cả: thêm tất cả filtered vào selected (giữ lại những cái đã chọn ở trang khác)
+  // Khi bỏ chọn tất cả: chỉ xóa những cái đang visible trong filtered
   const toggleSelectAll = (checked) => {
+    const filteredIds = filteredProducts.map((p) => p.productId).filter(Boolean);
     if (checked) {
-      setSelectedIds(filteredProducts.map((p) => p.productId).filter(Boolean));
+      setSelectedIds((prev) => {
+        const combined = new Set([...prev, ...filteredIds]);
+        return Array.from(combined);
+      });
     } else {
-      setSelectedIds([]);
+      setSelectedIds((prev) => prev.filter((id) => !filteredIds.includes(id)));
     }
   };
 
-  const handleSubmit = () => {
+  const allFilteredSelected =
+    filteredProducts.length > 0 && filteredProducts.every((p) => selectedIds.includes(p.productId));
+
+  const handleSubmit = async () => {
     if (selectedIds.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 sản phẩm để kiểm kê!');
+      setError('Vui lòng chọn ít nhất 1 sản phẩm để kiểm kê!');
       return;
     }
-    // NOTE: Chỉ gửi 3 trường - Backend tự lấy branchId từ JWT Token
-    onSave(selectedIds, notes, assigneeUserId || null);
+    setError('');
+    setSubmitting(true);
+    try {
+      // Staff: assigneeUserId = currentUserId (đã set từ useEffect)
+      // Owner: assigneeUserId = giá trị chọn từ dropdown, hoặc null nếu để trống
+      await onSave(selectedIds, notes, isOwner ? assigneeUserId || null : currentUserId);
+    } catch {
+      // Error được xử lý bởi parent
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-800">Tạo Phiếu Kiểm Kê Mới</h2>
-            <p className="mt-1 text-xs text-slate-500">Chọn sản phẩm từ kho để bắt đầu kiểm đếm</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+  // Định nghĩa cột cho Shared Table
+  const tableColumns = [
+    {
+      key: 'checkbox',
+      width: '50px',
+      header: (
+        <div className="text-center">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-slate-300"
+            checked={allFilteredSelected}
+            onChange={(e) => toggleSelectAll(e.target.checked)}
+          />
+        </div>
+      ),
+      render: (_, p) => (
+        <div className="text-center">
+          <input
+            type="checkbox"
+            checked={selectedIds.includes(p.productId)}
+            onChange={() => toggleSelect(p.productId)}
+            className="h-4 w-4 cursor-pointer"
+          />
+        </div>
+      ),
+    },
+    {
+      key: 'productCode',
+      header: 'Mã SP',
+      render: (val) => <span className="font-semibold text-slate-700">{val}</span>,
+    },
+    {
+      key: 'productName',
+      header: 'Tên SP',
+    },
+    {
+      key: 'stock',
+      header: <div className="text-center">Tồn Hệ Thống</div>,
+      render: (_, p) => {
+        const stock = p.actualStock ?? p.availableStock ?? 0;
+        return (
+          <div
+            className={`text-center font-bold ${stock === 0 ? 'text-slate-400' : 'text-slate-700'}`}
           >
-            <Icon name="close" size={24} />
-          </button>
+            {stock}
+          </div>
+        );
+      },
+    },
+  ];
+
+  // Footer cho Modal
+  const modalFooter = (
+    <>
+      <Button variant="secondary" onClick={onClose} disabled={submitting}>
+        Hủy
+      </Button>
+      <Button
+        variant="primary"
+        onClick={handleSubmit}
+        disabled={selectedIds.length === 0 || submitting}
+        loading={submitting}
+        className="flex items-center gap-2"
+      >
+        {!submitting && <Icon name="save" size={20} />}
+        {submitting ? 'Đang tạo...' : 'Tạo phiếu kiểm kê'}
+      </Button>
+    </>
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Tạo Phiếu Kiểm Kê Mới"
+      size="4xl"
+      footer={modalFooter}
+    >
+      <div className="-mt-2 mb-6 text-sm text-slate-500">
+        Chọn sản phẩm từ kho để bắt đầu kiểm đếm
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {/* Ghi chú */}
+        <div className="col-span-3 md:col-span-2">
+          <Textarea
+            label="Mục đích / Ghi chú"
+            placeholder="VD: Kiểm kê định kỳ cuối tháng..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={1}
+          />
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
-          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* Ghi chú */}
-            <div className="col-span-3 md:col-span-2">
-              <label className="mb-2 block text-sm font-bold text-slate-700">
-                Mục đích / Ghi chú
-              </label>
-              <textarea
-                rows="1"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="VD: Kiểm kê định kỳ cuối tháng..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-
-            {/* Người phụ trách - Chỉ Owner */}
-            {isOwner && (
-              <div className="col-span-1">
-                <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Người phụ trách
-                </label>
-                <select
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100"
-                  value={assigneeUserId}
-                  onChange={(e) => setAssigneeUserId(e.target.value)}
-                  disabled={loadingStaff}
-                >
-                  <option value="">-- Để trống --</option>
-                  <option value={currentUserId}>Tự giao cho tôi</option>
-                  {staffList.map((staff) => {
-                    if (staff.userId === currentUserId) return null;
-                    return (
-                      <option key={staff.userId} value={staff.userId}>
-                        {staff.fullName || staff.email}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+        {/* Người phụ trách - Chỉ Owner */}
+        {isOwner && (
+          <div className="col-span-1">
+            <label className="mb-1 block text-sm font-medium text-slate-700">Người phụ trách</label>
+            <select
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50"
+              value={assigneeUserId}
+              onChange={(e) => setAssigneeUserId(e.target.value)}
+              disabled={loadingStaff}
+            >
+              <option value="">-- Để trống (chưa gán) --</option>
+              <option value={currentUserId}>Tự giao cho tôi</option>
+              {staffList
+                .filter((staff) => staff.userId !== currentUserId)
+                .map((staff) => (
+                  <option key={staff.userId} value={staff.userId}>
+                    {staff.fullName || staff.email}
+                  </option>
+                ))}
+            </select>
+            {loadingStaff && (
+              <span className="mt-1 inline-block text-xs text-slate-500">
+                Đang tải nhân viên...
+              </span>
             )}
           </div>
+        )}
 
-          {/* Danh sách sản phẩm */}
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">
-              Danh sách Sản phẩm trong kho
-              <span className="ml-2 text-xs font-normal text-slate-500">
-                ({filteredProducts.length} sản phẩm)
-              </span>
-            </h3>
-            <div className="flex w-64 items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-              <Icon name="search" size={18} className="mr-2 text-slate-400" />
-              <input
-                type="text"
-                className="w-full text-sm outline-none"
-                placeholder="Tìm tên, mã SP..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+        {/* Staff: hiển thị thông tin assignee */}
+        {!isOwner && (
+          <div className="col-span-1">
+            <label className="mb-1 block text-sm font-medium text-slate-700">Người phụ trách</label>
+            <div className="w-full rounded-lg border border-slate-200 bg-gray-50 px-3 py-2 text-sm text-slate-600">
+              {user?.fullName || user?.email || 'Bạn'} (tự gán)
             </div>
           </div>
+        )}
+      </div>
 
-          <div className="max-h-[350px] overflow-hidden overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="sticky top-0 z-10 bg-slate-100 text-xs uppercase text-slate-500 shadow-sm">
-                <tr>
-                  <th className="w-12 border-b px-4 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300"
-                      checked={
-                        filteredProducts.length > 0 &&
-                        selectedIds.length === filteredProducts.length
-                      }
-                      onChange={(e) => toggleSelectAll(e.target.checked)}
-                    />
-                  </th>
-                  <th className="border-b px-4 py-3 font-bold">Mã SP</th>
-                  <th className="border-b px-4 py-3 font-bold">Tên SP</th>
-                  <th className="border-b px-4 py-3 text-center font-bold">Tồn Hệ Thống</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={4} className="p-8 text-center text-slate-400">
-                      <Icon name="sync" className="animate-spin text-2xl" />
-                      <p className="mt-2">Đang tải sản phẩm...</p>
-                    </td>
-                  </tr>
-                ) : filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="p-8 text-center text-slate-400">
-                      {'Không tìm thấy sản phẩm nào trong kho'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProducts.map((p) => {
-                    const id = p.productId;
-                    const isSelected = selectedIds.includes(id);
-                    const stock = p.actualStock ?? p.availableStock ?? 0;
-
-                    return (
-                      <tr
-                        key={id}
-                        className={`cursor-pointer transition-colors hover:bg-blue-50 ${
-                          isSelected ? 'bg-blue-50/50' : ''
-                        }`}
-                        onClick={() => toggleSelect(id)}
-                      >
-                        <td className="px-4 py-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleSelect(id)}
-                            className="h-4 w-4"
-                          />
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-slate-700">{p.productCode}</td>
-                        <td className="px-4 py-3">{p.productName}</td>
-                        <td
-                          className={`px-4 py-3 text-center font-bold ${
-                            stock === 0 ? 'text-slate-400' : 'text-slate-700'
-                          }`}
-                        >
-                          {stock}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Summary */}
-          <div className="mt-2 text-right text-sm text-slate-600">
-            Đã chọn: <strong className="text-blue-600">{selectedIds.length}</strong> sản phẩm
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-          >
-            Hủy
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={selectedIds.length === 0}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            <Icon name="save" size={20} /> Tạo phiếu kiểm kê
-          </button>
+      {/* Danh sách sản phẩm */}
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-sm font-bold text-slate-800">
+          Danh sách Sản phẩm
+          <span className="ml-2 font-normal text-slate-500">
+            ({filteredProducts.length} sản phẩm)
+          </span>
+        </h3>
+        <div className="w-full sm:w-64">
+          <Input
+            placeholder="Tìm tên, mã SP..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            icon={<Icon name="search" size={18} />}
+          />
         </div>
       </div>
-    </div>
+
+      <div className="max-h-[350px] overflow-y-auto rounded-lg border border-slate-200 bg-white">
+        <Table
+          columns={tableColumns}
+          data={filteredProducts}
+          loading={loadingProducts}
+          emptyMessage="Không tìm thấy sản phẩm nào trong kho"
+          className="border-none" // Bỏ border ngoài cùng để tránh bị double border với div bọc ngoài
+        />
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <div className="text-sm text-slate-600">
+          Đã chọn: <strong className="text-[#004785]">{selectedIds.length}</strong> sản phẩm
+        </div>
+      </div>
+
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+    </Modal>
   );
 };
 

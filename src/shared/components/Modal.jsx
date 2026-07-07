@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export const Modal = ({
   isOpen = false,
@@ -49,8 +50,8 @@ export const Modal = ({
     '7xl': 'max-w-7xl',
   };
 
-  return (
-    <div className="fixed inset-0 z-50">
+  return createPortal(
+    <div className="fixed inset-0 z-[100]">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-70 transition-opacity"
@@ -99,7 +100,8 @@ export const Modal = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

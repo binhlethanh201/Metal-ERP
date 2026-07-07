@@ -179,7 +179,7 @@ export const cancelReturn = (returnId) => {
   return apiPosPatch(ENDPOINTS.POS.CANCEL_RETURN(returnId), {});
 };
 
-export default {
+const posService = {
   // Products
   getPosProducts,
   getProductPrice,
@@ -218,3 +218,5 @@ export default {
   finalizeReturn,
   cancelReturn,
 };
+
+export default posService;

@@ -4,7 +4,6 @@
  */
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useAuth } from '../../../shared/hooks/useAuth';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
@@ -131,20 +130,30 @@ const PAYMENT_VARIANTS = {
   'Tiền mặt': 'warning',
   Thẻ: 'info',
   'Chuyển khoản': 'primary',
+  'Kết hợp': 'secondary',
+  'Công nợ': 'danger',
   Cash: 'warning',
   Card: 'info',
   Transfer: 'primary',
+  Combined: 'secondary',
+  Debt: 'danger',
   CASH: 'warning',
   CARD: 'info',
   TRANSFER: 'primary',
+  COMBINED: 'secondary',
+  DEBT: 'danger',
 };
 const PAYMENT_LABELS = {
   CASH: 'Tiền mặt',
   TRANSFER: 'Chuyển khoản',
   CARD: 'Thẻ',
+  COMBINED: 'Kết hợp',
+  DEBT: 'Công nợ',
   Cash: 'Tiền mặt',
   Transfer: 'Chuyển khoản',
   Card: 'Thẻ',
+  Combined: 'Kết hợp',
+  Debt: 'Công nợ',
 };
 const translatePayment = (method) => PAYMENT_LABELS[method] || method || '-';
 
@@ -279,7 +288,6 @@ const mapOrder = (o) => {
 const OrderHistory = () => {
   const navigate = useNavigate();
   const { drafts, setDrafts } = useOutletContext();
-  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -292,11 +300,7 @@ const OrderHistory = () => {
     setCurrentPage(1);
   }, [search, timeFilter]);
 
-  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
-
   const fetchOrders = useCallback(async () => {
-
     setLoading(true);
     setFetchError(null);
     try {
@@ -321,7 +325,7 @@ const OrderHistory = () => {
     } finally {
       setLoading(false);
     }
-  }, [isOwner]);
+  }, []);
 
   useEffect(() => {
     fetchOrders();
@@ -329,7 +333,7 @@ const OrderHistory = () => {
 
   // Fetch chi tiết hóa đơn khi chọn xem
   const [selected, setSelected] = useState(null);
-  const [selectedLoading, setSelectedLoading] = useState(false);
+  const [, setSelectedLoading] = useState(false);
   const handleSelectOrder = async (row) => {
     setSelected(row);
     setSelectedLoading(true);
@@ -514,7 +518,6 @@ ${
   });
   const todayRevenue = todayOrders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
   const todayCount = todayOrders.length;
-  const totalRevenue = orders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
 
   const columns = [
     {
@@ -621,7 +624,9 @@ ${
   return (
     <div className="flex h-full gap-6">
       {/* LEFT: List */}
-      <div className={`flex flex-col gap-4 overflow-y-auto ${selected ? 'flex-1' : 'flex-1'}`}>
+      <div
+        className={`flex flex-col gap-4 overflow-y-auto ${selected ? 'flex-1 pr-3' : 'flex-1 pr-3'}`}
+      >
         {/* Header */}
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Đơn hàng</h1>
@@ -757,7 +762,8 @@ ${
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3">
               <span className="text-sm text-slate-500">
-                Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} đơn hàng
+                Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
+                {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} đơn hàng
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -776,7 +782,11 @@ ${
                       Math.abs(currentPage - 1 - i) > 2
                     ) {
                       if (Math.abs(currentPage - 1 - i) === 3) {
-                        return <span key={i} className="px-1 text-slate-400">...</span>;
+                        return (
+                          <span key={i} className="px-1 text-slate-400">
+                            ...
+                          </span>
+                        );
                       }
                       return null;
                     }
