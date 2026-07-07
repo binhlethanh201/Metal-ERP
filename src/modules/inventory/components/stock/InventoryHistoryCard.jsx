@@ -9,26 +9,30 @@ import {
 } from '../../services/inventoryService';
 import { TicketDetailModal } from './TicketDetailModal';
 import { InventoryFilterBar } from './InventoryFilterBar';
+import { Badge } from '../../../../shared/components/Badge';
+import { Button } from '../../../../shared/components/Button';
+import IconButton from '../../../../shared/components/IconButton';
+import { Table } from '../../../../shared/components/Table';
 
 const renderStatusBadge = (status) => {
   switch (status?.toUpperCase()) {
     case 'COMPLETED':
       return (
-        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+        <Badge variant="success" size="sm" className="inline-flex items-center gap-1">
           <CheckCircle2 size={12} /> Hoàn tất
-        </span>
+        </Badge>
       );
     case 'PENDING':
       return (
-        <span className="inline-flex animate-pulse items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+        <Badge variant="warning" size="sm" className="inline-flex animate-pulse items-center gap-1">
           <Clock size={12} /> Chờ duyệt kho
-        </span>
+        </Badge>
       );
     case 'CANCELLED':
       return (
-        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
+        <Badge variant="secondary" size="sm" className="inline-flex items-center gap-1">
           <XCircle size={12} /> Đã hủy
-        </span>
+        </Badge>
       );
     default:
       return <span className="text-xs font-medium text-slate-500">{status || 'N/A'}</span>;
@@ -145,20 +149,114 @@ export const InventoryHistoryCard = ({
     }
   };
 
+  const columns = [
+    {
+      key: 'ticketCode',
+      header: 'Mã phiếu',
+      render: (_, row) => (
+        <button
+          type="button"
+          onClick={() => setViewingId(row.stockTicketId || row.id)}
+          className="text-left font-bold text-[#004785] hover:underline"
+          title="Click để xem chi tiết & biến động kho"
+        >
+          {row.ticketCode || row.id}
+        </button>
+      ),
+    },
+    {
+      key: 'date',
+      header: 'Ngày tạo',
+      render: (_, row) => {
+        const raw = row.date || row.createdAt;
+        if (!raw) return <span className="text-xs text-slate-500">---</span>;
+        const iso = raw.endsWith('Z') ? raw : `${raw}Z`;
+        return (
+          <span className="text-xs text-slate-500">
+            {new Date(iso).toLocaleDateString('vi-VN')}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'productName',
+      header: 'Sản phẩm / Ghi chú',
+      render: (_, row) => (
+        <div>
+          <div className="font-medium text-slate-700">
+            {row.productName || row.reason || 'Không có ghi chú'}
+          </div>
+          {row.cancelReason && (
+            <div className="mt-0.5 text-xs italic text-rose-600">Lý do hủy: {row.cancelReason}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'quantity',
+      header: 'Số lượng',
+      render: (val) => (
+        <span className="block text-right font-semibold text-slate-900">{val ?? '---'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Trạng thái',
+      render: (val) => <span className="flex justify-center">{renderStatusBadge(val)}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Thao tác',
+      render: (_, row) => {
+        const isCancelled = row.status?.toUpperCase() === 'CANCELLED';
+        const isPending = row.status?.toUpperCase() === 'PENDING';
+        const currentId = row.stockTicketId || row.id;
+        const isConfirming = confirmingId === currentId;
+
+        return (
+          <div className="flex items-center justify-end gap-1.5">
+            {isPending && (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={isConfirming}
+                onClick={() => handleConfirmTicket(row)}
+                title="Xác nhận duyệt để cộng/trừ kho thực tế"
+                className="flex items-center gap-1"
+              >
+                <CheckCheck size={14} /> {isConfirming ? 'Đang duyệt...' : 'Duyệt phiếu'}
+              </Button>
+            )}
+            <IconButton
+              icon={Ban}
+              variant="ghost"
+              space="customer"
+              size="sm"
+              disabled={isCancelled || isConfirming}
+              onClick={() => setCancellingTicket(row)}
+              title={isCancelled ? 'Phiếu đã bị hủy' : 'Hủy phiếu này'}
+            />
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <h2 className="text-lg font-bold text-slate-900">{title}</h2>
         {onReload && (
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => onReload(filters)}
             disabled={isLoading}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            className="flex items-center gap-1.5"
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
             Làm mới
-          </button>
+          </Button>
         )}
       </div>
 
@@ -170,112 +268,12 @@ export const InventoryHistoryCard = ({
         branches={branches}
       />
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/70 text-left text-slate-600">
-              <th className="px-3 py-3 font-semibold">Mã phiếu</th>
-              <th className="px-3 py-3 font-semibold">Ngày tạo</th>
-              <th className="px-3 py-3 font-semibold">Sản phẩm / Ghi chú</th>
-              <th className="px-3 py-3 text-right font-semibold">Số lượng</th>
-              <th className="px-3 py-3 text-center font-semibold">Trạng thái</th>
-              <th className="px-3 py-3 text-right font-semibold">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400">
-                  Đang tải dữ liệu...
-                </td>
-              </tr>
-            ) : tickets.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400">
-                  Chưa có phiếu nào trong hệ thống
-                </td>
-              </tr>
-            ) : (
-              tickets.map((item) => {
-                const isCancelled = item.status?.toUpperCase() === 'CANCELLED';
-                const isPending = item.status?.toUpperCase() === 'PENDING';
-                const currentId = item.stockTicketId || item.id;
-                const isConfirming = confirmingId === currentId;
-
-                return (
-                  <tr
-                    key={item.id}
-                    className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50"
-                  >
-                    {/* Cột Mã phiếu: Click để mở Modal chi tiết */}
-                    <td className="px-3 py-3">
-                      <button
-                        type="button"
-                        onClick={() => setViewingId(currentId)}
-                        className="text-left font-bold text-sky-600 hover:text-sky-800 hover:underline"
-                        title="Click để xem chi tiết & biến động kho"
-                      >
-                        {item.ticketCode || item.id}
-                      </button>
-                    </td>
-                    <td className="px-3 py-3 text-xs text-slate-500">
-                      {item.date || item.createdAt
-                        ? new Date(
-                            (item.date || item.createdAt).endsWith('Z')
-                              ? item.date || item.createdAt
-                              : `${item.date || item.createdAt}Z`
-                          ).toLocaleDateString('vi-VN')
-                        : '---'}
-                    </td>
-                    <td className="px-3 py-3 text-slate-700">
-                      <div className="font-medium">
-                        {item.productName || item.reason || 'Không có ghi chú'}
-                      </div>
-                      {item.cancelReason && (
-                        <div className="mt-0.5 text-xs italic text-rose-600">
-                          Lý do hủy: {item.cancelReason}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-right font-semibold text-slate-900">
-                      {item.quantity ?? '---'}
-                    </td>
-                    <td className="px-3 py-3 text-center">{renderStatusBadge(item.status)}</td>
-
-                    {/* Cột Thao tác: Duyệt nhanh / Hủy */}
-                    <td className="px-3 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {isPending && (
-                          <button
-                            type="button"
-                            disabled={isConfirming}
-                            onClick={() => handleConfirmTicket(item)}
-                            title="Xác nhận duyệt để cộng/trừ kho thực tế"
-                            className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
-                          >
-                            <CheckCheck size={14} />
-                            {isConfirming ? 'Đang duyệt...' : 'Duyệt phiếu'}
-                          </button>
-                        )}
-
-                        <button
-                          type="button"
-                          disabled={isCancelled || isConfirming}
-                          onClick={() => setCancellingTicket(item)}
-                          title={isCancelled ? 'Phiếu đã bị hủy' : 'Hủy phiếu này'}
-                          className="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
-                        >
-                          <Ban size={14} /> Hủy
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table
+        columns={columns}
+        data={tickets}
+        loading={isLoading}
+        emptyMessage="Chưa có phiếu nào trong hệ thống"
+      />
 
       <CancelTicketModal
         isOpen={!!cancellingTicket}

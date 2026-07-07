@@ -6,24 +6,29 @@ export const useProductFilters = () => {
   const [groupKeyword, setGroupKeyword] = useState('');
   const [brandKeyword, setBrandKeyword] = useState('');
   const [supplierKeyword, setSupplierKeyword] = useState('');
-  // Mặc định 'all' để KHÔNG lọc gì cả (khớp với option "Tất cả" trong UI).
+  // Mặc định 'all' = không lọc gì (khớp option "Tất cả" trong UI select).
   const [productStatusFilter, setProductStatusFilter] = useState('all');
-  const [pageSize, setPageSize] = useState(20); // Chuẩn API default là 20
+  const [pageSize, setPageSize] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Chuẩn hóa 100% camelCase Query Params khớp bản API mới
+  // Query params gửi lên API — chỉ bao gồm những tham số API thực sự hỗ trợ.
+  // Không đưa filter ngày tháng (dự kiến hết hàng / thời gian tạo) vào đây
+  // vì tài liệu API không có param tương ứng cho ProductsController.
   const queryParams = useMemo(() => {
     const params = {
       pageNumber: currentPage,
-      pageSize: pageSize,
+      pageSize,
       sort: sortConfig.key,
       order: sortConfig.direction,
     };
     if (search.trim()) params.searchTerm = search.trim();
+    // categoryName: API lọc theo equals, nên phải gửi đúng tên chính xác.
+    // ProductFilterSidebar dùng <select> từ API nên đảm bảo luôn đúng.
     if (groupKeyword.trim()) params.categoryName = groupKeyword.trim();
     if (brandKeyword.trim()) params.brandName = brandKeyword.trim();
+    // supplierId: API nhận GUID, ProductFilterSidebar gửi s.id (GUID) làm value.
     if (supplierKeyword.trim()) params.supplierId = supplierKeyword.trim();
-    // status chỉ được gửi khi là 'active' hoặc 'inactive'; 'all' nghĩa là không lọc.
+    // status chỉ gửi khi là 'active' hoặc 'inactive'; 'all' = bỏ param (không lọc).
     if (productStatusFilter === 'active' || productStatusFilter === 'inactive') {
       params.status = productStatusFilter;
     }

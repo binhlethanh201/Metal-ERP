@@ -1,11 +1,6 @@
-/**
- * Sidebar Tổng kho
- * Tinh chỉnh lùi lề menu con sang trái để hiển thị trọn vẹn chữ mà không đổi kích thước sidebar.
- */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
-import Logo from '../../../../shared/components/Logo';
 import { sidebarItems } from '../../data/inventoryPageData';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
@@ -18,13 +13,9 @@ const InventorySidebar = () => {
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
   const isOwner = userRoles.includes('Owner');
 
-  // Lọc menu theo quyền (RBAC)
   const visibleMenuItems = useMemo(() => {
-    // Hàm kiểm tra xem 1 item có được hiển thị với user hiện tại không
     const checkPermission = (item) => {
-      // Nếu là mục dành riêng cho Owner mà user không phải Owner -> Ẩn
       if (item.ownerOnly && !isOwner) return false;
-      // Nếu là mục dành riêng cho Staff (không phải Owner) mà user lại là Owner -> Ẩn
       if (item.staffOnly && isOwner) return false;
       return true;
     };
@@ -40,7 +31,6 @@ const InventorySidebar = () => {
     });
   }, [isOwner]);
 
-  // Tự động mở menu cha nếu URL đang ở trang con
   useEffect(() => {
     visibleMenuItems.forEach((item) => {
       if (item.children) {
@@ -74,24 +64,18 @@ const InventorySidebar = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-full w-[260px] select-none flex-col border-r border-slate-200 bg-white p-3.5">
-      {/* Khối Logo thương hiệu */}
-      <div className="mb-6 px-2.5">
-        <Logo moduleName="Tổng Kho" />
-      </div>
-
+    // Bỏ `fixed`, thêm `rounded-xl` để bo góc như POS
+    <aside className="flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
       {/* Vùng điều hướng Menu chính */}
-      <nav className="no-scrollbar flex-1 space-y-1.5 overflow-y-auto pr-0.5">
+      <nav className="no-scrollbar flex-1 space-y-1.5 overflow-y-auto px-3 py-3">
         {visibleMenuItems.map((item) => {
           const hasChildren = item.children && item.children.length > 0;
           const isParentExpanded = expandedMenus[item.label];
           const active = isItemActive(item.path);
-
           const isAnyChildActive = hasChildren && item.children.some((c) => isItemActive(c.path));
 
           return (
             <div key={item.label} className="flex flex-col">
-              {/* MENU CHA */}
               <button
                 type="button"
                 onClick={() => toggleParentMenu(item.label, item.path)}
@@ -123,7 +107,6 @@ const InventorySidebar = () => {
                 )}
               </button>
 
-              {/* DANH SÁCH MENU CON: Lùi lề trái từ pl-9 thành pl-5 để mở rộng không gian chữ */}
               {hasChildren && isParentExpanded && (
                 <div className="animate-fadeIn mt-1 flex flex-col space-y-1 pl-5 pr-1">
                   {item.children.map((child) => {
@@ -144,7 +127,6 @@ const InventorySidebar = () => {
                             childActive ? 'bg-[#004785]' : 'bg-slate-300'
                           }`}
                         />
-                        {/* Loại bỏ truncate, dùng whitespace-normal để hiển thị hết chữ */}
                         <span className="whitespace-normal break-words leading-snug">
                           {child.label}
                         </span>

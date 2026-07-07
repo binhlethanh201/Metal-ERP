@@ -11,7 +11,7 @@ import { getSuppliers } from '../services/supplierService';
 import { ImportItemsTable } from '../components/stock/ImportItemsTable';
 import { ImportTicketForm } from '../components/stock/ImportTicketForm';
 import { InventoryHistoryCard } from '../components/stock/InventoryHistoryCard';
-import { EditProductModal } from './InventoryProduct';
+import { EditProductModal } from '../components/product/EditProductModal';
 import { createProduct } from '../services/productService';
 import { Card } from '../../../shared/components/Card';
 
