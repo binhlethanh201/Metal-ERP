@@ -79,30 +79,6 @@ const mapShift = (s) => {
   };
 };
 
-// Mock data fallback
-const MOCK_SHIFTS = [
-  {
-    shiftId: 'mock-1',
-    startedAt: new Date(Date.now() - 86400000).toISOString(),
-    userName: 'Nguyễn Văn A',
-    status: 'CLOSED',
-    openingBalance: 1000000,
-    totalRevenue: 2500000,
-    totalOrders: 15,
-    note: '',
-  },
-  {
-    shiftId: 'mock-2',
-    startedAt: new Date(Date.now() - 172800000).toISOString(),
-    userName: 'Trần Thị B',
-    status: 'CLOSED',
-    openingBalance: 500000,
-    totalRevenue: 1800000,
-    totalOrders: 12,
-    note: 'Ca chiều',
-  },
-];
-
 export const ShiftManagement = () => {
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.email || 'Thu ngân';
@@ -375,6 +351,15 @@ export const ShiftManagement = () => {
 
   const handleEndShift = async () => {
     if (!openShift) return;
+    // Kiểm tra nếu tiền mặt lệch so với dự kiến thì bắt buộc nhập ghi chú
+    const expectedAmount =
+      (openShift?.openingBalance || 0) + ((shiftSummary || openShift)?.cashSales || 0);
+    const actualAmount = parseFloat(endForm.actualCashCount) || 0;
+    const hasDiff = actualAmount !== expectedAmount;
+    if (hasDiff && !endForm.note.trim()) {
+      alert('Số tiền thực tế chênh lệch so với dự kiến. Vui lòng nhập ghi chú giải thích lý do.');
+      return;
+    }
     try {
       console.log('[ShiftManagement] Ending shift:', openShift.id);
       const result = await endShift(openShift.id, {
@@ -745,7 +730,9 @@ export const ShiftManagement = () => {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
             <span className="text-sm text-slate-500">
-              Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredShifts.length)} trên {filteredShifts.length} ca
+              Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
+              {Math.min(currentPage * pageSize, filteredShifts.length)} trên {filteredShifts.length}{' '}
+              ca
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -765,7 +752,11 @@ export const ShiftManagement = () => {
                     Math.abs(currentPage - 1 - i) > 2
                   ) {
                     if (Math.abs(currentPage - 1 - i) === 3) {
-                      return <span key={i} className="px-1 text-slate-400">...</span>;
+                      return (
+                        <span key={i} className="px-1 text-slate-400">
+                          ...
+                        </span>
+                      );
                     }
                     return null;
                   }
@@ -1006,6 +997,19 @@ export const ShiftManagement = () => {
                   <span className="shrink-0 text-xs text-amber-500">VNĐ</span>
                 </div>
               </div>
+              <div className="overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 transition-shadow hover:shadow-sm">
+                <p className="truncate text-[11px] font-bold uppercase tracking-wide text-blue-700">
+                  Tiền mặt
+                </p>
+                <div className="mt-1.5 flex items-baseline gap-1">
+                  <span className="truncate text-xl font-extrabold text-blue-700">
+                    {formatCurrency(
+                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0)
+                    )}
+                  </span>
+                  <span className="shrink-0 text-xs text-blue-500">VNĐ</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1058,7 +1062,7 @@ export const ShiftManagement = () => {
                 {endForm.actualCashCount &&
                   (() => {
                     const expectedAmount =
-                      (displayShift?.openingBalance || 0) + (displayShift?.totalSales || 0);
+                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0);
                     const actualAmount = Number(endForm.actualCashCount);
                     const diff = actualAmount - expectedAmount;
                     const isReasonable = actualAmount <= expectedAmount * 3 && actualAmount >= 0;
@@ -1130,13 +1134,46 @@ export const ShiftManagement = () => {
                   })()}
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ghi chú</label>
+                <label
+                  className={`mb-1.5 block text-sm font-semibold ${(() => {
+                    const expectedCash =
+                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0);
+                    const actualCash = Number(endForm.actualCashCount) || 0;
+                    return actualCash !== expectedCash ? 'text-red-600' : 'text-slate-700';
+                  })()}`}
+                >
+                  Ghi chú{' '}
+                  {(() => {
+                    const expectedCash =
+                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0);
+                    const actualCash = Number(endForm.actualCashCount) || 0;
+                    return actualCash !== expectedCash ? (
+                      <span className="text-red-500">*</span>
+                    ) : (
+                      ''
+                    );
+                  })()}
+                </label>
                 <textarea
                   rows={2}
-                  placeholder="Nhập ghi chú (không bắt buộc)"
+                  placeholder={(() => {
+                    const expectedCash =
+                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0);
+                    const actualCash = Number(endForm.actualCashCount) || 0;
+                    return actualCash !== expectedCash
+                      ? 'Bắt buộc nhập ghi chú giải thích lý do chênh lệch'
+                      : 'Nhập ghi chú (không bắt buộc)';
+                  })()}
                   value={endForm.note}
                   onChange={(e) => setEndForm((f) => ({ ...f, note: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm transition-all focus:border-[#004785] focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className={`w-full rounded-xl border px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 ${(() => {
+                    const expectedCash =
+                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0);
+                    const actualCash = Number(endForm.actualCashCount) || 0;
+                    return actualCash !== expectedCash
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                      : 'border-slate-200 focus:border-[#004785] focus:ring-blue-100';
+                  })()}`}
                 />
               </div>
             </div>

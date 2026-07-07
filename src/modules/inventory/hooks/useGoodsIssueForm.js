@@ -161,7 +161,7 @@ export const useGoodsIssueForm = (initialData = null) => {
       alert(error?.message || 'Lỗi khi lưu phiếu xuất');
       return false;
     }
-  }, [header, lines, isValid]);
+  }, [header, lines, isValid, saving]);
 
   const resetForm = useCallback(() => {
     setHeader({

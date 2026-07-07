@@ -61,7 +61,7 @@ export const sidebarItems = [
   },
   {
     label: 'Hệ thống & Nhân sự',
-    icon: 'manage_accounts',
+    icon: 'UserCog',
     ownerOnly: true,
     children: [{ label: 'Quản lý nhân viên', path: '/inventory/employees' }],
   },

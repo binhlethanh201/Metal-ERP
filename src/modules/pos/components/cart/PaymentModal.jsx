@@ -17,16 +17,11 @@ const PaymentModal = ({
   onRemoveLine,
   onLineChange,
   onQuickFill,
-  onSelectMethod,
-  onOpenQR,
-  onOpenDebt,
 }) => {
-  // 4 payment methods theo SRS: Cash, Transfer, Combined, Debt
+  // 2 payment methods: Cash, Transfer
   const allMethods = [
     { id: 'Cash', name: 'Tiền mặt', icon: '💵' },
     { id: 'Transfer', name: 'Chuyển khoản', icon: '📱' },
-    { id: 'Combined', name: 'Kết hợp', icon: '🔄' },
-    { id: 'Debt', name: 'Ghi nợ', icon: '📒', disabled: !selectedCustomer?.debtLimit },
   ];
 
   return (
@@ -113,7 +108,7 @@ const PaymentModal = ({
             )}
           </div>
 
-          <div className="max-h-64 space-y-4 overflow-y-auto">
+          <div className="space-y-4">
             {payLines.map((line) => (
               <div key={line.id} className="rounded-lg border border-slate-200 bg-white p-4">
                 <div className="mb-3 flex items-center justify-between">

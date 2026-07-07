@@ -2,12 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
 import ConfirmActionModal from '../components/ConfirmActionModal';
 import CreateAccountModal from '../components/account/CreateAccountModal';
-import {
-  getOwnerList,
-  createOwner,
-  changeOwnerStatus,
-  banOwner,
-} from '../services/adminService';
+import { getOwnerList, createOwner, banOwner } from '../services/adminService';
 
 const OwnerAccountsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,7 +111,7 @@ const OwnerAccountsManagement = () => {
                       : 'bg-error-container text-error'
                   }`}
                 >
-                  {owner.status === 1 ? 'ACTIVE' : (owner.status?.toUpperCase() || '—')}
+                  {owner.status === 1 ? 'ACTIVE' : owner.status?.toUpperCase() || '—'}
                 </span>
               </td>
               <td className="px-4 py-3 text-right">
@@ -175,9 +170,7 @@ const OwnerAccountsManagement = () => {
             {error}
           </div>
         )}
-        <div className="overflow-x-auto">
-          {renderOwnersTable()}
-        </div>
+        <div className="overflow-x-auto">{renderOwnersTable()}</div>
       </div>
 
       <CreateAccountModal

@@ -1,6 +1,6 @@
 /**
  * Bộ khung Layout dùng chung cho toàn phân hệ bán hàng POS.
- * Tự động đồng bộ Header, Sidebar, cơ chế thông báo và tối ưu không gian hiển thị.
+ * Thiết kế dạng bảng: sidebar | content (cart | products) | footer
  */
 import React, { useState, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -24,6 +24,7 @@ const PosLayout = () => {
   const [notice, setNotice] = useState('');
   const [quickAddCust, setQuickAddCust] = useState(0);
   const [drafts, setDrafts] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [footerInfo, setFooterInfo] = useState({
     orderCode: '---',
     customer: '---',
@@ -31,12 +32,8 @@ const PosLayout = () => {
   });
   const noticeTimer = useRef(null);
 
-  // Derive active menu from current route
   const currentPath = location.pathname.replace(/\/$/, '');
   const activeMenu = ROUTE_TO_MENU[currentPath] || 'Máy bán hàng';
-
-  // Cart panel chỉ hiển thị ở màn hình POS chính + checkout
-  const isMainPosScreen = currentPath === '/pos' || currentPath === '/pos/checkout';
 
   const showNotice = useCallback((message) => {
     setNotice(message);
@@ -44,31 +41,19 @@ const PosLayout = () => {
     noticeTimer.current = setTimeout(() => setNotice(''), 2200);
   }, []);
 
-  const handleMenuSelect = (label) => {
-    // activeMenu được derive từ route, không cần setState ở đây
-  };
+  const handleMenuSelect = (label) => {};
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 antialiased">
-      {/* Toast thông báo toàn hệ thống POS */}
+    <div className="flex h-screen flex-col overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 antialiased">
+      {/* Toast */}
       {notice && (
         <div className="fixed left-1/2 top-5 z-[100] -translate-x-1/2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-2xl">
           {notice}
         </div>
       )}
 
-      {/* Sidebar cố định lề trái */}
-      <PosSidebar
-        activeMenu={activeMenu}
-        onMenuSelect={handleMenuSelect}
-        onNavigateWarehouse={() => navigate('/inventory/dashboard')}
-      />
-
-      {/* Header dùng chung nhận state tìm kiếm từ Layout */}
+      {/* Header */}
       <PosHeader
-        search={search}
-        onSearchChange={setSearch}
-        isMainScreen={isMainPosScreen}
         onBarcodeScan={() => {
           navigate('/pos');
           setTimeout(() => showNotice('Đang mở chế độ quét mã'), 300);
@@ -80,33 +65,39 @@ const PosLayout = () => {
         }}
       />
 
-      {/* Container nội dung thay đổi động */}
-      {/* Nếu là màn hình chính thì bóp lề phải pr-[400px] nhường chỗ cho Giỏ hàng, trang phụ thì full width */}
-      <main
-        className={`fixed bottom-12 left-[260px] top-16 flex flex-col overflow-hidden bg-[#f7f9fc] p-6 transition-all duration-200 ${
-          isMainPosScreen ? 'right-[400px]' : 'right-0 overflow-y-auto'
-        }`}
-      >
-        <Outlet
-          context={{
-            search,
-            setSearch,
-            showNotice,
-            quickAddCust,
-            drafts,
-            setDrafts,
-            setFooterInfo,
-          }}
+      {/* Body: sidebar + content */}
+      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+        <PosSidebar
+          activeMenu={activeMenu}
+          onMenuSelect={handleMenuSelect}
+          onNavigateWarehouse={() => navigate('/inventory/dashboard')}
+          open={sidebarOpen}
+          onToggle={() => setSidebarOpen((v) => !v)}
         />
-      </main>
 
-      {/* Footer dung chung toan POS */}
+        <main className="flex flex-1 flex-col overflow-hidden">
+          <Outlet
+            context={{
+              search,
+              setSearch,
+              showNotice,
+              quickAddCust,
+              drafts,
+              setDrafts,
+              setFooterInfo,
+            }}
+          />
+        </main>
+      </div>
+
+      {/* Footer */}
       <PosFooter
         orderCode={footerInfo.orderCode}
         staffName="Nguyễn Văn A"
         customer={footerInfo.customer}
         points={footerInfo.points}
         synced
+        sidebarOpen={sidebarOpen}
       />
     </div>
   );

@@ -17,7 +17,6 @@ const AdminLayout = () => {
   const [toasts, setToasts] = useState([]);
   const dropdownRef = useRef(null);
   const hubRef = useRef(null);
-  const toastTimerRef = useRef(null);
 
   // ---- Toast helpers ----
   const addToast = useCallback((message, type = 'info') => {
@@ -98,15 +97,11 @@ const AdminLayout = () => {
   const MENU_SECTIONS = [
     {
       title: 'TỔNG QUAN',
-      items: [
-        { label: 'Dashboard hệ thống', path: '/admin', badge: null, icon: 'dashboard' },
-      ],
+      items: [{ label: 'Dashboard hệ thống', path: '/admin', badge: null, icon: 'dashboard' }],
     },
     {
       title: 'Quản trị Người dùng',
-      items: [
-        { label: 'Quản lý Chủ Cửa Hàng', path: '/admin/users', badge: null, icon: 'groups' },
-      ],
+      items: [{ label: 'Quản lý Chủ Cửa Hàng', path: '/admin/users', badge: null, icon: 'groups' }],
     },
     {
       title: 'Quản trị Cửa hàng',
@@ -117,22 +112,27 @@ const AdminLayout = () => {
     {
       title: 'VẬN HÀNH & HỆ THỐNG',
       items: [
-        { label: 'Thông báo hệ thống', path: '/admin/notifications', badge: null, icon: 'campaign' },
+        {
+          label: 'Thông báo hệ thống',
+          path: '/admin/notifications',
+          badge: null,
+          icon: 'campaign',
+        },
         { label: 'Nhật ký máy chủ (Log)', path: '/admin/logs', badge: null, icon: 'terminal' },
       ],
     },
   ];
 
   const TOAST_STYLES = {
-    info:    'bg-blue-50 border-blue-300 text-blue-800',
+    info: 'bg-blue-50 border-blue-300 text-blue-800',
     warning: 'bg-amber-50 border-amber-300 text-amber-800',
-    error:   'bg-red-50 border-red-300 text-red-800',
+    error: 'bg-red-50 border-red-300 text-red-800',
     success: 'bg-green-50 border-green-300 text-green-800',
   };
   const TOAST_ICONS = {
-    info:    'info',
+    info: 'info',
     warning: 'warning',
-    error:   'dangerous',
+    error: 'dangerous',
     success: 'check_circle',
   };
 
@@ -177,7 +177,11 @@ const AdminLayout = () => {
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <span className={isActive ? 'text-on-primary' : 'text-outline group-hover:text-primary'}>
+                          <span
+                            className={
+                              isActive ? 'text-on-primary' : 'text-outline group-hover:text-primary'
+                            }
+                          >
                             <Icon name={item.icon} size={16} />
                           </span>
                           <span>{item.label}</span>
@@ -221,21 +225,30 @@ const AdminLayout = () => {
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-primary-container text-xs font-bold text-on-primary-container">
                   {(user?.name || user?.fullName || 'A').charAt(0).toUpperCase()}
                 </div>
-                <span className="text-xs font-bold text-on-surface">{user?.name || user?.fullName || 'Admin'}</span>
-                <span className="text-outline"><Icon name="chevron_down" size={14} /></span>
+                <span className="text-xs font-bold text-on-surface">
+                  {user?.name || user?.fullName || 'Admin'}
+                </span>
+                <span className="text-outline">
+                  <Icon name="chevron_down" size={14} />
+                </span>
               </button>
 
               {isProfileOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-md border border-outline-variant bg-surface-container-lowest shadow-lg">
                   <div className="border-b border-surface-container-high px-4 py-3">
-                    <p className="text-xs font-bold text-on-surface">{user?.name || user?.fullName || 'Admin'}</p>
+                    <p className="text-xs font-bold text-on-surface">
+                      {user?.name || user?.fullName || 'Admin'}
+                    </p>
                     <p className="truncate text-[10px] font-semibold text-on-surface-variant">
                       {user?.email || 'admin@mep.system'}
                     </p>
                   </div>
                   <div className="p-1">
                     <button
-                      onClick={() => { navigate('/change-password'); setIsProfileOpen(false); }}
+                      onClick={() => {
+                        navigate('/change-password');
+                        setIsProfileOpen(false);
+                      }}
                       className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-container-low"
                     >
                       <Icon name="lock" size={14} /> Đổi mật khẩu

@@ -44,6 +44,17 @@ const mapProductToForm = (source = {}) => {
       }))
     : [];
 
+  // Đọc đúng trạng thái kinh doanh từ API:
+  // - Ưu tiên field `productStatus` ("active"/"inactive") mà normalizeProduct đã map
+  // - Fallback check `isActive` (boolean) nếu đang dùng data chưa qua normalizeProduct
+  // - Mặc định là 'active' nếu không có thông tin nào
+  const resolveProductStatus = () => {
+    if (source.productStatus === 'inactive') return 'inactive';
+    if (source.productStatus === 'active') return 'active';
+    if (source.isActive === false) return 'inactive';
+    return 'active';
+  };
+
   return {
     id: productCode || productId,
     productId,
@@ -80,7 +91,7 @@ const mapProductToForm = (source = {}) => {
     sizeUnit: source.sizeUnit || 'mm',
     conversionUnits: source.conversionUnits || [],
     attributes: source.attributes || [],
-    productStatus: source.isActive === false ? 'inactive' : 'active',
+    productStatus: resolveProductStatus(),
     directSale: source.directSale ?? true,
     description: source.description || source.specification || '',
     notes: source.notes || '',
@@ -151,7 +162,7 @@ export const useEditProductForm = ({
   const fileInputRef = useRef(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
-  // --- API / LS lists cho Categories & Brands ---
+  // Tải danh sách nhóm hàng & thương hiệu cho autocomplete trong form
   const [groups, setGroups] = useState([]);
   const [brands, setBrands] = useState([]);
 
@@ -162,17 +173,15 @@ export const useEditProductForm = ({
         const [catRes, brandRes] = await Promise.all([getCategories(), getBrands()]);
         if (!active) return;
         if (catRes?.success && Array.isArray(catRes?.data)) {
-          setGroups(catRes.data.map((item) => item.name));
+          setGroups(catRes.data.map((item) => item.name).filter(Boolean));
         } else {
-          // Fallback từ productList
           const fromProducts = productList
             .map((p) => p.group || p.categoryName || '')
             .filter(Boolean);
           setGroups([...new Set(fromProducts)]);
         }
-
         if (brandRes?.success && Array.isArray(brandRes?.data)) {
-          setBrands(brandRes.data.map((item) => item.name));
+          setBrands(brandRes.data.map((item) => item.name).filter(Boolean));
         } else {
           const fromProducts = productList.map((p) => p.brand || p.brandName || '').filter(Boolean);
           setBrands([...new Set(fromProducts)]);
@@ -189,11 +198,9 @@ export const useEditProductForm = ({
 
   const [locations, persistLocations] = useLocalStorage('productLocations', ['Kệ A1', 'Kệ B2']);
 
-  // --- Sub-hooks ---
   const attr = useProductAttributes(form, setForm);
   const conv = useConversionUnits(form, setForm);
 
-  // --- Modal toggles ---
   const [createLocationModalOpen, setCreateLocationModalOpen] = useState(false);
   const [newLocationName, setNewLocationName] = useState('');
 

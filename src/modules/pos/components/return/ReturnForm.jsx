@@ -21,12 +21,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceError, setInvoiceError] = useState('');
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [returnType, setReturnType] = useState('RETURN');
   const [reason, setReason] = useState('');
   const [refundMethod, setRefundMethod] = useState('CASH');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
+  const isExchange = returnType === 'EXCHANGE';
   const totalRefund = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
 
   const reset = () => {
@@ -36,6 +38,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     setInvoiceLoading(false);
     setInvoiceError('');
     setSelectedProducts([]);
+    setReturnType('RETURN');
     setReason('');
     setRefundMethod('CASH');
     setNotes('');
@@ -73,7 +76,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         // Kiểm tra sản phẩm đã đổi trả từ các phiếu trước
         const invId = found.invoiceId || found.invoiceCode || found.id;
         const orderId = found.orderId || found.order_id || '';
-        console.log('[ReturnForm] Found invoice, invId:', invId, 'orderId:', orderId, 'Full invoice keys:', Object.keys(found));
+        console.log(
+          '[ReturnForm] Found invoice, invId:',
+          invId,
+          'orderId:',
+          orderId,
+          'Full invoice keys:',
+          Object.keys(found)
+        );
         let returnedMap = {};
         try {
           const returnsData = await getReturns({});
@@ -84,22 +94,24 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           console.log('[ReturnForm] All returns count:', allReturns.length);
           if (allReturns.length > 0) {
             console.log('[ReturnForm] First return keys:', Object.keys(allReturns[0]));
-            console.log('[ReturnForm] First return sample:', JSON.stringify(allReturns[0], null, 2));
+            console.log(
+              '[ReturnForm] First return sample:',
+              JSON.stringify(allReturns[0], null, 2)
+            );
           }
           // Lọc các phiếu đổi trả không bị hủy của hóa đơn này
-          const relatedReturns = allReturns.filter(
-            (r) => {
-              const rStatus = String(r.status || '').toUpperCase();
-              // Match bằng orderId (chính xác nhất) hoặc invoiceCode
-              const match = rStatus !== 'CANCELLED' && (
-                (r.orderId && r.orderId.toLowerCase() === orderId.toLowerCase()) ||
+          const relatedReturns = allReturns.filter((r) => {
+            const rStatus = String(r.status || '').toUpperCase();
+            // Match bằng orderId (chính xác nhất) hoặc invoiceCode
+            const match =
+              rStatus !== 'CANCELLED' &&
+              ((r.orderId && r.orderId.toLowerCase() === orderId.toLowerCase()) ||
                 (r.invoiceCode && r.invoiceCode.toLowerCase() === invId.toLowerCase()) ||
-                (r.orderId && r.orderId.toLowerCase() === invId.toLowerCase())
-              );
-              if (match) console.log('[ReturnForm] Matched return:', r.returnCode, 'items:', r.items?.length);
-              return match;
-            }
-          );
+                (r.orderId && r.orderId.toLowerCase() === invId.toLowerCase()));
+            if (match)
+              console.log('[ReturnForm] Matched return:', r.returnCode, 'items:', r.items?.length);
+            return match;
+          });
           console.log('[ReturnForm] Related returns:', relatedReturns.length);
           relatedReturns.forEach((ret) => {
             const items = ret.items || ret.returnItems || [];
@@ -127,7 +139,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         const availableItems = enrichedItems.filter((item) => item._remainingQty > 0);
 
         if (availableItems.length === 0) {
-          setInvoiceError('Tất cả sản phẩm trong hóa đơn này đã được đổi trả hết. Không thể tạo thêm phiếu.');
+          setInvoiceError(
+            'Tất cả sản phẩm trong hóa đơn này đã được đổi trả hết. Không thể tạo thêm phiếu.'
+          );
           setInvoiceLoading(false);
           return;
         }
@@ -135,7 +149,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         setInvoice({ ...found, items: enrichedItems });
         setStep(2);
       } else {
-        setInvoiceError(`Không tìm thấy hóa đơn "${invoiceCode}". Kiểm tra lại mã hoặc trạng thái đơn.`);
+        setInvoiceError(
+          `Không tìm thấy hóa đơn "${invoiceCode}". Kiểm tra lại mã hoặc trạng thái đơn.`
+        );
       }
     } catch (err) {
       setInvoiceError('Lỗi tìm hóa đơn: ' + (err.message || 'Không xác định'));
@@ -189,8 +205,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       const invId = invoice.invoiceId || invoice.invoiceCode || invoice.id;
       const payload = {
         invoiceId: invId,
+        returnType: returnType,
         reason: reason.trim(),
-        refundMethod: refundMethod,
+        ...(returnType === 'RETURN' && { refundMethod: refundMethod }),
       };
       if (notes.trim()) {
         payload.notes = notes.trim();
@@ -203,7 +220,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       console.log('[ReturnForm] Payload:', payload);
       const retData = await createReturn(payload);
       console.log('[ReturnForm] Response:', retData);
-      const returnId = retData.returnOrderId || retData.returnId || retData.return?.returnId || retData.id;
+      const returnId =
+        retData.returnOrderId || retData.returnId || retData.return?.returnId || retData.id;
 
       // Nếu backend không nhận items inline thì gọi thêm API addReturnItem
       if (!retData.returnItems || retData.returnItems.length === 0) {
@@ -217,7 +235,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         );
       }
 
-      onSuccess?.();
+      onSuccess?.(retData);
       handleClose();
     } catch (err) {
       console.error('[ReturnForm] Full error:', err);
@@ -233,11 +251,15 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
   const renderStepIndicator = () => (
     <div className="mb-6 flex items-center gap-2">
-      <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${step === 1 ? 'bg-[#004785] text-white' : 'bg-green-500 text-white'}`}>
+      <div
+        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${step === 1 ? 'bg-[#004785] text-white' : 'bg-green-500 text-white'}`}
+      >
         {step === 1 ? '1' : '✓'}
       </div>
       <div className={`h-0.5 w-12 ${step === 2 ? 'bg-green-500' : 'bg-slate-200'}`} />
-      <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${step === 2 ? 'bg-[#004785] text-white' : 'bg-slate-200 text-slate-500'}`}>
+      <div
+        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${step === 2 ? 'bg-[#004785] text-white' : 'bg-slate-200 text-slate-500'}`}
+      >
         2
       </div>
       <span className="ml-2 text-sm text-slate-500">
@@ -255,7 +277,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       footer={
         step === 1 ? (
           <>
-            <Button variant="secondary" onClick={handleClose}>Hủy</Button>
+            <Button variant="secondary" onClick={handleClose}>
+              Hủy
+            </Button>
             <Button
               variant="primary"
               onClick={handleFindInvoice}
@@ -267,9 +291,11 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           </>
         ) : (
           <>
-            <Button variant="secondary" onClick={() => setStep(1)}>Quay lại</Button>
+            <Button variant="secondary" onClick={() => setStep(1)}>
+              Quay lại
+            </Button>
             <Button variant="primary" onClick={handleSubmit} loading={submitting}>
-              Tạo đơn đổi trả
+              {isExchange ? 'Tạo đơn đổi hàng' : 'Tạo đơn trả hàng'}
             </Button>
           </>
         )
@@ -295,8 +321,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             />
           </div>
           <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-            Nhập mã hóa đơn đã hoàn thành để tạo yêu cầu đổi/trả hàng.
-            Hệ thống sẽ kiểm tra hóa đơn và hiển thị danh sách sản phẩm có thể đổi trả.
+            Nhập mã hóa đơn đã hoàn thành để tạo yêu cầu đổi/trả hàng. Hệ thống sẽ kiểm tra hóa đơn
+            và hiển thị danh sách sản phẩm có thể đổi trả.
           </div>
         </div>
       )}
@@ -333,12 +359,81 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* Return type selector */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Loại yêu cầu <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setReturnType('RETURN')}
+                className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                  returnType === 'RETURN'
+                    ? 'border-[#004785] bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    returnType === 'RETURN'
+                      ? 'bg-[#004785] text-white'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 15v-1a4 4 0 00-8 0v1m0 0h8m-8 0a4 4 0 01-4-4V8a4 4 0 014-4h8a4 4 0 014 4v3a4 4 0 01-4 4m-8 0a4 4 0 004 4h.5M9 19l-1.5 1.5M9 19l1.5-1.5"
+                    />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-slate-900">Trả hàng</p>
+                  <p className="text-xs text-slate-500">Hoàn tiền cho khách</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setReturnType('EXCHANGE')}
+                className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                  returnType === 'EXCHANGE'
+                    ? 'border-[#004785] bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    returnType === 'EXCHANGE'
+                      ? 'bg-[#004785] text-white'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                    />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-slate-900">Đổi hàng</p>
+                  <p className="text-xs text-slate-500">Đổi sản phẩm cùng loại, không hoàn tiền</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
           {/* Product selection */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Sản phẩm đổi trả <span className="text-red-500">*</span>
             </label>
-            <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 rounded-lg border border-slate-200">
+            <div className="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200">
               {(invoice.items || []).map((item) => {
                 const selected = selectedProducts.find((p) => p.productId === item.productId);
                 const remainingQty = item._remainingQty ?? parseFloat(item.quantity || 0);
@@ -362,11 +457,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                     <div className="flex-1">
                       <p className="text-sm font-medium">{item.productName || item.productId}</p>
                       <p className="text-xs text-slate-500">
-                        {item.productCode || '-'} · Đơn giá: {formatCurrency(item.unitPrice || 0)} · Đã mua: {item.quantity}
+                        {item.productCode || '-'}
+                        {isExchange ? '' : ` · Đơn giá: ${formatCurrency(item.unitPrice || 0)}`} ·
+                        Đã mua: {item.quantity}
                       </p>
                       {returnedQty > 0 && (
                         <p className="text-xs text-amber-600">
-                          Đã đổi trả: {returnedQty} · Còn lại: <span className="font-semibold">{remainingQty}</span>
+                          Đã đổi trả: {returnedQty} · Còn lại:{' '}
+                          <span className="font-semibold">{remainingQty}</span>
                         </p>
                       )}
                     </div>
@@ -418,35 +516,65 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             />
           </div>
 
-          {/* Refund method + amount */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Phương thức hoàn tiền
-              </label>
-              <select
-                value={refundMethod}
-                onChange={(e) => setRefundMethod(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
-              >
-                {REFUND_METHODS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Số tiền hoàn dự kiến
-              </label>
-              <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                <span className="text-lg font-bold text-green-700">
-                  {formatCurrency(totalRefund)}
-                </span>
+          {/* Refund method + amount — chỉ hiển thị khi trả hàng */}
+          {!isExchange && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Phương thức hoàn tiền
+                </label>
+                <select
+                  value={refundMethod}
+                  onChange={(e) => setRefundMethod(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+                >
+                  {REFUND_METHODS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Số tiền hoàn dự kiến
+                </label>
+                <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                  <span className="text-lg font-bold text-green-700">
+                    {formatCurrency(totalRefund)}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Exchange note */}
+          {isExchange && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  />
+                </svg>
+                <div>
+                  <p className="text-sm font-bold text-blue-800">Đổi hàng — không hoàn tiền</p>
+                  <p className="mt-1 text-xs text-blue-600">
+                    Khách hàng sẽ đổi sản phẩm cùng loại, cùng mẫu mã. Phiếu này ghi nhận việc đổi
+                    trả, không phát sinh hoàn tiền.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           <div>

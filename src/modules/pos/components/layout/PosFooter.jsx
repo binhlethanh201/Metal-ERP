@@ -1,5 +1,4 @@
-/** * Footer POS - Status bar: mã đơn, nhân viên (Dynamic), khách hàng, điểm, trạng thái đồng bộ kho.
- */
+/** * Footer POS - Status bar, nằm trong flex layout. */
 import React from 'react';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
@@ -19,12 +18,10 @@ const PosFooter = ({
   synced = true,
 }) => {
   const { user } = useAuth();
-
-  // Tự động kéo tên thật của User từ phiên đăng nhập hiện tại
   const currentStaff = user?.fullName || 'Hệ thống POS';
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-12 items-center justify-between bg-slate-900 px-6 text-white">
+    <footer className="flex h-12 shrink-0 items-center justify-between bg-slate-900 px-6 text-white">
       <div className="flex items-center gap-x-6">
         <StatusBadge label="ĐƠN:" value={orderCode} />
         <StatusBadge label="NHÂN VIÊN:" value={currentStaff} bordered />
