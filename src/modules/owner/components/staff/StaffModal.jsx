@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import Modal from '../../../../shared/components/Modal';
+import Button from '../../../../shared/components/Button';
+import Input from '../../../../shared/components/Input';
 
 const initialFormState = {
   username: '',
@@ -17,26 +20,11 @@ const PERMISSION_GROUPS = [
     label: 'Sale / POS & Thu ngân',
     prefixes: ['SALE_', 'CUSTOMER_', 'LOYALTY_', 'PAYMENT_', 'PRINT_', 'PROMOTION_', 'SHIFT_'],
   },
-  {
-    label: 'Kho hàng & Kiểm kê (Stock / Inventory)',
-    prefixes: ['STOCK_'],
-  },
-  {
-    label: 'Sản phẩm (Product)',
-    prefixes: ['PRODUCT_'],
-  },
-  {
-    label: 'Nhà cung cấp & Công nợ (Supplier)',
-    prefixes: ['SUPPLIER_'],
-  },
-  {
-    label: 'Nhân sự & Phân quyền (Staff)',
-    prefixes: ['STAFF_'],
-  },
-  {
-    label: 'Hệ thống & Báo cáo (System / Owner)',
-    prefixes: ['OWNER_', 'SYSTEM_', 'REPORT_'],
-  },
+  { label: 'Kho hàng & Kiểm kê (Stock / Inventory)', prefixes: ['STOCK_'] },
+  { label: 'Sản phẩm (Product)', prefixes: ['PRODUCT_'] },
+  { label: 'Nhà cung cấp & Công nợ (Supplier)', prefixes: ['SUPPLIER_'] },
+  { label: 'Nhân sự & Phân quyền (Staff)', prefixes: ['STAFF_'] },
+  { label: 'Hệ thống & Báo cáo (System / Owner)', prefixes: ['OWNER_', 'SYSTEM_', 'REPORT_'] },
 ];
 
 const DEFAULT_ROLE_PERMISSIONS = {
@@ -104,7 +92,6 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
 
   const groupedPermissions = useMemo(() => {
     if (!permissions.length) return [];
-
     return PERMISSION_GROUPS.map((group) => {
       const items = permissions.filter((p) =>
         group.prefixes.some((prefix) => p.permissionCode.startsWith(prefix))
@@ -112,8 +99,6 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
       return { ...group, items };
     }).filter((g) => g.items.length > 0);
   }, [permissions]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -136,7 +121,6 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
     if (!staff && !isCustomizing && form.defaultRoleType) {
       submitData.permissionCodes = [];
     }
-
     onSave(submitData);
   };
 
@@ -161,295 +145,244 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
       const validDefaults = permissions
         .filter((p) => defaults.includes(p.permissionCode))
         .map((p) => p.permissionCode);
-
-      setForm((prev) => ({
-        ...prev,
-        permissionCodes: validDefaults,
-      }));
+      setForm((prev) => ({ ...prev, permissionCodes: validDefaults }));
     }
   };
 
   const handleRoleChange = (e) => {
-    const newRole = e.target.value;
     setForm((prev) => ({
       ...prev,
-      defaultRoleType: newRole,
+      defaultRoleType: e.target.value,
       permissionCodes: [],
     }));
     setIsCustomizing(false);
   };
 
-  const inputCss =
-    'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors disabled:bg-slate-100 disabled:text-slate-500';
+  const selectCss =
+    'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-[#004785] focus:outline-none transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed';
+
+  const modalFooter = (
+    <>
+      <Button variant="secondary" onClick={onClose}>
+        Đóng
+      </Button>
+      <Button variant="primary" type="submit" form="staff-form" className="flex items-center gap-2">
+        <Icon name="save" size={18} />
+        {staff ? 'Lưu thay đổi' : 'Tạo nhân viên'}
+      </Button>
+    </>
+  );
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 shadow-sm">
-          <div>
-            <h2 className="text-lg font-bold text-slate-800">
-              {staff ? `Chi tiết nhân viên: ${staff.fullName}` : 'Thêm Nhân viên mới'}
-            </h2>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="4xl"
+      title={
+        <div>
+          <span className="block">
+            {staff ? `Chi tiết nhân viên: ${staff.fullName}` : 'Thêm Nhân viên mới'}
+          </span>
+          {staff && (
+            <span className="mt-1 text-xs font-normal text-slate-500">
+              Bạn có thể kiểm tra và chỉnh sửa thông tin hoặc phân quyền trực tiếp tại đây.
+            </span>
+          )}
+        </div>
+      }
+      footer={modalFooter}
+    >
+      <form id="staff-form" onSubmit={handleSubmit}>
+        <div className="mb-6 grid grid-cols-2 gap-5">
+          {!staff && (
+            <Input
+              label="Tên đăng nhập"
+              required
+              placeholder="VD: nguyenvan_a (Unique)"
+              value={form.username || ''}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+            />
+          )}
+
+          <Input
+            label="Mật khẩu"
+            type="password"
+            required={!staff}
+            hint={staff ? '(Bỏ trống nếu không đổi)' : ''}
+            placeholder="Nhập mật khẩu mới nếu muốn đổi..."
+            value={form.password || ''}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
+
+          <Input
+            label="Họ và tên"
+            required
+            placeholder="VD: Nguyễn Văn A"
+            value={form.fullName || ''}
+            onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+          />
+
+          <Input
+            label="Email"
+            type="email"
+            required
+            placeholder="VD: nguyenvana@gmail.com (Unique)"
+            value={form.email || ''}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+
+          <Input
+            label="Số điện thoại"
+            placeholder="VD: 0912345678 (Unique nếu có)"
+            value={form.phoneNumber || ''}
+            onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+          />
+
+          <div className="w-full">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              {staff ? 'Vai trò / Chức danh' : 'Vai trò mặc định'}
+            </label>
+            <select
+              className={selectCss}
+              value={form.defaultRoleType}
+              onChange={handleRoleChange}
+              disabled={!!staff}
+            >
+              <option value="SalesStaff">Sales Staff (Nhân viên Bán hàng)</option>
+              <option value="InventoryStaff">Inventory Staff (Nhân viên Kho)</option>
+              <option value="Staff">Staff (Nhân viên)</option>
+              {!staff && <option value="">-- Không gán vai trò (Tuỳ chỉnh) --</option>}
+            </select>
             {staff && (
-              <p className="text-xs text-slate-500">
-                Bạn có thể kiểm tra và chỉnh sửa thông tin hoặc phân quyền trực tiếp tại đây.
+              <p className="mt-1 text-xs italic text-slate-400">
+                * Hệ thống không hỗ trợ đổi chức danh sau khi tạo. Bạn chỉ có thể sửa quyền bên
+                dưới.
               </p>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
-          >
-            <Icon name="close" size={24} />
-          </button>
-        </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="mb-6 grid grid-cols-2 gap-5">
-            {!staff && (
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Tên đăng nhập <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="VD: nguyenvan_a (Unique)"
-                  className={inputCss}
-                  value={form.username || ''}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                />
-              </div>
-            )}
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                Mật khẩu <span className="text-red-500">{!staff ? '*' : ''}</span>
-                {staff && (
-                  <span className="ml-1 text-xs font-normal text-slate-500">
-                    (Bỏ trống nếu không đổi)
-                  </span>
-                )}
-              </label>
-              <input
-                type="password"
-                required={!staff}
-                placeholder="Nhập mật khẩu mới nếu muốn đổi..."
-                className={inputCss}
-                value={form.password || ''}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                Họ và tên <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="VD: Nguyễn Văn A"
-                className={inputCss}
-                value={form.fullName || ''}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                required
-                placeholder="VD: nguyenvana@gmail.com (Unique)"
-                className={inputCss}
-                value={form.email || ''}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                Số điện thoại
-              </label>
-              <input
-                type="text"
-                placeholder="VD: 0912345678 (Unique nếu có)"
-                className={inputCss}
-                value={form.phoneNumber || ''}
-                onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                {staff ? 'Vai trò / Chức danh' : 'Vai trò mặc định'}
+          {staff && (
+            <div className="w-full">
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Trạng thái tài khoản
               </label>
               <select
-                className={inputCss}
-                value={form.defaultRoleType}
-                onChange={handleRoleChange}
-                disabled={!!staff}
+                className={selectCss}
+                value={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: Number(e.target.value) })}
               >
-                <option value="SalesStaff">Sales Staff (Nhân viên Bán hàng)</option>
-                <option value="InventoryStaff">Inventory Staff (Nhân viên Kho)</option>
-                <option value="Staff">Staff (Nhân viên)</option>
-                {!staff && <option value="">-- Không gán vai trò (Tuỳ chỉnh) --</option>}
+                <option value={1}>Đang hoạt động (ACTIVE)</option>
+                <option value={0}>Khóa tài khoản (INACTIVE)</option>
               </select>
-              {staff && (
-                <span className="mt-1 block text-xs italic text-slate-400">
-                  * Hệ thống không hỗ trợ đổi chức danh sau khi tạo. Bạn chỉ có thể sửa quyền bên
-                  dưới.
-                </span>
-              )}
             </div>
+          )}
+        </div>
 
-            {staff && (
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Trạng thái tài khoản
-                </label>
-                <select
-                  className={inputCss}
-                  value={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: Number(e.target.value) })}
-                >
-                  <option value={1}>Đang hoạt động (ACTIVE)</option>
-                  <option value={0}>Khóa tài khoản (INACTIVE)</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60 p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-              <div>
-                <label className="text-base font-bold text-slate-800">
-                  <Icon
-                    name="Key_Icon"
-                    size={20}
-                    className="mr-2 inline align-text-bottom text-blue-600"
-                  />
-                  Phân quyền chi tiết ({form.permissionCodes.length} quyền đang chọn)
-                </label>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {!staff
-                    ? 'Chế độ tạo mới: Tùy chỉnh quyền sẽ ghi đè hoàn toàn quyền mặc định của vai trò.'
-                    : 'Chế độ xem & cập nhật: Tích hoặc bỏ tích để cập nhật quyền hạn cho nhân viên.'}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {!staff && form.defaultRoleType && (
-                  <button
-                    type="button"
-                    onClick={() => setIsCustomizing(!isCustomizing)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
-                      !isCustomizing
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                    }`}
-                  >
-                    {!isCustomizing ? '✓ Dùng quyền mặc định' : 'Chuyển sang quyền mặc định'}
-                  </button>
-                )}
-
-                {(isCustomizing || staff) && form.defaultRoleType && (
-                  <button
-                    type="button"
-                    onClick={handleApplyRoleDefaults}
-                    className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                  >
-                    Khôi phục bộ quyền mẫu {form.defaultRoleType}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {!permissions.length ? (
-              <p className="flex items-center gap-2 py-4 text-sm italic text-slate-500">
-                <Icon name="sync" className="animate-spin" /> Đang tải danh sách quyền từ hệ
-                thống...
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <div>
+              <label className="text-base font-bold text-slate-800">
+                <Icon
+                  name="Key_Icon"
+                  size={20}
+                  className="mr-2 inline align-text-bottom text-blue-600"
+                />
+                Phân quyền chi tiết ({form.permissionCodes.length} quyền đang chọn)
+              </label>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {!staff
+                  ? 'Chế độ tạo mới: Tùy chỉnh quyền sẽ ghi đè hoàn toàn quyền mặc định của vai trò.'
+                  : 'Chế độ xem & cập nhật: Tích hoặc bỏ tích để cập nhật quyền hạn cho nhân viên.'}
               </p>
-            ) : !isCustomizing && !staff && form.defaultRoleType ? (
-              <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-6 text-center">
-                <Icon name="verified_user" size={32} className="mx-auto mb-2 text-blue-600" />
-                <h4 className="text-sm font-bold text-blue-900">
-                  Đang áp dụng bộ quyền tự động cho chức danh [{form.defaultRoleType}]
-                </h4>
-                <p className="mx-auto mt-1 max-w-lg text-xs text-blue-700">
-                  Nhân viên sẽ tự động nhận đầy đủ các quyền chuẩn được thiết lập sẵn trong hệ thống
-                  khi khởi tạo.
-                </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {!staff && form.defaultRoleType && (
+                <Button
+                  size="sm"
+                  variant={!isCustomizing ? 'primary' : 'secondary'}
+                  onClick={() => setIsCustomizing(!isCustomizing)}
+                >
+                  {!isCustomizing ? '✓ Dùng quyền mặc định' : 'Chuyển sang quyền mặc định'}
+                </Button>
+              )}
+
+              {(isCustomizing || staff) && form.defaultRoleType && (
                 <button
                   type="button"
-                  onClick={() => setIsCustomizing(true)}
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-800 underline hover:text-black"
+                  onClick={handleApplyRoleDefaults}
+                  className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                 >
-                  <Icon name="edit" size={14} /> Tôi muốn tự chọn / ghi đè quyền thủ công
+                  Khôi phục bộ quyền mẫu {form.defaultRoleType}
                 </button>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {groupedPermissions.map((group) => (
-                  <div key={group.label}>
-                    <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-600">
-                      {group.label}
-                    </h4>
-                    <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
-                      {group.items.map((perm) => {
-                        const isChecked = form.permissionCodes.includes(perm.permissionCode);
-                        return (
-                          <label
-                            key={perm.permissionId}
-                            className="group flex cursor-pointer items-start gap-2.5 rounded p-1 hover:bg-slate-50"
-                          >
-                            <input
-                              type="checkbox"
-                              className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 transition-colors focus:ring-blue-500"
-                              checked={isChecked}
-                              onChange={() => handleTogglePermission(perm.permissionCode)}
-                            />
-                            <div className="flex flex-col">
-                              <span
-                                className={`text-sm font-medium transition-colors ${
-                                  isChecked
-                                    ? 'font-semibold text-blue-700'
-                                    : 'text-slate-700 group-hover:text-black'
-                                }`}
-                              >
-                                {perm.permissionName || perm.permissionCode}
-                              </span>
-                              <span className="font-mono text-[11px] text-slate-400">
-                                {perm.permissionCode}
-                              </span>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          <div className="sticky bottom-0 mt-8 flex justify-end gap-3 border-t border-slate-200 bg-white pb-2 pt-5">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              Đóng
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
-            >
-              <Icon name="save" size={18} />
-              {staff ? 'Lưu thay đổi' : 'Tạo nhân viên'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          {!permissions.length ? (
+            <p className="flex items-center gap-2 py-4 text-sm italic text-slate-500">
+              <Icon name="sync" className="animate-spin" /> Đang tải danh sách quyền từ hệ thống...
+            </p>
+          ) : !isCustomizing && !staff && form.defaultRoleType ? (
+            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-6 text-center">
+              <Icon name="verified_user" size={32} className="mx-auto mb-2 text-blue-600" />
+              <h4 className="text-sm font-bold text-blue-900">
+                Đang áp dụng bộ quyền tự động cho chức danh [{form.defaultRoleType}]
+              </h4>
+              <p className="mx-auto mt-1 max-w-lg text-xs text-blue-700">
+                Nhân viên sẽ tự động nhận đầy đủ các quyền chuẩn được thiết lập sẵn trong hệ thống
+                khi khởi tạo.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsCustomizing(true)}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-800 underline hover:text-black"
+              >
+                <Icon name="edit" size={14} /> Tôi muốn tự chọn / ghi đè quyền thủ công
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {groupedPermissions.map((group) => (
+                <div key={group.label}>
+                  <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    {group.label}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
+                    {group.items.map((perm) => {
+                      const isChecked = form.permissionCodes.includes(perm.permissionCode);
+                      return (
+                        <label
+                          key={perm.permissionId}
+                          className="group flex cursor-pointer items-start gap-2.5 rounded p-1 hover:bg-slate-50"
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 transition-colors focus:ring-blue-500"
+                            checked={isChecked}
+                            onChange={() => handleTogglePermission(perm.permissionCode)}
+                          />
+                          <div className="flex flex-col">
+                            <span
+                              className={`text-sm font-medium transition-colors ${isChecked ? 'font-semibold text-blue-700' : 'text-slate-700 group-hover:text-black'}`}
+                            >
+                              {perm.permissionName || perm.permissionCode}
+                            </span>
+                            <span className="font-mono text-[11px] text-slate-400">
+                              {perm.permissionCode}
+                            </span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </form>
+    </Modal>
   );
 };
 

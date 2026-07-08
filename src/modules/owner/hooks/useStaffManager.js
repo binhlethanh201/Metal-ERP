@@ -9,6 +9,27 @@ import {
   deleteStaff,
 } from '../services/staffService';
 
+// --- Helper: lấy userId hiện tại từ JWT lưu trong storage (key 'authToken', khớp apiClient.js) ---
+const decodeCurrentUserId = () => {
+  try {
+    const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    if (!token) return null;
+
+    const payloadBase64 = token.split('.')[1];
+    const normalized = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(decodeURIComponent(escape(atob(normalized))));
+    return (
+      payload.nameid ||
+      payload.sub ||
+      payload.userId ||
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+      null
+    );
+  } catch {
+    return null;
+  }
+};
+
 const formatApiError = (err, defaultMsg = 'Đã có lỗi xảy ra.') => {
   const message = err?.data?.message || err?.message || defaultMsg;
   const errors = err?.data?.errors;
@@ -24,6 +45,7 @@ export const useStaffManager = () => {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentUserId] = useState(decodeCurrentUserId());
 
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
@@ -162,6 +184,7 @@ export const useStaffManager = () => {
     search,
     setSearch,
     paginationMeta,
+    currentUserId,
     fetchStaffDetail,
     handleCreateStaff,
     handleUpdateStaff,

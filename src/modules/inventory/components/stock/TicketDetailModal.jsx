@@ -235,9 +235,6 @@ export const TicketDetailModal = ({
               Hủy phiếu nháp
             </Button>
           )}
-          <Button variant="secondary" onClick={onClose}>
-            Đóng
-          </Button>
           {canConfirm && isPending && (
             <Button
               variant="success"

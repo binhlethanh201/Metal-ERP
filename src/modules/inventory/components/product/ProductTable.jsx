@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import Toggle from '../../../../shared/components/Toggle';
 import { formatMoney, isProductActive } from '../../utils/productUtils';
 import { ProductDetailPanel } from './ProductDetailPanel';
 
@@ -18,9 +19,6 @@ const fmtDateTime = (dateStr) => {
 
 export const ProductTable = ({
   rows = [],
-  sortConfig,
-  getSortIcon,
-  onToggleSort,
   onToggleStatus,
   expandedId,
   onToggleExpand,
@@ -31,22 +29,25 @@ export const ProductTable = ({
   onSelectAll,
 }) => {
   const isAllSelected = rows.length > 0 && selectedIds.length === rows.length;
+
+  // Đã bỏ sortKey ra khỏi mảng columns
   const columns = [
-    ['Mã hàng', 'code', 'w-[140px]'],
-    ['Tên hàng', 'name', 'w-[240px]'],
-    ['Đơn vị', '', 'w-[90px]'],
-    ['Thương hiệu', '', 'w-[130px]'],
-    ['Giá bán', 'saleprice', 'w-[110px]'],
-    ['Giá vốn', 'costprice', 'w-[110px]'],
-    ['Tồn kho', 'stock', 'w-[110px]'],
-    ['Vị trí kho', '', 'w-[110px]'],
-    ['Hoạt động', '', 'w-[90px]'],
-    ['Thời gian tạo', 'createdat', 'w-[160px]'],
+    ['Mã hàng', 'w-[140px]'],
+    ['Tên hàng', 'w-[240px]'],
+    ['Đơn vị', 'w-[90px]'],
+    ['Thương hiệu', 'w-[130px]'],
+    ['Giá bán', 'w-[110px]'],
+    ['Giá vốn', 'w-[110px]'],
+    ['Tồn kho', 'w-[110px]'],
+    ['Vị trí kho', 'w-[110px]'],
+    ['Hoạt động', 'w-[90px]'],
+    ['Thời gian tạo', 'w-[160px]'],
   ];
+
   return (
     <table className="w-full min-w-[1250px] table-fixed border-collapse text-left">
-      <thead className="border-b border-slate-200 bg-[#e8f0fe]">
-        <tr className="text-[11px] font-bold uppercase text-slate-600">
+      <thead className="border-b border-slate-200 bg-gray-50">
+        <tr className="text-xs font-semibold text-slate-900">
           <th className="w-[48px] px-4 py-3 text-center">
             <input
               type="checkbox"
@@ -55,34 +56,30 @@ export const ProductTable = ({
               onChange={(e) => onSelectAll?.(e.target.checked, rows)}
             />
           </th>
-          <th className="w-[40px] px-2 py-3">
-            <Icon name="star_outline" className="text-slate-400" size={16} />
-          </th>
-          {columns.map(([label, sortKey, widthClass]) => {
-            const isSorted = sortConfig?.key === sortKey;
+
+          {/* Đã xóa cột Star */}
+
+          {columns.map(([label, widthClass]) => {
             const isNumCol = label === 'Giá bán' || label === 'Giá vốn' || label === 'Tồn kho';
             return (
-              <th
-                key={label}
-                className={`${widthClass} ${sortKey ? 'cursor-pointer select-none' : ''} px-4 py-3 ${isNumCol ? 'text-right' : ''}`}
-                onClick={() => sortKey && onToggleSort?.(sortKey)}
-              >
+              <th key={label} className={`${widthClass} px-4 py-3 ${isNumCol ? 'text-right' : ''}`}>
                 <div className={`flex items-center gap-1 ${isNumCol ? 'justify-end' : ''}`}>
                   <span className="truncate">{label}</span>
-                  {sortKey && (
-                    <Icon
-                      name={getSortIcon?.(sortKey) || 'unfold_more'}
-                      size={14}
-                      className={isSorted ? 'font-bold text-blue-600' : 'text-slate-400 opacity-50'}
-                    />
-                  )}
                 </div>
               </th>
             );
           })}
         </tr>
       </thead>
-      <tbody className="divide-y divide-slate-100 text-sm">
+      <tbody className="divide-y divide-gray-200 text-sm">
+        {rows.length === 0 && (
+          <tr>
+            {/* Giảm colSpan từ 12 xuống 11 do đã xóa 1 cột */}
+            <td colSpan={11} className="px-6 py-8 text-center text-slate-500">
+              Không có dữ liệu
+            </td>
+          </tr>
+        )}
         {rows.map((row) => {
           const isExpanded = expandedId === (row.id || row.productId);
           const currentId = row.id || row.productId;
@@ -91,7 +88,7 @@ export const ProductTable = ({
           return (
             <Fragment key={currentId}>
               <tr
-                className={`group cursor-pointer transition-colors hover:bg-blue-50 ${isExpanded || isSelected ? 'bg-blue-50' : ''}`}
+                className={`group cursor-pointer transition-colors hover:bg-gray-50 ${isExpanded || isSelected ? 'bg-blue-50' : ''}`}
                 onClick={() => onToggleExpand?.(currentId)}
               >
                 <td className="px-4 py-3 text-center">
@@ -106,13 +103,9 @@ export const ProductTable = ({
                     onClick={(e) => e.stopPropagation()}
                   />
                 </td>
-                <td className="px-2 py-3">
-                  <Icon
-                    name="star_outline"
-                    className="text-slate-300 transition-colors group-hover:text-amber-400"
-                    size={16}
-                  />
-                </td>
+
+                {/* Đã xóa cột Star */}
+
                 <td className="overflow-hidden px-4 py-3">
                   <div className="flex items-center gap-3 overflow-hidden">
                     <div className="flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100">
@@ -153,18 +146,12 @@ export const ProductTable = ({
                   {row.shelfLocation || row.location || '---'}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-center">
-                  <label className="relative inline-flex cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Toggle
                       checked={rowActive}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        onToggleStatus?.(currentId, rowActive);
-                      }}
+                      onChange={() => onToggleStatus?.(currentId, rowActive)}
                     />
-                    <div className="peer h-5 w-9 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
-                  </label>
+                  </div>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">
                   {fmtDateTime(row.createdAt)}
@@ -172,7 +159,8 @@ export const ProductTable = ({
               </tr>
               {isExpanded && (
                 <tr>
-                  <td colSpan={12} className="border-b border-blue-200 p-0">
+                  {/* Giảm colSpan từ 12 xuống 11 */}
+                  <td colSpan={11} className="border-b border-blue-200 p-0">
                     <ProductDetailPanel
                       row={row}
                       onEdit={(r, tab) => onEdit?.(r, tab)}
