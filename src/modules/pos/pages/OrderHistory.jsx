@@ -2,7 +2,7 @@
  * OrderHistory Page - Lịch sử đơn hàng POS (bán tại quầy)
  * Dữ liệu từ API: GET /pos/invoices?status=Completed
  */
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
@@ -16,113 +16,183 @@ import { getOrders, getInvoice } from '../services/posService';
 const MOCK_ORDERS = [
   {
     id: 'POS-20240508-001',
+    invoiceCode: 'POS-20240508-001',
     date: '2024-05-08 14:30',
+    createdAt: '2024-05-08T14:30:00',
     customer: 'Cty TNHH XD Minh Phat',
+    customerName: 'Cty TNHH XD Minh Phat',
     cashier: 'Nguyen Van A',
-    items: 5,
+    items: [
+      { productName: 'Thép tấm SS400 5mm', quantity: 10, unitPrice: 250000, price: 250000 },
+      { productName: 'Ống thép mạ kẽm Ø34', quantity: 50, unitPrice: 150000, price: 150000 },
+    ],
+    itemCount: 2,
     subtotal: 4200000,
     discount: 0,
     vat: 336000,
     total: 4536000,
+    totalAmount: 4536000,
     payLines: [{ method: 'Tiền mặt', amount: 5000000 }],
     change: 464000,
+    changeAmount: 464000,
   },
   {
     id: 'POS-20240508-002',
+    invoiceCode: 'POS-20240508-002',
     date: '2024-05-08 15:10',
+    createdAt: '2024-05-08T15:10:00',
     customer: 'Khách lẻ',
+    customerName: 'Khách lẻ',
     cashier: 'Nguyen Van A',
-    items: 2,
+    items: [
+      { productName: 'Bulong M16', quantity: 50, unitPrice: 12000, price: 12000 },
+      { productName: 'Đai ốc M16', quantity: 50, unitPrice: 5000, price: 5000 },
+    ],
+    itemCount: 2,
     subtotal: 850000,
     discount: 50000,
     vat: 64000,
     total: 864000,
-    payLines: [{ method: 'The', amount: 864000 }],
+    totalAmount: 864000,
+    payLines: [{ method: 'Thẻ', amount: 864000 }],
     change: 0,
+    changeAmount: 0,
   },
   {
     id: 'POS-20240508-003',
+    invoiceCode: 'POS-20240508-003',
     date: '2024-05-08 16:45',
+    createdAt: '2024-05-08T16:45:00',
     customer: 'Dai ly Tuan Kiet',
+    customerName: 'Dai ly Tuan Kiet',
     cashier: 'Nguyen Van A',
-    items: 12,
+    items: [
+      { productName: 'Thép hộp 40x80', quantity: 20, unitPrice: 350000, price: 350000 },
+      { productName: 'Tôn lợp mái', quantity: 30, unitPrice: 180000, price: 180000 },
+    ],
+    itemCount: 2,
     subtotal: 12500000,
     discount: 500000,
     vat: 960000,
     total: 12960000,
+    totalAmount: 12960000,
     payLines: [
       { method: 'Tiền mặt', amount: 8000000 },
       { method: 'Chuyển khoản', amount: 4960000 },
     ],
     change: 0,
+    changeAmount: 0,
   },
   {
     id: 'POS-20240507-004',
+    invoiceCode: 'POS-20240507-004',
     date: '2024-05-07 09:15',
+    createdAt: '2024-05-07T09:15:00',
     customer: 'Nha thau Quang Vinh',
+    customerName: 'Nha thau Quang Vinh',
     cashier: 'Tran Thi B',
-    items: 8,
+    items: [
+      { productName: 'Sắt phi 12', quantity: 100, unitPrice: 42000, price: 42000 },
+      { productName: 'Sắt phi 16', quantity: 50, unitPrice: 65000, price: 65000 },
+    ],
+    itemCount: 2,
     subtotal: 5600000,
     discount: 0,
     vat: 448000,
     total: 6048000,
+    totalAmount: 6048000,
     payLines: [{ method: 'Chuyển khoản', amount: 6048000 }],
     change: 0,
+    changeAmount: 0,
   },
   {
     id: 'POS-20240507-005',
+    invoiceCode: 'POS-20240507-005',
     date: '2024-05-07 11:30',
+    createdAt: '2024-05-07T11:30:00',
     customer: 'Khách lẻ',
+    customerName: 'Khách lẻ',
     cashier: 'Tran Thi B',
-    items: 1,
+    items: [{ productName: 'Máy cắt cầm tay', quantity: 1, unitPrice: 1550000, price: 1550000 }],
+    itemCount: 1,
     subtotal: 1550000,
     discount: 0,
     vat: 124000,
     total: 1674000,
+    totalAmount: 1674000,
     payLines: [{ method: 'Tiền mặt', amount: 1700000 }],
     change: 26000,
+    changeAmount: 26000,
   },
   {
     id: 'POS-20240507-006',
+    invoiceCode: 'POS-20240507-006',
     date: '2024-05-07 14:00',
+    createdAt: '2024-05-07T14:00:00',
     customer: 'Anh Nguyen Van Hung',
+    customerName: 'Anh Nguyen Van Hung',
     cashier: 'Tran Thi B',
-    items: 3,
+    items: [
+      { productName: 'Keo dán sắt', quantity: 10, unitPrice: 45000, price: 45000 },
+      { productName: 'Băng keo chống thấm', quantity: 5, unitPrice: 120000, price: 120000 },
+      { productName: 'Vít bắn tôn', quantity: 200, unitPrice: 3000, price: 3000 },
+    ],
+    itemCount: 3,
     subtotal: 2100000,
     discount: 0,
     vat: 168000,
     total: 2268000,
-    payLines: [{ method: 'The', amount: 2268000 }],
+    totalAmount: 2268000,
+    payLines: [{ method: 'Thẻ', amount: 2268000 }],
     change: 0,
+    changeAmount: 0,
   },
   {
     id: 'POS-20240506-007',
+    invoiceCode: 'POS-20240506-007',
     date: '2024-05-06 08:30',
+    createdAt: '2024-05-06T08:30:00',
     customer: 'Cua hang VLXD Tuan Kiet',
+    customerName: 'Cua hang VLXD Tuan Kiet',
     cashier: 'Le Van C',
-    items: 20,
+    items: [
+      { productName: 'Xi măng PCB40', quantity: 50, unitPrice: 85000, price: 85000 },
+      { productName: 'Cát vàng', quantity: 5, unitPrice: 350000, price: 350000 },
+    ],
+    itemCount: 2,
     subtotal: 18500000,
     discount: 925000,
     vat: 1406000,
     total: 18981000,
+    totalAmount: 18981000,
     payLines: [
       { method: 'Tiền mặt', amount: 10000000 },
       { method: 'Chuyển khoản', amount: 8981000 },
     ],
     change: 0,
+    changeAmount: 0,
   },
   {
     id: 'POS-20240506-008',
+    invoiceCode: 'POS-20240506-008',
     date: '2024-05-06 10:15',
+    createdAt: '2024-05-06T10:15:00',
     customer: 'Khách lẻ',
+    customerName: 'Khách lẻ',
     cashier: 'Le Van C',
-    items: 2,
+    items: [
+      { productName: 'Găng tay bảo hộ', quantity: 10, unitPrice: 35000, price: 35000 },
+      { productName: 'Khẩu trang công nghiệp', quantity: 20, unitPrice: 10000, price: 10000 },
+    ],
+    itemCount: 2,
     subtotal: 550000,
     discount: 0,
     vat: 44000,
     total: 594000,
+    totalAmount: 594000,
     payLines: [{ method: 'Tiền mặt', amount: 600000 }],
     change: 6000,
+    changeAmount: 6000,
   },
 ];
 
@@ -243,6 +313,7 @@ const mapOrder = (o) => {
 
   return {
     id: o.invoiceCode || o.invoiceId || o.id || '',
+    invoiceId: o.invoiceId || o.id || o.invoiceCode || '',
     invoiceCode: o.invoiceCode || o.id || '',
     date: o.createdAt || o.date || o.invoiceDate || '',
     createdAt: o.createdAt || o.date || o.invoiceDate || '',
@@ -287,7 +358,7 @@ const mapOrder = (o) => {
 
 const OrderHistory = () => {
   const navigate = useNavigate();
-  const { drafts, setDrafts } = useOutletContext();
+  const { drafts, setDrafts, showNotice } = useOutletContext();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -331,30 +402,54 @@ const OrderHistory = () => {
     fetchOrders();
   }, [fetchOrders]);
 
+  // Tu dong refresh khi quay lai trang
+  useEffect(() => {
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') fetchOrders();
+    };
+    document.addEventListener('visibilitychange', onFocus);
+    return () => document.removeEventListener('visibilitychange', onFocus);
+  }, [fetchOrders]);
+
   // Fetch chi tiết hóa đơn khi chọn xem
   const [selected, setSelected] = useState(null);
   const [, setSelectedLoading] = useState(false);
   const handleSelectOrder = async (row) => {
     setSelected(row);
     setSelectedLoading(true);
-    // Thử lấy chi tiết hóa đơn từ API (có thể có payments, items đầy đủ)
-    const invoiceId = row.invoiceCode || row.id;
+    const invoiceId = row.invoiceId || row.invoiceCode || row.id;
     if (invoiceId) {
       try {
         const detail = await getInvoice(invoiceId);
         if (detail) {
+          const mapped = mapOrder(detail);
+          // Giữ lại items từ row nếu API detail không trả về items
+          if ((!mapped.items || mapped.items.length === 0) && row.items?.length > 0) {
+            mapped.items = row.items;
+          }
           setSelected((prev) =>
-            prev?.id === (row.invoiceCode || row.id) ? { ...prev, ...mapOrder(detail) } : prev
+            prev?.id === (row.invoiceCode || row.id) ? { ...prev, ...mapped } : prev
+          );
+          // Cập nhật luôn vào orders để bảng hiển thị đúng tổng tiền
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.invoiceCode === mapped.invoiceCode || o.id === mapped.id ? { ...o, ...mapped } : o
+            )
           );
         }
-      } catch (_) {}
+      } catch (err) {
+        console.warn('[OrderHistory] getInvoice failed, using list data:', err?.message);
+      }
     }
     setSelectedLoading(false);
   };
 
   const handlePrintOrder = (order) => {
     const printWindow = window.open('', '_blank', 'width=420,height=800');
-    if (!printWindow) return;
+    if (!printWindow) {
+      showNotice?.('Trình duyệt đã chặn cửa sổ in. Vui lòng cho phép popup rồi thử lại.');
+      return;
+    }
 
     const payLines = Array.isArray(order.payLines)
       ? order.payLines
@@ -503,7 +598,10 @@ ${
       w.setDate(w.getDate() - 7);
       list = list.filter((o) => new Date(o.createdAt || o.date) >= w);
     }
-    return list;
+    // Sap xep moi nhat len dau
+    return [...list].sort(
+      (a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
+    );
   }, [orders, search, timeFilter, loading]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
@@ -511,6 +609,36 @@ ${
     const start = (currentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage, pageSize]);
+
+  // Tự động backfill tổng tiền cho các đơn ở trang hiện tại
+  const fetchedDetailIds = useRef(new Set());
+  useEffect(() => {
+    if (!orders.length || loading) return;
+    const needFetch = paginatedData.filter(
+      (o) => !fetchedDetailIds.current.has(o.invoiceCode) && (!o.totalAmount || !o.items?.length)
+    );
+    if (!needFetch.length) return;
+    needFetch.forEach((o) => fetchedDetailIds.current.add(o.invoiceCode));
+    Promise.allSettled(
+      needFetch.map((o) => {
+        const id = o.invoiceId || o.invoiceCode || o.id;
+        return id ? getInvoice(id) : Promise.reject('no id');
+      })
+    ).then((results) => {
+      setOrders((prev) => {
+        const updated = [...prev];
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled' && result.value) {
+            const mapped = mapOrder(result.value);
+            const code = needFetch[idx].invoiceCode;
+            const orderIdx = updated.findIndex((o) => o.invoiceCode === code);
+            if (orderIdx !== -1) updated[orderIdx] = { ...updated[orderIdx], ...mapped };
+          }
+        });
+        return updated;
+      });
+    });
+  }, [currentPage, paginatedData, orders.length, loading]);
 
   const todayOrders = orders.filter((o) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -552,7 +680,9 @@ ${
       header: 'Món',
       width: '50px',
       render: (v, row) => (
-        <span className="text-slate-600">{v?.length ?? row.items ?? row.itemCount ?? 0}</span>
+        <span className="text-slate-600">
+          {Array.isArray(v) ? v.length : (row.itemCount ?? v ?? 0)}
+        </span>
       ),
     },
     {
@@ -587,7 +717,7 @@ ${
       header: 'Tổng tiền',
       render: (v, row) => (
         <span className="text-xs font-bold text-green-600">
-          {formatCurrency(v ?? row.total ?? 0)}
+          {formatCurrency(v || row.totalAmount || row.total || 0)}
         </span>
       ),
     },
@@ -869,27 +999,58 @@ ${
           <Card header={`Sản phẩm (${selected.items?.length || selected.itemCount || 0})`}>
             <div className="space-y-3">
               {selected.items && selected.items.length > 0 ? (
-                selected.items.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-900">
-                        {item.productName ||
-                          item.name ||
-                          item.productCode ||
-                          `SP #${item.productId || item.id || ''}`}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {formatCurrency(item.unitPrice || item.price || 0)} x {item.quantity || 0}
-                      </p>
+                (() => {
+                  const hasValidPrice = selected.items.some(
+                    (item) => (item.totalPrice || item.unitPrice || item.price || 0) > 0
+                  );
+                  return hasValidPrice ? (
+                    selected.items.map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-900">
+                            {item.productName ||
+                              item.name ||
+                              item.productCode ||
+                              `SP #${item.productId || item.id || ''}`}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {formatCurrency(item.unitPrice || item.price || 0)} x{' '}
+                            {item.quantity || 0}
+                          </p>
+                        </div>
+                        <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
+                          {formatCurrency(
+                            item.totalPrice ||
+                              (item.unitPrice || item.price || 0) * (item.quantity || 0)
+                          )}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="space-y-2">
+                      {selected.items.map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between border-b border-slate-50 pb-2 text-sm last:border-0 last:pb-0"
+                        >
+                          <span className="truncate text-slate-900">
+                            {item.productName ||
+                              item.name ||
+                              `SP #${item.productId || item.id || ''}`}
+                          </span>
+                          <span className="shrink-0 text-slate-500">x {item.quantity || 0}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-bold text-[#004785]">
+                        <span>Tổng tiền hàng</span>
+                        <span>{formatCurrency(selected.totalAmount || selected.total || 0)}</span>
+                      </div>
                     </div>
-                    <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
-                      {formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 0))}
-                    </span>
-                  </div>
-                ))
+                  );
+                })()
               ) : (
                 <p className="text-sm text-slate-400">Không có chi tiết sản phẩm</p>
               )}

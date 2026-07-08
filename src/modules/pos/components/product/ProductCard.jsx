@@ -29,15 +29,21 @@ const ProductCard = ({
         disabled={outOfStock || disabled}
         className="group flex w-full items-center gap-3 overflow-hidden rounded-lg border border-slate-200 bg-white text-left transition-all hover:shadow-md active:scale-[0.99]"
       >
-        <img
-          className="h-[80px] w-[80px] shrink-0 object-cover"
-          src={product.image}
-          alt={product.name}
-          onError={(e) => {
-            e.currentTarget.src =
-              'https://images.unsplash.com/photo-1586864387789-628af9feed72?q=80&w=900&auto=format&fit=crop';
-          }}
-        />
+        {product.image ? (
+          <img
+            className="h-[80px] w-[80px] shrink-0 object-cover"
+            src={product.image}
+            alt={product.name}
+            onError={(e) => {
+              e.currentTarget.src =
+                'https://images.unsplash.com/photo-1586864387789-628af9feed72?q=80&w=900&auto=format&fit=crop';
+            }}
+          />
+        ) : (
+          <div className="flex h-[80px] w-[80px] shrink-0 items-center justify-center bg-slate-100 text-lg font-bold text-slate-300">
+            {product.name?.charAt(0) || '?'}
+          </div>
+        )}
         <div className="flex min-w-0 flex-1 items-center justify-between gap-2 pr-3">
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold text-slate-800">{product.name}</h3>
@@ -78,15 +84,21 @@ const ProductCard = ({
       disabled={outOfStock || disabled}
       className="group relative flex h-[410px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-all hover:shadow-lg active:scale-95"
     >
-      <img
-        className="h-[230px] w-full shrink-0 object-cover"
-        src={product.image}
-        alt={product.name}
-        onError={(e) => {
-          e.currentTarget.src =
-            'https://images.unsplash.com/photo-1586864387789-628af9feed72?q=80&w=900&auto=format&fit=crop';
-        }}
-      />
+      {product.image ? (
+        <img
+          className="h-[230px] w-full shrink-0 object-cover"
+          src={product.image}
+          alt={product.name}
+          onError={(e) => {
+            e.currentTarget.src =
+              'https://images.unsplash.com/photo-1586864387789-628af9feed72?q=80&w=900&auto=format&fit=crop';
+          }}
+        />
+      ) : (
+        <div className="flex h-[230px] w-full shrink-0 items-center justify-center bg-slate-100 text-4xl font-bold text-slate-300">
+          {product.name?.charAt(0) || '?'}
+        </div>
+      )}
       {/* Badge trạng thái stock */}
       <span
         className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[10px] font-bold ${product.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}

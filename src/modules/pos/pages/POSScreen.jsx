@@ -722,8 +722,6 @@ const POSScreen = () => {
               }}
               onQtyChange={cart.changeQty}
               onRemoveItem={cart.removeItem}
-              selectedCustomer={selectedCustomer}
-              onOpenCustomerPicker={() => setShowCustModal(true)}
               payMethod={cart.paymentMethod}
               onPayMethodChange={cart.setPaymentMethod}
               isSplitPay={isSplitPay}

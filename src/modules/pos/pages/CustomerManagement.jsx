@@ -2,7 +2,7 @@
  * CustomerManagement Page - Quản lý khách hàng trong POS
  * API: /pos/customers - GET list, POST create, PUT update
  */
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
@@ -17,6 +17,7 @@ import {
   updateCustomer,
   getReturns,
   getOrders,
+  getCustomerOrders,
 } from '../services/posService';
 import { CUSTOMER_GROUPS } from '../data/posMockData';
 
@@ -246,22 +247,12 @@ export const CustomerManagement = () => {
   const loadCustomerOrders = useCallback(async (customer) => {
     setOrdersLoading(true);
     try {
-      const cid = String(customer.customerId || customer.id || '').toLowerCase();
-      const cname = (customer.name || '').toLowerCase().trim();
-      // Dùng getOrders (cùng API với trang Đơn hàng) để đồng bộ số liệu
-      const ordersData = await getOrders({ status: 'Completed', pageSize: 500 });
-      const allOrders = Array.isArray(ordersData)
+      const cid = customer.customerId || customer.id;
+      // Dùng API chuyên dụng GET /pos/customers/{id}/orders
+      const ordersData = await getCustomerOrders(cid);
+      const orders = Array.isArray(ordersData)
         ? ordersData
         : (ordersData?.items ?? ordersData?.data ?? []);
-      const orders = allOrders.filter((o) => {
-        const ocid = String(
-          o.customerId || o.customer?.id || o.customer?.customerId || ''
-        ).toLowerCase();
-        if (ocid) return ocid === cid;
-        // Fallback: match bằng tên khách hàng
-        const oname = (o.customerName || '').toLowerCase().trim();
-        return oname && oname === cname;
-      });
 
       // Lấy returns để tính tiền hoàn - map bằng cả orderId lẫn invoiceCode
       let returnsByOrderId = {};
@@ -368,6 +359,45 @@ export const CustomerManagement = () => {
     const start = (currentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage, pageSize]);
+
+  // Tự động backfill tổng chi tiêu cho khách hàng ở trang hiện tại
+  const fetchedCustDetailIds = useRef(new Set());
+  useEffect(() => {
+    if (!customers.length || loading) return;
+    const needFetch = paginatedData.filter(
+      (c) => !fetchedCustDetailIds.current.has(c.id) && (!c.totalSpent || !c.orderCount)
+    );
+    if (!needFetch.length) return;
+    needFetch.forEach((c) => fetchedCustDetailIds.current.add(c.id));
+    Promise.allSettled(
+      needFetch.map((c) => {
+        const cid = c.customerId || c.id;
+        return cid ? getCustomerOrders(cid) : Promise.reject('no id');
+      })
+    ).then((results) => {
+      setCustomers((prev) => {
+        const updated = [...prev];
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled' && result.value) {
+            const orders = Array.isArray(result.value)
+              ? result.value
+              : (result.value?.items ?? result.value?.data ?? []);
+            const totalSpent = orders.reduce(
+              (s, o) => s + parseFloat(o.totalAmount || o.total || o.grandTotal || o.amount || 0),
+              0
+            );
+            const orderCount = orders.length;
+            const cid = needFetch[idx].customerId || needFetch[idx].id;
+            const custIdx = updated.findIndex((c) => (c.customerId || c.id) === cid);
+            if (custIdx !== -1) {
+              updated[custIdx] = { ...updated[custIdx], totalSpent, orderCount };
+            }
+          }
+        });
+        return updated;
+      });
+    });
+  }, [currentPage, paginatedData, customers.length, loading]);
 
   const activeCustomers = customers.filter((c) => c.orderCount > 0);
   const totalCustomers = customers.length;

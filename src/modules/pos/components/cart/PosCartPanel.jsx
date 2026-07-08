@@ -16,8 +16,6 @@ const PosCartPanel = ({
   onSaveDraft,
   onQtyChange,
   onRemoveItem,
-  selectedCustomer,
-  onOpenCustomerPicker,
   payMethod,
   onPayMethodChange,
   isSplitPay,
@@ -30,7 +28,7 @@ const PosCartPanel = ({
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
     ['account_balance', 'Chuyển khoản'],
-    ['sync', 'Kết hợp'],
+    ['merge', 'Kết hợp'],
   ];
   return (
     <aside
@@ -49,70 +47,73 @@ const PosCartPanel = ({
         </button>
       </div>
 
-      {/* Chọn khách hàng */}
-      <button
-        type="button"
-        onClick={onOpenCustomerPicker}
-        className={`flex items-center justify-between border-b px-4 py-3.5 transition-all hover:opacity-90 ${
-          selectedCustomer ? 'border-blue-100 bg-blue-50' : 'border-slate-100'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-9 w-9 items-center justify-center rounded-full ${
-              selectedCustomer ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
-            }`}
-          >
-            <Icon name="person" className="text-base" />
-          </div>
-          {selectedCustomer ? (
-            <div className="text-left">
-              <p className="text-sm font-bold text-blue-900">{selectedCustomer.name}</p>
-              <p className="text-xs text-blue-600">{selectedCustomer.phone}</p>
-            </div>
-          ) : (
-            <div>
-              <p className="text-sm font-bold text-slate-600">Khách lẻ</p>
-              <p className="text-xs text-slate-400">Nhấn để chọn khách hàng</p>
-            </div>
-          )}
-        </div>
-        <Icon
-          name="chevron_right"
-          className={`${selectedCustomer ? 'text-blue-400' : 'text-slate-300'}`}
-        />
-      </button>
-
+      {/* Danh sách sản phẩm */}
       <div className="custom-scrollbar flex flex-1 flex-col gap-y-4 overflow-y-auto p-4">
         {cart.map((item) => (
-          <div key={item.id} className="flex items-center gap-x-4">
-            <div className="h-[88px] w-[88px] flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-              <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
+          <div key={item.id} className="flex items-center gap-x-2">
+            <div className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+              {item.image ? (
+                <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
+              ) : (
+                <span className="text-xs font-bold text-slate-300">
+                  {item.name?.charAt(0) || '?'}
+                </span>
+              )}
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 flex-col">
               <h5 className="truncate text-sm font-bold text-slate-900">{item.name}</h5>
-              <div className="mt-1.5 text-base font-black text-[#004785]">
+              <div className="mt-0.5 whitespace-nowrap text-base font-black text-[#004785]">
                 {formatCurrency(item.price)}
+                <span className="ml-1 text-xs font-medium text-slate-500">
+                  / {item.displayUnit || item.selectedUnit || 'Cái'}
+                </span>
               </div>
             </div>
-            <div className="flex items-center gap-x-2">
+            <div className="flex items-center gap-x-1.5">
+              {item.quantity > 1 && (
+                <span className="ml-3 whitespace-nowrap text-xs font-semibold text-slate-500">
+                  Thành tiền:
+                  <span className="ml-1 text-sm font-black text-[#004785]">
+                    {formatCurrency(item.price * item.quantity)}
+                  </span>
+                </span>
+              )}
               <button
                 onClick={() => onQtyChange(item.id, -1)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
               >
                 -
               </button>
-              <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
+              <input
+                type="number"
+                min="1"
+                max={item.stock || 999999}
+                step="1"
+                value={item.quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val) && val >= 1) {
+                    const maxQty = item.stock || Infinity;
+                    const clamped = Math.min(val, maxQty);
+                    onQtyChange(item.id, clamped - item.quantity);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === '-' || e.key === 'e' || e.key === '.') e.preventDefault();
+                }}
+                className="w-8 text-center text-sm font-bold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
               <button
                 onClick={() => onQtyChange(item.id, 1)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
+                disabled={item.quantity >= (item.stock || 999999)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 +
               </button>
             </div>
             <button
               onClick={() => onRemoveItem(item.id)}
-              className="ml-2 text-base text-slate-300 hover:text-red-600 active:scale-95"
+              className="text-base text-slate-300 hover:text-red-600 active:scale-95"
             >
               <Icon name="close" className="text-base" />
             </button>

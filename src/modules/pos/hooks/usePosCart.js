@@ -33,8 +33,9 @@ export const usePosCart = (initialItems = []) => {
       const displayUnit = convertValue === 1 ? unitName : `${unitName} (×${convertValue})`;
 
       if (existed) {
+        const maxQty = existed.stock || Infinity;
         return prev.map((item) =>
-          item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === itemId ? { ...item, quantity: Math.min(maxQty, item.quantity + 1) } : item
         );
       }
 
@@ -60,9 +61,9 @@ export const usePosCart = (initialItems = []) => {
       prev
         .map((item) => {
           if (item.id !== id) return item;
-          // Cho phép số lẻ (tối thiểu 0.01)
-          const newQty = item.quantity + delta;
-          return { ...item, quantity: Math.max(0.01, newQty) };
+          const newQty = Math.round(item.quantity + delta);
+          const maxQty = item.stock || Infinity;
+          return { ...item, quantity: Math.max(1, Math.min(maxQty, newQty)) };
         })
         .filter((item) => item.quantity > 0)
     );
@@ -74,7 +75,11 @@ export const usePosCart = (initialItems = []) => {
   const setItemQuantity = useCallback((id, quantity) => {
     setCart((prev) =>
       prev
-        .map((item) => (item.id === id ? { ...item, quantity: Math.max(0.01, quantity) } : item))
+        .map((item) => {
+          if (item.id !== id) return item;
+          const maxQty = item.stock || Infinity;
+          return { ...item, quantity: Math.max(1, Math.min(maxQty, Math.round(quantity))) };
+        })
         .filter((item) => item.quantity > 0)
     );
   }, []);

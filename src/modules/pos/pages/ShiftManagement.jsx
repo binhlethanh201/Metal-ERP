@@ -17,6 +17,7 @@ import {
   getShifts,
   getShiftSummary,
   getOrders,
+  getInvoice,
 } from '../services/posService';
 
 // Format date thành YYYY-MM-DD theo giờ địa phương
@@ -193,6 +194,7 @@ export const ShiftManagement = () => {
       const orders = rawOrders.map((o) => ({
         id: o.invoiceCode || o.invoiceId || o.id || '',
         invoiceCode: o.invoiceCode || o.id || '',
+        invoiceId: o.invoiceId || o.id || o.invoiceCode || '',
         createdAt: o.createdAt || o.date || o.invoiceDate || '',
         customerName: o.customerName || o.customer || 'Khách lẻ',
         totalAmount: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
@@ -232,6 +234,8 @@ export const ShiftManagement = () => {
         if (!keep) console.log('[ShiftManagement] order before shift:', o.invoiceCode, o.createdAt);
         return keep;
       });
+      // Sap xep moi nhat len dau
+      filteredOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       console.log('[ShiftManagement] filtered orders count:', filteredOrders.length);
       if (filteredOrders.length > 0) {
         console.log('[ShiftManagement] first order:', filteredOrders[0]);
@@ -273,6 +277,65 @@ export const ShiftManagement = () => {
         transferSales,
       });
       setShiftOrders(filteredOrders);
+      // Backfill tong tien ngay trong fetchShiftSummary
+      if (filteredOrders.length > 0) {
+        const needFetch = filteredOrders.filter(
+          (o) => !o.totalAmount && (o.invoiceId || o.invoiceCode)
+        );
+        if (needFetch.length > 0) {
+          Promise.allSettled(
+            needFetch.map((o) => {
+              const id = o.invoiceId || o.invoiceCode;
+              return id ? getInvoice(id) : Promise.reject('no id');
+            })
+          ).then((results) => {
+            const updates = [];
+            results.forEach((result, idx) => {
+              if (result.status === 'fulfilled' && result.value) {
+                const d = result.value;
+                const amt = parseFloat(d.totalAmount || d.total || d.grandTotal || 0);
+                const pm = d.paymentMethod || needFetch[idx].paymentMethod;
+                updates.push({
+                  code: needFetch[idx].invoiceCode,
+                  totalAmount: amt,
+                  paymentMethod: pm,
+                });
+              }
+            });
+            if (!updates.length) return;
+            setShiftOrders((prev) =>
+              prev.map((o) => {
+                const u = updates.find((x) => x.code === o.invoiceCode);
+                return u ? { ...o, totalAmount: u.totalAmount, paymentMethod: u.paymentMethod } : o;
+              })
+            );
+            setShiftSummary((prev) => {
+              if (!prev) return prev;
+              let extraTotal = 0,
+                extraCash = 0,
+                extraCard = 0,
+                extraTransfer = 0;
+              updates.forEach((u) => {
+                extraTotal += u.totalAmount;
+                if (['Cash', 'CASH', 'Tiền mặt'].includes(u.paymentMethod))
+                  extraCash += u.totalAmount;
+                else if (['Card', 'CARD', 'Thẻ'].includes(u.paymentMethod))
+                  extraCard += u.totalAmount;
+                else if (['Transfer', 'TRANSFER', 'Chuyển khoản'].includes(u.paymentMethod))
+                  extraTransfer += u.totalAmount;
+              });
+              return {
+                ...prev,
+                totalSales: (prev.totalSales || 0) + extraTotal,
+                totalRevenue: (prev.totalRevenue || 0) + extraTotal,
+                cashSales: (prev.cashSales || 0) + extraCash,
+                cardSales: (prev.cardSales || 0) + extraCard,
+                transferSales: (prev.transferSales || 0) + extraTransfer,
+              };
+            });
+          });
+        }
+      }
     } catch (err) {
       console.error('Lỗi load shift orders:', err);
       setShiftSummary(openShift);
@@ -284,6 +347,15 @@ export const ShiftManagement = () => {
 
   useEffect(() => {
     fetchShifts();
+  }, [fetchShifts]);
+
+  // Tu dong refresh khi quay lai trang
+  useEffect(() => {
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') fetchShifts();
+    };
+    document.addEventListener('visibilitychange', onFocus);
+    return () => document.removeEventListener('visibilitychange', onFocus);
   }, [fetchShifts]);
 
   useEffect(() => {
@@ -423,12 +495,41 @@ export const ShiftManagement = () => {
         .map((o) => ({
           id: o.invoiceCode || o.invoiceId || o.id || '',
           invoiceCode: o.invoiceCode || o.id || '',
+          invoiceId: o.invoiceId || o.id || o.invoiceCode || '',
           createdAt: o.createdAt || o.date || '',
           customerName: o.customerName || o.customer || 'Khách lẻ',
           totalAmount: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
           paymentMethod: o.paymentMethod || '',
         }));
       setSelectedShiftOrders(orders);
+      // Backfill tổng tiền cho modal chi tiết
+      const needFetch = orders.filter((o) => !o.totalAmount && (o.invoiceId || o.invoiceCode));
+      if (needFetch.length > 0) {
+        Promise.allSettled(
+          needFetch.map((o) => {
+            const id = o.invoiceId || o.invoiceCode;
+            return id ? getInvoice(id) : Promise.reject('no id');
+          })
+        ).then((results) => {
+          setSelectedShiftOrders((prev) =>
+            prev.map((o) => {
+              const found = results.find(
+                (r) =>
+                  r.status === 'fulfilled' &&
+                  r.value &&
+                  (r.value.invoiceCode === o.invoiceCode || r.value.invoiceId === o.invoiceId)
+              );
+              if (!found || found.status !== 'fulfilled' || !found.value) return o;
+              const d = found.value;
+              return {
+                ...o,
+                totalAmount: parseFloat(d.totalAmount || d.total || d.grandTotal || o.totalAmount),
+                paymentMethod: d.paymentMethod || o.paymentMethod,
+              };
+            })
+          );
+        });
+      }
     } catch (err) {
       console.error('[ShiftManagement] Lỗi load orders for detail:', err);
     } finally {
