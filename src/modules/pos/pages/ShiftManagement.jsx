@@ -18,6 +18,7 @@ import {
   getShiftSummary,
   getOrders,
   getInvoice,
+  getReturns,
 } from '../services/posService';
 
 // Format date thành YYYY-MM-DD theo giờ địa phương
@@ -94,6 +95,7 @@ export const ShiftManagement = () => {
   // Summary + orders của ca đang mở
   const [shiftSummary, setShiftSummary] = useState(null);
   const [shiftOrders, setShiftOrders] = useState([]);
+  const [shiftReturns, setShiftReturns] = useState([]); // hoàn trả trong ca
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   const [showStartModal, setShowStartModal] = useState(false);
@@ -181,14 +183,33 @@ export const ShiftManagement = () => {
         console.warn('[ShiftManagement] getShiftSummary failed, fallback to order-based calc');
       }
 
-      // Load orders
-      console.log('[ShiftManagement] Fetching completed orders...');
-      const ordersData = await getOrders({ status: 'Completed' });
+      // Load orders và returns song song
+      console.log('[ShiftManagement] Fetching completed orders and returns...');
+      const [ordersData, returnsRaw] = await Promise.all([
+        getOrders({ status: 'Completed' }),
+        getReturns({}).catch(() => []),
+      ]);
       console.log('[ShiftManagement] getOrders response:', ordersData);
       const rawOrders = Array.isArray(ordersData)
         ? ordersData
         : ordersData?.items || ordersData?.data || [];
       console.log('[ShiftManagement] raw orders count:', rawOrders.length);
+
+      // Lưu returns để tính net revenue
+      const allReturns = Array.isArray(returnsRaw)
+        ? returnsRaw
+        : (returnsRaw?.items ?? returnsRaw?.data ?? []);
+      setShiftReturns(allReturns);
+      const shiftStartUTCForReturns = new Date(openShift.startedAt).getTime();
+      // Chỉ lấy REFUND (không lấy EXCHANGE) trong thời gian ca
+      const shiftRefundTotal = allReturns
+        .filter((r) => {
+          const rStatus = String(r.status || '').toUpperCase();
+          const rType = String(r.returnType || r.return_type || '').toUpperCase();
+          const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
+          return rStatus !== 'CANCELLED' && rType === 'REFUND' && rDate >= shiftStartUTCForReturns;
+        })
+        .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
 
       // Map orders với field linh hoạt
       const orders = rawOrders.map((o) => ({
@@ -249,8 +270,9 @@ export const ShiftManagement = () => {
         console.log('[ShiftManagement] first order:', filteredOrders[0]);
       }
 
-      // Tính stats từ orders
-      const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+      // Tính stats từ orders — net revenue = gross - hoàn trả (REFUND) trong ca
+      const grossRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+      const totalRevenue = Math.max(0, grossRevenue - shiftRefundTotal);
       const orderCount = filteredOrders.length;
       const cashSales = filteredOrders
         .filter(
@@ -716,9 +738,26 @@ export const ShiftManagement = () => {
                       className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
-                          {o.invoiceCode}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
+                            {o.invoiceCode}
+                          </span>
+                          {/* Badge hoàn trả nếu đơn này có phiếu REFUND */}
+                          {shiftReturns.some((r) => {
+                            const rType = String(r.returnType || r.return_type || '').toUpperCase();
+                            const rStatus = String(r.status || '').toUpperCase();
+                            return (
+                              rStatus !== 'CANCELLED' &&
+                              rType === 'REFUND' &&
+                              (r.invoiceCode || '').toLowerCase() ===
+                                (o.invoiceCode || '').toLowerCase()
+                            );
+                          }) && (
+                            <span className="mt-0.5 inline-flex items-center gap-0.5 rounded border border-red-200 bg-red-50 px-1 py-0.5 text-[9px] font-semibold text-red-600">
+                              🔄 Đã hoàn tiền
+                            </span>
+                          )}
+                        </div>
                         <span className="shrink-0 text-xs text-slate-400">
                           {new Date(o.createdAt).toLocaleTimeString('vi-VN', {
                             hour: '2-digit',

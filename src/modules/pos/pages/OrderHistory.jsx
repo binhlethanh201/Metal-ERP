@@ -10,7 +10,7 @@ import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { getOrders, getInvoice } from '../services/posService';
+import { getOrders, getInvoice, getReturns } from '../services/posService';
 
 // Mock data fallback — dùng khi API chưa có dữ liệu
 const MOCK_ORDERS = [
@@ -360,6 +360,7 @@ const OrderHistory = () => {
   const navigate = useNavigate();
   const { drafts, setDrafts, showNotice } = useOutletContext();
   const [orders, setOrders] = useState([]);
+  const [returnsData, setReturnsData] = useState([]); // danh sách hoàn trả để tính net revenue
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
@@ -376,8 +377,11 @@ const OrderHistory = () => {
     setLoading(true);
     setFetchError(null);
     try {
-      // Fetch more orders to ensure local time filters (yesterday, week) work correctly
-      const data = await getOrders({ status: 'Completed', pageSize: 1000 });
+      // Fetch orders và returns song song
+      const [data, returnsRaw] = await Promise.all([
+        getOrders({ status: 'Completed', pageSize: 1000 }),
+        getReturns({}).catch(() => []),
+      ]);
       console.log('[OrderHistory] API response:', data);
       // Backend trả về PageResultDto với Items (capital I) hoặc mảng trực tiếp
       const raw = Array.isArray(data) ? data : (data?.Items ?? data?.items ?? data?.data ?? []);
@@ -389,6 +393,11 @@ const OrderHistory = () => {
           Object.keys(Array.isArray(raw) ? raw[0] : [])
         );
       setOrders(items);
+      // Lưu returns để tính net revenue và hiển thị badge
+      const allReturns = Array.isArray(returnsRaw)
+        ? returnsRaw
+        : (returnsRaw?.items ?? returnsRaw?.data ?? []);
+      setReturnsData(allReturns);
     } catch (err) {
       console.error('Lỗi khi lấy danh sách đơn hàng:', err);
       setFetchError(err.message || 'Không thể tải danh sách đơn hàng');
@@ -659,17 +668,56 @@ ${
     const vnToday = new Date(now.getTime() + vnOffset).toISOString().slice(0, 10);
     return (o.createdAt || o.date || '').startsWith(vnToday);
   });
-  const todayRevenue = todayOrders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
+  const todayGross = todayOrders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
+
+  // Doanh thu thực = Doanh thu bán - Tổng hoàn trả (REFUND) trong ngày hôm nay
+  const now = new Date();
+  const vnOffset = 7 * 60 * 60 * 1000;
+  const vnToday = new Date(now.getTime() + vnOffset).toISOString().slice(0, 10);
+  const todayRefunds = returnsData
+    .filter((r) => {
+      const rStatus = String(r.status || '').toUpperCase();
+      const rType = String(r.returnType || r.return_type || '').toUpperCase();
+      const rDate = r.createdAt || r.created_at || '';
+      return rStatus !== 'CANCELLED' && rType === 'REFUND' && rDate.startsWith(vnToday);
+    })
+    .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
+  const todayRevenue = Math.max(0, todayGross - todayRefunds);
   const todayCount = todayOrders.length;
+
+  // Build map: invoiceCode -> totalRefundedAmount (để hiển thị badge)
+  const refundByInvoice = {};
+  returnsData.forEach((r) => {
+    const rStatus = String(r.status || '').toUpperCase();
+    const rType = String(r.returnType || r.return_type || '').toUpperCase();
+    if (rStatus === 'CANCELLED') return;
+    const key = r.invoiceCode || r.returnCode || '';
+    if (!key) return;
+    if (rType === 'REFUND') {
+      refundByInvoice[key] =
+        (refundByInvoice[key] || 0) + parseFloat(r.refundAmount || r.refund_amount || 0);
+    }
+  });
 
   const columns = [
     {
       key: 'invoiceCode',
       header: 'Mã đơn',
-      width: '160px',
-      render: (v, row) => (
-        <span className="font-mono text-xs font-bold text-[#004785]">{v || row.id || '-'}</span>
-      ),
+      width: '180px',
+      render: (v, row) => {
+        const code = v || row.id || '-';
+        const refunded = refundByInvoice[code];
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-xs font-bold text-[#004785]">{code}</span>
+            {refunded > 0 && (
+              <span className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                🔄 Hoàn {formatCurrency(refunded)}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'createdAt',
