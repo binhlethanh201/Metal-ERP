@@ -82,6 +82,8 @@ export const apiClient = async (endpoint, options = {}) => {
         errorData.message ||
         errorData.title ||
         errorData.detail ||
+        errorData.error?.message ||
+        errorData.Error?.Message ||
         `HTTP ${response.status}`;
       const error = new Error(msg);
       error.status = response.status;
