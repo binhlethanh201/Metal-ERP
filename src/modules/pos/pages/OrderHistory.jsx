@@ -481,106 +481,115 @@ const OrderHistory = () => {
             .join('')
         : `<tr><td>${translatePayment(order.paymentMethod)}</td><td class="r">${formatCurrency(totalPaid)}</td></tr>`;
 
+    const itemsHtml = (order.items || [])
+      .map(
+        (item) => `
+	    <tr>
+	      <td class="name">${item.productName || item.name || 'SP'}</td>
+	      <td class="r">${item.quantity || 0}${item.displayUnit || item.selectedUnit || ''} x ${formatCurrency(item.unitPrice || item.price || 0)}</td>
+	      <td class="r">${formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 0))}</td>
+	    </tr>`
+      )
+      .join('');
+
     printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>In hoa don ${order.id}</title>
-<style>
-  @page { size: 80mm auto; margin: 0; }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{
-    font-family:'Consolas','Courier New',monospace;
-    font-size:14px;
-    color:#000;
-    background:#fff;
-    max-width:320px;
-    margin:0 auto;
-    padding:14px 10px;
-    line-height:1.35;
+	<html>
+	<head><meta charset="utf-8"><title>In hóa đơn ${order.id}</title>
+	<style>
+	  @page { size: 80mm auto; margin: 0; }
+	  *{margin:0;padding:0;box-sizing:border-box}
+	  body{
+	    font-family:'Consolas','Courier New',monospace;
+	    font-size:14px;
+	    color:#000;
+	    background:#fff;
+	    max-width:320px;
+	    margin:0 auto;
+	    padding:14px 10px;
+	    line-height:1.35;
+	  }
+	  .c{text-align:center}
+	  .r{text-align:right;white-space:nowrap}
+	  .name{word-wrap:break-word}
+	  h2{font-size:18px;font-weight:700;margin-bottom:2px}
+	  .sub{font-size:12px;color:#333;margin-bottom:1px}
+	  hr{border:none;border-top:1px dashed #000;margin:8px 0}
+	  hr.d{border-top:1px dotted #888}
+	  table{width:100%;border-collapse:collapse}
+	  td{padding:2px 0;font-size:14px;vertical-align:top}
+	  th{font-size:11px;color:#666;text-transform:uppercase;padding:1px 0 4px;font-weight:600}
+	  .bold{font-weight:700}
+	  .lg{font-size:17px}
+	  .thanks{font-size:14px;font-weight:700;margin-top:6px}
+	  @media print{
+	    body{max-width:100%;width:100%;padding:12px 16px;font-size:12px}
+	    td{font-size:12px}
+	    h2{font-size:16px}
+	    .lg{font-size:15px}
+	    .sub{font-size:11px}
+	    .thanks{font-size:12px}
+	    th{font-size:10px}
+	  }
+	</style></head>
+	<body>
+	<div class="c">
+	  <h2>MEP SYSTEM</h2>
+	  <p class="sub">12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM</p>
+	  <p class="sub">ĐT: 028.3999.8888 &bull; MST: 0312345678</p>
+	</div>
+	<hr>
+	<div class="c">
+	  <p class="bold lg">HÓA ĐƠN BÁN HÀNG</p>
+	  <p style="font-size:13px;color:#555">Mã: ${order.id}</p>
+	  <p style="font-size:13px;color:#555">${new Date(order.date || order.createdAt).toLocaleString('vi-VN')}</p>
+	</div>
+	<hr>
+	<table>
+	  <tr><td>Thu ngân</td><td class="r">${order.cashier || order.userName || '-'}</td></tr>
+	</table>
+	<hr>
+	${
+    itemsHtml
+      ? `
+	<table>
+	  <thead><tr><th style="text-align:left">Mặt hàng</th><th style="text-align:right">SL x Giá</th><th style="text-align:right">T.Tiền</th></tr></thead>
+	  ${itemsHtml}
+	</table>
+	<hr>
+	`
+      : ''
   }
-  .c{text-align:center}
-  .r{text-align:right;white-space:nowrap}
-  h2{font-size:18px;font-weight:700;margin-bottom:2px}
-  .sub{font-size:12px;color:#333;margin-bottom:1px}
-  hr{border:none;border-top:1px dashed #000;margin:8px 0}
-  hr.d{border-top:1px dotted #888}
-  table{width:100%;border-collapse:collapse}
-  td{padding:2px 0;font-size:14px;vertical-align:top}
-  .bold{font-weight:700}
-  .lg{font-size:17px}
-  .thanks{font-size:14px;font-weight:700;margin-top:6px}
-  @media print{
-    body{max-width:100%;width:100%;padding:12px 16px;font-size:12px}
-    td{font-size:12px}
-    h2{font-size:16px}
-    .lg{font-size:15px}
-    .sub{font-size:11px}
-    .thanks{font-size:12px}
-  }
-</style></head>
-<body>
-<div class="c">
-  <h2>MEP SYSTEM</h2>
-  <p class="sub">12 Nguyen Van Bao, P.4, Go Vap, TP.HCM</p>
-  <p class="sub">DT: 028.3999.8888 &bull; MST: 0312345678</p>
-</div>
-<hr>
-<div class="c">
-  <p class="bold lg">HOA DON BAN HANG</p>
-  <p style="font-size:13px;color:#555">Ma: ${order.id}</p>
-  <p style="font-size:13px;color:#555">${new Date(order.date).toLocaleString('vi-VN')}</p>
-</div>
-<hr>
-<table>
-  <tr><td>So mon</td><td class="r">${order.items?.length || order.itemCount || 0} mon</td></tr>
-  <tr><td>Thu ngan</td><td class="r">${order.cashier || order.userName || '-'}</td></tr>
-</table>
-<hr>
-<!-- DS san pham -->
-${
-  Array.isArray(order.items) && order.items.length > 0
-    ? `
-<table>
-  <tr style="font-size:12px;font-weight:700;color:#555;">
-    <td style="padding-bottom:4px;">San pham</td>
-    <td class="r" style="padding-bottom:4px;">SL</td>
-    <td class="r" style="padding-bottom:4px;">Tien</td>
-  </tr>
-  ${order.items
-    .map(
-      (item) => `<tr>
-    <td style="font-size:13px;">${item.productName || item.name || 'SP'}</td>
-    <td class="r" style="font-size:13px;">${item.quantity || 0}</td>
-    <td class="r" style="font-size:13px;">${formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 0))}</td>
-  </tr>`
-    )
-    .join('')}
-</table>
-<hr>
-`
-    : ''
-}
-<table>
-  <tr><td>Tam tinh</td><td class="r">${formatCurrency(order.subtotal)}</td></tr>
-  ${order.discount > 0 ? `<tr><td style="color:#c62828;">Giam gia</td><td class="r" style="color:#c62828;">-${formatCurrency(order.discount)}</td></tr>` : ''}
-  <tr><td>VAT (8%)</td><td class="r">${formatCurrency(order.vat)}</td></tr>
-  <tr class="bold lg"><td>TONG CONG</td><td class="r">${formatCurrency(order.total)}</td></tr>
-</table>
-<hr>
-<table>
-  <tr><td>Khach hang</td><td class="r">${order.customer}</td></tr>
-  ${payLinesHtml}
-  <tr class="bold"><td>Da thanh toan</td><td class="r">${formatCurrency(totalPaid)}</td></tr>
-  ${order.change > 0 ? `<tr><td style="color:#e65100;">Tien thua</td><td class="r" style="color:#e65100;">${formatCurrency(order.change)}</td></tr>` : ''}
-</table>
-<hr class="d">
-<div class="c">
-  <p class="thanks">Cam on quy khach!</p>
-  <p style="font-size:13px;color:#666">Hen gap lai &#9728;</p>
-</div>
-<script>window.onload=function(){window.print()}</script>
-</body></html>`);
+	<table>
+	  <tr><td>Tạm tính</td><td class="r">${formatCurrency(order.subtotal)}</td></tr>
+	  ${order.discount > 0 ? `<tr><td style="color:#c62828;">Giảm giá</td><td class="r" style="color:#c62828;">-${formatCurrency(order.discount)}</td></tr>` : ''}
+	  <tr><td>VAT (8%)</td><td class="r">${formatCurrency(order.vat)}</td></tr>
+	  <tr class="bold lg"><td>TỔNG CỘNG</td><td class="r">${formatCurrency(order.total)}</td></tr>
+	</table>
+	<hr>
+	<table>
+	  <tr><td>Khách hàng</td><td class="r">${order.customer}</td></tr>
+	  ${payLinesHtml}
+	  <tr class="bold"><td>Đã thanh toán</td><td class="r">${formatCurrency(totalPaid)}</td></tr>
+	  ${order.change > 0 ? `<tr><td style="color:#e65100;">Tiền thừa</td><td class="r" style="color:#e65100;">${formatCurrency(order.change)}</td></tr>` : ''}
+	</table>
+	<hr class="d">
+	<div class="c">
+	  <p class="thanks">Cảm ơn quý khách!</p>
+	  <p style="font-size:13px;color:#666">Hẹn gặp lại &#9728;</p>
+	</div>
+	<script>window.onload=function(){window.print()}</script>
+	</body></html>`);
     printWindow.document.close();
   };
+
+  const getVNDateStr = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    return new Date(d.getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  };
+
+  const todayStr = getVNDateStr(new Date());
 
   const filtered = useMemo(() => {
     if (!orders.length && !loading) return [];
@@ -594,18 +603,13 @@ ${
       );
     }
     if (timeFilter === 'today') {
-      // Lấy today theo UTC+7 (Việt Nam) bằng cách offset +7 hours
-      const now = new Date();
-      const vnOffset = 7 * 60 * 60 * 1000; // UTC+7
-      const vnToday = new Date(now.getTime() + vnOffset).toISOString().slice(0, 10);
-      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(vnToday));
+      list = list.filter((o) => getVNDateStr(o.createdAt || o.date) === todayStr);
     }
     if (timeFilter === 'yesterday') {
       const d = new Date();
       d.setDate(d.getDate() - 1);
-      const vnOffset = 7 * 60 * 60 * 1000;
-      const vnYesterday = new Date(d.getTime() + vnOffset).toISOString().slice(0, 10);
-      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(vnYesterday));
+      const yesterdayStr = getVNDateStr(d);
+      list = list.filter((o) => getVNDateStr(o.createdAt || o.date) === yesterdayStr);
     }
     if (timeFilter === 'week') {
       const w = new Date();
@@ -616,7 +620,7 @@ ${
     return [...list].sort(
       (a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
     );
-  }, [orders, search, timeFilter, loading]);
+  }, [orders, search, timeFilter, loading, todayStr]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginatedData = useMemo(() => {
@@ -662,24 +666,18 @@ ${
   }, [paginatedData, orders.length, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const todayOrders = orders.filter((o) => {
-    // Lấy today theo UTC+7 (Việt Nam)
-    const now = new Date();
-    const vnOffset = 7 * 60 * 60 * 1000;
-    const vnToday = new Date(now.getTime() + vnOffset).toISOString().slice(0, 10);
-    return (o.createdAt || o.date || '').startsWith(vnToday);
+    const orderDateVN = getVNDateStr(o.createdAt || o.date);
+    return orderDateVN === todayStr;
   });
   const todayGross = todayOrders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
 
   // Doanh thu thực = Doanh thu bán - Tổng hoàn trả (REFUND) trong ngày hôm nay
-  const now = new Date();
-  const vnOffset = 7 * 60 * 60 * 1000;
-  const vnToday = new Date(now.getTime() + vnOffset).toISOString().slice(0, 10);
   const todayRefunds = returnsData
     .filter((r) => {
       const rStatus = String(r.status || '').toUpperCase();
       const rType = String(r.returnType || r.return_type || '').toUpperCase();
-      const rDate = r.createdAt || r.created_at || '';
-      return rStatus !== 'CANCELLED' && rType === 'REFUND' && rDate.startsWith(vnToday);
+      const rDateVN = getVNDateStr(r.createdAt || r.created_at || '');
+      return rStatus !== 'CANCELLED' && rType === 'REFUND' && rDateVN === todayStr;
     })
     .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
   const todayRevenue = Math.max(0, todayGross - todayRefunds);
@@ -687,6 +685,7 @@ ${
 
   // Build map: invoiceCode -> totalRefundedAmount (để hiển thị badge)
   const refundByInvoice = {};
+  const exchangeByInvoice = {};
   returnsData.forEach((r) => {
     const rStatus = String(r.status || '').toUpperCase();
     const rType = String(r.returnType || r.return_type || '').toUpperCase();
@@ -696,6 +695,9 @@ ${
     if (rType === 'REFUND') {
       refundByInvoice[key] =
         (refundByInvoice[key] || 0) + parseFloat(r.refundAmount || r.refund_amount || 0);
+    }
+    if (rType === 'EXCHANGE') {
+      exchangeByInvoice[key] = true;
     }
   });
 
@@ -707,14 +709,22 @@ ${
       render: (v, row) => {
         const code = v || row.id || '-';
         const refunded = refundByInvoice[code];
+        const exchanged = exchangeByInvoice[code];
         return (
           <div className="flex flex-col gap-0.5">
             <span className="font-mono text-xs font-bold text-[#004785]">{code}</span>
-            {refunded > 0 && (
-              <span className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
-                🔄 Hoàn {formatCurrency(refunded)}
-              </span>
-            )}
+            <div className="flex flex-wrap gap-1">
+              {refunded > 0 && (
+                <span className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                  🔄 Hoàn {formatCurrency(refunded)}
+                </span>
+              )}
+              {exchanged && (
+                <span className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
+                  🔄 Đổi hàng
+                </span>
+              )}
+            </div>
           </div>
         );
       },
@@ -851,7 +861,7 @@ ${
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-purple-600">
-                {todayCount > 0 ? formatCurrency(todayRevenue / todayCount) : '0 d'}
+                {todayCount > 0 ? formatCurrency(todayRevenue / todayCount) : formatCurrency(0)}
               </div>
               <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
                 Bình quân/đơn

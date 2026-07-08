@@ -103,6 +103,7 @@ export const ShiftManagement = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState(null);
   const [selectedShiftOrders, setSelectedShiftOrders] = useState([]);
+  const [selectedShiftReturns, setSelectedShiftReturns] = useState([]);
   const [detailOrdersLoading, setDetailOrdersLoading] = useState(false);
   const [dateFilter, setDateFilter] = useState(() => toLocalDateStr(new Date()));
   const [currentPage, setCurrentPage] = useState(1);
@@ -200,16 +201,6 @@ export const ShiftManagement = () => {
         ? returnsRaw
         : (returnsRaw?.items ?? returnsRaw?.data ?? []);
       setShiftReturns(allReturns);
-      const shiftStartUTCForReturns = new Date(openShift.startedAt).getTime();
-      // Chỉ lấy REFUND (không lấy EXCHANGE) trong thời gian ca
-      const shiftRefundTotal = allReturns
-        .filter((r) => {
-          const rStatus = String(r.status || '').toUpperCase();
-          const rType = String(r.returnType || r.return_type || '').toUpperCase();
-          const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
-          return rStatus !== 'CANCELLED' && rType === 'REFUND' && rDate >= shiftStartUTCForReturns;
-        })
-        .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
 
       // Map orders với field linh hoạt
       const orders = rawOrders.map((o) => ({
@@ -270,9 +261,29 @@ export const ShiftManagement = () => {
         console.log('[ShiftManagement] first order:', filteredOrders[0]);
       }
 
+      // Chỉ tính REFUND cho những đơn thuộc ca này (invoiceCode có trong filteredOrders)
+      const shiftInvoiceCodes = new Set(
+        filteredOrders.map((o) => (o.invoiceCode || '').toLowerCase()).filter(Boolean)
+      );
+      const shiftStartUTCForReturns = new Date(openShift.startedAt).getTime();
+      const shiftRefundTotal = allReturns
+        .filter((r) => {
+          const rStatus = String(r.status || '').toUpperCase();
+          const rType = String(r.returnType || r.return_type || '').toUpperCase();
+          const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
+          const rInvoice = (r.invoiceCode || '').toLowerCase();
+          return (
+            rStatus !== 'CANCELLED' &&
+            rType === 'REFUND' &&
+            rDate >= shiftStartUTCForReturns &&
+            shiftInvoiceCodes.has(rInvoice)
+          );
+        })
+        .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
+
       // Tính stats từ orders — net revenue = gross - hoàn trả (REFUND) trong ca
       const grossRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-      const totalRevenue = Math.max(0, grossRevenue - shiftRefundTotal);
+      const totalRevenue = grossRevenue - shiftRefundTotal;
       const orderCount = filteredOrders.length;
       const cashSales = filteredOrders
         .filter(
@@ -297,14 +308,33 @@ export const ShiftManagement = () => {
         )
         .reduce((sum, o) => sum + o.totalAmount, 0);
 
+      // Tính hoàn trả theo phương thức (cùng thời gian ca)
+      const cashRefunds = allReturns
+        .filter((r) => {
+          const s = String(r.status || '').toUpperCase();
+          const t = String(r.returnType || r.return_type || '').toUpperCase();
+          const d = new Date(r.createdAt || r.created_at || 0).getTime();
+          const rInvoice = (r.invoiceCode || '').toLowerCase();
+          return (
+            s !== 'CANCELLED' &&
+            t === 'REFUND' &&
+            d >= shiftStartUTCForReturns &&
+            (r.refundMethod || r.method || '').toUpperCase() === 'CASH' &&
+            shiftInvoiceCodes.has(rInvoice)
+          );
+        })
+        .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
+
       setShiftSummary({
         ...summaryData,
         totalRevenue,
         totalSales: totalRevenue,
         orderCount,
-        cashSales,
+        cashSales: cashSales - cashRefunds, // trừ tiền mặt đã hoàn
+        cashSalesGross: cashSales, // giữ lại để tính số dư cuối dự kiến
         cardSales,
         transferSales,
+        cashRefunds,
       });
       setShiftOrders(filteredOrders);
       // Backfill tong tien ngay trong fetchShiftSummary
@@ -505,12 +535,16 @@ export const ShiftManagement = () => {
   const handleViewDetail = async (shift) => {
     setSelectedShift(shift);
     setSelectedShiftOrders([]);
+    setSelectedShiftReturns([]);
     setShowDetailModal(true);
     setDetailOrdersLoading(true);
 
-    // Fetch orders trong khoảng thời gian của ca
+    // Fetch orders + returns trong khoảng thời gian của ca
     try {
-      const ordersData = await getOrders({ status: 'Completed' });
+      const [ordersData, returnsRaw] = await Promise.all([
+        getOrders({ status: 'Completed' }),
+        getReturns({}).catch(() => []),
+      ]);
       const rawOrders = Array.isArray(ordersData)
         ? ordersData
         : ordersData?.items || ordersData?.data || [];
@@ -532,6 +566,17 @@ export const ShiftManagement = () => {
           paymentMethod: o.paymentMethod || '',
         }));
       setSelectedShiftOrders(orders);
+      // Lọc returns trong khoảng thời gian của ca
+      const allReturns = Array.isArray(returnsRaw)
+        ? returnsRaw
+        : (returnsRaw?.items ?? returnsRaw?.data ?? []);
+      const shiftReturnsInDetail = allReturns.filter((r) => {
+        const rStatus = String(r.status || '').toUpperCase();
+        if (rStatus === 'CANCELLED') return false;
+        const d = new Date(r.createdAt || r.created_at || '');
+        return !isNaN(d.getTime()) && d >= shiftStart && d <= shiftEnd;
+      });
+      setSelectedShiftReturns(shiftReturnsInDetail);
       // Backfill tổng tiền cho modal chi tiết
       const needFetch = orders.filter((o) => !o.totalAmount && (o.invoiceId || o.invoiceCode));
       if (needFetch.length > 0) {
@@ -712,78 +757,228 @@ export const ShiftManagement = () => {
                   Số dư cuối dự kiến
                 </p>
                 <p className="mt-1 truncate text-lg font-extrabold text-amber-700">
-                  {formatCurrency(displayShift.openingBalance + displayShift.totalSales)}
+                  {formatCurrency(
+                    (displayShift.openingBalance || 0) + (displayShift.totalSales || 0)
+                  )}
                 </p>
               </div>
             </div>
 
-            {/* Danh sách đơn đã bán trong ca - dạng thanh trượt 3 đơn */}
+            {/* Danh sách hoạt động trong ca */}
             {shiftOrders.length > 0 && (
               <div className="border-t border-slate-100 pt-4">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Đơn đã bán trong ca
+                    Hoạt động trong ca
                   </h3>
                   <span className="text-xs font-semibold text-slate-400">
-                    {shiftOrders.length} đơn
+                    {(() => {
+                      // Gộp đơn bán + hoàn trả (không hủy)
+                      const refundsInShift = shiftReturns.filter((r) => {
+                        const rStatus = String(r.status || '').toUpperCase();
+                        if (rStatus === 'CANCELLED') return false;
+                        const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
+                        return rDate >= new Date(openShift.startedAt).getTime();
+                      });
+                      return shiftOrders.length + refundsInShift.length;
+                    })()}{' '}
+                    hoạt động
                   </span>
                 </div>
                 <div
                   className="scrollbar-thin space-y-2 overflow-y-auto pr-1"
                   style={{ maxHeight: '11.5rem' }}
                 >
-                  {shiftOrders.map((o) => (
-                    <div
-                      key={o.id}
-                      className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex flex-col">
-                          <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
-                            {o.invoiceCode}
-                          </span>
-                          {/* Badge hoàn trả nếu đơn này có phiếu REFUND */}
-                          {shiftReturns.some((r) => {
-                            const rType = String(r.returnType || r.return_type || '').toUpperCase();
-                            const rStatus = String(r.status || '').toUpperCase();
-                            return (
-                              rStatus !== 'CANCELLED' &&
-                              rType === 'REFUND' &&
-                              (r.invoiceCode || '').toLowerCase() ===
-                                (o.invoiceCode || '').toLowerCase()
-                            );
-                          }) && (
-                            <span className="mt-0.5 inline-flex items-center gap-0.5 rounded border border-red-200 bg-red-50 px-1 py-0.5 text-[9px] font-semibold text-red-600">
-                              🔄 Đã hoàn tiền
-                            </span>
-                          )}
-                        </div>
-                        <span className="shrink-0 text-xs text-slate-400">
-                          {new Date(o.createdAt).toLocaleTimeString('vi-VN', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        <span className="truncate text-xs text-slate-600">{o.customerName}</span>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span className="text-xs font-bold text-green-600">
-                          {formatCurrency(o.totalAmount)}
-                        </span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                          {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash'
-                            ? 'Tiền mặt'
-                            : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer'
-                              ? 'CK'
-                              : o.paymentMethod === 'CARD' || o.paymentMethod === 'Card'
-                                ? 'Thẻ'
-                                : o.paymentMethod || '-'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  {(() => {
+                    // Gộp đơn bán + hoàn trả, sắp xếp theo thời gian
+                    const shiftStart = new Date(openShift.startedAt).getTime();
+                    const returns = shiftReturns
+                      .filter((r) => {
+                        const s = String(r.status || '').toUpperCase();
+                        if (s === 'CANCELLED') return false;
+                        return new Date(r.createdAt || r.created_at || 0).getTime() >= shiftStart;
+                      })
+                      .map((r) => {
+                        const rType = String(r.returnType || r.return_type || '').toUpperCase();
+                        return {
+                          _type: rType === 'REFUND' ? 'refund' : 'exchange',
+                          _time: new Date(r.createdAt || r.created_at || 0).getTime(),
+                          id: r.returnCode || r.returnOrderId || r.returnId || r.id || '',
+                          code: r.returnCode || r.returnOrderId || r.returnId || r.id || '',
+                          invoiceCode: r.invoiceCode || '',
+                          customerName: r.customerName || 'Khách lẻ',
+                          createdAt: r.createdAt || r.created_at || '',
+                          amount: parseFloat(r.refundAmount || r.refund_amount || 0),
+                        };
+                      });
+                    const sales = shiftOrders.map((o) => ({
+                      _type: 'sale',
+                      _time: new Date(o.createdAt || 0).getTime(),
+                      id: o.id,
+                      code: o.invoiceCode,
+                      invoiceCode: o.invoiceCode,
+                      customerName: o.customerName,
+                      createdAt: o.createdAt,
+                      amount: o.totalAmount,
+                      paymentMethod: o.paymentMethod,
+                    }));
+                    return [...sales, ...returns]
+                      .sort((a, b) => b._time - a._time)
+                      .map((act) => {
+                        if (act._type === 'sale') {
+                          return (
+                            <div
+                              key={'sale-' + act.id}
+                              className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
+                            >
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100">
+                                  <svg
+                                    className="h-3.5 w-3.5 text-green-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                </div>
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
+                                      {act.code}
+                                    </span>
+                                    <span className="rounded bg-green-100 px-1 py-0.5 text-[9px] font-semibold text-green-700">
+                                      Bán
+                                    </span>
+                                  </div>
+                                </div>
+                                <span className="shrink-0 text-xs text-slate-400">
+                                  {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                <span className="truncate text-xs text-slate-600">
+                                  {act.customerName}
+                                </span>
+                              </div>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <span className="text-xs font-bold text-green-600">
+                                  +{formatCurrency(act.amount)}
+                                </span>
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                                  {act.paymentMethod === 'CASH' ||
+                                  act.paymentMethod === 'Cash' ||
+                                  act.paymentMethod === 'Tiền mặt'
+                                    ? 'Tiền mặt'
+                                    : act.paymentMethod === 'TRANSFER' ||
+                                        act.paymentMethod === 'Transfer' ||
+                                        act.paymentMethod === 'Chuyển khoản'
+                                      ? 'CK'
+                                      : act.paymentMethod === 'CARD' ||
+                                          act.paymentMethod === 'Card' ||
+                                          act.paymentMethod === 'Thẻ'
+                                        ? 'Thẻ'
+                                        : act.paymentMethod === 'COMBINED' ||
+                                            act.paymentMethod === 'Combined' ||
+                                            act.paymentMethod === 'Kết hợp'
+                                          ? 'Kết hợp'
+                                          : act.paymentMethod || '-'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        const isRefund = act._type === 'refund';
+                        return (
+                          <div
+                            key={'ret-' + act.id}
+                            className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${isRefund ? 'bg-red-100' : 'bg-blue-100'}`}
+                              >
+                                {isRefund ? (
+                                  <svg
+                                    className="h-3.5 w-3.5 text-red-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M16 15v-1a4 4 0 00-8 0v1m0 0h8m-8 0a4 4 0 01-4-4V8a4 4 0 014-4h8a4 4 0 014 4v3a4 4 0 01-4 4m-8 0a4 4 0 004 4h.5M9 19l-1.5 1.5M9 19l1.5-1.5"
+                                    />
+                                  </svg>
+                                ) : (
+                                  <svg
+                                    className="h-3.5 w-3.5 text-blue-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                                    />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="shrink-0 font-mono text-xs font-bold text-slate-500">
+                                    {act.code}
+                                  </span>
+                                  <span
+                                    className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
+                                  >
+                                    {isRefund ? 'Trả' : 'Đổi'}
+                                  </span>
+                                </div>
+                                <span className="mt-0.5 text-[9px] text-slate-400">
+                                  {act.invoiceCode}
+                                </span>
+                              </div>
+                              <span className="shrink-0 text-xs text-slate-400">
+                                {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                              <span className="truncate text-xs text-slate-600">
+                                {act.customerName}
+                              </span>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <span
+                                className={`text-xs font-bold ${isRefund ? 'text-red-600' : ''}`}
+                              >
+                                {isRefund && act.amount > 0 ? `-${formatCurrency(act.amount)}` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      });
+                  })()}
                 </div>
-                {shiftOrders.length > 3 && (
+                {shiftOrders.length +
+                  shiftReturns.filter((r) => {
+                    const rStatus = String(r.status || '').toUpperCase();
+                    if (rStatus === 'CANCELLED') return false;
+                    const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
+                    return rDate >= new Date(openShift.startedAt).getTime();
+                  }).length >
+                  3 && (
                   <div className="mt-2 text-center">
                     <span className="text-[10px] font-medium text-slate-400">
                       ⋮ kéo xuống để xem thêm ⋮
@@ -1405,56 +1600,192 @@ export const ShiftManagement = () => {
               </div>
             )}
 
-            {/* Đơn đã bán trong ca */}
+            {/* Hoạt động trong ca (detail modal) */}
             <div className="border-t pt-4">
               <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
-                Đơn đã bán trong ca
-                {selectedShiftOrders.length > 0 && (
-                  <span className="ml-2 text-xs font-normal text-slate-400">
-                    ({selectedShiftOrders.length} đơn)
-                  </span>
-                )}
+                Hoạt động trong ca
+                {(() => {
+                  const total = selectedShiftOrders.length + selectedShiftReturns.length;
+                  return (
+                    total > 0 && (
+                      <span className="ml-2 text-xs font-normal text-slate-400">
+                        ({total} hoạt động)
+                      </span>
+                    )
+                  );
+                })()}
               </h3>
               {detailOrdersLoading ? (
                 <div className="py-4 text-center text-xs text-slate-400">Đang tải...</div>
-              ) : selectedShiftOrders.length > 0 ? (
+              ) : selectedShiftOrders.length > 0 || selectedShiftReturns.length > 0 ? (
                 <div className="max-h-60 space-y-2 overflow-y-auto">
-                  {selectedShiftOrders.map((o) => (
-                    <div
-                      key={o.id}
-                      className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
-                          {o.invoiceCode}
-                        </span>
-                        <span className="shrink-0 text-xs text-slate-400">
-                          {new Date(o.createdAt).toLocaleTimeString('vi-VN', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        <span className="truncate text-xs text-slate-600">{o.customerName}</span>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span className="text-xs font-bold text-green-600">
-                          {formatCurrency(o.totalAmount)}
-                        </span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
-                          {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash'
-                            ? 'Tiền mặt'
-                            : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer'
-                              ? 'CK'
-                              : o.paymentMethod === 'CARD' || o.paymentMethod === 'Card'
-                                ? 'Thẻ'
-                                : o.paymentMethod || '-'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  {(() => {
+                    const returns = selectedShiftReturns.map((r) => {
+                      const rType = String(r.returnType || r.return_type || '').toUpperCase();
+                      return {
+                        _type: rType === 'REFUND' ? 'refund' : 'exchange',
+                        _time: new Date(r.createdAt || r.created_at || 0).getTime(),
+                        id: r.returnCode || r.returnOrderId || r.returnId || r.id || '',
+                        code: r.returnCode || r.returnOrderId || r.returnId || r.id || '',
+                        invoiceCode: r.invoiceCode || '',
+                        customerName: r.customerName || 'Khách lẻ',
+                        createdAt: r.createdAt || r.created_at || '',
+                        amount: parseFloat(r.refundAmount || r.refund_amount || 0),
+                      };
+                    });
+                    const sales = selectedShiftOrders.map((o) => ({
+                      _type: 'sale',
+                      _time: new Date(o.createdAt || 0).getTime(),
+                      id: o.id,
+                      code: o.invoiceCode,
+                      invoiceCode: o.invoiceCode,
+                      customerName: o.customerName,
+                      createdAt: o.createdAt,
+                      amount: o.totalAmount,
+                      paymentMethod: o.paymentMethod,
+                    }));
+                    return [...sales, ...returns]
+                      .sort((a, b) => b._time - a._time)
+                      .map((act) => {
+                        if (act._type === 'sale') {
+                          return (
+                            <div
+                              key={'detail-sale-' + act.id}
+                              className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5"
+                            >
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100">
+                                  <svg
+                                    className="h-3 w-3 text-green-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                </div>
+                                <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
+                                  {act.code}
+                                </span>
+                                <span className="rounded bg-green-100 px-1 py-0.5 text-[9px] font-semibold text-green-700">
+                                  Bán
+                                </span>
+                                <span className="shrink-0 text-xs text-slate-400">
+                                  {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                <span className="truncate text-xs text-slate-600">
+                                  {act.customerName}
+                                </span>
+                              </div>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <span className="text-xs font-bold text-green-600">
+                                  +{formatCurrency(act.amount)}
+                                </span>
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                                  {act.paymentMethod === 'CASH' ||
+                                  act.paymentMethod === 'Cash' ||
+                                  act.paymentMethod === 'Tiền mặt'
+                                    ? 'Tiền mặt'
+                                    : act.paymentMethod === 'TRANSFER' ||
+                                        act.paymentMethod === 'Transfer' ||
+                                        act.paymentMethod === 'Chuyển khoản'
+                                      ? 'CK'
+                                      : act.paymentMethod === 'CARD' ||
+                                          act.paymentMethod === 'Card' ||
+                                          act.paymentMethod === 'Thẻ'
+                                        ? 'Thẻ'
+                                        : act.paymentMethod === 'COMBINED' ||
+                                            act.paymentMethod === 'Combined' ||
+                                            act.paymentMethod === 'Kết hợp'
+                                          ? 'Kết hợp'
+                                          : act.paymentMethod || '-'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        const isRefund = act._type === 'refund';
+                        return (
+                          <div
+                            key={'detail-ret-' + act.id}
+                            className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5"
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isRefund ? 'bg-red-100' : 'bg-blue-100'}`}
+                              >
+                                {isRefund ? (
+                                  <svg
+                                    className="h-3 w-3 text-red-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M16 15v-1a4 4 0 00-8 0v1m0 0h8m-8 0a4 4 0 01-4-4V8a4 4 0 014-4h8a4 4 0 014 4v3a4 4 0 01-4 4m-8 0a4 4 0 004 4h.5M9 19l-1.5 1.5M9 19l1.5-1.5"
+                                    />
+                                  </svg>
+                                ) : (
+                                  <svg
+                                    className="h-3 w-3 text-blue-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                                    />
+                                  </svg>
+                                )}
+                              </div>
+                              <span className="shrink-0 font-mono text-xs font-bold text-slate-500">
+                                {act.code}
+                              </span>
+                              <span
+                                className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
+                              >
+                                {isRefund ? 'Trả' : 'Đổi'}
+                              </span>
+                              <span className="shrink-0 text-xs text-slate-400">
+                                {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                              <span className="truncate text-xs text-slate-600">
+                                {act.customerName}
+                              </span>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <span
+                                className={`text-xs font-bold ${isRefund ? 'text-red-600' : ''}`}
+                              >
+                                {isRefund && act.amount > 0 ? `-${formatCurrency(act.amount)}` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      });
+                  })()}
                 </div>
               ) : (
-                <p className="py-4 text-center text-sm text-slate-400">Không có đơn nào trong ca</p>
+                <p className="py-4 text-center text-sm text-slate-400">
+                  Không có hoạt động nào trong ca
+                </p>
               )}
             </div>
           </div>

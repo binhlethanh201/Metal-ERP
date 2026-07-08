@@ -266,16 +266,27 @@ export const CustomerManagement = () => {
         allReturns.forEach((ret) => {
           const retStatus = String(ret.status || '').toUpperCase();
           if (retStatus === 'CANCELLED' || retStatus === 'PENDING' || retStatus === 'DRAFT') return;
+          const retType = (ret.returnType || 'RETURN').toUpperCase();
+          // Chỉ tính REFUND (hoàn tiền) vào tổng đã hoàn — EXCHANGE (đổi hàng) không hoàn tiền
+          if (retType !== 'REFUND') return;
           const refund = parseFloat(ret.refundAmount || 0);
-          const retType = ret.returnType || 'RETURN';
           if (ret.orderId) {
             const key = ret.orderId.toLowerCase();
             returnsByOrderId[key] = (returnsByOrderId[key] || 0) + refund;
-            if (retType === 'EXCHANGE') hasExchangeByOrder[key] = true;
           }
           if (ret.invoiceCode) {
             const key = ret.invoiceCode.toLowerCase();
             returnsByInvoice[key] = (returnsByInvoice[key] || 0) + refund;
+          }
+        });
+        // Duyệt lại để đánh dấu EXCHANGE (không phụ thuộc thứ tự)
+        allReturns.forEach((ret) => {
+          const retStatus = String(ret.status || '').toUpperCase();
+          if (retStatus === 'CANCELLED' || retStatus === 'PENDING' || retStatus === 'DRAFT') return;
+          const retType = (ret.returnType || 'RETURN').toUpperCase();
+          if (retType !== 'EXCHANGE') return;
+          if (ret.orderId) {
+            hasExchangeByOrder[ret.orderId.toLowerCase()] = true;
           }
         });
       } catch {}
@@ -286,7 +297,10 @@ export const CustomerManagement = () => {
         const invCode = (o.invoiceCode || o.invoiceId || '').toLowerCase();
         const originalValue = parseFloat(o.totalAmount || o.total || o.grandTotal || o.amount || 0);
         // Ưu tiên match bằng orderId, fallback sang invoiceCode
-        const refunded = returnsByOrderId[orderId] || returnsByInvoice[invCode] || 0;
+        const refunded = Math.min(
+          originalValue,
+          returnsByOrderId[orderId] ?? returnsByInvoice[invCode] ?? 0
+        );
         const remaining = Math.max(0, originalValue - refunded);
         const hasExchange = !!hasExchangeByOrder[orderId];
         let status = 'COMPLETED';

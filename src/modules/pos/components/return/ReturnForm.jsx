@@ -35,7 +35,6 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [submitError, setSubmitError] = useState('');
 
   const isExchange = returnType === 'EXCHANGE';
-  const isRefund = returnType === 'REFUND';
   const totalRefund = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
 
   const reset = () => {
@@ -45,7 +44,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     setInvoiceLoading(false);
     setInvoiceError('');
     setSelectedProducts([]);
-    setReturnType('RETURN');
+    setReturnType('REFUND');
     setReason('');
     setRefundMethod('CASH');
     setNotes('');
@@ -84,6 +83,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         let fullInvoice = found;
         const invId = found.invoiceId || found.invoiceCode || found.id;
         const orderId = found.orderId || found.order_id || '';
+        // invoiceCode dùng để match với return.invoiceCode (không dùng invId vì có thể là UUID)
+        const invCode = (found.invoiceCode || found.invoiceId || found.id || '').toLowerCase();
         try {
           const detail = await getInvoice(invId);
           if (detail) {
@@ -123,12 +124,15 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             // Chỉ match bằng invoiceCode - không dùng orderId vì có thể bị trùng
             const rInvoiceCode = r.invoiceCode || '';
             const match =
-              rStatus !== 'CANCELLED' && rInvoiceCode.toLowerCase() === invId.toLowerCase();
+              rStatus !== 'CANCELLED' &&
+              (rInvoiceCode.toLowerCase() === invCode ||
+                rInvoiceCode.toLowerCase() === invId.toLowerCase());
             if (match)
               console.log('[ReturnForm] Matched return:', r.returnCode, 'items:', r.items?.length);
             return match;
           });
           console.log('[ReturnForm] Related returns:', relatedReturns.length);
+          // returnedMap API: key bằng productId (tổng số lượng đã trả theo SP)
           relatedReturns.forEach((ret) => {
             const items = ret.items || ret.returnItems || [];
             items.forEach((item) => {
@@ -137,22 +141,61 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               returnedMap[pid] = (returnedMap[pid] || 0) + qty;
             });
           });
-          console.log('[ReturnForm] Returned map:', returnedMap);
+          console.log('[ReturnForm] Returned map (API):', returnedMap);
         } catch (err) {
           console.error('[ReturnForm] getReturns failed:', err);
         }
 
-        // Tính số lượng còn lại có thể đổi trả cho từng sản phẩm
+        // Tracking từ localStorage: lưu theo từng dòng invoiceItemId + productId
+        const localReturned = {}; // key = lineKey, value = qty
+        let localTotalByProduct = {}; // key = productId, value = tổng qty từ local
+        try {
+          const invId = found.invoiceId || found.invoiceCode || found.id;
+          const saved = JSON.parse(localStorage.getItem('pos_return_items_' + invId) || '{}');
+          Object.entries(saved).forEach(([k, val]) => {
+            const qty = typeof val === 'number' ? val : val.qty || 0;
+            const pid = val.productId || '';
+            if (qty > 0) {
+              localReturned[k] = (localReturned[k] || 0) + qty;
+              if (pid) localTotalByProduct[pid] = (localTotalByProduct[pid] || 0) + qty;
+            }
+          });
+        } catch (_) {}
+
+        // Tính số lượng còn lại có thể đổi trả cho từng dòng (phân biệt cùng SP khác đơn vị)
         const invoiceItems = fullInvoice.items || fullInvoice.invoiceItems || [];
         const enrichedItems = invoiceItems.map((item) => {
-          const pid = item.productId || item.branchProductId || item.id;
+          const lineKey = item.invoiceItemId || item.id || item.productId;
           const originalQty = parseFloat(item.quantity || 0);
-          const returnedQty = returnedMap[pid] || 0;
-          const remainingQty = Math.max(0, originalQty - returnedQty);
-          // Gắn thêm productName nếu bị thiếu (khi xài model gốc)
+          // Ưu tiên tra theo lineKey (local storage chính xác từng dòng)
+          const localQty = localReturned[lineKey] || 0;
+          if (localQty > 0) {
+            // Có tracking chính xác từ localStorage
+            return {
+              ...item,
+              _key: lineKey,
+              _remainingQty: Math.max(0, originalQty - localQty),
+              _returnedQty: localQty,
+              productName:
+                item.productName || (item.product && item.product.productName) || item.name || '',
+              _displayUnit: item.displayUnit || item.selectedUnit || item.unit || '',
+            };
+          }
+          // Không có local → dùng API productId, trừ đi lượng đã track local cho product này
+          const apiTotal = returnedMap[item.productId] || 0;
+          const localForProduct = localTotalByProduct[item.productId] || 0;
+          const adjustedTotal = Math.max(0, apiTotal - localForProduct);
+          const remainingQty = Math.max(0, originalQty - adjustedTotal);
           const productName =
             item.productName || (item.product && item.product.productName) || item.name || '';
-          return { ...item, _remainingQty: remainingQty, _returnedQty: returnedQty, productName };
+          return {
+            ...item,
+            _key: lineKey,
+            _remainingQty: remainingQty,
+            _returnedQty: adjustedTotal,
+            productName,
+            _displayUnit: item.displayUnit || item.selectedUnit || item.unit || '',
+          };
         });
 
         const availableItems = enrichedItems.filter((item) => item._remainingQty > 0);
@@ -181,14 +224,15 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
   const toggleProduct = (product) => {
     setSelectedProducts((prev) => {
-      const idx = prev.findIndex((p) => p.productId === product.productId);
+      const idx = prev.findIndex((p) => p._key === product._key);
       if (idx >= 0) {
-        return prev.filter((p) => p.productId !== product.productId);
+        return prev.filter((p) => p._key !== product._key);
       }
       const remainingQty = product._remainingQty ?? parseFloat(product.quantity || 0);
       return [
         ...prev,
         {
+          _key: product._key,
           productId: product.productId,
           productName: product.productName || product.name,
           productCode: product.productCode || '',
@@ -200,10 +244,10 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     });
   };
 
-  const updateQty = (productId, qty) => {
+  const updateQty = (key, qty) => {
     setSelectedProducts((prev) =>
       prev.map((p) =>
-        p.productId === productId ? { ...p, quantity: Math.max(1, Math.min(qty, p.maxQty)) } : p
+        p._key === key ? { ...p, quantity: Math.max(1, Math.min(qty, p.maxQty)) } : p
       )
     );
   };
@@ -253,6 +297,19 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           )
         );
       }
+
+      // Lưu tracking hoàn trả theo từng dòng (invoiceItemId + productId) vào localStorage
+      // để lần sau mở form biết chính xác dòng nào đã hoàn bao nhiêu
+      try {
+        const invId = invoice.invoiceId || invoice.invoiceCode || invoice.id;
+        const storageKey = 'pos_return_items_' + invId;
+        const existing = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        selectedProducts.forEach((p) => {
+          const prev = existing[p._key] || { qty: 0, productId: p.productId };
+          existing[p._key] = { qty: prev.qty + p.quantity, productId: p.productId };
+        });
+        localStorage.setItem(storageKey, JSON.stringify(existing));
+      } catch (_) {}
 
       onSuccess?.(retData);
       handleClose();
@@ -454,7 +511,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             </label>
             <div className="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200">
               {(invoice.items || []).map((item) => {
-                const selected = selectedProducts.find((p) => p.productId === item.productId);
+                const itemKey = item._key || item.invoiceItemId || item.productId;
+                const selected = selectedProducts.find((p) => p._key === itemKey);
                 const remainingQty = item._remainingQty ?? parseFloat(item.quantity || 0);
                 const returnedQty = item._returnedQty || 0;
 
@@ -463,14 +521,16 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
                 return (
                   <div
-                    key={item.invoiceItemId || item.productId}
+                    key={itemKey}
                     className={`flex items-center gap-3 p-3 transition-colors ${selected ? 'bg-blue-50' : remainingQty <= 0 ? 'bg-slate-50 opacity-50' : 'hover:bg-slate-50'}`}
                   >
                     <input
                       type="checkbox"
                       checked={!!selected}
                       disabled={remainingQty <= 0}
-                      onChange={() => toggleProduct({ ...item, quantity: remainingQty })}
+                      onChange={() =>
+                        toggleProduct({ ...item, quantity: remainingQty, _key: itemKey })
+                      }
                       className="h-4 w-4 rounded border-slate-300 text-[#004785]"
                     />
                     <div className="flex-1">
@@ -479,6 +539,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                         {item.productCode || '-'}
                         {isExchange ? '' : ` · Đơn giá: ${formatCurrency(item.unitPrice || 0)}`} ·
                         Đã mua: {item.quantity}
+                        {item._displayUnit ? ` (${item._displayUnit})` : ''}
                       </p>
                       {returnedQty > 0 && (
                         <p className="text-xs text-amber-600">
@@ -491,7 +552,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => updateQty(item.productId, (selected.quantity || 1) - 1)}
+                          onClick={() => updateQty(itemKey, (selected.quantity || 1) - 1)}
                           className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-sm font-bold hover:bg-slate-100"
                         >
                           -
@@ -501,7 +562,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                         </span>
                         <button
                           type="button"
-                          onClick={() => updateQty(item.productId, (selected.quantity || 1) + 1)}
+                          onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
                           className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-sm font-bold hover:bg-slate-100"
                         >
                           +
