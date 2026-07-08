@@ -205,24 +205,22 @@ export const ShiftManagement = () => {
       }));
 
       // Lọc orders từ lúc mở ca (xử lý linh hoạt định dạng ngày)
-      const startDate = new Date(openShift.startedAt);
-      console.log('[ShiftManagement] startDate:', startDate, 'raw:', openShift.startedAt);
+      // Backend lưu UTC, convert về UTC timestamp để so sánh chính xác
+      const startDateUTC = new Date(openShift.startedAt).getTime();
+      console.log(
+        '[ShiftManagement] startDate (UTC ms):',
+        startDateUTC,
+        'raw:',
+        openShift.startedAt
+      );
       const filteredOrders = orders.filter((o) => {
         if (!o.createdAt) {
           console.warn('[ShiftManagement] order missing createdAt:', o.invoiceCode);
           return false;
         }
-        const orderDate = new Date(o.createdAt);
-        if (isNaN(orderDate.getTime())) {
-          try {
-            const parsed = Date.parse(o.createdAt);
-            if (!isNaN(parsed)) {
-              const keep = parsed >= startDate.getTime();
-              if (!keep)
-                console.log('[ShiftManagement] order before shift:', o.invoiceCode, o.createdAt);
-              return keep;
-            }
-          } catch (_) {}
+        // Parse order date và convert về UTC timestamp để so sánh
+        const orderDateUTC = new Date(o.createdAt).getTime();
+        if (isNaN(orderDateUTC)) {
           console.warn(
             '[ShiftManagement] unparseable date, keeping order:',
             o.invoiceCode,
@@ -230,8 +228,18 @@ export const ShiftManagement = () => {
           );
           return true;
         }
-        const keep = orderDate >= startDate;
-        if (!keep) console.log('[ShiftManagement] order before shift:', o.invoiceCode, o.createdAt);
+        // So sánh UTC timestamps (không bị ảnh hưởng bởi timezone của browser)
+        const keep = orderDateUTC >= startDateUTC;
+        if (!keep)
+          console.log(
+            '[ShiftManagement] order before shift:',
+            o.invoiceCode,
+            o.createdAt,
+            'orderUTC:',
+            orderDateUTC,
+            'shiftUTC:',
+            startDateUTC
+          );
         return keep;
       });
       // Sap xep moi nhat len dau

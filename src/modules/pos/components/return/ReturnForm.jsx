@@ -7,7 +7,13 @@ import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { getOrders, getReturns, createReturn, addReturnItem } from '../../services/posService';
+import {
+  getOrders,
+  getReturns,
+  createReturn,
+  addReturnItem,
+  getInvoice,
+} from '../../services/posService';
 
 const REFUND_METHODS = [
   { value: 'CASH', label: 'Tiền mặt' },
@@ -21,7 +27,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceError, setInvoiceError] = useState('');
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [returnType, setReturnType] = useState('RETURN');
+  const [returnType, setReturnType] = useState('REFUND');
   const [reason, setReason] = useState('');
   const [refundMethod, setRefundMethod] = useState('CASH');
   const [notes, setNotes] = useState('');
@@ -29,6 +35,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [submitError, setSubmitError] = useState('');
 
   const isExchange = returnType === 'EXCHANGE';
+  const isRefund = returnType === 'REFUND';
   const totalRefund = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
 
   const reset = () => {
@@ -73,16 +80,26 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       );
 
       if (found) {
-        // Kiểm tra sản phẩm đã đổi trả từ các phiếu trước
+        // Fetch full invoice detail to get items (getOrders doesn't include items)
+        let fullInvoice = found;
         const invId = found.invoiceId || found.invoiceCode || found.id;
         const orderId = found.orderId || found.order_id || '';
+        try {
+          const detail = await getInvoice(invId);
+          if (detail) {
+            fullInvoice = { ...found, ...detail };
+          }
+        } catch (err) {
+          console.warn('[ReturnForm] getInvoice failed:', err);
+        }
+
         console.log(
           '[ReturnForm] Found invoice, invId:',
           invId,
           'orderId:',
           orderId,
           'Full invoice keys:',
-          Object.keys(found)
+          Object.keys(fullInvoice)
         );
         let returnedMap = {};
         try {
@@ -100,14 +117,13 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             );
           }
           // Lọc các phiếu đổi trả không bị hủy của hóa đơn này
+          // CHỈ match bằng invoiceCode để tránh sai sót khi orderId bị trùng lặp
           const relatedReturns = allReturns.filter((r) => {
             const rStatus = String(r.status || '').toUpperCase();
-            // Match bằng orderId (chính xác nhất) hoặc invoiceCode
+            // Chỉ match bằng invoiceCode - không dùng orderId vì có thể bị trùng
+            const rInvoiceCode = r.invoiceCode || '';
             const match =
-              rStatus !== 'CANCELLED' &&
-              ((r.orderId && r.orderId.toLowerCase() === orderId.toLowerCase()) ||
-                (r.invoiceCode && r.invoiceCode.toLowerCase() === invId.toLowerCase()) ||
-                (r.orderId && r.orderId.toLowerCase() === invId.toLowerCase()));
+              rStatus !== 'CANCELLED' && rInvoiceCode.toLowerCase() === invId.toLowerCase();
             if (match)
               console.log('[ReturnForm] Matched return:', r.returnCode, 'items:', r.items?.length);
             return match;
@@ -127,13 +143,16 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         }
 
         // Tính số lượng còn lại có thể đổi trả cho từng sản phẩm
-        const invoiceItems = found.items || [];
+        const invoiceItems = fullInvoice.items || fullInvoice.invoiceItems || [];
         const enrichedItems = invoiceItems.map((item) => {
-          const pid = item.productId || item.id;
+          const pid = item.productId || item.branchProductId || item.id;
           const originalQty = parseFloat(item.quantity || 0);
           const returnedQty = returnedMap[pid] || 0;
           const remainingQty = Math.max(0, originalQty - returnedQty);
-          return { ...item, _remainingQty: remainingQty, _returnedQty: returnedQty };
+          // Gắn thêm productName nếu bị thiếu (khi xài model gốc)
+          const productName =
+            item.productName || (item.product && item.product.productName) || item.name || '';
+          return { ...item, _remainingQty: remainingQty, _returnedQty: returnedQty, productName };
         });
 
         const availableItems = enrichedItems.filter((item) => item._remainingQty > 0);
@@ -146,7 +165,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           return;
         }
 
-        setInvoice({ ...found, items: enrichedItems });
+        setInvoice({ ...fullInvoice, items: enrichedItems });
         setStep(2);
       } else {
         setInvoiceError(
@@ -207,7 +226,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         invoiceId: invId,
         returnType: returnType,
         reason: reason.trim(),
-        ...(returnType === 'RETURN' && { refundMethod: refundMethod }),
+        ...(returnType === 'REFUND' && { refundMethod: refundMethod }),
       };
       if (notes.trim()) {
         payload.notes = notes.trim();
@@ -367,16 +386,16 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setReturnType('RETURN')}
+                onClick={() => setReturnType('REFUND')}
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
-                  returnType === 'RETURN'
+                  returnType === 'REFUND'
                     ? 'border-[#004785] bg-blue-50'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                    returnType === 'RETURN'
+                    returnType === 'REFUND'
                       ? 'bg-[#004785] text-white'
                       : 'bg-slate-100 text-slate-500'
                   }`}

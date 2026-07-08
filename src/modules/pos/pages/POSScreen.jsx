@@ -641,7 +641,7 @@ const POSScreen = () => {
       const payment = paymentRes.data || paymentRes;
       // Lưu thông tin QR để hiển thị
       setQrData({
-        paymentId: payment.paymentId,
+        paymentId: payment.PaymentId || payment.paymentId, // Backend trả PascalCase
         qrImageBase64: payment.qrImageBase64 || payment.QRImageBase64,
         transactionContent: payment.transactionContent || payment.VietQRString,
         amount: amount,
@@ -655,7 +655,7 @@ const POSScreen = () => {
         const pendingOrders = JSON.parse(localStorage.getItem('pos_pending_orders') || '[]');
         pendingOrders.push({
           invoiceId,
-          paymentId: payment.paymentId,
+          paymentId: payment.PaymentId || payment.paymentId, // Backend trả PascalCase
           amount,
           createdAt: new Date().toISOString(),
           customer: selectedCustomer?.name || 'Khách lẻ',

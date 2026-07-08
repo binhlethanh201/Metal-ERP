@@ -336,11 +336,11 @@ const mapOrder = (o) => {
       ),
     })),
     itemCount: (o.items || o.lineItems || []).length || o.itemCount || 0,
-    subtotal: parseFloat(o.subtotal || o.subTotal || 0),
-    discount: parseFloat(o.discountAmount || o.discount || 0),
-    vat: parseFloat(o.taxAmount || o.vat || o.tax || 0),
-    totalAmount: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
-    total: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
+    subtotal: parseFloat(o.subtotal || o.Subtotal || o.subTotal || 0),
+    discount: parseFloat(o.discountAmount || o.DiscountAmount || o.discount || 0),
+    vat: parseFloat(o.taxAmount || o.TaxAmount || o.vat || o.tax || 0),
+    totalAmount: parseFloat(o.totalAmount || o.TotalAmount || o.total || o.grandTotal || 0),
+    total: parseFloat(o.totalAmount || o.TotalAmount || o.total || o.grandTotal || 0),
     paymentMethod: normalizedPM || paymentMethod,
     payLines:
       lines.length > 0
@@ -365,6 +365,7 @@ const OrderHistory = () => {
   const [search, setSearch] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [backfilling, setBackfilling] = useState(false); // Track backfill state to prevent "0 đ" flash
   const pageSize = 15;
 
   useEffect(() => {
@@ -584,14 +585,18 @@ ${
       );
     }
     if (timeFilter === 'today') {
-      const today = new Date().toISOString().slice(0, 10);
-      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(today));
+      // Lấy today theo UTC+7 (Việt Nam) bằng cách offset +7 hours
+      const now = new Date();
+      const vnOffset = 7 * 60 * 60 * 1000; // UTC+7
+      const vnToday = new Date(now.getTime() + vnOffset).toISOString().slice(0, 10);
+      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(vnToday));
     }
     if (timeFilter === 'yesterday') {
       const d = new Date();
       d.setDate(d.getDate() - 1);
-      const y = d.toISOString().slice(0, 10);
-      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(y));
+      const vnOffset = 7 * 60 * 60 * 1000;
+      const vnYesterday = new Date(d.getTime() + vnOffset).toISOString().slice(0, 10);
+      list = list.filter((o) => (o.createdAt || o.date || '').startsWith(vnYesterday));
     }
     if (timeFilter === 'week') {
       const w = new Date();
@@ -614,14 +619,18 @@ ${
   const fetchedDetailIds = useRef(new Set());
   useEffect(() => {
     if (!orders.length || loading) return;
+    // Chỉ backfill những đơn thực sự thiếu totalAmount (=0) — không backfill khi đã có data
     const needFetch = paginatedData.filter(
-      (o) => !fetchedDetailIds.current.has(o.invoiceCode) && (!o.totalAmount || !o.items?.length)
+      (o) =>
+        !fetchedDetailIds.current.has(o.invoiceCode) &&
+        (!o.totalAmount || o.totalAmount === 0 || !o.items?.length)
     );
     if (!needFetch.length) return;
     needFetch.forEach((o) => fetchedDetailIds.current.add(o.invoiceCode));
     Promise.allSettled(
       needFetch.map((o) => {
-        const id = o.invoiceId || o.invoiceCode || o.id;
+        // Dùng invoiceId (Guid) thay vì invoiceCode
+        const id = o.invoiceId || o.id;
         return id ? getInvoice(id) : Promise.reject('no id');
       })
     ).then((results) => {
@@ -630,6 +639,8 @@ ${
         results.forEach((result, idx) => {
           if (result.status === 'fulfilled' && result.value) {
             const mapped = mapOrder(result.value);
+            // Chỉ cập nhật nếu backfill cho ra totalAmount > 0 (tránh ghi đè data tốt bằng data xấu)
+            if (!mapped.totalAmount || mapped.totalAmount === 0) return;
             const code = needFetch[idx].invoiceCode;
             const orderIdx = updated.findIndex((o) => o.invoiceCode === code);
             if (orderIdx !== -1) updated[orderIdx] = { ...updated[orderIdx], ...mapped };
@@ -637,12 +648,16 @@ ${
         });
         return updated;
       });
+      setBackfilling(false);
     });
-  }, [currentPage, paginatedData, orders.length, loading]);
+  }, [paginatedData, orders.length, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const todayOrders = orders.filter((o) => {
-    const today = new Date().toISOString().slice(0, 10);
-    return (o.createdAt || o.date || '').startsWith(today);
+    // Lấy today theo UTC+7 (Việt Nam)
+    const now = new Date();
+    const vnOffset = 7 * 60 * 60 * 1000;
+    const vnToday = new Date(now.getTime() + vnOffset).toISOString().slice(0, 10);
+    return (o.createdAt || o.date || '').startsWith(vnToday);
   });
   const todayRevenue = todayOrders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
   const todayCount = todayOrders.length;
@@ -886,7 +901,7 @@ ${
           <Table
             columns={columns}
             data={paginatedData}
-            loading={loading}
+            loading={loading || backfilling}
             emptyMessage={fetchError ? `Lỗi: ${fetchError}` : 'Không có đơn hàng nào'}
           />
           {totalPages > 1 && (
