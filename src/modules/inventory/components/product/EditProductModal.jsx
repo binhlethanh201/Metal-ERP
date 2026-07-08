@@ -843,6 +843,28 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
               }
             />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Đơn vị gốc</label>
+            <select
+              value={f.newConversionUnit.convertFrom || ''}
+              onChange={(e) =>
+                f.setNewConversionUnit({ ...f.newConversionUnit, convertFrom: e.target.value })
+              }
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+            >
+              <option value="">
+                Chọn đơn vị gốc (Mặc định: {f.form.baseUnit?.name || 'Chưa có'})
+              </option>
+              {f.form.baseUnit?.name && (
+                <option value={f.form.baseUnit.name}>{f.form.baseUnit.name}</option>
+              )}
+              {(f.form.conversionUnits || []).map((u) => (
+                <option key={u.id || u.name} value={u.name}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </Modal>
     </>

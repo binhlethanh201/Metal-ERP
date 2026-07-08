@@ -2,7 +2,14 @@
 import ProductCard from './ProductCard';
 import Icon from '../../../../shared/components/Icon';
 
-const ProductGrid = ({ products, onAddToCart, loading, error, singleColumn }) => {
+const ProductGrid = ({
+  products,
+  onAddToCart,
+  onOpenUnitSelector,
+  loading,
+  error,
+  singleColumn,
+}) => {
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
@@ -33,7 +40,13 @@ const ProductGrid = ({ products, onAddToCart, loading, error, singleColumn }) =>
     return (
       <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} horizontal />
+          <ProductCard
+            key={product.id}
+            product={product}
+            onAddToCart={onAddToCart}
+            onOpenUnitSelector={onOpenUnitSelector}
+            horizontal
+          />
         ))}
       </div>
     );
@@ -42,7 +55,12 @@ const ProductGrid = ({ products, onAddToCart, loading, error, singleColumn }) =>
   return (
     <div className="custom-scrollbar grid flex-1 grid-cols-1 items-start gap-4 overflow-y-auto pb-6 pr-2 md:grid-cols-2 xl:grid-cols-3">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          onAddToCart={onAddToCart}
+          onOpenUnitSelector={onOpenUnitSelector}
+        />
       ))}
     </div>
   );

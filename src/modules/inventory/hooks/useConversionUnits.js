@@ -19,7 +19,7 @@ export const useConversionUnits = (form, setForm) => {
   const addUnit = () => {
     const name = (newUnit.name || '').trim();
     const cv = Number(newUnit.convertValue) || 0;
-    const cf = (newUnit.convertFrom || '').trim();
+    const cf = (newUnit.convertFrom || '').trim() || form.baseUnit?.name;
     if (!name) {
       alert('Vui lòng nhập tên đơn vị');
       return;
@@ -81,6 +81,7 @@ export const useConversionUnits = (form, setForm) => {
           name,
           convertValue: cv,
           convertFrom: cf,
+          price: newUnit.price ? Number(newUnit.price) : calcPrice,
           calculatedPrice: calcPrice,
           directSale: newUnit.directSale,
         },

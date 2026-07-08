@@ -70,6 +70,9 @@ const normalizePosProduct = (p) => ({
   categoryName: p.categoryName || p.category || '',
   image: p.imageUrl || p.image || '',
   status: (p.availableStock || p.quantity || p.stock || 0) > 0 ? 'Còn hàng' : 'Hết hàng',
+  // UOM: đơn vị quy đổi
+  conversionUnits: p.conversionUnits || [],
+  hasMultipleUnits: (p.conversionUnits || []).length > 0,
 });
 
 export const usePosProductList = (searchTerm = '') => {

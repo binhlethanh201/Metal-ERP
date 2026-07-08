@@ -8,6 +8,7 @@ import { useAuth } from '../../../shared/hooks/useAuth';
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
+import UnitSelector from '../components/product/UnitSelector';
 import PaymentModal from '../components/cart/PaymentModal';
 import QRModal from '../components/cart/QRModal';
 import SuccessModal from '../components/order/SuccessModal';
@@ -28,7 +29,7 @@ import {
 const PAYMENT_LABELS = { cash: 'Tiền mặt', transfer: 'Chuyển khoản' };
 const newPaymentLine = (method = 'cash') => ({ id: Date.now(), method, amount: 0 });
 
-// Map API product sang format POS cart
+// Map API product sang format POS cart (có hỗ trợ UOM)
 const mapToPosProduct = (p) => ({
   id: p.productId || p.productCode || p.id || '',
   name: p.productName || p.name || '',
@@ -40,7 +41,9 @@ const mapToPosProduct = (p) => ({
   image: p.image || '',
   productId: p.productId || p.id || '',
   barcode: p.barcode || '',
-  unit: p.unit || 'Cái',
+  unit: p.unit || 'Cái', // Base unit
+  conversionUnits: p.conversionUnits || [], // Các đơn vị quy đổi
+  hasMultipleUnits: (p.conversionUnits || []).length > 0, // Có nhiều đơn vị không
 });
 
 const POSScreen = () => {
@@ -70,6 +73,10 @@ const POSScreen = () => {
   // Lưu tạm invoiceId và paymentId để xử lý đơn treo
   const [pendingInvoice, setPendingInvoice] = useState(null);
 
+  // UOM: Unit selector modal
+  const [showUnitSelector, setShowUnitSelector] = useState(false);
+  const [selectedProductForUnit, setSelectedProductForUnit] = useState(null);
+
   const prevQuickAdd = useRef(quickAddCust);
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
@@ -84,7 +91,29 @@ const POSScreen = () => {
   const cart = usePosCart([]);
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
-  const handleAddToCart = useCallback((p) => cart.addToCart(p), [cart]);
+  const handleAddToCart = useCallback(
+    (p, selectedUnit = null) => {
+      cart.addToCart(p, selectedUnit);
+    },
+    [cart]
+  );
+
+  // UOM: Mở modal chọn đơn vị
+  const handleOpenUnitSelector = useCallback((product) => {
+    setSelectedProductForUnit(product);
+    setShowUnitSelector(true);
+  }, []);
+
+  // UOM: Xử lý khi chọn đơn vị xong
+  const handleUnitSelected = useCallback(
+    (product, selectedUnit) => {
+      cart.addToCart(product, selectedUnit);
+      setShowUnitSelector(false);
+      setSelectedProductForUnit(null);
+      showNotice(`Đã thêm: ${product.name} (${selectedUnit.name})`);
+    },
+    [cart, showNotice]
+  );
   const handleClearCart = useCallback(() => {
     cart.clearCart();
     setSelectedCustomer(null);
@@ -176,13 +205,15 @@ const POSScreen = () => {
         localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
       }
 
-      // 2. Thêm từng sản phẩm vào hóa đơn
+      // 2. Thêm từng sản phẩm vào hóa đơn (kèm UOM data)
       await Promise.all(
         cart.cart.map((item) =>
           addInvoiceItem(invoice.invoiceId, {
             productId: item.productId || item.id,
             quantity: item.quantity,
             unitPrice: item.price,
+            selectedUnit: item.selectedUnit,
+            convertValue: item.convertValue,
           })
         )
       );
@@ -332,13 +363,15 @@ const POSScreen = () => {
           cashierName: staffName,
           createdBy: staffName,
         });
-        // Thêm sản phẩm
+        // Thêm sản phẩm (kèm UOM data)
         await Promise.all(
           cart.cart.map((item) =>
             addInvoiceItem(invoice.invoiceId, {
               productId: item.productId || item.id,
               quantity: item.quantity,
               unitPrice: item.price,
+              selectedUnit: item.selectedUnit,
+              convertValue: item.convertValue,
             })
           )
         );
@@ -409,13 +442,15 @@ const POSScreen = () => {
           map[invoiceId] = staffName;
           localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
         }
-        // Thêm sản phẩm
+        // Thêm sản phẩm (kèm UOM data)
         await Promise.all(
           cart.cart.map((item) =>
             addInvoiceItem(invoice.invoiceId, {
               productId: item.productId || item.id,
               quantity: item.quantity,
               unitPrice: item.price,
+              selectedUnit: item.selectedUnit,
+              convertValue: item.convertValue,
             })
           )
         );
@@ -468,13 +503,15 @@ const POSScreen = () => {
           map[invoiceId] = staffName;
           localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
         }
-        // Thêm sản phẩm
+        // Thêm sản phẩm (kèm UOM data)
         await Promise.all(
           cart.cart.map((item) =>
             addInvoiceItem(invoice.invoiceId, {
               productId: item.productId || item.id,
               quantity: item.quantity,
               unitPrice: item.price,
+              selectedUnit: item.selectedUnit,
+              convertValue: item.convertValue,
             })
           )
         );
@@ -722,7 +759,12 @@ const POSScreen = () => {
             </div>
           </div>
           <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-2">
-            <ProductGrid products={filteredProducts} onAddToCart={handleAddToCart} singleColumn />
+            <ProductGrid
+              products={filteredProducts}
+              onAddToCart={handleAddToCart}
+              onOpenUnitSelector={handleOpenUnitSelector}
+              singleColumn
+            />
           </div>
         </div>
       </div>
@@ -768,6 +810,17 @@ const POSScreen = () => {
       />
 
       <ReceiptModal isOpen={showReceipt} onClose={handleCloseReceipt} lastOrder={lastOrder} />
+
+      {/* UOM: Unit Selector Modal */}
+      <UnitSelector
+        isOpen={showUnitSelector}
+        onClose={() => {
+          setShowUnitSelector(false);
+          setSelectedProductForUnit(null);
+        }}
+        product={selectedProductForUnit}
+        onSelect={handleUnitSelected}
+      />
 
       <CustomerPickerModal
         isOpen={showCustModal}

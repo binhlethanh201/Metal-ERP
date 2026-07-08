@@ -70,7 +70,10 @@ const PaymentModal = ({
             {cart.cart.map((item) => (
               <div key={item.id} className="flex items-center justify-between text-xs">
                 <span className="flex-1 truncate text-slate-700">{item.name}</span>
-                <span className="mx-2 text-slate-400">x{item.quantity}</span>
+                <span className="mx-2 text-slate-400">
+                  x{item.quantity}
+                  {item.displayUnit || item.selectedUnit || ''}
+                </span>
                 <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
               </div>
             ))}
