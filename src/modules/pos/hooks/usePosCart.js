@@ -1,6 +1,7 @@
 /**
  * Hook quản lý giỏ hàng POS - add, changeQty, remove, clearCart, voucher, paymentMethod.
  * Tự tính subtotal, discount, VAT (8%), total. Export toàn bộ state + handlers.
+ * Hỗ trợ UOM (Unit of Measurement) - đơn vị quy đổi với số lẻ.
  */
 import { useState, useCallback } from 'react';
 
@@ -10,23 +11,70 @@ export const usePosCart = (initialItems = []) => {
   const [appliedVoucher, setAppliedVoucher] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Tiền mặt');
 
-  const addToCart = useCallback((product) => {
+  /**
+   * Thêm sản phẩm vào giỏ hàng với hỗ trợ UOM
+   * @param {Object} product - Sản phẩm
+   * @param {Object|null} selectedUnit - Đơn vị đã chọn { convertValue, price, name }
+   */
+  const addToCart = useCallback((product, selectedUnit = null) => {
     setCart((prev) => {
-      const existed = prev.find((item) => item.id === product.id);
-      if (existed)
+      // Tạo ID riêng nếu có đơn vị quy đổi (để cùng sản phẩm khác đơn vị vẫn thêm riêng)
+      const itemId = selectedUnit ? `${product.id}-${selectedUnit.name}` : product.id;
+
+      const existed = prev.find((item) => item.id === itemId);
+
+      // Xác định đơn vị và giá
+      const unitName = selectedUnit?.name || product.unit || 'Cái';
+      const convertValue = selectedUnit?.convertValue || 1;
+      const price = selectedUnit?.price ?? product.price;
+
+      // Tạo displayUnit string
+      const baseUnit = product.unit || 'Cái';
+      const displayUnit = convertValue === 1 ? unitName : `${unitName} (×${convertValue})`;
+
+      if (existed) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
         );
-      return [...prev, { ...product, quantity: 1 }];
+      }
+
+      return [
+        ...prev,
+        {
+          ...product,
+          id: itemId,
+          quantity: 1,
+          price, // Giá theo đơn vị đã chọn
+          selectedUnit: unitName,
+          convertValue,
+          displayUnit,
+          baseUnit,
+          stock: product.stock || 0,
+        },
+      ];
     });
   }, []);
 
   const changeQty = useCallback((id, delta) => {
     setCart((prev) =>
       prev
-        .map((item) =>
-          item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
-        )
+        .map((item) => {
+          if (item.id !== id) return item;
+          // Cho phép số lẻ (tối thiểu 0.01)
+          const newQty = item.quantity + delta;
+          return { ...item, quantity: Math.max(0.01, newQty) };
+        })
+        .filter((item) => item.quantity > 0)
+    );
+  }, []);
+
+  /**
+   * Set số lượng trực tiếp (cho input)
+   */
+  const setItemQuantity = useCallback((id, quantity) => {
+    setCart((prev) =>
+      prev
+        .map((item) => (item.id === id ? { ...item, quantity: Math.max(0.01, quantity) } : item))
         .filter((item) => item.quantity > 0)
     );
   }, []);
@@ -62,6 +110,7 @@ export const usePosCart = (initialItems = []) => {
     setPaymentMethod,
     addToCart,
     changeQty,
+    setItemQuantity,
     removeItem,
     clearCart,
     applyVoucher,

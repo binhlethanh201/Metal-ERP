@@ -1,18 +1,23 @@
 /**
  * CartItem Component - Mục trong giỏ hàng
+ * Hỗ trợ UOM: hiển thị đơn vị tính với số lượng
  */
 
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
 export const CartItem = ({ item, onQuantityChange, onRemove }) => {
   const subtotal = item.price * item.quantity;
+  const displayUnit = item.displayUnit || item.selectedUnit || '';
 
   return (
     <div className="flex gap-3 rounded-lg bg-slate-50 p-3">
       {/* Product Info */}
       <div className="flex-1">
         <h4 className="text-sm font-bold text-slate-900">{item.name}</h4>
-        <p className="text-xs text-slate-500">{formatCurrency(item.price)}</p>
+        <p className="text-xs text-slate-500">
+          {formatCurrency(item.price)}
+          {displayUnit && <span className="ml-1 text-slate-400">/ {displayUnit}</span>}
+        </p>
       </div>
 
       {/* Quantity */}
@@ -23,7 +28,20 @@ export const CartItem = ({ item, onQuantityChange, onRemove }) => {
         >
           −
         </button>
-        <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
+        <div className="flex flex-col items-center">
+          <span className="w-12 text-center text-sm font-semibold">{item.quantity}</span>
+          {displayUnit && item.convertValue !== 1 && (
+            <span className="text-[10px] text-slate-400">{displayUnit}</span>
+          )}
+          {displayUnit && item.convertValue !== 1 && (
+            <span
+              className="text-[10px] text-slate-400"
+              title={`Tương đương ${(item.quantity * item.convertValue).toFixed(2)} ${item.baseUnit || ''}`}
+            >
+              (≈ {(item.quantity * item.convertValue).toFixed(2)} {item.baseUnit || ''})
+            </span>
+          )}
+        </div>
         <button
           onClick={() => onQuantityChange(item.id, item.quantity + 1)}
           className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm hover:bg-slate-100"
