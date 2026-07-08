@@ -5,6 +5,23 @@
  */
 import { useState, useCallback } from 'react';
 
+/**
+ * Helper: Tính productId gốc từ item.id (cắt phần "-unitName" nếu có)
+ */
+const getProductId = (item) => {
+  if (item.productId) return item.productId;
+  return item.id.split('-').slice(0, -1).join('-') || item.id;
+};
+
+/**
+ * Helper: Tính tổng base units đã sử dụng cho 1 productId (loại trừ 1 item nếu specify)
+ */
+const calcUsedStock = (items, productId, excludeItemId = null) => {
+  return items
+    .filter((it) => getProductId(it) === productId && it.id !== excludeItemId)
+    .reduce((sum, it) => sum + it.quantity * (it.convertValue || 1), 0);
+};
+
 export const usePosCart = (initialItems = []) => {
   const [cart, setCart] = useState(initialItems);
   const [voucher, setVoucher] = useState('');
@@ -35,9 +52,22 @@ export const usePosCart = (initialItems = []) => {
       // Lấy stock (API trả về đã là base unit)
       const baseStock = product.availableStock ?? product.stock ?? 0;
 
+      // === FIX: Kiểm tra stock overdraw cho cùng productId ===
+      // Tính base units đã sử dụng bởi các items khác cùng productId (loại trừ existed)
+      const otherUsedStock = calcUsedStock(prev, product.id, existed ? itemId : null);
+      const newActualQty = (existed ? existed.quantity + 1 : 1) * convertValue;
+      const totalAfterAdd = otherUsedStock + newActualQty;
+
+      if (totalAfterAdd > baseStock) {
+        alert(`Tổng số lượng vượt quá tồn kho (${baseStock} ${baseUnit})`);
+        return prev;
+      }
+      // === END FIX ===
+
       if (existed) {
-        // Tính maxQty theo đơn vị đã chọn: stock / convertValue
-        const maxQty = Math.floor(baseStock / convertValue);
+        // Tính maxQty = remainingStock / convertValue
+        const remainingStock = Math.max(0, baseStock - otherUsedStock);
+        const maxQty = Math.floor(remainingStock / convertValue);
         return prev.map((item) =>
           item.id === itemId ? { ...item, quantity: Math.min(maxQty, item.quantity + 1) } : item
         );
@@ -47,6 +77,7 @@ export const usePosCart = (initialItems = []) => {
         ...prev,
         {
           ...product,
+          productId: product.id, // Lưu productId gốc để group
           id: itemId,
           quantity: 1,
           price, // Giá theo đơn vị đã chọn
@@ -55,40 +86,81 @@ export const usePosCart = (initialItems = []) => {
           displayUnit,
           baseUnit,
           baseStock, // Stock gốc (base unit)
-          maxQty: Math.floor(baseStock / convertValue), // Số lượng max theo đơn vị đã chọn
+          maxQty: Math.floor((baseStock - otherUsedStock) / convertValue), // Số lượng max theo đơn vị đã chọn, đã trừ used
         },
       ];
     });
   }, []);
 
   const changeQty = useCallback((id, delta) => {
-    setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.id !== id) return item;
-          const newQty = Math.round(item.quantity + delta);
-          // Sử dụng maxQty đã tính sẵn (stock / convertValue)
-          const maxQty = item.maxQty || item.stock || Infinity;
-          return { ...item, quantity: Math.max(1, Math.min(maxQty, newQty)) };
-        })
-        .filter((item) => item.quantity > 0)
-    );
+    setCart((prev) => {
+      const item = prev.find((it) => it.id === id);
+      if (!item) return prev;
+
+      const productId = getProductId(item);
+      const baseStock = item.baseStock ?? item.stock ?? 0;
+      const convertValue = item.convertValue || 1;
+
+      // === FIX: Kiểm tra stock overdraw cho cùng productId ===
+      // Tính base units đã sử dụng bởi các items khác cùng productId (loại trừ item hiện tại)
+      const otherUsedStock = calcUsedStock(prev, productId, id);
+      const newQty = Math.round(item.quantity + delta);
+      const newActualQty = newQty * convertValue;
+      const totalAfterChange = otherUsedStock + newActualQty;
+
+      if (totalAfterChange > baseStock) {
+        alert(`Tổng số lượng vượt quá tồn kho (${baseStock} ${item.baseUnit || 'Cái'})`);
+        return prev;
+      }
+      // === END FIX ===
+
+      // Tính maxQty = remainingStock / convertValue
+      const remainingStock = Math.max(0, baseStock - otherUsedStock);
+      const maxQty = Math.floor(remainingStock / convertValue);
+
+      return prev
+        .map((it) =>
+          it.id === id ? { ...it, quantity: Math.max(1, Math.min(maxQty, newQty)) } : it
+        )
+        .filter((it) => it.quantity > 0);
+    });
   }, []);
 
   /**
    * Set số lượng trực tiếp (cho input)
    */
   const setItemQuantity = useCallback((id, quantity) => {
-    setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.id !== id) return item;
-          // Sử dụng maxQty đã tính sẵn (stock / convertValue)
-          const maxQty = item.maxQty || item.stock || Infinity;
-          return { ...item, quantity: Math.max(1, Math.min(maxQty, Math.round(quantity))) };
-        })
-        .filter((item) => item.quantity > 0)
-    );
+    setCart((prev) => {
+      const item = prev.find((it) => it.id === id);
+      if (!item) return prev;
+
+      const productId = getProductId(item);
+      const baseStock = item.baseStock ?? item.stock ?? 0;
+      const convertValue = item.convertValue || 1;
+
+      // === FIX: Kiểm tra stock overdraw cho cùng productId ===
+      // Tính base units đã sử dụng bởi các items khác cùng productId (loại trừ item hiện tại)
+      const otherUsedStock = calcUsedStock(prev, productId, id);
+      const newQty = Math.max(1, Math.round(quantity));
+      const newActualQty = newQty * convertValue;
+      const totalAfterChange = otherUsedStock + newActualQty;
+
+      if (totalAfterChange > baseStock) {
+        alert(`Tổng số lượng vượt quá tồn kho (${baseStock} ${item.baseUnit || 'Cái'})`);
+        return prev;
+      }
+      // === END FIX ===
+
+      // Tính maxQty = remainingStock / convertValue
+      const remainingStock = Math.max(0, baseStock - otherUsedStock);
+      const maxQty = Math.floor(remainingStock / convertValue);
+
+      return prev
+        .map((it) =>
+          it.id === id ? { ...it, quantity: Math.max(1, Math.min(maxQty, newQty)) } : it
+        )
+        .filter((it) => it.quantity > 0);
+    });
   }, []);
 
   const removeItem = useCallback((id) => {
