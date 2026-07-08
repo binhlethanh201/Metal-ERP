@@ -378,8 +378,8 @@ const OrderHistory = () => {
       // Fetch more orders to ensure local time filters (yesterday, week) work correctly
       const data = await getOrders({ status: 'Completed', pageSize: 1000 });
       console.log('[OrderHistory] API response:', data);
-      // Backend trả về PageResultDto hoặc mảng trực tiếp hoặc {data: [...]}
-      const raw = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
+      // Backend trả về PageResultDto với Items (capital I) hoặc mảng trực tiếp
+      const raw = Array.isArray(data) ? data : (data?.Items ?? data?.items ?? data?.data ?? []);
       const items = Array.isArray(raw) ? raw.map(mapOrder) : [];
       console.log('[OrderHistory] mapped orders:', items.length, items[0]);
       if (items.length > 0)

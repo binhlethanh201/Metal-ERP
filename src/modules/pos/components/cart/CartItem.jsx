@@ -1,6 +1,6 @@
 /**
  * CartItem Component - Mục trong giỏ hàng
- * Hỗ trợ UOM: hiển thị đơn vị tính với số lượng
+ * Hỗ trợ UOM: hiển thị đơn vị tính với số lượng, stock warning
  */
 
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
@@ -8,6 +8,12 @@ import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 export const CartItem = ({ item, onQuantityChange, onRemove }) => {
   const subtotal = item.price * item.quantity;
   const displayUnit = item.displayUnit || item.selectedUnit || '';
+
+  // Tính stock còn lại sau khi mua
+  const baseStock = item.baseStock ?? item.stock ?? 0;
+  const actualQtyUsed = item.quantity * (item.convertValue || 1);
+  const remainingStock = Math.max(0, baseStock - actualQtyUsed);
+  const isLowStock = remainingStock <= 0;
 
   return (
     <div className="flex gap-3 rounded-lg bg-slate-50 p-3">
@@ -18,6 +24,14 @@ export const CartItem = ({ item, onQuantityChange, onRemove }) => {
           {formatCurrency(item.price)}
           {displayUnit && <span className="ml-1 text-slate-400">/ {displayUnit}</span>}
         </p>
+        {/* Stock warning */}
+        {item.convertValue !== 1 && (
+          <p
+            className={`text-[10px] ${isLowStock ? 'font-semibold text-red-500' : 'text-slate-400'}`}
+          >
+            Còn {remainingStock.toFixed(2)} {item.baseUnit || ''}
+          </p>
+        )}
       </div>
 
       {/* Quantity */}

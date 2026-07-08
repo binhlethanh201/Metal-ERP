@@ -1,6 +1,6 @@
 /**
  * UnitSelector - Component chọn đơn vị tính khi thêm sản phẩm vào giỏ
- * Hiển thị danh sách đơn vị quy đổi và giá tương ứng
+ * Hiển thị danh sách đơn vị quy đổi, giá tương ứng và số lượng có thể mua
  */
 import { useState } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
@@ -13,6 +13,9 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
   if (!product) return null;
 
   const baseUnit = product.unit || 'Cái';
+  const baseStock = product.availableStock ?? product.stock ?? 0;
+  // API trả về PascalCase (ConversionUnits) - hỗ trợ cả lowercase
+  const rawConversionUnits = product.ConversionUnits ?? product.conversionUnits ?? [];
 
   // Build list: base unit + conversion units
   const units = [
@@ -23,13 +26,18 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
       price: product.price,
       description: 'Đơn vị cơ bản',
     },
-    ...(product.conversionUnits || []).map((u) => ({
-      id: u.unitName,
-      name: u.unitName,
-      convertValue: u.convertValue,
-      price: u.price || product.price * u.convertValue,
-      description: `= ${u.convertValue} ${baseUnit}`,
-    })),
+    ...rawConversionUnits.map((u) => {
+      const unitName = u.UnitName ?? u.unitName ?? u.name ?? baseUnit;
+      const convertValue = u.ConvertValue ?? u.convertValue ?? 1;
+      const price = u.Price ?? u.price ?? product.price * convertValue;
+      return {
+        id: unitName,
+        name: unitName,
+        convertValue,
+        price,
+        description: `= ${convertValue} ${baseUnit}`,
+      };
+    }),
   ];
 
   const handleSelect = () => {
@@ -66,39 +74,49 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
         <div className="rounded-lg bg-slate-50 p-3">
           <p className="font-semibold text-slate-900">{product.name}</p>
           <p className="text-xs text-slate-500">
-            SL tồn: {product.stock} {baseUnit}
+            SL tồn: {baseStock.toFixed(2)} {baseUnit}
           </p>
         </div>
 
         {/* Unit list */}
         <div className="space-y-2">
           <p className="text-sm font-medium text-slate-600">Chọn đơn vị:</p>
-          {units.map((unit) => (
-            <button
-              key={unit.id}
-              onClick={() => setSelectedUnitId(unit.id)}
-              className={`flex w-full items-center justify-between rounded-lg border p-3 transition-all ${
-                selectedUnitId === unit.id
-                  ? 'border-[#004785] bg-blue-50 shadow-sm'
-                  : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <div className="text-left">
-                <span className="font-semibold text-slate-900">{unit.name}</span>
-                {unit.convertValue !== 1 && (
-                  <span className="ml-2 text-xs text-slate-500">{unit.description}</span>
-                )}
-              </div>
-              <div className="text-right">
-                <span className="block font-bold text-[#004785]">{formatCurrency(unit.price)}</span>
-                {unit.convertValue !== 1 && (
-                  <span className="text-xs text-slate-400">
-                    {formatCurrency(unit.price / unit.convertValue)}/{baseUnit}
+          {units.map((unit) => {
+            const maxQty = Math.floor(baseStock / unit.convertValue);
+            const isDisabled = maxQty <= 0;
+
+            return (
+              <button
+                key={unit.id}
+                onClick={() => !isDisabled && setSelectedUnitId(unit.id)}
+                disabled={isDisabled}
+                className={`flex w-full items-center justify-between rounded-lg border p-3 transition-all ${
+                  selectedUnitId === unit.id
+                    ? 'border-[#004785] bg-blue-50 shadow-sm'
+                    : isDisabled
+                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-50'
+                      : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="text-left">
+                  <span className="font-semibold text-slate-900">{unit.name}</span>
+                  {unit.convertValue !== 1 && (
+                    <span className="ml-2 text-xs text-slate-500">{unit.description}</span>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="block font-bold text-[#004785]">
+                    {formatCurrency(unit.price)}
                   </span>
-                )}
-              </div>
-            </button>
-          ))}
+                  <span
+                    className={`text-[10px] ${maxQty <= 0 ? 'text-red-500' : 'text-slate-400'}`}
+                  >
+                    Max: {maxQty} {unit.name}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </Modal>

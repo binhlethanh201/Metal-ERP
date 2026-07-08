@@ -32,8 +32,12 @@ export const usePosCart = (initialItems = []) => {
       const baseUnit = product.unit || 'Cái';
       const displayUnit = convertValue === 1 ? unitName : `${unitName} (×${convertValue})`;
 
+      // Lấy stock (API trả về đã là base unit)
+      const baseStock = product.availableStock ?? product.stock ?? 0;
+
       if (existed) {
-        const maxQty = existed.stock || Infinity;
+        // Tính maxQty theo đơn vị đã chọn: stock / convertValue
+        const maxQty = Math.floor(baseStock / convertValue);
         return prev.map((item) =>
           item.id === itemId ? { ...item, quantity: Math.min(maxQty, item.quantity + 1) } : item
         );
@@ -50,7 +54,8 @@ export const usePosCart = (initialItems = []) => {
           convertValue,
           displayUnit,
           baseUnit,
-          stock: product.stock || 0,
+          baseStock, // Stock gốc (base unit)
+          maxQty: Math.floor(baseStock / convertValue), // Số lượng max theo đơn vị đã chọn
         },
       ];
     });
@@ -62,7 +67,8 @@ export const usePosCart = (initialItems = []) => {
         .map((item) => {
           if (item.id !== id) return item;
           const newQty = Math.round(item.quantity + delta);
-          const maxQty = item.stock || Infinity;
+          // Sử dụng maxQty đã tính sẵn (stock / convertValue)
+          const maxQty = item.maxQty || item.stock || Infinity;
           return { ...item, quantity: Math.max(1, Math.min(maxQty, newQty)) };
         })
         .filter((item) => item.quantity > 0)
@@ -77,7 +83,8 @@ export const usePosCart = (initialItems = []) => {
       prev
         .map((item) => {
           if (item.id !== id) return item;
-          const maxQty = item.stock || Infinity;
+          // Sử dụng maxQty đã tính sẵn (stock / convertValue)
+          const maxQty = item.maxQty || item.stock || Infinity;
           return { ...item, quantity: Math.max(1, Math.min(maxQty, Math.round(quantity))) };
         })
         .filter((item) => item.quantity > 0)

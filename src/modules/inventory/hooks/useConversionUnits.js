@@ -80,6 +80,7 @@ export const useConversionUnits = (form, setForm) => {
           id: Date.now(),
           name,
           convertValue: cv,
+          rate: cv, // Backend uses 'rate' field in payload
           convertFrom: cf,
           price: newUnit.price ? Number(newUnit.price) : calcPrice,
           calculatedPrice: calcPrice,

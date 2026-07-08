@@ -59,21 +59,34 @@ const MOCK_POS_PRODUCTS = [
   },
 ];
 
-const normalizePosProduct = (p) => ({
-  productId: p.productId || p.id || '',
-  productCode: p.productCode || '',
-  productName: p.productName || p.name || '',
-  barcode: p.barcode || '',
-  unit: p.unit || 'Cái',
-  retailPrice: parseFloat(p.retailPrice || p.unitPrice || p.salePrice || p.price || 0),
-  availableStock: parseFloat(p.availableStock || p.quantity || p.stock || 0),
-  categoryName: p.categoryName || p.category || '',
-  image: p.imageUrl || p.image || '',
-  status: (p.availableStock || p.quantity || p.stock || 0) > 0 ? 'Còn hàng' : 'Hết hàng',
-  // UOM: đơn vị quy đổi
-  conversionUnits: p.conversionUnits || [],
-  hasMultipleUnits: (p.conversionUnits || []).length > 0,
-});
+const normalizePosProduct = (p) => {
+  // API trả PascalCase - hỗ trợ cả lowercase
+  const rawConvUnits = p.ConversionUnits ?? p.conversionUnits ?? [];
+  return {
+    productId: p.ProductId ?? p.productId ?? p.id ?? '',
+    productCode: p.ProductCode ?? p.productCode ?? '',
+    productName: p.ProductName ?? p.productName ?? p.name ?? '',
+    barcode: p.Barcode ?? p.barcode ?? '',
+    unit: p.Unit ?? p.unit ?? 'Cái',
+    retailPrice: parseFloat(
+      p.RetailPrice ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0
+    ),
+    availableStock: parseFloat(p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0),
+    categoryName: p.CategoryName ?? p.categoryName ?? p.category ?? '',
+    image: p.ImageUrl ?? p.imageUrl ?? p.image ?? '',
+    status:
+      (p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0
+        ? 'Còn hàng'
+        : 'Hết hàng',
+    // UOM: đơn vị quy đổi - map sang lowercase cho FE
+    conversionUnits: rawConvUnits.map((u) => ({
+      unitName: u.UnitName ?? u.unitName ?? u.name ?? '',
+      convertValue: u.ConvertValue ?? u.convertValue ?? 1,
+      price: u.Price ?? u.price ?? 0,
+    })),
+    hasMultipleUnits: rawConvUnits.length > 0,
+  };
+};
 
 export const usePosProductList = (searchTerm = '') => {
   const [products, setProducts] = useState([]);
@@ -86,7 +99,10 @@ export const usePosProductList = (searchTerm = '') => {
     setError(null);
     try {
       const response = await getPosProducts(term ? { search: term } : {});
-      const items = Array.isArray(response) ? response : response?.items || response?.data || [];
+      // API trả PascalCase Items - hỗ trợ cả lowercase
+      const items = Array.isArray(response)
+        ? response
+        : (response?.Items ?? response?.items ?? response?.data ?? []);
 
       if (items.length > 0) {
         setProducts(items.map(normalizePosProduct));
