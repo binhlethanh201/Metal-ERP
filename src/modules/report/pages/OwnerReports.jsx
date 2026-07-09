@@ -10,7 +10,6 @@ import {
   getProductProfitReport,
   getSupplierDetailReport,
 } from '../services/reportService';
-import { getBranches } from '../../owner/services/branchService';
 import { getSuppliers } from '../../inventory/services/supplierService';
 import { getProducts, getCategories } from '../../inventory/services/productService';
 import { useReport } from '../hooks/useReport';
@@ -42,10 +41,8 @@ export const OwnerReports = () => {
   const [reportDate, setReportDate] = useState(defaultDate);
   const [fromDate, setFromDate] = useState(defaultFromDate);
   const [toDate, setToDate] = useState(defaultToDate);
-  const [branchId, setBranchId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [productId, setProductId] = useState('');
-  const [branches, setBranches] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -58,10 +55,6 @@ export const OwnerReports = () => {
   const [purchaseToDate, setPurchaseToDate] = useState('');
   const [paymentFromDate, setPaymentFromDate] = useState('');
   const [paymentToDate, setPaymentToDate] = useState('');
-
-  // NEW: cờ đánh dấu đã load xong danh sách chi nhánh, để tránh gọi report
-  // với branchId rỗng ngay khi mount (race condition)
-  const [branchesLoaded, setBranchesLoaded] = useState(false);
 
   // ============ HOOKS ============
   const {
@@ -167,16 +160,6 @@ export const OwnerReports = () => {
     return productProfitData.items || productProfitData.data || [];
   }, [productProfitData]);
 
-  // const selectedCategory = useMemo(
-  //   () => categories.find((category) => category.id === categoryId),
-  //   [categories, categoryId]
-  // );
-
-  // const selectedSupplier = useMemo(
-  //   () => suppliers.find((supplier) => (supplier.id || supplier.supplierId) === supplierId),
-  //   [suppliers, supplierId]
-  // );
-
   const productProfitTotals = useMemo(() => {
     const totalRevenue =
       productProfitData?.totalRevenue ??
@@ -187,7 +170,6 @@ export const OwnerReports = () => {
     const totalProfit =
       productProfitData?.totalProfit ??
       productProfitItems.reduce((sum, item) => sum + (item.profit || 0), 0);
-    // NEW: doc trả thêm 2 field này, trước đây bị bỏ qua hoàn toàn
     const averageProfitMargin =
       productProfitData?.averageProfitMargin ??
       (totalRevenue ? (totalProfit / totalRevenue) * 100 : 0);
@@ -229,16 +211,6 @@ export const OwnerReports = () => {
   ]);
 
   // ============ HANDLERS ============
-  const handleBranchChange = (value) => {
-    setBranchId(value);
-    if (selectedReport === 'stock-movement' || selectedReport === 'product-profit') {
-      setCategoryId('');
-    }
-    if (selectedReport === 'stock-movement') {
-      setProductId('');
-    }
-  };
-
   const handleDownload = () => {
     if (selectedReport === 'stock-movement' && movementData?.items) {
       exportToCSV(movementData.items, STOCK_COLUMNS, 'Bao_Cao_Xuat_Nhap_Ton');
@@ -264,38 +236,26 @@ export const OwnerReports = () => {
   const loadReport = async () => {
     switch (selectedReport) {
       case 'daily-end':
-        await fetchDailyEnd({ date: reportDate, branchId: branchId || null });
+        await fetchDailyEnd({ date: reportDate });
         break;
 
       case 'stock-movement': {
-        const movementPayload = {
-          fromDate,
-          toDate,
-          branchId: branchId || null,
-          productId: productId || null,
-        };
-        // Doc chỉ định nghĩa "categoryId": "guid". Hệ thống Product hiện KHÔNG có
-        // Category dạng entity/GUID (xem productService: rename/delete category theo name).
-        // => tạm thời gửi categoryName dưới key categoryId theo đúng field doc yêu cầu.
-        // CẦN XÁC NHẬN VỚI BACKEND xem field này có nhận tên nhóm hay bắt buộc GUID thật.
-        if (categoryId) {
-          movementPayload.categoryId = categoryId;
-        }
+        const movementPayload = { fromDate, toDate, productId: productId || null };
+        if (categoryId) movementPayload.categoryId = categoryId;
         await fetchStockMovement(movementPayload);
         break;
       }
 
       case 'revenue-by-time':
-        await fetchRevenue({ fromDate, toDate, branchId: branchId || null, timeGrouping });
+        await fetchRevenue({ fromDate, toDate, timeGrouping });
         break;
 
       case 'low-stock':
-        await fetchLowStock({ branchId: branchId || null, includeZeroStock });
+        await fetchLowStock({ includeZeroStock });
         break;
 
       case 'product-profit': {
         const profitPayload = { fromDate, toDate, sortBy, pageNumber: 1, pageSize };
-        if (branchId) profitPayload.branchId = branchId;
         if (categoryId) profitPayload.categoryId = categoryId;
         await fetchProductProfit(profitPayload);
         break;
@@ -303,9 +263,6 @@ export const OwnerReports = () => {
 
       case 'supplier-detail': {
         if (!supplierId) return;
-        // Doc endpoint 6 chỉ định nghĩa 5 field: supplierId + 2 khoảng ngày.
-        // Đã bỏ pageNumber/pageSize/supplierName vì API không yêu cầu (nếu backend
-        // thực tế cần phân trang lịch sử, cần bổ sung lại theo xác nhận backend).
         const supplierPayload = { supplierId };
         if (purchaseFromDate) supplierPayload.purchaseFromDate = purchaseFromDate;
         if (purchaseToDate) supplierPayload.purchaseToDate = purchaseToDate;
@@ -325,21 +282,6 @@ export const OwnerReports = () => {
     let isMounted = true;
 
     const loadStaticData = async () => {
-      try {
-        const branchResponse = await getBranches();
-        if (isMounted && branchResponse?.success && branchResponse.data) {
-          const list = branchResponse.data.items || branchResponse.data || [];
-          setBranches(list);
-          if (list.length > 0) setBranchId(list[0].branchId || list[0].id);
-        }
-      } catch (error) {
-        console.error('Không tải được danh sách chi nhánh:', error);
-      } finally {
-        // Dù thành công hay lỗi, đánh dấu đã "load xong" để mở khoá loadReport ban đầu.
-        // Nếu lỗi, branchId vẫn là '' và request sẽ gửi branchId: null (server tự lấy từ token).
-        if (isMounted) setBranchesLoaded(true);
-      }
-
       try {
         const supplierResponse = await getSuppliers({
           pageNumber: 1,
@@ -362,9 +304,6 @@ export const OwnerReports = () => {
     };
   }, []);
 
-  // Danh mục nhóm sản phẩm: dùng API riêng getCategories() thay vì suy ra từ
-  // danh sách sản phẩm hiện có trên branch (cách cũ vừa tốn thêm 1 lần gọi
-  // getProducts không cần thiết, vừa dễ thiếu nhóm nếu branch đó chưa có SP nào).
   useEffect(() => {
     let isMounted = true;
 
@@ -373,7 +312,6 @@ export const OwnerReports = () => {
         const res = await getCategories();
         if (isMounted && res?.success && res.data) {
           const raw = res.data.items || res.data || [];
-          // Chuẩn hoá: API có thể trả mảng string (tên nhóm) hoặc mảng object {id, name}.
           const normalized = raw.map((c) =>
             typeof c === 'string' ? { id: c, name: c } : { id: c.id ?? c.name, name: c.name }
           );
@@ -400,7 +338,6 @@ export const OwnerReports = () => {
           pageNumber: 1,
           pageSize: 200,
           status: 'active',
-          branchId: branchId || undefined,
           categoryName: selectedCatName || undefined,
         });
         if (isMounted && res?.success && res.data) {
@@ -415,18 +352,13 @@ export const OwnerReports = () => {
     return () => {
       isMounted = false;
     };
-  }, [branchId, categoryId, categories]);
+  }, [categoryId, categories]);
 
-  // FIX: trước đây effect này chạy ngay khi mount, song song với loadStaticData(),
-  // nên request đầu tiên (tab daily-end) luôn gửi branchId rỗng dù dropdown sau đó
-  // hiển thị branches[0] -> lệch dữ liệu filter vs report hiển thị, có thể 401 nếu
-  // token Owner không có branchId claim. Giờ đợi branchesLoaded xong mới gọi.
   useEffect(() => {
-    if (!branchesLoaded) return;
     if (selectedReport === 'supplier-detail' && !supplierId) return;
     loadReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedReport, branchesLoaded]);
+  }, [selectedReport]);
 
   useEffect(() => {
     if (selectedReport === 'supplier-detail' && supplierId) {
@@ -438,7 +370,6 @@ export const OwnerReports = () => {
   // ============ RENDER ============
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Báo cáo Tổng hợp</h1>
@@ -448,13 +379,9 @@ export const OwnerReports = () => {
         </div>
       </div>
 
-      {/* Tabs + Filters */}
       <ReportFilters
         selectedReport={selectedReport}
         onSelectReport={setSelectedReport}
-        branchId={branchId}
-        onBranchChange={handleBranchChange}
-        branches={branches}
         reportDate={reportDate}
         onReportDateChange={setReportDate}
         fromDate={fromDate}
@@ -490,7 +417,6 @@ export const OwnerReports = () => {
         hasDataToExport={hasDataToExport}
       />
 
-      {/* Error State */}
       {selectedError && (
         <div className="flex items-center rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 shadow-sm">
           <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0 text-red-600" />
@@ -498,22 +424,17 @@ export const OwnerReports = () => {
         </div>
       )}
 
-      {/* Report Content */}
       <div className="space-y-6">
         {selectedReport === 'daily-end' && <DailyEndReport data={dailyEndData} />}
-
         {selectedReport === 'stock-movement' && (
           <StockMovementReport data={movementData} isLoading={loadingStockMovement} />
         )}
-
         {selectedReport === 'revenue-by-time' && (
           <RevenueByTimeReport data={revenueData} isLoading={loadingRevenue} />
         )}
-
         {selectedReport === 'low-stock' && (
           <LowStockReport data={lowStockData} isLoading={loadingLowStock} />
         )}
-
         {selectedReport === 'product-profit' && (
           <ProductProfitReport
             data={productProfitData}
@@ -522,7 +443,6 @@ export const OwnerReports = () => {
             isLoading={loadingProductProfit}
           />
         )}
-
         {selectedReport === 'supplier-detail' && (
           <SupplierDetailReport
             data={supplierDetailData}

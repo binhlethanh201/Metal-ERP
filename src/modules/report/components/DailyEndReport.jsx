@@ -8,13 +8,10 @@ export const DailyEndReport = ({ data }) => {
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card padding="p-5" className="border-t-4 border-t-blue-500">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Ngày / Chi nhánh
-          </p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Ngày</p>
           <p className="mt-2 text-lg font-bold text-slate-900">
             {new Date(data.reportDate).toLocaleDateString('vi-VN')}
           </p>
-          <p className="text-sm text-slate-500">{data.branchName || 'Toàn hệ thống'}</p>
         </Card>
 
         <Card padding="p-5" className="border-t-4 border-t-green-500">

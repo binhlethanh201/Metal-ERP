@@ -26,9 +26,6 @@ const formatVN = (isoDate) => {
 export const ReportFilters = ({
   selectedReport,
   onSelectReport,
-  branchId,
-  onBranchChange,
-  branches,
   reportDate,
   onReportDateChange,
   fromDate,
@@ -64,13 +61,6 @@ export const ReportFilters = ({
   hasDataToExport,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const showBranch =
-    selectedReport === 'daily-end' ||
-    selectedReport === 'stock-movement' ||
-    selectedReport === 'revenue-by-time' ||
-    selectedReport === 'low-stock' ||
-    selectedReport === 'product-profit';
 
   const showDateRange =
     selectedReport === 'stock-movement' ||
@@ -186,28 +176,9 @@ export const ReportFilters = ({
         </div>
       </div>
 
-      {/* Toolbar: chỉ còn Chi nhánh / Nhà cung cấp — thứ quyết định phạm vi dữ liệu */}
+      {/* Toolbar */}
       <Card className="border-slate-200 bg-white shadow-sm" padding="p-5">
         <div className="flex flex-wrap items-end gap-4">
-          {showBranch && (
-            <div className="min-w-[180px] flex-1 lg:flex-none">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                Chi nhánh
-              </label>
-              <select
-                value={branchId}
-                onChange={(e) => onBranchChange(e.target.value)}
-                className={selectClass}
-              >
-                {branches.map((branch) => (
-                  <option key={branch.branchId || branch.id} value={branch.branchId || branch.id}>
-                    {branch.branchName || branch.branchCode || branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           {selectedReport === 'supplier-detail' && (
             <div className="min-w-[220px] flex-1 lg:flex-none">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
