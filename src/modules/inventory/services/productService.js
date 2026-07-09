@@ -16,19 +16,16 @@ export const getProducts = (filters = {}) => {
   return apiGet(`${BASE}${qs ? `?${qs}` : ''}`);
 };
 
-export const getProduct = (id, branchId) => {
-  const qs = branchId ? `?branchId=${branchId}` : '';
-  return apiGet(`${BASE}/${id}${qs}`);
+export const getProduct = (id) => {
+  return apiGet(`${BASE}/${id}`);
 };
 
-export const createProduct = (data, branchId) => {
-  const qs = branchId ? `?branchId=${branchId}` : '';
-  return apiPost(`${BASE}${qs}`, data);
+export const createProduct = (data) => {
+  return apiPost(BASE, data);
 };
 
-export const updateProduct = (id, data, branchId) => {
-  const qs = branchId ? `?branchId=${branchId}` : '';
-  return apiPut(`${BASE}/${id}${qs}`, data);
+export const updateProduct = (id, data) => {
+  return apiPut(`${BASE}/${id}`, data);
 };
 
 export const deleteProduct = (id) => apiDelete(`${BASE}/${id}`);

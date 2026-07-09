@@ -51,7 +51,7 @@ const ReceiptLineTable = ({ p, onRequestNewProduct }) => (
     )}
 
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[1500px] table-fixed">
+      <table className="w-full min-w-[1580px] table-fixed">
         <thead className="border-b border-slate-200 bg-slate-50">
           <tr>
             <th className="w-[44px] px-2 py-2.5 text-center text-[10px] font-bold text-slate-500">
@@ -77,6 +77,9 @@ const ReceiptLineTable = ({ p, onRequestNewProduct }) => (
             </th>
             <th className="w-[80px] px-2 py-2.5 text-center text-[10px] font-bold text-slate-500">
               Đơn vị tính
+            </th>
+            <th className="w-[75px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500">
+              Tồn kho
             </th>
             <th className="w-[85px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500">
               Số lượng
@@ -181,6 +184,20 @@ const ReceiptLineTable = ({ p, onRequestNewProduct }) => (
                 <td className="px-2 py-1.5 text-center">
                   <span className={`text-sm ${isD ? 'text-slate-700' : 'text-slate-400'}`}>
                     {line.unit || '--'}
+                  </span>
+                </td>
+                <td className="px-2 py-1.5 text-right">
+                  <span
+                    className={`text-sm font-semibold ${(() => {
+                      const prod = p.productList.find((x) => x.id === line.productId);
+                      const s = prod?.stock ?? 0;
+                      if (!line.productId) return 'text-slate-300';
+                      return s <= 0 ? 'text-red-500' : 'text-emerald-600';
+                    })()}`}
+                  >
+                    {line.productId
+                      ? fmt(p.productList.find((x) => x.id === line.productId)?.stock ?? 0)
+                      : '--'}
                   </span>
                 </td>
                 <td className="px-2 py-1.5">

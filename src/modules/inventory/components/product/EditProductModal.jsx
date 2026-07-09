@@ -523,18 +523,70 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
             </section>
 
             <Section
-              title="Tồn kho ban đầu"
-              subtitle="Thiết lập số lượng tồn thực tế ban đầu."
+              title="Tồn kho"
+              subtitle="Thiết lập số lượng tồn kho thực tế và khả dụng."
               defaultOpen
             >
-              <div className="w-full md:w-1/2">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <Input
-                  label="Tồn thực tế ban đầu"
+                  label="Tồn kho thực tế"
                   type="number"
                   min="0"
                   className="text-right font-semibold"
                   value={f.form.stock !== '' ? f.form.stock : '0'}
-                  onChange={(e) => f.handleChange('stock', e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d+$/.test(v)) f.handleChange('stock', v);
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      [
+                        'Backspace',
+                        'Delete',
+                        'Tab',
+                        'Escape',
+                        'Enter',
+                        'ArrowLeft',
+                        'ArrowRight',
+                        'ArrowUp',
+                        'ArrowDown',
+                        'Home',
+                        'End',
+                      ].includes(e.key)
+                    )
+                      return;
+                    if (!/^\d$/.test(e.key)) e.preventDefault();
+                  }}
+                />
+                <Input
+                  label="Tồn kho khả dụng"
+                  type="number"
+                  min="0"
+                  className="text-right font-semibold"
+                  value={f.form.availableStock !== '' ? f.form.availableStock : '0'}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d+$/.test(v)) f.handleChange('availableStock', v);
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      [
+                        'Backspace',
+                        'Delete',
+                        'Tab',
+                        'Escape',
+                        'Enter',
+                        'ArrowLeft',
+                        'ArrowRight',
+                        'ArrowUp',
+                        'ArrowDown',
+                        'Home',
+                        'End',
+                      ].includes(e.key)
+                    )
+                      return;
+                    if (!/^\d$/.test(e.key)) e.preventDefault();
+                  }}
                 />
               </div>
             </Section>

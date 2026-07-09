@@ -13,6 +13,7 @@ const staticIconMap = {
   close: 'X',
   star_outline: 'Star',
   keyboard_arrow_down: 'ChevronDown',
+  expand_less: 'ChevronUp',
   expand_more: 'ChevronDown',
   keyboard_arrow_up: 'ChevronUp',
   calendar_today: 'Calendar',

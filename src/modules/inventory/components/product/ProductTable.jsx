@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import Toggle from '../../../../shared/components/Toggle';
 import { formatMoney, isProductActive } from '../../utils/productUtils';
@@ -17,6 +17,45 @@ const fmtDateTime = (dateStr) => {
   }
 };
 
+const COLUMNS = [
+  { label: 'Mã hàng', width: 'w-[140px]', sortKey: 'productCode', align: '' },
+  { label: 'Tên hàng', width: 'w-[240px]', sortKey: 'productName', align: '' },
+  { label: 'Đơn vị', width: 'w-[90px]', sortKey: 'unit', align: '' },
+  { label: 'Thương hiệu', width: 'w-[130px]', sortKey: 'brand', align: '' },
+  { label: 'Giá bán', width: 'w-[110px]', sortKey: 'salePrice', align: 'right' },
+  { label: 'Giá vốn', width: 'w-[110px]', sortKey: 'costPrice', align: 'right' },
+  { label: 'Tồn kho', width: 'w-[110px]', sortKey: 'stock', align: 'right' },
+  { label: 'Vị trí kho', width: 'w-[110px]', sortKey: 'location', align: '' },
+  { label: 'Hoạt động', width: 'w-[90px]', sortKey: '', align: '' },
+  { label: 'Thời gian tạo', width: 'w-[160px]', sortKey: 'createdAt', align: '' },
+];
+
+const getValue = (row, sortKey) => {
+  if (!sortKey) return '';
+  switch (sortKey) {
+    case 'productCode':
+      return row.productCode || '';
+    case 'productName':
+      return (row.productName || row.name || '').toLowerCase();
+    case 'unit':
+      return row.unit || '';
+    case 'brand':
+      return row.brandName || row.brand || '';
+    case 'salePrice':
+      return row.salePrice ?? 0;
+    case 'costPrice':
+      return row.costPrice ?? 0;
+    case 'stock':
+      return row.actualStock ?? row.stock ?? 0;
+    case 'location':
+      return row.shelfLocation || row.location || '';
+    case 'createdAt':
+      return row.createdAt || '';
+    default:
+      return '';
+  }
+};
+
 export const ProductTable = ({
   rows = [],
   onToggleStatus,
@@ -29,20 +68,33 @@ export const ProductTable = ({
   onSelectAll,
 }) => {
   const isAllSelected = rows.length > 0 && selectedIds.length === rows.length;
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState('asc');
 
-  // Đã bỏ sortKey ra khỏi mảng columns
-  const columns = [
-    ['Mã hàng', 'w-[140px]'],
-    ['Tên hàng', 'w-[240px]'],
-    ['Đơn vị', 'w-[90px]'],
-    ['Thương hiệu', 'w-[130px]'],
-    ['Giá bán', 'w-[110px]'],
-    ['Giá vốn', 'w-[110px]'],
-    ['Tồn kho', 'w-[110px]'],
-    ['Vị trí kho', 'w-[110px]'],
-    ['Hoạt động', 'w-[90px]'],
-    ['Thời gian tạo', 'w-[160px]'],
-  ];
+  const handleSort = (key) => {
+    if (!key) return;
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    if (!sortKey) return rows;
+    return [...rows].sort((a, b) => {
+      const va = getValue(a, sortKey);
+      const vb = getValue(b, sortKey);
+      let cmp = 0;
+      if (typeof va === 'string' && typeof vb === 'string') {
+        cmp = va.localeCompare(vb, 'vi');
+      } else {
+        cmp = va < vb ? -1 : va > vb ? 1 : 0;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [rows, sortKey, sortDir]);
 
   return (
     <table className="w-full min-w-[1250px] table-fixed border-collapse text-left">
@@ -57,14 +109,32 @@ export const ProductTable = ({
             />
           </th>
 
-          {/* Đã xóa cột Star */}
-
-          {columns.map(([label, widthClass]) => {
-            const isNumCol = label === 'Giá bán' || label === 'Giá vốn' || label === 'Tồn kho';
+          {COLUMNS.map((col) => {
+            const isActive = sortKey === col.sortKey && col.sortKey;
             return (
-              <th key={label} className={`${widthClass} px-4 py-3 ${isNumCol ? 'text-right' : ''}`}>
-                <div className={`flex items-center gap-1 ${isNumCol ? 'justify-end' : ''}`}>
-                  <span className="truncate">{label}</span>
+              <th
+                key={col.label}
+                className={`${col.width} px-4 py-3 ${col.align === 'right' ? 'text-right' : ''} ${col.sortKey ? 'cursor-pointer select-none hover:bg-slate-100' : ''}`}
+                onClick={() => handleSort(col.sortKey)}
+              >
+                <div
+                  className={`flex items-center gap-1 ${col.align === 'right' ? 'justify-end' : ''}`}
+                >
+                  <span className="truncate">{col.label}</span>
+                  {col.sortKey && (
+                    <span className="inline-flex flex-none flex-col leading-none text-slate-400">
+                      <Icon
+                        name="expand_less"
+                        size={14}
+                        className={`-mb-1 ${isActive && sortDir === 'asc' ? 'font-bold text-[#004785]' : ''}`}
+                      />
+                      <Icon
+                        name="expand_more"
+                        size={14}
+                        className={`-mt-1 ${isActive && sortDir === 'desc' ? 'font-bold text-[#004785]' : ''}`}
+                      />
+                    </span>
+                  )}
                 </div>
               </th>
             );
@@ -72,15 +142,14 @@ export const ProductTable = ({
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-200 text-sm">
-        {rows.length === 0 && (
+        {sortedRows.length === 0 && (
           <tr>
-            {/* Giảm colSpan từ 12 xuống 11 do đã xóa 1 cột */}
             <td colSpan={11} className="px-6 py-8 text-center text-slate-500">
               Không có dữ liệu
             </td>
           </tr>
         )}
-        {rows.map((row) => {
+        {sortedRows.map((row) => {
           const isExpanded = expandedId === (row.id || row.productId);
           const currentId = row.id || row.productId;
           const isSelected = selectedIds.includes(currentId);
@@ -140,7 +209,7 @@ export const ProductTable = ({
                   {fmtMoney(row.costPrice)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-slate-900">
-                  {row.actualStock ?? row.stock ?? 0}
+                  {(row.actualStock ?? row.stock ?? 0).toLocaleString('vi-VN')}
                 </td>
                 <td className="truncate whitespace-nowrap px-4 py-3 text-slate-500">
                   {row.shelfLocation || row.location || '---'}

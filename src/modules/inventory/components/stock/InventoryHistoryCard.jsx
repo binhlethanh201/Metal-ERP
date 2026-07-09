@@ -153,11 +153,12 @@ export const InventoryHistoryCard = ({
     {
       key: 'ticketCode',
       header: 'Mã phiếu',
+      width: '140px',
       render: (_, row) => (
         <button
           type="button"
           onClick={() => setViewingId(row.stockTicketId || row.id)}
-          className="text-left font-bold text-[#004785] hover:underline"
+          className="font-bold text-[#004785] hover:underline"
           title="Click để xem chi tiết & biến động kho"
         >
           {row.ticketCode || row.id}
@@ -167,6 +168,7 @@ export const InventoryHistoryCard = ({
     {
       key: 'date',
       header: 'Ngày tạo',
+      width: '110px',
       render: (_, row) => {
         const raw = row.date || row.createdAt;
         if (!raw) return <span className="text-xs text-slate-500">---</span>;
@@ -180,12 +182,13 @@ export const InventoryHistoryCard = ({
     },
     {
       key: 'productName',
-      header: 'Sản phẩm / Ghi chú',
+      header: 'Sản phẩm',
+      width: '1fr',
       render: (_, row) => (
         <div>
-          <div className="font-medium text-slate-700">
+          <span className="font-medium text-slate-700">
             {row.productName || row.reason || 'Không có ghi chú'}
-          </div>
+          </span>
           {row.cancelReason && (
             <div className="mt-0.5 text-xs italic text-rose-600">Lý do hủy: {row.cancelReason}</div>
           )}
@@ -195,18 +198,26 @@ export const InventoryHistoryCard = ({
     {
       key: 'quantity',
       header: 'Số lượng',
+      width: '100px',
+      align: 'right',
       render: (val) => (
-        <span className="block text-right font-semibold text-slate-900">{val ?? '---'}</span>
+        <span className="font-semibold text-slate-900">
+          {val != null ? Number(val).toLocaleString('vi-VN') : '---'}
+        </span>
       ),
     },
     {
       key: 'status',
       header: 'Trạng thái',
-      render: (val) => <span className="flex justify-center">{renderStatusBadge(val)}</span>,
+      width: '130px',
+      align: 'center',
+      render: (val) => renderStatusBadge(val),
     },
     {
       key: 'actions',
       header: 'Thao tác',
+      width: '140px',
+      align: 'right',
       render: (_, row) => {
         const isCancelled = row.status?.toUpperCase() === 'CANCELLED';
         const isPending = row.status?.toUpperCase() === 'PENDING';
@@ -214,7 +225,7 @@ export const InventoryHistoryCard = ({
         const isConfirming = confirmingId === currentId;
 
         return (
-          <div className="flex items-center justify-end gap-1.5">
+          <div className="flex items-center justify-end gap-1">
             {isPending && (
               <Button
                 variant="primary"
@@ -222,9 +233,9 @@ export const InventoryHistoryCard = ({
                 disabled={isConfirming}
                 onClick={() => handleConfirmTicket(row)}
                 title="Xác nhận duyệt để cộng/trừ kho thực tế"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 whitespace-nowrap !px-2.5 !py-1 !text-[11px]"
               >
-                <CheckCheck size={14} /> {isConfirming ? 'Đang duyệt...' : 'Duyệt phiếu'}
+                <CheckCheck size={12} /> {isConfirming ? 'Đang duyệt...' : 'Duyệt'}
               </Button>
             )}
             <IconButton
@@ -243,9 +254,32 @@ export const InventoryHistoryCard = ({
   ];
 
   return (
-    <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#004785]/5">
+            <svg
+              className="h-5 w-5 text-[#004785]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">{title}</h2>
+            <p className="text-xs text-slate-500">
+              Tổng số: <span className="font-semibold text-slate-700">{tickets.length}</span> phiếu
+            </p>
+          </div>
+        </div>
         {onReload && (
           <Button
             variant="outline"
@@ -260,20 +294,26 @@ export const InventoryHistoryCard = ({
         )}
       </div>
 
-      <InventoryFilterBar
-        type={type}
-        filters={filters}
-        onChangeFilter={handleChangeFilter}
-        onResetFilter={handleResetFilter}
-        branches={branches}
-      />
+      {/* Filter Bar */}
+      <div className="border-b border-slate-100 bg-slate-50/30 px-5 py-3">
+        <InventoryFilterBar
+          type={type}
+          filters={filters}
+          onChangeFilter={handleChangeFilter}
+          onResetFilter={handleResetFilter}
+          branches={branches}
+        />
+      </div>
 
-      <Table
-        columns={columns}
-        data={tickets}
-        loading={isLoading}
-        emptyMessage="Chưa có phiếu nào trong hệ thống"
-      />
+      {/* Table */}
+      <div className="px-0">
+        <Table
+          columns={columns}
+          data={tickets}
+          loading={isLoading}
+          emptyMessage="Chưa có phiếu nào trong hệ thống"
+        />
+      </div>
 
       <CancelTicketModal
         isOpen={!!cancellingTicket}

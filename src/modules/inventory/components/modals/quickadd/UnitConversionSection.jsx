@@ -66,8 +66,12 @@ const UnitConversionSection = ({ p }) => (
               <span className="text-sm font-medium text-slate-700">1</span>
               <span className="text-sm font-semibold text-slate-700">{unit.name}</span>
               <span className="text-sm font-semibold text-slate-600">=</span>
-              <span className="text-sm font-medium text-slate-700">{unit.convertValue}</span>
-              <span className="text-sm font-semibold text-slate-700">{unit.convertFrom}</span>
+              <span className="text-sm font-medium text-slate-700">
+                {p.formatMoney(unit.convertValue)}
+              </span>
+              <span className="text-sm font-semibold text-slate-700">
+                {unit.convertFrom || p.baseUnit.name}
+              </span>
               <div className="min-w-[20px] flex-1" />
               <div className="min-w-[100px] text-right">
                 <span className="text-sm text-slate-600">

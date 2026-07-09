@@ -8,7 +8,11 @@ const InventorySidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const [expandedMenus, setExpandedMenus] = useState({});
+  const [expandedMenus, setExpandedMenus] = useState(() => {
+    // Auto-expand menu đầu tiên có children
+    const firstGroup = sidebarItems.find((item) => item.children?.length > 0);
+    return firstGroup ? { [firstGroup.label]: true } : {};
+  });
 
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
   const isOwner = userRoles.includes('Owner');
@@ -79,13 +83,13 @@ const InventorySidebar = () => {
               <button
                 type="button"
                 onClick={() => toggleParentMenu(item.label, item.path)}
-                className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors duration-200 ${
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors duration-150 ${
                   active
                     ? 'bg-blue-50 font-bold text-[#004785]'
                     : isAnyChildActive
                       ? 'bg-slate-100 font-bold text-[#004785]'
                       : 'font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                }`}
+                } ${hasChildren ? 'cursor-pointer' : ''}`}
               >
                 <div className="flex items-center gap-3">
                   <Icon name={item.icon} size={22} className="shrink-0" />

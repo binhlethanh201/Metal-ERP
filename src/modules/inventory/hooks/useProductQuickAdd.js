@@ -47,6 +47,8 @@ export const useProductQuickAdd = (onSave) => {
     // Tab kho
     defaultWarehouseId: '',
     defaultWarehouseName: '',
+    actualStock: 0,
+    availableStock: 0,
     minStock: 0,
     maxStock: 0,
   });
@@ -336,6 +338,8 @@ export const useProductQuickAdd = (onSave) => {
       newLocationName: '',
       defaultWarehouseId: '',
       defaultWarehouseName: '',
+      actualStock: 0,
+      availableStock: 0,
       minStock: 0,
       maxStock: 0,
     });
@@ -370,6 +374,8 @@ export const useProductQuickAdd = (onSave) => {
       conversionUnits,
       minStock: form.minStock,
       maxStock: form.maxStock,
+      actualStock: form.actualStock,
+      availableStock: form.availableStock,
       defaultWarehouseId: form.defaultWarehouseId,
       images: images.map((img) => ({ name: img.file.name, isMain: img.isMain })),
       attributes: attributes.filter((a) => a.name && a.value),

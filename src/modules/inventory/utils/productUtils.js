@@ -85,6 +85,7 @@ export const normalizeProduct = (product = {}, index = 0) => {
     // isActive: cờ boolean tiện dùng trong JSX, LUÔN đồng bộ với productStatus
     isActive: productStatus !== 'inactive',
     estimatedOutAt: product.estimatedOutAt || '',
+    createdAt: product.createdAt || '',
     directSale: Boolean(product.directSale ?? true),
     salesChannelLinked: Boolean(product.salesChannelLinked ?? false),
   };

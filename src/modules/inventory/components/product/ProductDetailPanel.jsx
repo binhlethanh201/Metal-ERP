@@ -255,7 +255,7 @@ export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) =>
       }
     };
     fetchDetail();
-  }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [productId, row]);
 
   return (
     <div className="overflow-hidden border-l-4 border-blue-500 bg-[#f8fbff] p-4 sm:p-6">

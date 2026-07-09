@@ -96,6 +96,7 @@ const mapProductToForm = (source = {}) => {
       rate: u.Rate ?? u.ConvertValue ?? u.convertValue ?? 1,
       price: u.Price ?? u.price ?? 0,
       directSale: u.DirectSale ?? u.directSale ?? true,
+      convertFrom: u.convertFrom ?? u.ConvertFrom ?? '',
     })),
     attributes: source.attributes || [],
     productStatus: resolveProductStatus(),

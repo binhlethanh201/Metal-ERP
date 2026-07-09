@@ -299,7 +299,9 @@ const ProductBasicTab = ({ p }) => (
               onClick={() => p.fileInputRef.current?.click()}
             >
               <Icon name="image" size={22} />
-              <span className="text-[10px] font-semibold">Thêm hình ảnh</span>
+              <span className="max-w-[80px] text-center text-[10px] font-semibold leading-tight">
+                Thêm hình ảnh
+              </span>
               <span className="text-[9px] text-slate-400">({p.images.length}/10)</span>
             </button>
           )}

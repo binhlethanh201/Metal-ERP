@@ -13,7 +13,7 @@ export const Button = ({
   ...props
 }) => {
   const baseStyles =
-    'font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+    'font-medium rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variants = {
     primary: 'bg-[#004785] hover:brightness-90 text-white focus:ring-blue-500 disabled:bg-blue-400',
