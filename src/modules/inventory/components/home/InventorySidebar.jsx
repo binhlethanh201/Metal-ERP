@@ -48,11 +48,14 @@ const InventorySidebar = () => {
     });
   }, [location.pathname, visibleMenuItems]);
 
-  const toggleParentMenu = (label, path) => {
+  const toggleParentMenu = (label, path, children) => {
+    // Luôn toggle expand
+    setExpandedMenus((prev) => ({ ...prev, [label]: !prev[label] }));
+    // Nếu có path thì navigate, nếu không có path và có children thì navigate tới child đầu tiên
     if (path) {
       navigate(path);
-    } else {
-      setExpandedMenus((prev) => ({ ...prev, [label]: !prev[label] }));
+    } else if (children && children.length > 0 && children[0].path) {
+      navigate(children[0].path);
     }
   };
 
@@ -82,7 +85,7 @@ const InventorySidebar = () => {
             <div key={item.label} className="flex flex-col">
               <button
                 type="button"
-                onClick={() => toggleParentMenu(item.label, item.path)}
+                onClick={() => toggleParentMenu(item.label, item.path, item.children)}
                 className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors duration-150 ${
                   active
                     ? 'bg-blue-50 font-bold text-[#004785]'

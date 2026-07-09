@@ -295,12 +295,12 @@ const ProductBasicTab = ({ p }) => (
           {p.images.length < 10 && (
             <button
               type="button"
-              className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-primary hover:text-primary"
+              className="flex h-24 w-24 flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-primary hover:text-primary"
               onClick={() => p.fileInputRef.current?.click()}
             >
-              <Icon name="image" size={22} />
-              <span className="max-w-[80px] text-center text-[10px] font-semibold leading-tight">
-                Thêm hình ảnh
+              <Icon name="image" size={20} />
+              <span className="max-w-[68px] truncate text-center text-[9px] font-semibold leading-tight">
+                Thêm ảnh
               </span>
               <span className="text-[9px] text-slate-400">({p.images.length}/10)</span>
             </button>

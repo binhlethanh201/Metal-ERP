@@ -10,7 +10,7 @@ export const ProductSearchInput = ({ products = [], onSelectProduct, formatCurre
 
   const filteredProducts = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
-    if (!keyword) return products.slice(0, 6);
+    if (!keyword) return products.slice(0, 20);
     return products.filter((p) =>
       `${p.productCode} ${p.productName}`.toLowerCase().includes(keyword)
     );
@@ -116,7 +116,7 @@ export const ProductSearchInput = ({ products = [], onSelectProduct, formatCurre
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-slate-900">
-                  {product.productName} ({product.unitName})
+                  {product.productName} ({product.unitName || product.unit || ''})
                 </div>
                 <div className="mt-0.5 flex items-center gap-4 text-xs text-slate-600">
                   <span className="font-medium text-slate-700">Mã: {product.productCode}</span>

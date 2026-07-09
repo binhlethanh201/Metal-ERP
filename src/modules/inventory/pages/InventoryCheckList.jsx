@@ -12,8 +12,6 @@ import {
 import {
   Filter,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   AlertCircle,
   X,
   Eye,
@@ -40,7 +38,22 @@ const formatDateTime = (dateString) => {
   return `${date.toLocaleDateString('vi-VN')} ${date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 };
 
-// ==================== MAIN COMPONENT ====================
+const formatUserName = (name) => {
+  if (!name) return '';
+  // Nếu là email, chỉ lấy phần trước @
+  let username = name;
+  const atIndex = name.indexOf('@');
+  if (atIndex > 0) username = name.slice(0, atIndex);
+
+  // Chuyển "tran_van_bac", "tran.van.bac", "tranvanbac" → "Trần Văn Bắc"
+  return username
+    .replace(/[._]/g, ' ') // thay . _ bằng khoảng trắng
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // tách camelCase
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
 const InventoryCheckList = () => {
   // ---- Trạng thái danh sách ----
   const [checks, setChecks] = useState([]);
@@ -58,8 +71,14 @@ const InventoryCheckList = () => {
 
   // ---- Phân trang ----
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(20);
   const [paginationMeta, setPaginationMeta] = useState({ totalCount: 0, totalPages: 1 });
+
+  // Khi đổi pageSize thì về trang 1
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setPageNumber(1);
+  };
 
   // ---- Modal tạo phiếu ----
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -227,14 +246,16 @@ const InventoryCheckList = () => {
     {
       key: 'createdByUserName',
       header: 'Người tạo',
-      render: (_, row) => <span className="text-slate-700">{row.createdByUserName || '---'}</span>,
+      render: (_, row) => (
+        <span className="text-slate-700">{formatUserName(row.createdByUserName) || '---'}</span>
+      ),
     },
     {
       key: 'assigneeUserName',
       header: 'Người phụ trách',
       render: (_, row) => (
         <span className={!row.assigneeUserName ? 'italic text-slate-400' : 'text-slate-700'}>
-          {row.assigneeUserName || 'Chưa gán'}
+          {formatUserName(row.assigneeUserName) || 'Chưa gán'}
         </span>
       ),
     },
@@ -470,30 +491,46 @@ const InventoryCheckList = () => {
 
       {/* ==================== PHÂN TRANG ==================== */}
       {!loading && paginationMeta.totalPages > 1 && (
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <span className="text-sm text-slate-500">
-            Hiển thị {(pageNumber - 1) * pageSize + 1} -{' '}
-            {Math.min(pageNumber * pageSize, paginationMeta.totalCount)} /{' '}
-            {paginationMeta.totalCount} phiếu
-          </span>
-          <div className="flex items-center gap-2">
-            <IconButton
-              icon={ChevronLeft}
-              variant="outline"
-              size="sm"
-              disabled={pageNumber <= 1}
-              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-            />
-            <span className="px-3 text-sm font-semibold">
-              Trang {pageNumber} / {paginationMeta.totalPages}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+              >
+                <option value={20}>20 dòng</option>
+                <option value={50}>50 dòng</option>
+                <option value={100}>100 dòng</option>
+              </select>
+            </div>
+            <span>
+              {(pageNumber - 1) * pageSize + 1} -{' '}
+              {Math.min(pageNumber * pageSize, paginationMeta.totalCount)} trong tổng số{' '}
+              {paginationMeta.totalCount} phiếu
             </span>
-            <IconButton
-              icon={ChevronRight}
-              variant="outline"
-              size="sm"
-              disabled={pageNumber >= paginationMeta.totalPages}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+              disabled={pageNumber <= 1}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_left" className="text-[18px]" />
+            </button>
+            <div className="px-3 text-sm text-slate-700">
+              Trang {pageNumber} / {paginationMeta.totalPages}
+            </div>
+            <button
+              type="button"
               onClick={() => setPageNumber((p) => p + 1)}
-            />
+              disabled={pageNumber >= paginationMeta.totalPages}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_right" className="text-[18px]" />
+            </button>
           </div>
         </div>
       )}

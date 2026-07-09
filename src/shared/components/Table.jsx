@@ -14,7 +14,7 @@ export const Table = ({
 }) => {
   return (
     <div className={`w-full overflow-x-auto ${className}`}>
-      <table className="w-full" {...props}>
+      <table className="w-full table-fixed" {...props}>
         <thead>
           <tr>
             {columns.map((col) => {

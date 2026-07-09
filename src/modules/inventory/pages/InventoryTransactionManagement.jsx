@@ -9,8 +9,8 @@ import {
   getOutwardInventories,
   getInwardInventory,
   getOutwardInventory,
-  deleteInwardInventory,
-  deleteOutwardInventory,
+  cancelInwardInventory,
+  cancelOutwardInventory,
 } from '../services/inventoryService';
 
 // Format helpers
@@ -364,25 +364,28 @@ export const InventoryTransactionManagement = () => {
     }
   }, []);
 
-  // Handle delete
-  const handleDelete = useCallback(
+  // Handle cancel (thay vì DELETE)
+  const handleCancel = useCallback(
     async (transaction) => {
-      if (!window.confirm(`Bạn có chắc muốn xóa phiếu ${transaction.ticketCode}?`)) {
+      const reason = prompt(`Nhập lý do hủy phiếu ${transaction.ticketCode}:`);
+      if (reason === null) return; // user bấm Cancel
+      if (!reason.trim()) {
+        alert('Vui lòng nhập lý do hủy phiếu.');
         return;
       }
 
       try {
         const apiCall =
           transaction.type === 'INWARD'
-            ? deleteInwardInventory(transaction.id)
-            : deleteOutwardInventory(transaction.id);
+            ? cancelInwardInventory(transaction.id, reason.trim())
+            : cancelOutwardInventory(transaction.id, reason.trim());
 
         await apiCall;
         fetchData(false);
         setIsDetailOpen(false);
       } catch (error) {
-        console.error('Delete failed:', error);
-        alert('Xóa thất bại. Vui lòng thử lại.');
+        console.error('Cancel failed:', error);
+        alert('Hủy phiếu thất bại. Vui lòng thử lại.');
       }
     },
     [fetchData]
@@ -708,7 +711,7 @@ export const InventoryTransactionManagement = () => {
         onClose={() => setIsDetailOpen(false)}
         transaction={selectedTransaction}
         loading={detailLoading}
-        onDelete={handleDelete}
+        onCancel={handleCancel}
       />
     </div>
   );

@@ -258,7 +258,7 @@ export const TicketDetailModal = ({
           <div className="py-16 text-center text-red-500">Không tìm thấy dữ liệu phiếu kho.</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm sm:grid-cols-4">
               <div>
                 <span className="block text-xs font-semibold uppercase text-slate-500">
                   Trạng thái
@@ -310,16 +310,8 @@ export const TicketDetailModal = ({
                   {renderTicketTypeLabel(detail.ticketType, type)}
                 </div>
               </div>
-              <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500">
-                  {type === 'INWARD' ? 'Kho nhập' : 'Kho xuất'}
-                </span>
-                <div className="mt-1 font-semibold text-slate-800">
-                  {detail.warehouseName || detail.warehouse || '---'}
-                </div>
-              </div>
               {type === 'OUTWARD' && (
-                <div>
+                <div className="sm:col-span-4">
                   <span className="block text-xs font-semibold uppercase text-slate-500">
                     Đối tượng xuất
                   </span>
@@ -408,13 +400,12 @@ export const TicketDetailModal = ({
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-600">
                       <th className="px-3 py-3">Mã hàng</th>
                       <th className="px-3 py-3">Tên sản phẩm</th>
-                      <th className="w-14 px-3 py-3 text-center">ĐVT</th>
                       {type === 'INWARD' && <th className="px-3 py-3 text-right">Đơn giá nhập</th>}
                       {isCompleted && (
                         <th className="px-3 py-3 text-right text-slate-500">Tồn trước</th>
                       )}
                       <th className="px-3 py-3 text-right font-extrabold text-[#004785]">
-                        {type === 'INWARD' ? '+ Nhập vào' : '- Xuất đi'}
+                        {type === 'INWARD' ? '+ Nhập vào' : 'Xuất đi'}
                       </th>
                       {isCompleted && (
                         <th className="px-3 py-3 text-right text-green-700">Tồn sau</th>
@@ -425,7 +416,7 @@ export const TicketDetailModal = ({
                   <tbody className="divide-y divide-slate-100">
                     {!detail.items || detail.items.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="py-6 text-center text-slate-400">
+                        <td colSpan={7} className="py-6 text-center text-slate-400">
                           Không có sản phẩm nào
                         </td>
                       </tr>
@@ -447,9 +438,6 @@ export const TicketDetailModal = ({
                             </td>
                             <td className="px-3 py-3 font-medium text-slate-800">
                               {item.productName || 'Sản phẩm'}
-                            </td>
-                            <td className="px-3 py-3 text-center text-slate-500">
-                              {item.unit || '---'}
                             </td>
                             {type === 'INWARD' && (
                               <td className="px-3 py-3 text-right text-slate-600">

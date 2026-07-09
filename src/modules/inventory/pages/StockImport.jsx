@@ -37,8 +37,11 @@ const fallbackSuppliers = [
   { id: 'sup-002', name: 'Công ty Nam Kim', phone: '0912345678' },
 ];
 
-const formatCurrency = (val) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(val || 0));
+const formatCurrency = (val) => {
+  const num = Number(val || 0);
+  if (!Number.isFinite(num) || num > 1e15) return '---';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+};
 
 const extractList = (res) => {
   const data = res?.data ?? res;
@@ -206,10 +209,13 @@ export const StockImport = () => {
     () => ({
       totalLines: items.length,
       totalQuantity: items.reduce((sum, i) => sum + Number(i.quantity || 0), 0),
-      totalAmount: items.reduce(
-        (sum, i) => sum + Number(i.quantity || 0) * Number(i.costPrice || 0),
-        0
-      ),
+      totalAmount: items.reduce((sum, i) => {
+        const qty = Number(i.quantity || 0);
+        const price = Number(i.costPrice || 0);
+        if (qty > 999999 || price > 999999999) return sum;
+        const lineTotal = qty * price;
+        return sum + (lineTotal > 1e15 ? 0 : lineTotal);
+      }, 0),
     }),
     [items]
   );

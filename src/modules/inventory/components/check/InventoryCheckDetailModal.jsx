@@ -19,6 +19,20 @@ import Table from '../../../../shared/components/Table';
 import Badge from '../../../../shared/components/Badge';
 
 // ==================== HELPERS ====================
+const formatUserName = (name) => {
+  if (!name) return '';
+  let username = name;
+  const atIndex = name.indexOf('@');
+  if (atIndex > 0) username = name.slice(0, atIndex);
+  return username
+    .replace(/[._]/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
 const normalizeDetailData = (data) => {
   if (!data) return null;
   const rawDetails = data.details || data.items || [];
@@ -569,11 +583,16 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
       </div>
       <div className="text-sm font-normal text-slate-500">
         Người phụ trách:{' '}
-        <strong className="text-slate-700">{detailData?.assigneeUserName || 'Chưa gán'}</strong>
+        <strong className="text-slate-700">
+          {formatUserName(detailData?.assigneeUserName) || 'Chưa gán'}
+        </strong>
         {detailData?.createdByUserName && (
           <>
             {' '}
-            • Người tạo: <strong className="text-slate-700">{detailData.createdByUserName}</strong>
+            • Người tạo:{' '}
+            <strong className="text-slate-700">
+              {formatUserName(detailData.createdByUserName)}
+            </strong>
           </>
         )}
       </div>

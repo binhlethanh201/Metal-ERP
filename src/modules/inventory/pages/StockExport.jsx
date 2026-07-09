@@ -57,6 +57,14 @@ const REASON_OPTIONS = [
   { value: '__other__', label: 'Khác...' },
 ];
 
+// Map reason → outwardType enum:
+// 1 = ReturnToSupplier, 2 = DamagedHaoHut (WRITE_OFF), 3 = InternalUse (TRANSFER)
+const getOutwardType = (reason) => {
+  if (reason === 'Trả hàng nhà cung cấp') return 1;
+  if (reason === 'Xuất hủy / Hao hụt') return 2;
+  return 3; // Mặc định InternalUse cho Xuất bán hàng, Nội bộ, NVL, Khác
+};
+
 const TARGET_OPTIONS = [
   { value: 'Khách hàng', label: 'Khách hàng' },
   { value: 'Nhà cung cấp', label: 'Nhà cung cấp' },
@@ -325,7 +333,7 @@ export const StockExport = () => {
 
     try {
       const payload = {
-        outwardType: 1,
+        outwardType: getOutwardType(resolvedReason),
         reason: reasonText,
         note: note || reasonText,
         ...(ticketCode.trim() && { ticketCode: ticketCode.trim() }),

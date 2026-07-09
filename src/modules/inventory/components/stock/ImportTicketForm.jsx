@@ -109,11 +109,20 @@ export const ImportTicketForm = ({
           </div>
           <div className="flex items-center justify-between text-sm text-slate-600">
             <span>Tổng sản phẩm:</span>
-            <span className="font-bold text-slate-900">{totals.totalQuantity}</span>
+            <span className="font-bold text-slate-900">
+              {Number.isFinite(totals.totalQuantity) && totals.totalQuantity <= 999999999
+                ? totals.totalQuantity.toLocaleString('vi-VN')
+                : '---'}
+            </span>
           </div>
           <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-base font-bold text-slate-900">
             <span>Tổng tiền:</span>
-            <span className="text-green-600">{formatCurrency(totals.totalAmount)}</span>
+            <span
+              className="max-w-[200px] truncate text-right text-green-600"
+              title={formatCurrency(totals.totalAmount)}
+            >
+              {formatCurrency(totals.totalAmount)}
+            </span>
           </div>
         </div>
 

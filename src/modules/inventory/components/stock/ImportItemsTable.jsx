@@ -26,41 +26,120 @@ export const ImportItemsTable = ({
       render: (val) => <span className="font-bold text-slate-800">{val}</span>,
     },
     { key: 'productName', header: 'Tên hàng' },
-    { key: 'unitName', header: 'ĐVT' },
+    {
+      key: 'unitName',
+      header: 'ĐVT',
+      render: (_, row) => (
+        <span className="text-slate-500">{row.unitName || row.unit || '---'}</span>
+      ),
+    },
+    {
+      key: 'stock',
+      header: 'Tồn kho',
+      render: (_, row) => {
+        const stock = row.actualStock ?? row.stock ?? row.availableStock ?? 0;
+        return (
+          <span className={`font-semibold ${stock <= 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+            {stock.toLocaleString('vi-VN')}
+          </span>
+        );
+      },
+    },
     {
       key: 'quantity',
       header: 'Số lượng',
+      width: 110,
       render: (val, row) => (
         <input
-          type="number"
-          min="1"
+          type="text"
+          inputMode="numeric"
           value={val}
-          onChange={(e) => onUpdateItem(row.id, 'quantity', e.target.value)}
-          className="w-24 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm font-semibold outline-none focus:border-[#004785]"
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9]/g, '');
+            if (v === '' || (/^\d+$/.test(v) && Number(v) <= 999999))
+              onUpdateItem(row.id, 'quantity', v);
+          }}
+          onKeyDown={(e) => {
+            if (
+              [
+                'Backspace',
+                'Delete',
+                'Tab',
+                'Escape',
+                'Enter',
+                'ArrowLeft',
+                'ArrowRight',
+                'ArrowUp',
+                'ArrowDown',
+                'Home',
+                'End',
+              ].includes(e.key)
+            )
+              return;
+            if (!/^\d$/.test(e.key)) e.preventDefault();
+          }}
+          className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm font-semibold outline-none focus:border-[#004785]"
         />
       ),
     },
     {
       key: 'costPrice',
       header: 'Đơn giá nhập',
+      width: 140,
       render: (val, row) => (
         <input
-          type="number"
-          min="0"
+          type="text"
+          inputMode="numeric"
           value={val}
-          onChange={(e) => onUpdateItem(row.id, 'costPrice', e.target.value)}
-          className="w-28 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-[#004785]"
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9]/g, '');
+            if (v === '' || (/^\d+$/.test(v) && Number(v) <= 999999999))
+              onUpdateItem(row.id, 'costPrice', v);
+          }}
+          onKeyDown={(e) => {
+            if (
+              [
+                'Backspace',
+                'Delete',
+                'Tab',
+                'Escape',
+                'Enter',
+                'ArrowLeft',
+                'ArrowRight',
+                'ArrowUp',
+                'ArrowDown',
+                'Home',
+                'End',
+              ].includes(e.key)
+            )
+              return;
+            if (!/^\d$/.test(e.key)) e.preventDefault();
+          }}
+          className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm outline-none focus:border-[#004785]"
         />
       ),
     },
     {
       key: 'total',
       header: 'Thành tiền',
-      render: (_, row) => (
-        <span className="font-bold text-slate-900">
-          {formatCurrency(Number(row.quantity || 0) * Number(row.costPrice || 0))}
-        </span>
-      ),
+      width: 150,
+      render: (_, row) => {
+        const qty = Number(row.quantity || 0);
+        const price = Number(row.costPrice || 0);
+        const total = qty > 0 && price > 0 && qty <= 999999 && price <= 999999999 ? qty * price : 0;
+        const display =
+          total > 0 && total <= 1e15
+            ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)
+            : '---';
+        return (
+          <span
+            className="block truncate text-right font-bold tabular-nums text-slate-900"
+            title={display}
+          >
+            {display}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
