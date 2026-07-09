@@ -106,24 +106,24 @@ export const ENDPOINTS = {
     // ================= Alerts =================
     GET_LOW_STOCK_ALERTS: '/api/inventory/low-stock-alerts',
 
-    // ============ EXPENSE ============
-    EXPENSE: {
-      GET_LIST: '/api/expense',
-      GET_DETAIL: (id) => `/api/expense/${id}`,
-      CREATE: '/api/expense',
-      CONFIRM: (id) => `/api/expense/${id}/confirm`,
-      CANCEL: (id) => `/api/expense/${id}/cancel`,
-
-      GET_CATEGORIES: '/api/expense/categories',
-      CREATE_CATEGORY: '/api/expense/categories',
-      UPDATE_CATEGORY: (id) => `/api/expense/categories/${id}`,
-      DELETE_CATEGORY: (id) => `/api/expense/categories/${id}`,
-    },
-
     // ================= Reports =================
     GET_STOCK_REPORT: '/api/inventory/stock-report',
     GET_MOVEMENT_REPORT: '/api/inventory/movement-report',
     GET_IMPORT_SUGGESTIONS: '/api/inventory/import-suggestions',
+  },
+
+  // ============ EXPENSE ============
+  EXPENSE: {
+    GET_LIST: '/api/expense',
+    GET_DETAIL: (id) => `/api/expense/${id}`,
+    CREATE: '/api/expense',
+    CONFIRM: (id) => `/api/expense/${id}/confirm`,
+    CANCEL: (id) => `/api/expense/${id}/cancel`,
+
+    GET_CATEGORIES: '/api/expense/categories',
+    CREATE_CATEGORY: '/api/expense/categories',
+    UPDATE_CATEGORY: (id) => `/api/expense/categories/${id}`,
+    DELETE_CATEGORY: (id) => `/api/expense/categories/${id}`,
   },
 
   // ============ POS (Bán hàng) ============

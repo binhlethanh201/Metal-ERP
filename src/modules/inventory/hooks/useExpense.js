@@ -19,6 +19,8 @@ export const useExpense = () => {
   const [status, setStatus] = useState('ALL');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [sort, setSort] = useState('createdat');
+  const [order, setOrder] = useState('desc');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [paginationMeta, setPaginationMeta] = useState(DEFAULT_PAGINATION);
@@ -33,6 +35,8 @@ export const useExpense = () => {
         status: status && status !== 'ALL' ? status : undefined,
         fromDate: fromDate || undefined,
         toDate: toDate || undefined,
+        sort: sort || undefined,
+        order: order || undefined,
         pageNumber,
         pageSize,
       };
@@ -51,7 +55,7 @@ export const useExpense = () => {
     } finally {
       setLoading(false);
     }
-  }, [categoryId, supplierId, status, fromDate, toDate, pageNumber, pageSize]);
+  }, [categoryId, supplierId, status, fromDate, toDate, sort, order, pageNumber, pageSize]);
 
   useEffect(() => {
     fetchVouchers();
@@ -91,6 +95,10 @@ export const useExpense = () => {
     setFromDate,
     toDate,
     setToDate,
+    sort,
+    setSort,
+    order,
+    setOrder,
 
     pageNumber,
     setPageNumber,

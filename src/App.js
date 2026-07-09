@@ -122,7 +122,7 @@ function App() {
               <Route path="supplier-debt" element={<SupplierDebtManagement />} />
               <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
               <Route path="expenses" element={<ExpenseManagement />} />
-              <Route path="expenses/categories" element={<ExpenseCategoryManagement />} />
+              <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
               <Route element={<PrivateRoute allowedRoles={['Owner']} />}>
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="employees" element={<StaffManagement />} />

@@ -66,7 +66,7 @@ export const sidebarItems = [
     ownerOnly: true,
     children: [
       { label: 'Quản lý chi phí', path: '/inventory/expenses' },
-      { label: 'Loại chi phí', path: '/inventory/expenses/categories' },
+      { label: 'Loại chi phí', path: '/inventory/expense-categories' },
     ],
   },
   {
@@ -79,9 +79,7 @@ export const sidebarItems = [
     label: 'Báo cáo',
     icon: 'assessment',
     children: [
-      // staffOnly: Nếu là Owner sẽ bị ẩn, chỉ Staff mới thấy
       { label: 'Báo cáo kho', path: '/inventory/reports', staffOnly: true },
-      // ownerOnly: Nếu là Staff sẽ bị ẩn, chỉ Owner mới thấy
       { label: 'Báo cáo Tổng hợp', path: '/inventory/owner-reports', ownerOnly: true },
     ],
   },
