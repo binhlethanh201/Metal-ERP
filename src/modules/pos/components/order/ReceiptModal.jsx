@@ -80,8 +80,8 @@ const handlePrint = (order) => {
 <hr>
 <table>
   <tr><td>Tạm tính</td><td class="r">${formatCurrency(order.subtotal)}</td></tr>
-  ${order.discount > 0 ? `<tr><td style="color:#c62828;">Giảm giá</td><td class="r" style="color:#c62828;">-${formatCurrency(order.discount)}</td></tr>` : ''}
-  <tr><td>VAT (8%)</td><td class="r">${formatCurrency(order.vat)}</td></tr>
+  ${order.discount > 0 ? `<tr><td style="color:#2e7d32;">Giảm giá</td><td class="r" style="color:#2e7d32;">-${formatCurrency(order.discount)}</td></tr>` : ''}
+  
   <tr class="bold lg"><td>TỔNG CỘNG</td><td class="r">${formatCurrency(order.total)}</td></tr>
 </table>
 <hr>
@@ -160,15 +160,11 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
             <span>{formatCurrency(lastOrder.subtotal)}</span>
           </div>
           {lastOrder.discount > 0 && (
-            <div className="flex justify-between text-xs text-red-500">
-              <span>Giảm giá</span>
+            <div className="flex justify-between text-xs text-emerald-600">
+              <span>Giảm giá {lastOrder.discountPercent || ''}%</span>
               <span>-{formatCurrency(lastOrder.discount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>VAT</span>
-            <span>{formatCurrency(lastOrder.vat)}</span>
-          </div>
           <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785]">
             <span>TỔNG CỘNG</span>
             <span>{formatCurrency(lastOrder.total)}</span>

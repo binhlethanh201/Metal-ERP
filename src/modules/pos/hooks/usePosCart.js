@@ -47,7 +47,11 @@ export const usePosCart = (initialItems = []) => {
 
       // Tạo displayUnit string
       const baseUnit = product.unit || 'Cái';
-      const displayUnit = convertValue === 1 ? unitName : `${unitName} (×${convertValue})`;
+      let displayUnit;
+      if (convertValue === 1) displayUnit = unitName;
+      else if (convertValue >= 1)
+        displayUnit = `${unitName} (×${convertValue})`; // Thùng (×12)
+      else displayUnit = `${unitName} (1/${Math.round(1 / convertValue)} ${baseUnit})`; // Mét (1/100 Cuộn)
 
       // Lấy stock (API trả về đã là base unit)
       const baseStock = product.availableStock ?? product.stock ?? 0;
@@ -65,7 +69,7 @@ export const usePosCart = (initialItems = []) => {
       // === END FIX ===
 
       if (existed) {
-        // Tính maxQty = remainingStock / convertValue
+        // Tính maxQty = remainingStock / convertValue (chuyển đổi về đơn vị đã chọn)
         const remainingStock = Math.max(0, baseStock - otherUsedStock);
         const maxQty = Math.floor(remainingStock / convertValue);
         return prev.map((item) =>
@@ -86,7 +90,7 @@ export const usePosCart = (initialItems = []) => {
           displayUnit,
           baseUnit,
           baseStock, // Stock gốc (base unit)
-          maxQty: Math.floor((baseStock - otherUsedStock) / convertValue), // Số lượng max theo đơn vị đã chọn, đã trừ used
+          maxQty: Math.floor(Math.max(0, baseStock) / convertValue), // Số lượng max theo đơn vị đã chọn
         },
       ];
     });
@@ -174,10 +178,8 @@ export const usePosCart = (initialItems = []) => {
   }, []);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const voucherDiscount = appliedVoucher ? 50000 : 0;
-  const discount = cart.length > 0 ? voucherDiscount : 0;
-  const vat = Math.round((subtotal - discount) * 0.08);
-  const total = subtotal - discount + vat;
+  const discount = 0; // Voucher removed; tier discount applied separately in PaymentModal
+  const total = subtotal;
 
   const applyVoucher = useCallback(() => {
     if (!voucher.trim()) return false;
@@ -200,7 +202,6 @@ export const usePosCart = (initialItems = []) => {
     applyVoucher,
     subtotal,
     discount,
-    vat,
     total,
   };
 };

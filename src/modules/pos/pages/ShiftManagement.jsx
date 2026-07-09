@@ -210,6 +210,10 @@ export const ShiftManagement = () => {
         createdAt: o.createdAt || o.date || o.invoiceDate || '',
         customerName: o.customerName || o.customer || 'Khách lẻ',
         totalAmount: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
+        discountAmount: parseFloat(o.discountAmount || o.discountAmount || o.DiscountAmount || 0),
+        discountPercent: parseFloat(
+          o.discountPercent || o.discountPercent || o.DiscountPercent || 0
+        ),
         paymentMethod: o.paymentMethod || '',
         cashier: o.userName || o.cashier || o.createdBy || openShift.cashier,
         items: o.items || [],
@@ -283,6 +287,10 @@ export const ShiftManagement = () => {
 
       // Tính stats từ orders — net revenue = gross - hoàn trả (REFUND) trong ca
       const grossRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+      const totalDiscount = filteredOrders.reduce(
+        (sum, o) => sum + (o.discountAmount || o.discount || 0),
+        0
+      );
       const totalRevenue = grossRevenue - shiftRefundTotal;
       const orderCount = filteredOrders.length;
       const cashSales = filteredOrders
@@ -329,6 +337,7 @@ export const ShiftManagement = () => {
         ...summaryData,
         totalRevenue,
         totalSales: totalRevenue,
+        totalDiscount,
         orderCount,
         cashSales: cashSales - cashRefunds, // trừ tiền mặt đã hoàn
         cashSalesGross: cashSales, // giữ lại để tính số dư cuối dự kiến
@@ -751,6 +760,11 @@ export const ShiftManagement = () => {
                 <p className="mt-1 truncate text-lg font-extrabold text-green-700">
                   {formatCurrency(displayShift.totalSales)}
                 </p>
+                {displayShift.totalDiscount > 0 && (
+                  <p className="mt-1 truncate text-xs text-emerald-600">
+                    (Đã giảm: -{formatCurrency(displayShift.totalDiscount)})
+                  </p>
+                )}
               </div>
               <div className="overflow-hidden rounded-lg bg-amber-50 p-4">
                 <p className="truncate text-xs font-bold uppercase text-amber-600">

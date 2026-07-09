@@ -351,6 +351,7 @@ const mapOrder = (o) => {
         : [],
     changeAmount: parseFloat(o.changeAmount || o.change || 0),
     discountAmount: parseFloat(o.discountAmount || o.discount || 0),
+    discountPercent: parseFloat(o.discountPercent || o.DiscountPercent || 0),
     taxAmount: parseFloat(o.taxAmount || o.vat || o.tax || 0),
     note: o.note || o.notes || '',
   };
@@ -562,7 +563,6 @@ const OrderHistory = () => {
 	<table>
 	  <tr><td>Tạm tính</td><td class="r">${formatCurrency(order.subtotal)}</td></tr>
 	  ${order.discount > 0 ? `<tr><td style="color:#c62828;">Giảm giá</td><td class="r" style="color:#c62828;">-${formatCurrency(order.discount)}</td></tr>` : ''}
-	  <tr><td>VAT (8%)</td><td class="r">${formatCurrency(order.vat)}</td></tr>
 	  <tr class="bold lg"><td>TỔNG CỘNG</td><td class="r">${formatCurrency(order.total)}</td></tr>
 	</table>
 	<hr>
@@ -1175,15 +1175,11 @@ const OrderHistory = () => {
                   </span>
                 </div>
                 {selected.discountAmount > 0 && (
-                  <div className="flex justify-between text-xs text-red-500">
-                    <span>Giảm giá</span>
+                  <div className="flex justify-between text-xs text-emerald-600">
+                    <span>Giảm giá {selected.discountPercent ?? ''}%</span>
                     <span>-{formatCurrency(selected.discountAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>VAT</span>
-                  <span>{formatCurrency(selected.taxAmount ?? selected.vat ?? 0)}</span>
-                </div>
                 <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785]">
                   <span>Tổng</span>
                   <span>{formatCurrency(selected.totalAmount ?? selected.total ?? 0)}</span>

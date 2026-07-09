@@ -50,10 +50,12 @@ export const ReceiptPreview = ({ order, onPrint, onClose }) => {
           <span>Tổng tiền hàng:</span>
           <span>{formatCurrency(order.subtotal)}</span>
         </div>
-        <div className="flex justify-between text-slate-600">
-          <span>Thuế VAT (10%):</span>
-          <span>{formatCurrency(order.tax)}</span>
-        </div>
+        {order.discount > 0 && (
+          <div className="flex justify-between text-emerald-600">
+            <span>Giảm giá {order.discountPercent || ''}%</span>
+            <span>-{formatCurrency(order.discount)}</span>
+          </div>
+        )}
         <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold text-slate-900">
           <span>TỔNG CỘNG:</span>
           <span>{formatCurrency(order.total)}</span>

@@ -106,7 +106,7 @@ const OrderDetailPanel = ({ order, onClose, showNotice }) => {
                 <span className="font-bold text-slate-800">{order.total} đ</span>
               </div>
               <div className="flex justify-between font-sans font-medium text-slate-400">
-                <span>Thuế VAT khấu trừ (10%):</span>
+                <span>Giảm giá %:</span>
                 <span className="font-bold text-slate-800">3.756.500 đ</span>
               </div>
               <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2.5">

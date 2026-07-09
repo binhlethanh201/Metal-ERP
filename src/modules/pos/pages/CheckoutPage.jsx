@@ -16,8 +16,8 @@ const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
     0
   );
   const discount = 0;
-  const vat = Math.round((subtotal - discount) * 0.08);
-  const total = subtotal - discount + vat;
+
+  const total = subtotal - discount;
 
   const handleBack = () => {
     if (onBack) {
@@ -82,10 +82,6 @@ const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
           <div className="flex justify-between text-slate-600">
             <span>Tổng tiền hàng:</span>
             <span>{formatCurrency(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-slate-600">
-            <span>Thuế VAT (8%):</span>
-            <span>{formatCurrency(vat)}</span>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold text-slate-900">
             <span>TỔNG CỘNG:</span>
