@@ -77,6 +77,28 @@ const POSScreen = () => {
   const [showUnitSelector, setShowUnitSelector] = useState(false);
   const [selectedProductForUnit, setSelectedProductForUnit] = useState(null);
 
+  // Discount tiers
+  const [discountTiers, setDiscountTiers] = useState([]);
+
+  // Fetch discount tiers on mount
+  useEffect(() => {
+    const fetchDiscountTiers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:5100/api/order-discount-tiers', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDiscountTiers(data || []);
+        }
+      } catch (e) {
+        console.error('Failed to fetch discount tiers:', e);
+      }
+    };
+    fetchDiscountTiers();
+  }, []);
+
   const prevQuickAdd = useRef(quickAddCust);
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
@@ -90,6 +112,20 @@ const POSScreen = () => {
 
   const cart = usePosCart([]);
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
+
+  // Calculate discount info based on subtotal
+  const discountInfo = useMemo(() => {
+    if (!discountTiers || discountTiers.length === 0 || cart.subtotal <= 0) return null;
+    const sortedTiers = [...discountTiers].sort((a, b) => b.minOrderValue - a.minOrderValue);
+    const applicableTier = sortedTiers.find((t) => cart.subtotal >= t.minOrderValue && t.isActive);
+    if (!applicableTier) return null;
+    const discountAmount = Math.round(cart.subtotal * (applicableTier.discountPercent / 100));
+    return {
+      discountPercent: applicableTier.discountPercent,
+      discountAmount,
+      tierName: `Giảm giá ${applicableTier.discountPercent}%`,
+    };
+  }, [discountTiers, cart.subtotal]);
 
   const handleAddToCart = useCallback(
     (p, selectedUnit = null) => {
@@ -118,9 +154,7 @@ const POSScreen = () => {
     cart.clearCart();
     setSelectedCustomer(null);
   }, [cart]);
-  const handleApplyVoucher = useCallback(() => {
-    showNotice(cart.applyVoucher() ? 'Đã áp dụng mã giảm giá' : 'Vui lòng nhập mã giảm giá');
-  }, [cart, showNotice]);
+  const handleApplyVoucher = useCallback(() => {}, []);
 
   // ---- Load draft neu co ----
   useEffect(() => {
@@ -179,9 +213,10 @@ const POSScreen = () => {
   }
 
   // ---- Thanh toán ----
+  const finalTotal = Math.max(0, cart.subtotal - (discountInfo?.discountAmount || 0));
   const totalPaid = payLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
-  const remaining = Math.max(0, cart.total - totalPaid);
-  const isPaymentValid = Math.abs(totalPaid - cart.total) <= 1 && totalPaid > 0;
+  const remaining = Math.max(0, finalTotal - totalPaid);
+  const isPaymentValid = Math.abs(totalPaid - finalTotal) <= 1 && totalPaid > 0;
 
   const processOrder = async (lines, totalPaidAmount) => {
     setPaying(true);
@@ -283,7 +318,7 @@ const POSScreen = () => {
         const shiftData = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
         if (shiftData) {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
-          shiftData.totalSales = (shiftData.totalSales || 0) + cart.total;
+          shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
           shiftData.totalRevenue = shiftData.totalSales;
           sessionStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
@@ -295,12 +330,12 @@ const POSScreen = () => {
         date: new Date().toISOString(),
         items: [...cart.cart],
         subtotal: cart.subtotal,
-        discount: cart.discount,
-        vat: cart.vat,
-        total: cart.total,
+        discount: discountInfo?.discountAmount || 0,
+
+        total: finalTotal,
         payLines: lines.map((l) => ({ method: PAYMENT_LABELS[l.method], amount: l.amount })),
         totalPaid: totalPaidAmount,
-        change: Math.max(0, totalPaidAmount - cart.total),
+        change: Math.max(0, totalPaidAmount - finalTotal),
         customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
       };
       setLastOrder(order);
@@ -324,12 +359,12 @@ const POSScreen = () => {
         date: new Date().toISOString(),
         items: [...cart.cart],
         subtotal: cart.subtotal,
-        discount: cart.discount,
-        vat: cart.vat,
-        total: cart.total,
+        discount: discountInfo?.discountAmount || 0,
+
+        total: finalTotal,
         payLines: lines.map((l) => ({ method: PAYMENT_LABELS[l.method], amount: l.amount })),
         totalPaid: totalPaidAmount,
-        change: Math.max(0, totalPaidAmount - cart.total),
+        change: Math.max(0, totalPaidAmount - finalTotal),
         customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
       };
       setLastOrder(order);
@@ -383,7 +418,7 @@ const POSScreen = () => {
           localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
         }
         // Tạo payment Transfer và hiển QR
-        await handleOpenQRPayment(invoiceId, cart.total);
+        await handleOpenQRPayment(invoiceId, finalTotal, invoice.invoiceCode);
       } catch (err) {
         console.error('[POS] Quick Transfer error:', err);
         showNotice('Lỗi: ' + (err.message || 'Không thể tạo thanh toán'));
@@ -411,7 +446,7 @@ const POSScreen = () => {
       ]);
       setShowPayModal(true);
     } else {
-      processOrder([{ method: 'Cash', amount: cart.total }], cart.total);
+      processOrder([{ method: 'Cash', amount: finalTotal }], finalTotal);
     }
   };
 
@@ -470,7 +505,7 @@ const POSScreen = () => {
         // Lấy payment Transfer để hiển QR
         const transferLine = lines.find((l) => l.method === 'Transfer' && l.amount > 0);
         if (transferLine) {
-          await handleOpenQRPayment(invoiceId, transferLine.amount);
+          await handleOpenQRPayment(invoiceId, transferLine.amount, invoice.invoiceCode);
         } else {
           // Không có Transfer → finalize luôn
           await finalizeInvoice(invoiceId);
@@ -516,7 +551,7 @@ const POSScreen = () => {
           )
         );
         // Tạo payment và hiển QR
-        await handleOpenQRPayment(invoice.invoiceId, cart.total);
+        await handleOpenQRPayment(invoice.invoiceId, finalTotal, invoice.invoiceCode);
       } catch (err) {
         console.error('[POS] Process Transfer error:', err);
         showNotice('Lỗi: ' + (err.message || 'Không thể tạo thanh toán'));
@@ -542,7 +577,7 @@ const POSScreen = () => {
         const otherTotal = prev
           .filter((o) => o.id !== id)
           .reduce((s, o) => s + (Number(o.amount) || 0), 0);
-        const maxAllowed = Math.max(0, cart.total - otherTotal);
+        const maxAllowed = Math.max(0, finalTotal - otherTotal);
         const newAmount = Math.min(Number(value) || 0, maxAllowed);
         return { ...l, amount: newAmount };
       })
@@ -579,7 +614,7 @@ const POSScreen = () => {
         const shiftData = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
         if (shiftData) {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
-          shiftData.totalSales = (shiftData.totalSales || 0) + cart.total;
+          shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
           shiftData.totalRevenue = shiftData.totalSales;
           sessionStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
@@ -590,11 +625,11 @@ const POSScreen = () => {
         date: new Date().toISOString(),
         items: [...cart.cart],
         subtotal: cart.subtotal,
-        discount: cart.discount,
-        vat: cart.vat,
-        total: cart.total,
-        payLines: [{ method: 'Chuyển khoản', amount: cart.total }],
-        totalPaid: cart.total,
+        discount: discountInfo?.discountAmount || 0,
+
+        total: finalTotal,
+        payLines: [{ method: 'Chuyển khoản', amount: finalTotal }],
+        totalPaid: finalTotal,
         change: 0,
         customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
       };
@@ -612,7 +647,7 @@ const POSScreen = () => {
       try {
         const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
         savedPM[pendingInvoice.invoiceId] = JSON.stringify([
-          { method: 'Chuyển khoản', amount: cart.total },
+          { method: 'Chuyển khoản', amount: finalTotal },
         ]);
         localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
       } catch (_) {}
@@ -631,7 +666,7 @@ const POSScreen = () => {
   };
 
   // ---- QR Payment: Mở modal QR ----
-  const handleOpenQRPayment = async (invoiceId, amount) => {
+  const handleOpenQRPayment = async (invoiceId, amount, realInvoiceCode) => {
     try {
       // Tạo payment Transfer
       const paymentRes = await createPayment(invoiceId, {
@@ -649,7 +684,10 @@ const POSScreen = () => {
         bankName: payment.bankName || 'MB Bank',
       });
       // Lưu tạm invoice để xử lý đơn treo
-      setPendingInvoice({ invoiceId, invoiceCode: `INV-${invoiceId.toString().slice(0, 8)}` });
+      setPendingInvoice({
+        invoiceId,
+        invoiceCode: realInvoiceCode || `INV-${invoiceId.toString().slice(0, 8)}`,
+      });
       // Lưu vào localStorage để có thể resume nếu browser đóng
       try {
         const pendingOrders = JSON.parse(localStorage.getItem('pos_pending_orders') || '[]');
@@ -691,13 +729,8 @@ const POSScreen = () => {
           <div className="flex-1 overflow-hidden">
             <PosCartPanel
               cart={cart.cart}
-              voucher={cart.voucher}
-              onVoucherChange={cart.setVoucher}
-              onApplyVoucher={handleApplyVoucher}
               subtotal={cart.subtotal}
-              discount={cart.discount}
-              vat={cart.vat}
-              total={cart.total}
+              discountInfo={discountInfo}
               onClearCart={handleClearCart}
               onPay={handleOpenPay}
               onSaveDraft={() => {
@@ -710,9 +743,9 @@ const POSScreen = () => {
                   items: [...cart.cart],
                   customer: selectedCustomer,
                   subtotal: cart.subtotal,
-                  discount: cart.discount,
-                  vat: cart.vat,
-                  total: cart.total,
+                  discount: discountInfo?.discountAmount || 0,
+
+                  total: finalTotal,
                   createdAt: new Date().toISOString(),
                 };
                 setDrafts((prev) => [draft, ...prev]);
@@ -770,7 +803,7 @@ const POSScreen = () => {
       <PaymentModal
         isOpen={showPayModal}
         onClose={() => setShowPayModal(false)}
-        cart={cart}
+        cart={{ ...cart, discountInfo }}
         selectedCustomer={selectedCustomer}
         payLines={payLines}
         totalPaid={totalPaid}
