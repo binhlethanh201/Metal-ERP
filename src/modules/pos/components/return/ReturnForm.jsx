@@ -35,7 +35,11 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [submitError, setSubmitError] = useState('');
 
   const isExchange = returnType === 'EXCHANGE';
-  const totalRefund = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
+  const subtotal = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
+  const discountRatio =
+    invoice?.discountAmount && invoice?.subtotal ? invoice.discountAmount / invoice.subtotal : 0;
+  const discountPortion = subtotal * discountRatio;
+  const totalRefund = Math.max(0, subtotal - discountPortion);
 
   const reset = () => {
     setStep(1);
@@ -431,6 +435,12 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 <p className="mt-0.5 font-semibold text-green-600">
                   {formatCurrency(invoice.totalAmount || 0)}
                 </p>
+                {invoice.discountAmount > 0 && (
+                  <p className="mt-1 text-xs text-emerald-600">
+                    (Đã giảm {invoice.discountPercent || 0}%: -
+                    {formatCurrency(invoice.discountAmount)})
+                  </p>
+                )}
               </div>
             </div>
           </div>

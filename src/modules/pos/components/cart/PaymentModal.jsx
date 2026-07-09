@@ -18,6 +18,8 @@ const PaymentModal = ({
   onLineChange,
   onQuickFill,
 }) => {
+  const discountAmount = cart?.discountInfo?.discountAmount || 0;
+  const finalTotal = Math.max(0, (cart?.subtotal || 0) - discountAmount);
   // 2 payment methods: Cash, Transfer
   const allMethods = [
     { id: 'Cash', name: 'Tiền mặt', icon: '💵' },
@@ -41,7 +43,7 @@ const PaymentModal = ({
             disabled={!isPaymentValid}
             loading={paying}
           >
-            Xác nhận thanh toán ({formatCurrency(cart.total)})
+            Xác nhận thanh toán ({formatCurrency(finalTotal)})
           </Button>
         </>
       }
@@ -57,7 +59,7 @@ const PaymentModal = ({
           <div className="text-right">
             <span className="text-sm text-slate-500">Tổng cộng: </span>
             <span className="text-xl font-extrabold text-[#004785]">
-              {formatCurrency(cart.total)}
+              {formatCurrency(finalTotal)}
             </span>
           </div>
         </div>
@@ -85,16 +87,12 @@ const PaymentModal = ({
             <span>Tạm tính</span>
             <span>{formatCurrency(cart.subtotal)}</span>
           </div>
-          {cart.discount > 0 && (
-            <div className="flex justify-between text-red-500">
-              <span>Giảm giá</span>
-              <span>-{formatCurrency(cart.discount)}</span>
+          {cart.discountInfo && cart.discountInfo.discountAmount > 0 && (
+            <div className="flex justify-between text-emerald-600">
+              <span>Giảm giá {cart.discountInfo.discountPercent}%</span>
+              <span>-{formatCurrency(cart.discountInfo.discountAmount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-slate-500">
-            <span>VAT (8%)</span>
-            <span>{formatCurrency(cart.vat)}</span>
-          </div>
         </div>
 
         <div className="border-t border-slate-200 pt-4">
@@ -186,7 +184,7 @@ const PaymentModal = ({
           <div className="mt-5 space-y-2 rounded-lg bg-slate-50 p-4">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Tổng đơn hàng</span>
-              <span className="font-bold text-slate-900">{formatCurrency(cart.total)}</span>
+              <span className="font-bold text-slate-900">{formatCurrency(finalTotal)}</span>
             </div>
             <div className="flex justify-between border-t border-slate-200 pt-2 text-sm">
               <span className="text-slate-500">Đã nhập</span>
@@ -203,11 +201,11 @@ const PaymentModal = ({
                 <span className="font-bold text-green-600">✔</span>
               </div>
             )}
-            {totalPaid > cart.total && (
+            {totalPaid > finalTotal && (
               <div className="mt-2 flex justify-between rounded-lg border-2 border-green-400 bg-green-50 p-3 text-sm">
                 <span className="font-bold text-green-800">Tiền thừa trả khách</span>
                 <span className="font-bold text-green-700">
-                  + {formatCurrency(totalPaid - cart.total)}
+                  + {formatCurrency(totalPaid - finalTotal)}
                 </span>
               </div>
             )}

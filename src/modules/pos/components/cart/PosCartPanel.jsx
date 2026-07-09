@@ -1,15 +1,11 @@
-/** Panel giỏ hàng POS - Danh sách item + số lượng + chọn khách hàng + voucher + tạm tính/VAT/tổng + nút Thanh toán/Lưu nháp. */
+/** Panel giỏ hàng POS - Danh sách item + số lượng + chọn khách hàng + tạm tính/giảm giá/tổng + nút Thanh toán/Lưu nháp. */
 import Icon from '../../../../shared/components/Icon';
 const formatCurrency = (v) => `${Math.max(0, v).toLocaleString('vi-VN')}đ`;
 
 const PosCartPanel = ({
   cart,
-  voucher,
-  onVoucherChange,
-  onApplyVoucher,
   subtotal,
-  discount,
-  vat,
+  discountInfo,
   total,
   onClearCart,
   onPay,
@@ -128,44 +124,22 @@ const PosCartPanel = ({
 
       <div className="border-t border-slate-200 bg-slate-50 p-6">
         <div className="mb-4 flex flex-col gap-y-2">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            Mã giảm giá
-          </div>
-          <div className="flex gap-x-2">
-            <input
-              value={voucher}
-              onChange={(e) => onVoucherChange(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && onApplyVoucher()}
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-[#004785]"
-              placeholder="Nhập mã..."
-              type="text"
-            />
-            <button
-              onClick={onApplyVoucher}
-              className="rounded-lg bg-slate-200 px-4 py-1.5 text-xs font-bold uppercase text-slate-700 transition-colors hover:bg-slate-300 active:scale-95"
-            >
-              Áp dụng
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-4 flex flex-col gap-y-2">
           <div className="flex justify-between text-xs font-medium text-slate-500">
             <span>Tạm tính</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
-          <div className="flex justify-between text-xs font-medium text-slate-500">
-            <span>Giảm giá</span>
-            <span className="text-red-600">- {formatCurrency(discount)}</span>
-          </div>
-          <div className="flex justify-between text-xs font-medium text-slate-500">
-            <span>Thuế VAT (8%)</span>
-            <span>{formatCurrency(vat)}</span>
-          </div>
+          {discountInfo && discountInfo.discountAmount > 0 && (
+            <div className="flex justify-between text-xs font-medium text-emerald-600">
+              <span>Giảm giá {discountInfo.discountPercent}%</span>
+              <span>- {formatCurrency(discountInfo.discountAmount)}</span>
+            </div>
+          )}
           <div className="my-1 h-px bg-slate-200" />
           <div className="flex items-end justify-between">
             <span className="text-xs font-bold uppercase text-slate-900">Tổng cộng</span>
-            <span className="text-2xl font-black text-[#004785]">{formatCurrency(total)}</span>
+            <span className="text-2xl font-black text-[#004785]">
+              {formatCurrency(subtotal - (discountInfo?.discountAmount || 0))}
+            </span>
           </div>
         </div>
 
