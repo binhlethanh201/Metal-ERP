@@ -41,6 +41,10 @@ const SupplierDebtManagement = lazy(
 const SupplierPaymentManagement = lazy(
   () => import('./modules/inventory/pages/SupplierPaymentManagement')
 );
+const ExpenseManagement = lazy(() => import('./modules/inventory/pages/ExpenseManagement'));
+const ExpenseCategoryManagement = lazy(
+  () => import('./modules/inventory/pages/ExpenseCategoryManagement')
+);
 
 // POS Module
 const PosLayout = lazy(() => import('./modules/pos/layouts/PosLayout'));
@@ -116,10 +120,9 @@ function App() {
               <Route path="orders" element={<OrderList />} />
               <Route path="suppliers" element={<SupplierManagement />} />
               <Route path="supplier-debt" element={<SupplierDebtManagement />} />
-
-              {/* ---> BỔ SUNG ROUTE MỚI Ở ĐÂY <--- */}
               <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
-
+              <Route path="expenses" element={<ExpenseManagement />} />
+              <Route path="expenses/categories" element={<ExpenseCategoryManagement />} />
               <Route element={<PrivateRoute allowedRoles={['Owner']} />}>
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="employees" element={<StaffManagement />} />

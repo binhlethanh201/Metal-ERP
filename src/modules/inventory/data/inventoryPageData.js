@@ -59,6 +59,16 @@ export const sidebarItems = [
       { label: 'Voucher chiết khấu', path: '/inventory/promotions/vouchers' },
     ],
   },
+
+  {
+    label: 'Chi phí',
+    icon: 'request_quote',
+    ownerOnly: true,
+    children: [
+      { label: 'Quản lý chi phí', path: '/inventory/expenses' },
+      { label: 'Loại chi phí', path: '/inventory/expenses/categories' },
+    ],
+  },
   {
     label: 'Hệ thống & Nhân sự',
     icon: 'UserCog',
