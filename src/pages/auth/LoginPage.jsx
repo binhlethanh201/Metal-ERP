@@ -43,11 +43,11 @@ const LoginPage = () => {
       if (hasRole('Admin')) {
         navigate('/admin');
       } else if (hasRole('SalesStaff')) {
-        navigate('/pos'); // Nhân viên sale vào thẳng máy POS
+        navigate('/pos'); // Sale Staff
       } else if (hasRole('InventoryStaff')) {
-        navigate('/inventory'); // Thủ kho vào thẳng màn hình kho
+        navigate('/inventory/dashboard'); // Inventory Staff
       } else if (hasRole('Owner')) {
-        navigate('/inventory'); // Chủ shop tạm thời vào kho (Sẽ đổi thành /owner sau)
+        navigate('/inventory/owner-dashboard'); // Owner
       } else {
         navigate('/'); // Fallback an toàn
       }

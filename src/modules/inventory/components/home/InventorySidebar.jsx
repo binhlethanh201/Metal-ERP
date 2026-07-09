@@ -61,8 +61,13 @@ const InventorySidebar = () => {
 
   const isItemActive = (path) => {
     if (!path) return false;
+
     if (path === '/inventory/dashboard')
       return location.pathname.startsWith('/inventory/dashboard');
+
+    if (path === '/inventory/owner-dashboard')
+      return location.pathname.startsWith('/inventory/owner-dashboard');
+
     if (path === '/inventory/reports') return location.pathname === '/inventory/reports';
     if (path === '/inventory/owner-reports')
       return location.pathname.startsWith('/inventory/owner-reports');

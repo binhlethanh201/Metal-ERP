@@ -6,6 +6,13 @@ export const sidebarItems = [
     label: 'Tổng quan',
     icon: 'dashboard',
     path: '/inventory/dashboard',
+    staffOnly: true,
+  },
+  {
+    label: 'Tổng quan',
+    icon: 'dashboard',
+    path: '/inventory/owner-dashboard',
+    ownerOnly: true,
   },
   {
     label: 'Hàng hóa & Kho',
