@@ -4,17 +4,63 @@ import Icon from '../../../shared/components/Icon';
 import AiChatWidget from '../components/home/AiChatWidget';
 import KPICard from '../components/home/KPICard';
 import FinanceMetric from '../components/home/FinanceMetric';
+import { getInventoryDashboard } from '../services/inventoryService';
 import {
-  dashboardKpis,
-  financeKpis,
-  inventoryTrend,
-  recentTransactions,
-  cashSummary,
+  dashboardKpis as fallbackKpis,
+  financeKpis as fallbackFinance,
+  inventoryTrend as fallbackTrend,
+  recentTransactions as fallbackTxs,
+  cashSummary as fallbackCash,
 } from '../data/inventoryMockData';
 import { transactionToneClass } from '../data/inventoryPageData';
 
+const mapDashboard = (data) => {
+  if (!data) return {};
+  return {
+    kpis: data.dashboardKpis || data.kpis || fallbackKpis,
+    finance: data.financeKpis || data.finance || fallbackFinance,
+    trend: data.inventoryTrend || data.trend || fallbackTrend,
+    transactions: data.recentTransactions || data.transactions || fallbackTxs,
+    cash: data.cashSummary || data.cash || fallbackCash,
+  };
+};
+
 const InventoryDashboard = () => {
   // const { setActiveHubKey } = useOutletContext();
+
+  const [dashboard, setDashboard] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const fetchDashboard = async () => {
+      setLoading(true);
+      try {
+        const res = await getInventoryDashboard();
+        const data = res?.data || res;
+        if (!cancelled) setDashboard(mapDashboard(data));
+      } catch (err) {
+        if (!cancelled) {
+          // API chưa có → im lặng dùng mock data
+          setDashboard(mapDashboard(null));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchDashboard();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const {
+    kpis = fallbackKpis,
+    finance = fallbackFinance,
+    trend = fallbackTrend,
+    transactions = fallbackTxs,
+    cash = fallbackCash,
+  } = dashboard || {};
 
   const [isAssistantOpen, setIsAssistantOpen] = React.useState(false);
   const [assistantInput, setAssistantInput] = React.useState('');
@@ -41,14 +87,25 @@ const InventoryDashboard = () => {
     setAssistantInput('');
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-b-2 border-[#004785]" />
+          <p className="text-sm text-slate-500">Đang tải dữ liệu tổng quan...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[1600px] space-y-6 pb-8">
       {/* 1. Khu vực KPI và Chỉ số tài chính */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardKpis.map((kpi) => (
+        {kpis.map((kpi) => (
           <KPICard key={kpi.id} {...kpi} />
         ))}
-        {financeKpis.map((metric) => (
+        {finance.map((metric) => (
           <FinanceMetric key={metric.id} {...metric} />
         ))}
       </section>
@@ -62,7 +119,7 @@ const InventoryDashboard = () => {
               XU HƯỚNG TỒN KHO (7 NGÀY)
             </h4>
             <div className="flex h-48 items-end gap-2 px-2">
-              {inventoryTrend.map((item) => (
+              {trend.map((item) => (
                 <div
                   key={item.day}
                   className="h-full w-full rounded-t-md bg-blue-100 transition-colors hover:bg-[#004785]"
@@ -72,7 +129,7 @@ const InventoryDashboard = () => {
               ))}
             </div>
             <div className="mt-3 flex justify-between px-2 text-[10px] font-bold uppercase text-slate-400">
-              {inventoryTrend.map((item) => (
+              {trend.map((item) => (
                 <span key={item.day}>{item.day}</span>
               ))}
             </div>
@@ -148,7 +205,7 @@ const InventoryDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {recentTransactions.map((tx) => (
+                {transactions.map((tx) => (
                   <tr key={tx.id} className="transition-colors hover:bg-slate-50">
                     <td className="px-6 py-4">
                       <div
@@ -190,16 +247,16 @@ const InventoryDashboard = () => {
             <Icon name="account_balance_wallet" className="text-slate-400" />
           </div>
           <h2 className="mb-6 text-2xl font-extrabold text-blue-900">
-            {cashSummary.total} <span className="text-sm font-medium">VND</span>
+            {cash.total} <span className="text-sm font-medium">VND</span>
           </h2>
           <div className="flex items-end justify-between border-t border-slate-50 pt-4">
             <div className="space-y-1">
               <p className="text-[10px] font-bold uppercase text-slate-400">THU (THÁNG)</p>
-              <p className="text-sm font-black text-green-600">{cashSummary.income}</p>
+              <p className="text-sm font-black text-green-600">{cash.income}</p>
             </div>
             <div className="space-y-1 text-right">
               <p className="text-[10px] font-bold uppercase text-slate-400">CHI (THÁNG)</p>
-              <p className="text-sm font-black text-red-600">{cashSummary.expense}</p>
+              <p className="text-sm font-black text-red-600">{cash.expense}</p>
             </div>
           </div>
         </article>

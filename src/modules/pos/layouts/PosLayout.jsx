@@ -70,7 +70,7 @@ const PosLayout = () => {
         <PosSidebar
           activeMenu={activeMenu}
           onMenuSelect={handleMenuSelect}
-          onNavigateWarehouse={() => navigate('/inventory/dashboard')}
+          onNavigateWarehouse={() => navigate('/inventory')}
           open={sidebarOpen}
           onToggle={() => setSidebarOpen((v) => !v)}
         />

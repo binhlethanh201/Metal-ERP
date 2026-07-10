@@ -3,7 +3,9 @@
  * Tự tính subtotal, discount, VAT (8%), total. Export toàn bộ state + handlers.
  * Hỗ trợ UOM (Unit of Measurement) - đơn vị quy đổi với số lẻ.
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+
+const CART_STORAGE_KEY = 'pos_cart_items';
 
 /**
  * Helper: Tính productId gốc từ item.id (cắt phần "-unitName" nếu có)
@@ -23,10 +25,28 @@ const calcUsedStock = (items, productId, excludeItemId = null) => {
 };
 
 export const usePosCart = (initialItems = []) => {
-  const [cart, setCart] = useState(initialItems);
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : initialItems;
+    } catch {
+      return initialItems;
+    }
+  });
   const [voucher, setVoucher] = useState('');
   const [appliedVoucher, setAppliedVoucher] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Tiền mặt');
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (cart.length > 0) {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      } else {
+        localStorage.removeItem(CART_STORAGE_KEY);
+      }
+    } catch {}
+  }, [cart]);
 
   /**
    * Thêm sản phẩm vào giỏ hàng với hỗ trợ UOM
@@ -175,6 +195,7 @@ export const usePosCart = (initialItems = []) => {
     setCart([]);
     setAppliedVoucher('');
     setVoucher('');
+    localStorage.removeItem(CART_STORAGE_KEY);
   }, []);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);

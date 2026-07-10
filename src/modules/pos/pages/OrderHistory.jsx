@@ -10,6 +10,7 @@ import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { formatDateTime } from '../../../shared/utils/formatDate';
 import { getOrders, getInvoice, getReturns } from '../services/posService';
 
 // Mock data fallback — dùng khi API chưa có dữ liệu
@@ -542,7 +543,7 @@ const OrderHistory = () => {
 	<div class="c">
 	  <p class="bold lg">HÓA ĐƠN BÁN HÀNG</p>
 	  <p style="font-size:13px;color:#555">Mã: ${order.id}</p>
-	  <p style="font-size:13px;color:#555">${new Date(order.date || order.createdAt).toLocaleString('vi-VN')}</p>
+	  <p style="font-size:13px;color:#555">${formatDateTime(order.date || order.createdAt)}</p>
 	</div>
 	<hr>
 	<table>
@@ -735,7 +736,7 @@ const OrderHistory = () => {
       width: '140px',
       render: (v, row) => (
         <span className="text-xs text-slate-500">
-          {v ? new Date(v).toLocaleString('vi-VN') : row.date || '-'}
+          {v ? formatDateTime(v) : row.date ? formatDateTime(row.date) : '-'}
         </span>
       ),
     },
@@ -1029,7 +1030,7 @@ const OrderHistory = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-mono text-sm font-bold text-[#004785]">{selected.id}</h3>
-                  <p className="text-xs text-slate-400">{selected.date}</p>
+                  <p className="text-xs text-slate-400">{formatDateTime(selected.date)}</p>
                 </div>
                 <button
                   type="button"

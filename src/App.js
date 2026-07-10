@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './shared/hooks/useAuth';
 
 // Layouts
 import PrivateRoute from './shared/components/layout/PrivateRoute';
@@ -70,6 +71,14 @@ const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement
 
 // Report Module
 const OwnerReports = lazy(() => import('./modules/report/pages/OwnerReports'));
+
+const InventoryRedirect = () => {
+  const { user } = useAuth();
+  const roles = Array.isArray(user?.roles) ? user.roles : user?.role ? [user.role] : [];
+  const isOwner = roles.some((r) => r?.toLowerCase() === 'owner');
+  return <Navigate to={isOwner ? 'owner-dashboard' : 'dashboard'} replace />;
+};
+
 function App() {
   const LoadingSpinner = (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -107,10 +116,10 @@ function App() {
           {/* MODULE INVENTORY */}
           <Route element={<PrivateRoute allowedRoles={['Owner', 'InventoryStaff']} />}>
             <Route path="/inventory" element={<InventoryLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route index element={<InventoryRedirect />} />
 
-              {/* --- ROUTE INVENTORY STAFF --- */}
-              <Route element={<PrivateRoute allowedRoles={['InventoryStaff']} />}>
+              {/* --- ROUTE INVENTORY STAFF & OWNER --- */}
+              <Route element={<PrivateRoute allowedRoles={['Owner', 'InventoryStaff']} />}>
                 <Route path="dashboard" element={<InventoryDashboard />} />
               </Route>
 

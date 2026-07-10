@@ -1,6 +1,7 @@
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { formatDateTime } from '../../../../shared/utils/formatDate';
 
 const handlePrint = (order) => {
   const printWindow = window.open('', '_blank', 'width=420,height=800');
@@ -70,7 +71,7 @@ const handlePrint = (order) => {
 <div class="c">
   <p class="bold lg">HÓA ĐƠN BÁN HÀNG</p>
   <p style="font-size:13px;color:#555">Mã: ${order.id}</p>
-  <p style="font-size:13px;color:#555">${new Date(order.date).toLocaleString('vi-VN')}</p>
+  <p style="font-size:13px;color:#555">${formatDateTime(order.date)}</p>
 </div>
 <hr>
 <table>
@@ -129,9 +130,7 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
         <div className="text-center">
           <p className="font-bold text-slate-900">HÓA ĐƠN BÁN HÀNG</p>
           <p className="text-xs text-slate-500">Mã: {lastOrder.id}</p>
-          <p className="text-xs text-slate-400">
-            {new Date(lastOrder.date).toLocaleString('vi-VN')}
-          </p>
+          <p className="text-xs text-slate-400">{formatDateTime(lastOrder.date)}</p>
         </div>
         <div className="border-b border-t border-slate-200 py-2">
           <div className="mb-1 grid grid-cols-4 gap-1 text-xs font-bold text-slate-500">

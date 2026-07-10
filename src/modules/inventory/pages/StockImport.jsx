@@ -7,13 +7,14 @@ import {
 } from '../services/inventoryService';
 import { getSuppliers } from '../services/supplierService';
 
-// Import các sub-components đã tách
 import { ImportItemsTable } from '../components/stock/ImportItemsTable';
 import { ImportTicketForm } from '../components/stock/ImportTicketForm';
 import { InventoryHistoryCard } from '../components/stock/InventoryHistoryCard';
 import { EditProductModal } from '../components/product/EditProductModal';
 import { createProduct } from '../services/productService';
 import { Card } from '../../../shared/components/Card';
+import { Button } from '../../../shared/components/Button';
+import { Modal } from '../../../shared/components/Modal';
 
 const fallbackProducts = [
   {
@@ -54,7 +55,6 @@ const normalizeInwardRow = (item, index) => {
   const itemsList = Array.isArray(item?.items) ? item.items : [];
   const totalQty = itemsList.reduce((acc, curr) => acc + Number(curr?.quantity || 0), 0);
   const firstProduct = itemsList[0]?.productName || 'Hàng hóa nhập kho';
-
   return {
     id: item?.stockTicketId || item?.id || `IMP-${index + 1}`,
     stockTicketId: item?.stockTicketId || item?.id,
@@ -73,7 +73,6 @@ export const StockImport = () => {
   const [products, setProducts] = useState(fallbackProducts);
   const [suppliers, setSuppliers] = useState(fallbackSuppliers);
 
-  // Khôi phục Supplier nếu có
   const [selectedSupplier, setSelectedSupplier] = useState(() => {
     try {
       const saved = localStorage.getItem('stockImport_supplier');
@@ -83,11 +82,10 @@ export const StockImport = () => {
     }
   });
 
-  // Khôi phục danh sách sản phẩm đang chọn dở
   const [items, setItems] = useState(() => {
     try {
       const saved = localStorage.getItem('stockImport_items');
-      return saved ? JSON.parse(saved) : []; // Mặc định là mảng rỗng, không tự thêm SP
+      return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
@@ -103,39 +101,31 @@ export const StockImport = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Lưu trạng thái mỗi khi có thay đổi
   useEffect(() => {
     localStorage.setItem('stockImport_items', JSON.stringify(items));
   }, [items]);
-
   useEffect(() => {
-    if (selectedSupplier) {
+    if (selectedSupplier)
       localStorage.setItem('stockImport_supplier', JSON.stringify(selectedSupplier));
-    }
   }, [selectedSupplier]);
-
   useEffect(() => {
     localStorage.setItem('stockImport_type', inwardType);
   }, [inwardType]);
-
   useEffect(() => {
     localStorage.setItem('stockImport_note', note);
   }, [note]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // State lịch sử phiếu nhập
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [inwardsList, setInwardsList] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const loadInwardHistory = useCallback(async (filterParams = {}) => {
     setIsLoadingHistory(true);
     try {
-      const queryParams = {
-        pageNumber: 1,
-        pageSize: 20,
-        ...filterParams,
-      };
+      const queryParams = { pageNumber: 1, pageSize: 20, ...filterParams };
       const res = await getInwardInventories(queryParams);
       setInwardsList(extractList(res).map(normalizeInwardRow).filter(Boolean));
     } catch {
@@ -176,7 +166,6 @@ export const StockImport = () => {
     setItems((current) => {
       const key = getItemKey(product);
       if (!key) return current;
-
       const existing = current.find((i) => getItemKey(i) === key);
       if (existing) {
         return current.map((i) =>
@@ -220,6 +209,11 @@ export const StockImport = () => {
     [items]
   );
 
+  const openModal = () => {
+    setStatus({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
+    setIsModalOpen(true);
+  };
+
   const handleFinish = async (isDraft = false) => {
     if (!items.length) {
       setStatus({ type: 'error', message: 'Vui lòng chọn ít nhất 1 sản phẩm trước khi hoàn tất' });
@@ -248,11 +242,9 @@ export const StockImport = () => {
     });
 
     try {
-      // Bước 1: Tạo phiếu PENDING
       const res = await createInwardInventory(payload);
       const ticketId = res?.data?.ticketId || res?.data?.stockTicketId;
 
-      // Bước 2: NẾU KHÔNG PHẢI LƯU NHÁP -> Gọi tiếp API confirm để cộng kho
       if (!isDraft && ticketId) {
         setStatus({ type: 'info', message: 'Đang xác nhận cộng tồn kho thực tế...' });
         await confirmInwardInventory(ticketId);
@@ -261,7 +253,6 @@ export const StockImport = () => {
           message: `Đã hoàn tất & cộng kho! Mã phiếu: ${res?.data?.ticketCode || ticketId}`,
         });
       } else {
-        // Trường hợp lưu nháp (PENDING)
         setStatus({
           type: 'success',
           message: `Đã lưu nháp phiếu ${res?.data?.ticketCode || ticketId}. Tồn kho chưa thay đổi.`,
@@ -269,21 +260,19 @@ export const StockImport = () => {
       }
 
       setItems([]);
-      localStorage.removeItem('stockImport_items'); // Xóa cache sau khi hoàn tất
-      loadInwardHistory(); // Tải lại bảng lịch sử
+      localStorage.removeItem('stockImport_items');
+      loadInwardHistory();
+      setIsModalOpen(false);
     } catch (error) {
       const errors = error?.data?.errors;
       let msg;
       if (errors) {
-        if (Array.isArray(errors)) {
-          msg = errors.join(' | ');
-        } else if (typeof errors === 'object') {
+        if (Array.isArray(errors)) msg = errors.join(' | ');
+        else if (typeof errors === 'object')
           msg = Object.entries(errors)
-            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .map(([f, ms]) => `${f}: ${Array.isArray(ms) ? ms.join(', ') : ms}`)
             .join(' | ');
-        } else {
-          msg = String(errors);
-        }
+        else msg = String(errors);
       } else {
         msg = error?.message || 'Lỗi khi tạo phiếu';
       }
@@ -308,36 +297,14 @@ export const StockImport = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Nhập kho</h1>
         </div>
-        <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
-          {isLoadingData ? 'Đang tải dữ liệu...' : 'Sẵn sàng tạo phiếu'}
+        <div className="flex items-center gap-3">
+          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
+            {isLoadingData ? 'Đang tải dữ liệu...' : 'Sẵn sàng tạo phiếu'}
+          </div>
+          <Button variant="primary" onClick={openModal}>
+            + Nhập hàng
+          </Button>
         </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[7fr_3fr]">
-        <ImportItemsTable
-          items={items}
-          products={products}
-          onAddProduct={addProductToTicket}
-          onUpdateItem={updateItem}
-          onRemoveItem={removeItem}
-          onAddNewProduct={() => setIsProductModalOpen(true)}
-          formatCurrency={formatCurrency}
-        />
-
-        <ImportTicketForm
-          inwardType={inwardType}
-          onChangeInwardType={setInwardType}
-          suppliers={suppliers}
-          selectedSupplier={selectedSupplier}
-          onSelectSupplier={setSelectedSupplier}
-          note={note}
-          onChangeNote={setNote}
-          totals={totals}
-          status={status}
-          isSubmitting={isSubmitting}
-          onSubmit={handleFinish}
-          formatCurrency={formatCurrency}
-        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -361,7 +328,6 @@ export const StockImport = () => {
         </Card>
       </div>
 
-      {/* Lịch sử nhập kho kèm nút Hủy chuẩn API */}
       <InventoryHistoryCard
         title="Lịch sử phiếu nhập kho gần đây"
         type="INWARD"
@@ -370,6 +336,41 @@ export const StockImport = () => {
         onReload={loadInwardHistory}
         onNotify={(noti) => setStatus({ type: noti.type, message: noti.message })}
       />
+
+      {/* ============ MODAL NHẬP HÀNG ============ */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => !isSubmitting && setIsModalOpen(false)}
+        title="Tạo phiếu nhập kho"
+        size="6xl"
+      >
+        <div className="grid gap-6 xl:grid-cols-[7fr_3fr]">
+          <ImportItemsTable
+            items={items}
+            products={products}
+            onAddProduct={addProductToTicket}
+            onUpdateItem={updateItem}
+            onRemoveItem={removeItem}
+            onAddNewProduct={() => setIsProductModalOpen(true)}
+            formatCurrency={formatCurrency}
+          />
+
+          <ImportTicketForm
+            inwardType={inwardType}
+            onChangeInwardType={setInwardType}
+            suppliers={suppliers}
+            selectedSupplier={selectedSupplier}
+            onSelectSupplier={setSelectedSupplier}
+            note={note}
+            onChangeNote={setNote}
+            totals={totals}
+            status={status}
+            isSubmitting={isSubmitting}
+            onSubmit={handleFinish}
+            formatCurrency={formatCurrency}
+          />
+        </div>
+      </Modal>
 
       {isProductModalOpen && (
         <EditProductModal

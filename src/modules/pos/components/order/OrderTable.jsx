@@ -2,6 +2,7 @@
  * Bảng dữ liệu đơn hàng POS - Tích hợp highlight dòng đang chọn xem chi tiết trực tiếp.
  */
 import React from 'react';
+import { formatDateTime } from '../../../../shared/utils/formatDate';
 
 const OrderTable = ({
   orders,
@@ -58,7 +59,9 @@ const OrderTable = ({
                     />
                   </td>
                   <td className="px-4 py-3 font-mono font-black text-[#004785]">{order.code}</td>
-                  <td className="px-4 py-3 font-mono font-medium text-slate-400">{order.date}</td>
+                  <td className="px-4 py-3 font-mono font-medium text-slate-400">
+                    {formatDateTime(order.date)}
+                  </td>
                   <td className="max-w-[200px] truncate px-4 py-3 text-xs text-slate-900">
                     {order.customer}
                   </td>

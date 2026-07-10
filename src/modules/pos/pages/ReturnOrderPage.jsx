@@ -11,7 +11,14 @@ import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { getReturns, cancelReturn, getReturn, finalizeReturn } from '../services/posService';
+import { formatDateTime } from '../../../shared/utils/formatDate';
+import {
+  getReturns,
+  cancelReturn,
+  getReturn,
+  finalizeReturn,
+  getOrders,
+} from '../services/posService';
 import ReturnForm from '../components/return/ReturnForm';
 
 const STATUS_CONFIG = {
@@ -95,7 +102,19 @@ const mapReturn = (r) => ({
   id: r.returnOrderId || r.returnId || r.id,
   returnId: r.returnOrderId || r.returnId || r.id,
   returnCode: r.returnCode || r.returnOrderId || r.id,
-  invoiceCode: r.invoiceCode || r.invoiceId || '',
+  invoiceCode: (() => {
+    const raw =
+      r.invoiceCode ||
+      r.invoiceId ||
+      r.invoice?.invoiceCode ||
+      r.invoice?.invoiceId ||
+      r.invoice?.code ||
+      '';
+    return raw
+      .replace(/\s*\d{4}-\d{2}-\d{2}T[\d.:]+Z?/g, '')
+      .replace(/T[\d.:]+Z?/g, '')
+      .trim();
+  })(),
   customerName: r.customerName || 'Khách lẻ',
   userName: getCreatorName(r),
   status: normalizeStatus(r.status),
@@ -122,7 +141,19 @@ const mapApiDetail = (r) => {
   return {
     returnId: r.returnOrderId || r.returnId || r.id,
     returnCode: r.returnCode || r.returnOrderId || r.returnId || r.id,
-    invoiceCode: r.invoiceCode || r.invoiceId || '',
+    invoiceCode: (() => {
+      const raw =
+        r.invoiceCode ||
+        r.invoiceId ||
+        r.invoice?.invoiceCode ||
+        r.invoice?.invoiceId ||
+        r.invoice?.code ||
+        '';
+      return raw
+        .replace(/\s*\d{4}-\d{2}-\d{2}T[\d.:]+Z?/g, '')
+        .replace(/T[\d.:]+Z?/g, '')
+        .trim();
+    })(),
     customerName: r.customerName || 'Khách lẻ',
     userName: getCreatorName(r),
     status: normalizeStatus(r.status),
@@ -224,7 +255,32 @@ const ReturnOrderPage = () => {
         const raw = await getReturn(returnId);
         const data = raw?.data || raw;
         const fresh = mapApiDetail(data);
-        if (fresh) setDetail(fresh);
+        if (fresh) {
+          // invoiceCode về null, dùng orderId tìm invoiceCode thực từ danh sách hóa đơn
+          if (!fresh.invoiceCode && data.orderId) {
+            try {
+              const ordersData = await getOrders({ pageSize: 500 });
+              const orders = Array.isArray(ordersData)
+                ? ordersData
+                : (ordersData?.items ?? ordersData?.data ?? []);
+              const matched = orders.find(
+                (o) =>
+                  (o.orderId || '').toLowerCase() === data.orderId.toLowerCase() ||
+                  (o.id || '').toLowerCase() === data.orderId.toLowerCase() ||
+                  (o.invoiceId || '').toLowerCase() === data.orderId.toLowerCase()
+              );
+              if (matched) {
+                const rawCode = matched.invoiceCode || matched.invoiceId || matched.id || '';
+                // Xóa timestamp nếu bị dính vào invoiceCode (cả dạng có space và không space)
+                fresh.invoiceCode = rawCode
+                  .replace(/\s*\d{4}-\d{2}-\d{2}T[\d.:]+Z?/g, '')
+                  .replace(/T[\d.:]+Z?/g, '')
+                  .trim();
+              }
+            } catch (_) {}
+          }
+          setDetail(fresh);
+        }
       } catch (_) {
         // keep the list data as fallback
       }
@@ -324,11 +380,7 @@ const ReturnOrderPage = () => {
       key: 'createdAt',
       header: 'Ngày tạo',
       width: '140px',
-      render: (v) => (
-        <span className="text-xs text-slate-500">
-          {v ? new Date(v).toLocaleString('vi-VN') : '-'}
-        </span>
-      ),
+      render: (v) => <span className="text-xs text-slate-500">{v ? formatDateTime(v) : '-'}</span>,
     },
     {
       key: 'customerName',
@@ -550,7 +602,7 @@ const ReturnOrderPage = () => {
                     {detail.returnCode}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '-'}
+                    {detail.createdAt ? formatDateTime(detail.createdAt) : '-'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -644,9 +696,6 @@ const ReturnOrderPage = () => {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-900">
                         {item.productName}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {item.productCode || '-'} · SL: {item.quantity}
                       </p>
                     </div>
                     {detail.returnType !== 'EXCHANGE' && (

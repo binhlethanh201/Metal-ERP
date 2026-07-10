@@ -7,7 +7,8 @@ import { Card } from '../../../../shared/components/Card';
 import { Badge } from '../../../../shared/components/Badge';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { getReturn, finalizeReturn, cancelReturn } from '../../services/posService';
+import { formatDateTime } from '../../../../shared/utils/formatDate';
+import { getReturn, finalizeReturn, cancelReturn, getOrders } from '../../services/posService';
 
 const STATUS_CONFIG = {
   PENDING: { label: 'Chờ duyệt', variant: 'warning' },
@@ -36,7 +37,19 @@ const mapApiDetail = (r) => {
   return {
     returnId: r.returnOrderId || r.returnId || r.id,
     returnCode: r.returnCode || r.returnOrderId || r.returnId || r.id,
-    invoiceCode: r.invoiceCode || r.invoiceId || '',
+    invoiceCode: (() => {
+      const raw =
+        r.invoiceCode ||
+        r.invoiceId ||
+        r.invoice?.invoiceCode ||
+        r.invoice?.invoiceId ||
+        r.invoice?.code ||
+        '';
+      return raw
+        .replace(/\s*\d{4}-\d{2}-\d{2}T[\d.:]+Z?/g, '')
+        .replace(/T[\d.:]+Z?/g, '')
+        .trim();
+    })(),
     customerName: r.customerName || 'Khách lẻ',
     userName: r.userName || r.createdBy || '-',
     status: (r.status || 'PENDING').toUpperCase(),
@@ -45,7 +58,7 @@ const mapApiDetail = (r) => {
     totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
     refundMethod: (r.refundMethod || r.method || 'CASH').toUpperCase(),
     createdAt: r.createdAt || r.createdAt,
-    returnItems: items.length > 0 ? items : (r.returnItems || r.items || []),
+    returnItems: items.length > 0 ? items : r.returnItems || r.items || [],
   };
 };
 
@@ -71,7 +84,31 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
         const data = raw?.data || raw;
         if (!cancelled) {
           const fresh = mapApiDetail(data);
-          if (fresh) setDetail(fresh);
+          if (fresh) {
+            // invoiceCode về null, dùng orderId tìm invoiceCode thực từ danh sách hóa đơn
+            if (!fresh.invoiceCode && data.orderId) {
+              try {
+                const ordersData = await getOrders({ pageSize: 500 });
+                const orders = Array.isArray(ordersData)
+                  ? ordersData
+                  : (ordersData?.items ?? ordersData?.data ?? []);
+                const matched = orders.find(
+                  (o) =>
+                    (o.orderId || '').toLowerCase() === data.orderId.toLowerCase() ||
+                    (o.id || '').toLowerCase() === data.orderId.toLowerCase() ||
+                    (o.invoiceId || '').toLowerCase() === data.orderId.toLowerCase()
+                );
+                if (matched) {
+                  const rawCode = matched.invoiceCode || matched.invoiceId || matched.id || '';
+                  fresh.invoiceCode = rawCode
+                    .replace(/\s*\d{4}-\d{2}-\d{2}T[\d.:]+Z?/g, '')
+                    .replace(/T[\d.:]+Z?/g, '')
+                    .trim();
+                }
+              } catch (_) {}
+            }
+            setDetail(fresh);
+          }
         }
       } catch (err) {
         if (!cancelled) setApiError(err.message || 'Không thể tải chi tiết');
@@ -80,7 +117,9 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
       }
     };
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [returnId]);
 
   const handleFinalize = async () => {
@@ -135,13 +174,16 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
           className="flex items-center gap-1 text-sm text-slate-500 hover:text-[#004785]"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Quay lại danh sách
         </button>
-        {apiLoading && (
-          <span className="text-xs text-slate-400">Đang tải chi tiết...</span>
-        )}
+        {apiLoading && <span className="text-xs text-slate-400">Đang tải chi tiết...</span>}
         {apiError && (
           <span className="text-xs text-amber-500">Không đồng bộ được dữ liệu mới nhất</span>
         )}
@@ -154,7 +196,7 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
             <div>
               <h3 className="font-mono text-lg font-bold text-[#004785]">{detail.returnCode}</h3>
               <p className="text-sm text-slate-500">
-                {detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '-'}
+                {detail.createdAt ? formatDateTime(detail.createdAt) : '-'}
               </p>
             </div>
             <Badge variant={statusCfg.variant} size="lg">
@@ -168,7 +210,9 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
               <p className="mt-1 font-semibold">{detail.customerName}</p>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Hóa đơn gốc</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                Hóa đơn gốc
+              </p>
               <p className="mt-1 font-mono text-sm font-semibold">{detail.invoiceCode || '-'}</p>
             </div>
             <div>
@@ -179,7 +223,9 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
 
           {detail.reason && (
             <div className="rounded-lg bg-amber-50 p-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-amber-600">Lý do đổi trả</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-600">
+                Lý do đổi trả
+              </p>
               <p className="mt-1 text-sm text-amber-800">{detail.reason}</p>
             </div>
           )}
@@ -194,10 +240,6 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
               <div key={item.returnItemId || i} className="flex items-center justify-between py-3">
                 <div>
                   <p className="font-medium text-slate-900">{item.productName}</p>
-                  <p className="text-xs text-slate-500">
-                    {item.productCode || '-'} · SL: {item.quantity} · Đơn giá:{' '}
-                    {formatCurrency(item.sellPrice)}
-                  </p>
                 </div>
                 <p className="font-semibold text-green-600">
                   {formatCurrency(item.refundAmount || item.quantity * item.sellPrice)}
@@ -215,13 +257,17 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng tiền hoàn</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  Tổng tiền hoàn
+                </p>
                 <p className="text-2xl font-extrabold text-green-600">
                   {formatCurrency(detail.totalRefund)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Phương thức</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  Phương thức
+                </p>
                 <p className="mt-1 font-semibold">
                   {REFUND_METHOD_LABELS[detail.refundMethod] || detail.refundMethod}
                 </p>

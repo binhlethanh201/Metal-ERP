@@ -8,6 +8,7 @@ import { Badge } from '../../../../shared/components/Badge';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { formatDateTime } from '../../../../shared/utils/formatDate';
 import { getReturns, cancelReturn } from '../../services/posService';
 
 const STATUS_CONFIG = {
@@ -21,7 +22,19 @@ const mapReturn = (r) => ({
   returnId: r.returnOrderId || r.returnId || r.id,
   returnCode: r.returnCode || r.returnOrderId || r.id,
   invoiceId: r.invoiceId || '',
-  invoiceCode: r.invoiceCode || '',
+  invoiceCode: (() => {
+    const raw =
+      r.invoiceCode ||
+      r.invoiceId ||
+      r.invoice?.invoiceCode ||
+      r.invoice?.invoiceId ||
+      r.invoice?.code ||
+      '';
+    return raw
+      .replace(/\s*\d{4}-\d{2}-\d{2}T[\d.:]+Z?/g, '')
+      .replace(/T[\d.:]+Z?/g, '')
+      .trim();
+  })(),
   customerName: r.customerName || 'Khách lẻ',
   status: (r.status || 'PENDING').toUpperCase(),
   totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
@@ -132,11 +145,7 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
     {
       key: 'createdAt',
       header: 'Ngày tạo',
-      render: (v) => (
-        <span className="text-xs text-slate-500">
-          {v ? new Date(v).toLocaleString('vi-VN') : '-'}
-        </span>
-      ),
+      render: (v) => <span className="text-xs text-slate-500">{v ? formatDateTime(v) : '-'}</span>,
     },
     {
       key: 'actions',
@@ -217,7 +226,8 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
           <span className="text-sm text-slate-500">
-            Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} đơn
+            Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
+            {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} đơn
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -237,7 +247,11 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
                   Math.abs(currentPage - 1 - i) > 2
                 ) {
                   if (Math.abs(currentPage - 1 - i) === 3) {
-                    return <span key={i} className="px-1 text-slate-400">...</span>;
+                    return (
+                      <span key={i} className="px-1 text-slate-400">
+                        ...
+                      </span>
+                    );
                   }
                   return null;
                 }

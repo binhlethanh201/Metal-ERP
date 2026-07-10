@@ -28,7 +28,6 @@ const PosFooter = ({
         <StatusBadge label="KHÁCH HÀNG:" value={customer} bordered />
       </div>
       <div className="flex items-center gap-x-6">
-        <StatusBadge label="ĐIỂM:" value={points} />
         <div className="flex items-center gap-x-2 border-l border-white/20 pl-6 text-[10px] font-bold uppercase tracking-tighter">
           <div
             className={`h-2 w-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)] ${synced ? 'bg-green-500' : 'bg-yellow-500'}`}

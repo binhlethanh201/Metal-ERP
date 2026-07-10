@@ -7,6 +7,7 @@ import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { formatDateTime } from '../../../../shared/utils/formatDate';
 import {
   getOrders,
   getReturns,
@@ -425,9 +426,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               <div>
                 <p className="text-xs font-bold uppercase text-slate-400">Ngày mua</p>
                 <p className="mt-0.5 text-sm">
-                  {invoice.createdAt
-                    ? new Date(invoice.createdAt).toLocaleDateString('vi-VN')
-                    : '-'}
+                  {invoice.createdAt ? formatDateTime(invoice.createdAt) : '-'}
                 </p>
               </div>
               <div>
