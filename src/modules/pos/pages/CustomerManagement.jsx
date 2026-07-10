@@ -11,6 +11,7 @@ import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { formatDateTime } from '../../../shared/utils/formatDate';
 import {
   getCustomers,
   createCustomer,
@@ -42,8 +43,8 @@ const mapCustomer = (c) => ({
   totalSpent: parseFloat(c.totalSpent || 0),
   orderCount: parseInt(c.orderCount || 0),
   returnCount: parseInt(c.returnCount || 0),
-  lastVisit: c.lastVisit || '-',
-  createdAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : '-',
+  lastVisit: c.lastVisit ? formatDateTime(c.lastVisit) : '-',
+  createdAt: c.createdAt ? formatDateTime(c.createdAt) : '-',
 });
 
 const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
@@ -203,7 +204,7 @@ export const CustomerManagement = () => {
             : (returnsData?.items ?? returnsData?.data ?? []);
           returns.forEach((r) => {
             const rStatus = String(r.status || '').toUpperCase();
-            if (rStatus === 'CANCELLED') return;
+            if (rStatus === 'CANCELLED' || rStatus === 'PENDING' || rStatus === 'DRAFT') return;
             const oid = (r.orderId || '').toLowerCase();
             const info = orderInfoMap[oid];
             if (!info) return;
@@ -257,16 +258,36 @@ export const CustomerManagement = () => {
       // Lấy returns để tính tiền hoàn - map bằng cả orderId lẫn invoiceCode
       let returnsByOrderId = {};
       let returnsByInvoice = {};
+      let returnCountByOrderId = {};
       let hasExchangeByOrder = {};
       try {
         const returnsData = await getReturns({});
         const allReturns = Array.isArray(returnsData)
           ? returnsData
           : (returnsData?.items ?? returnsData?.data ?? []);
+        // Xây set orderIds + invoiceCodes của khách hàng này để lọc return
+        const customerOrderIds = new Set();
+        const customerInvoiceCodes = new Set();
+        orders.forEach((o) => {
+          const oid = (o.orderId || o.id || '').toLowerCase();
+          const inv = (o.invoiceCode || o.invoiceId || '').toLowerCase();
+          if (oid) customerOrderIds.add(oid);
+          if (inv) customerInvoiceCodes.add(inv);
+        });
         allReturns.forEach((ret) => {
           const retStatus = String(ret.status || '').toUpperCase();
           if (retStatus === 'CANCELLED' || retStatus === 'PENDING' || retStatus === 'DRAFT') return;
           const retType = (ret.returnType || 'RETURN').toUpperCase();
+          const oid = (ret.orderId || '').toLowerCase();
+          const invCode = (ret.invoiceCode || '').toLowerCase();
+          // Chỉ đếm return thuộc về đơn hàng của khách này
+          if (
+            (oid && customerOrderIds.has(oid)) ||
+            (invCode && customerInvoiceCodes.has(invCode))
+          ) {
+            const matchKey = oid || invCode;
+            returnCountByOrderId[matchKey] = (returnCountByOrderId[matchKey] || 0) + 1;
+          }
           // Chỉ tính REFUND (hoàn tiền) vào tổng đã hoàn — EXCHANGE (đổi hàng) không hoàn tiền
           if (retType !== 'REFUND') return;
           const refund = parseFloat(ret.refundAmount || 0);
@@ -325,7 +346,7 @@ export const CustomerManagement = () => {
       const totalSales = mapped.reduce((s, o) => s + o.originalValue, 0);
       const totalRefunded = mapped.reduce((s, o) => s + o.refunded, 0);
       const actualSpent = totalSales - totalRefunded;
-      const returnOrderCount = mapped.filter((o) => o.refunded > 0).length;
+      const returnOrderCount = Object.values(returnCountByOrderId).reduce((s, c) => s + c, 0);
 
       const updatedCustomer = {
         ...customer,
