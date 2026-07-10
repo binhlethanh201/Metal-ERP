@@ -31,6 +31,7 @@ export const sidebarItems = [
     icon: 'shopping_cart',
     children: [
       { label: 'Danh sách đơn hàng', path: '/inventory/orders' },
+      { label: 'Lịch sử đổi trả', path: '/inventory/return-history', ownerOnly: true },
       { label: 'Xử lý đơn', path: '/inventory/orders/processing' },
       { label: 'Giao hàng', path: '/inventory/orders/shipping' },
       { label: 'Đổi trả hàng', path: '/inventory/orders/returns' },
@@ -80,7 +81,10 @@ export const sidebarItems = [
     label: 'Hệ thống & Nhân sự',
     icon: 'UserCog',
     ownerOnly: true,
-    children: [{ label: 'Quản lý nhân viên', path: '/inventory/employees' }],
+    children: [
+      { label: 'Quản lý nhân viên', path: '/inventory/employees' },
+      { label: 'Lịch sử ca bán', path: '/inventory/shift-history' },
+    ],
   },
   {
     label: 'Báo cáo',

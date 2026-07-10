@@ -39,13 +39,19 @@ export const toggleProductStatusBulk = (ids, isActive) =>
 // Categories APIs
 export const getCategories = () => apiGet(`${BASE}/categories`);
 export const renameCategory = (oldName, newName) =>
-  apiPut(`${BASE}/categories/rename`, { oldName, newName });
+  apiPut(`${BASE}/categories/rename`, {
+    oldName: (oldName || '').trim(),
+    newName: (newName || '').trim(),
+  });
 export const deleteCategory = (name) => apiDelete(`${BASE}/categories/${encodeURIComponent(name)}`);
 
 // Brands APIs
 export const getBrands = () => apiGet(`${BASE}/brands`);
 export const renameBrand = (oldName, newName) =>
-  apiPut(`${BASE}/brands/rename`, { oldName, newName });
+  apiPut(`${BASE}/brands/rename`, {
+    oldName: (oldName || '').trim(),
+    newName: (newName || '').trim(),
+  });
 export const deleteBrand = (name) => apiDelete(`${BASE}/brands/${encodeURIComponent(name)}`);
 
 const productService = {
