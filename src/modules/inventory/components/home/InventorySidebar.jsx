@@ -49,13 +49,9 @@ const InventorySidebar = () => {
   }, [location.pathname, visibleMenuItems]);
 
   const toggleParentMenu = (label, path, children) => {
-    // Luôn toggle expand
     setExpandedMenus((prev) => ({ ...prev, [label]: !prev[label] }));
-    // Nếu có path thì navigate, nếu không có path và có children thì navigate tới child đầu tiên
     if (path) {
       navigate(path);
-    } else if (children && children.length > 0 && children[0].path) {
-      navigate(children[0].path);
     }
   };
 

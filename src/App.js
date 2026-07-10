@@ -68,6 +68,8 @@ const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
 const OwnerDashboard = lazy(() => import('./modules/owner/pages/Dashboard'));
 const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManagement'));
 const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement'));
+const ShiftHistory = lazy(() => import('./modules/owner/pages/ShiftHistory'));
+const ReturnHistory = lazy(() => import('./modules/owner/pages/ReturnHistory'));
 
 // Report Module
 const OwnerReports = lazy(() => import('./modules/report/pages/OwnerReports'));
@@ -129,6 +131,8 @@ function App() {
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="employees" element={<StaffManagement />} />
                 <Route path="owner-reports" element={<OwnerReports />} />
+                <Route path="shift-history" element={<ShiftHistory />} />
+                <Route path="return-history" element={<ReturnHistory />} />
               </Route>
 
               {/* --- ROUTE OWNER & STAFF --- */}

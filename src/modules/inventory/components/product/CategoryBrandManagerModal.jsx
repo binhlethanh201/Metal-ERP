@@ -13,6 +13,17 @@ import {
   deleteBrand,
 } from '../../services/productService';
 
+// Gộp message + errors[] từ response lỗi API (vd 400/404 trong doc mới)
+// thành 1 chuỗi dễ đọc cho alert(), thay vì chỉ lấy mỗi `message`.
+const extractErrorMessage = (err, fallback) => {
+  const msg = err?.data?.message;
+  const errors = err?.data?.errors;
+  if (Array.isArray(errors) && errors.length) {
+    return `${msg ? msg + ': ' : ''}${errors.join(', ')}`;
+  }
+  return msg || fallback;
+};
+
 export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
   const [activeTab, setActiveTab] = useState('categories');
   const [items, setItems] = useState([]);
@@ -56,7 +67,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
         onSuccess?.();
       }
     } catch (err) {
-      alert(err?.data?.message || 'Lỗi đổi tên');
+      alert(extractErrorMessage(err, 'Lỗi đổi tên'));
     }
   };
 
@@ -78,7 +89,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
         onSuccess?.();
       }
     } catch (err) {
-      alert(err?.data?.message || 'Lỗi khi xóa');
+      alert(extractErrorMessage(err, 'Lỗi khi xóa'));
     }
   };
 
