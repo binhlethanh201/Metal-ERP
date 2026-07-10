@@ -647,7 +647,6 @@ const ReturnOrderPage = () => {
                       </p>
                       <p className="text-xs text-slate-400">
                         {item.productCode || '-'} · SL: {item.quantity}
-                        {detail.returnType !== 'EXCHANGE' && ` · ${formatCurrency(item.sellPrice)}`}
                       </p>
                     </div>
                     {detail.returnType !== 'EXCHANGE' && (
