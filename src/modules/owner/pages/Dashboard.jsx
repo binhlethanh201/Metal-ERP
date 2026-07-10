@@ -136,32 +136,6 @@ const InventoryDashboard = () => {
   /* ════════════════════════════ RENDER ════════════════════════════ */
   return (
     <div className="mx-auto max-w-[1600px] space-y-6 pb-10">
-      {/* ── Header branch info ── */}
-      {loading ? (
-        <Skeleton className="h-8 w-80" />
-      ) : data ? (
-        <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-          <Icon name="store" className="text-primary" />
-          <div>
-            <p className="text-sm font-bold text-blue-900">{data.branchName}</p>
-            {data.branchAddress && <p className="text-xs text-blue-600">{data.branchAddress}</p>}
-          </div>
-          {data.branchManagerName && (
-            <span className="ml-auto rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
-              QL: {data.branchManagerName}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={refetch}
-            className="ml-2 flex h-7 w-7 items-center justify-center rounded-lg text-blue-500 hover:bg-white"
-            title="Làm mới dữ liệu"
-          >
-            <Icon name="RefreshCw" className="text-base" />
-          </button>
-        </div>
-      ) : null}
-
       {/* ── 1. KPI Cards ── */}
       <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {loading ? (
