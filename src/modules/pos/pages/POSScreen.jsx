@@ -155,7 +155,7 @@ const POSScreen = () => {
     cart.clearCart();
     setSelectedCustomer(null);
   }, [cart]);
-  const handleApplyVoucher = useCallback(() => {}, []);
+  // const handleApplyVoucher = useCallback(() => {}, []);
 
   // ---- Load draft neu co ----
   useEffect(() => {

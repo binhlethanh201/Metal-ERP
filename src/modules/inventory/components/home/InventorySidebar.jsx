@@ -3,19 +3,19 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import { sidebarItems } from '../../data/inventoryPageData';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 const InventorySidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState(() => {
-    // Auto-expand menu đầu tiên có children
     const firstGroup = sidebarItems.find((item) => item.children?.length > 0);
     return firstGroup ? { [firstGroup.label]: true } : {};
   });
 
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
-  const isOwner = userRoles.includes('Owner');
+  const isOwner = hasRole(userRoles, 'Owner');
 
   const visibleMenuItems = useMemo(() => {
     const checkPermission = (item) => {
@@ -70,6 +70,12 @@ const InventorySidebar = () => {
 
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <aside className="flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white" />
+    );
+  }
 
   return (
     // Bỏ `fixed`, thêm `rounded-xl` để bo góc như POS

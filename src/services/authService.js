@@ -58,8 +58,26 @@ const authRequest = async (endpoint, body) => {
   }
 };
 
+const stripSensitiveFields = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  const {
+    token,
+    accessToken,
+    jwt,
+    refreshToken,
+    password,
+    Password,
+    passwordHash,
+    PasswordHash,
+    ...rest
+  } = obj;
+
+  return rest;
+};
+
 const normalizeLoginResponse = (response) => {
-  const user =
+  const rawUser =
     firstDefined(
       response?.user,
       response?.data?.user,
@@ -80,14 +98,19 @@ const normalizeLoginResponse = (response) => {
     response?.result?.jwt
   );
 
-  let finalUser = user;
+  let finalUser = rawUser;
 
   if (!finalUser && response && typeof response === 'object') {
-    const { accessToken, token: tkn, jwt, Password, PasswordHash, message, ...rest } = response;
+    const { message, ...rest } = stripSensitiveFields(response);
     if (Object.keys(rest).length) {
       finalUser = { ...rest };
     }
   }
+
+  // Luôn strip token/password ra khỏi user, bất kể user đến từ nhánh nào ở trên
+  // (response.user, response.data, response.data.user, ...) — tránh lưu trùng
+  // token bên trong localStorage['user'].
+  finalUser = stripSensitiveFields(finalUser);
 
   if (finalUser) {
     if (finalUser.phoneNumber && !finalUser.phone) finalUser.phone = finalUser.phoneNumber;
@@ -144,7 +167,7 @@ export const loginRequest = async (credentials) => {
     }
 
     return {
-      user: { ...foundUser },
+      user: stripSensitiveFields({ ...foundUser }),
       token: `mock_token_${Date.now()}`,
       raw: { fallback: true },
     };

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { registerVerifyRequest, registerStartRequest } from '../../../services/authService';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import { getDefaultRouteByRole } from '../../../shared/utils/roleRedirect';
 
 const RegisterStep2Verify = ({ email, devOtp, onBack }) => {
   const navigate = useNavigate();
@@ -85,9 +86,9 @@ const RegisterStep2Verify = ({ email, devOtp, onBack }) => {
       const response = await registerVerifyRequest(payload);
 
       if (response?.data?.token) {
-        // Đăng nhập thẳng sau khi verify thành công
-        login(response.data, response.data.token);
-        navigate('/admin'); // Hoặc '/inventory' tùy luồng phân quyền của bạn
+        const { token, ...userInfo } = response.data;
+        login(userInfo, token);
+        navigate(getDefaultRouteByRole(userInfo));
       } else {
         navigate('/login', { state: { message: 'Đăng ký thành công, vui lòng đăng nhập!' } });
       }

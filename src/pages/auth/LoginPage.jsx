@@ -5,6 +5,7 @@ import { loginRequest } from '../../services/authService';
 import Logo from '../../shared/components/Logo';
 import LoginForm from './components/LoginForm';
 import loginBg from '../../assets/images/auth-bg.png';
+import { getDefaultRouteByRole } from '../../shared/utils/roleRedirect';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -29,28 +30,8 @@ const LoginPage = () => {
       if (!userInfo) {
         throw new Error('Hệ thống không trả về thông tin tài khoản hợp lệ.');
       }
-
-      // Lưu JWT Token và User Info vào LocalStorage
       login(userInfo, response.token);
-
-      // --- LOGIC ĐIỀU HƯỚNG THÔNG MINH THEO ROLE MỚI NHẤT ---
-      const userRoles = userInfo.roles || [userInfo.role] || [];
-
-      // Hàm helper để check role không phân biệt hoa thường
-      const hasRole = (roleToCheck) =>
-        userRoles.some((r) => r?.toLowerCase() === roleToCheck.toLowerCase());
-
-      if (hasRole('Admin')) {
-        navigate('/admin');
-      } else if (hasRole('SalesStaff')) {
-        navigate('/pos'); // Sale Staff
-      } else if (hasRole('InventoryStaff')) {
-        navigate('/inventory/dashboard'); // Inventory Staff
-      } else if (hasRole('Owner')) {
-        navigate('/inventory/owner-dashboard'); // Owner
-      } else {
-        navigate('/'); // Fallback an toàn
-      }
+      navigate(getDefaultRouteByRole(userInfo));
     } catch (err) {
       if (err?.status === 429 || err?.message?.includes('429')) {
         setError('Vui lòng chờ 1 phút rồi thử lại để đảm bảo an toàn cho tài khoản của bạn.');

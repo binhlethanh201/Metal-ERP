@@ -15,7 +15,7 @@ const API_CONFIG = {
 
 const getAuthToken = () => {
   try {
-    return sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    return localStorage.getItem('authToken');
   } catch (error) {
     return null;
   }
@@ -58,8 +58,8 @@ export const apiClient = async (endpoint, options = {}) => {
     if (!response.ok) {
       // 401 → redirect login
       if (response.status === 401) {
-        sessionStorage.removeItem('authToken');
         localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
         window.location.href = '/login';
         throw new Error('Unauthorized');
       }

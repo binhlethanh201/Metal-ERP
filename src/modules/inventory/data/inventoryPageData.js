@@ -32,9 +32,9 @@ export const sidebarItems = [
     children: [
       { label: 'Danh sách đơn hàng', path: '/inventory/orders' },
       { label: 'Lịch sử đổi trả', path: '/inventory/return-history', ownerOnly: true },
-      { label: 'Xử lý đơn', path: '/inventory/orders/processing' },
-      { label: 'Giao hàng', path: '/inventory/orders/shipping' },
-      { label: 'Đổi trả hàng', path: '/inventory/orders/returns' },
+      // { label: 'Xử lý đơn', path: '/inventory/orders/processing' },
+      // { label: 'Giao hàng', path: '/inventory/orders/shipping' },
+      // { label: 'Đổi trả hàng', path: '/inventory/orders/returns' },
     ],
   },
   {
@@ -42,31 +42,31 @@ export const sidebarItems = [
     icon: 'shopping_bag',
     ownerOnly: true,
     children: [
-      { label: 'Danh sách NCC', path: '/inventory/suppliers' },
-      { label: 'Đặt hàng mua', path: '/inventory/purchasing/orders' },
-      { label: 'Nhập hàng mua', path: '/inventory/purchasing/import' },
-      { label: 'Trả lại hàng mua', path: '/inventory/purchasing/returns' },
+      { label: 'Nhà cung cấp', path: '/inventory/suppliers' },
+      // { label: 'Đặt hàng mua', path: '/inventory/purchasing/orders' },
+      // { label: 'Nhập hàng mua', path: '/inventory/purchasing/import' },
+      // { label: 'Trả lại hàng mua', path: '/inventory/purchasing/returns' },
     ],
   },
-  {
-    label: 'Quỹ tiền',
-    icon: 'account_balance_wallet',
-    ownerOnly: true,
-    children: [
-      { label: 'Thu tiền', path: '/inventory/funds/receipts' },
-      { label: 'Chi tiền', path: '/inventory/funds/payments' },
-      { label: 'Sổ quỹ', path: '/inventory/funds/ledger' },
-      { label: 'Đối soát quỹ', path: '/inventory/funds/reconciliation' },
-    ],
-  },
-  {
-    label: 'Khuyến mại',
-    icon: 'sell',
-    children: [
-      { label: 'Chương trình chiết khấu', path: '/inventory/promotions' },
-      { label: 'Voucher chiết khấu', path: '/inventory/promotions/vouchers' },
-    ],
-  },
+  // {
+  //   label: 'Quỹ tiền',
+  //   icon: 'account_balance_wallet',
+  //   ownerOnly: true,
+  //   children: [
+  //     { label: 'Thu tiền', path: '/inventory/funds/receipts' },
+  //     { label: 'Chi tiền', path: '/inventory/funds/payments' },
+  //     { label: 'Sổ quỹ', path: '/inventory/funds/ledger' },
+  //     { label: 'Đối soát quỹ', path: '/inventory/funds/reconciliation' },
+  //   ],
+  // },
+  // {
+  //   label: 'Khuyến mại',
+  //   icon: 'sell',
+  //   children: [
+  //     { label: 'Chương trình chiết khấu', path: '/inventory/promotions' },
+  //     { label: 'Voucher chiết khấu', path: '/inventory/promotions/vouchers' },
+  //   ],
+  // },
 
   {
     label: 'Chi phí',

@@ -133,6 +133,12 @@ function App() {
                 <Route path="owner-reports" element={<OwnerReports />} />
                 <Route path="shift-history" element={<ShiftHistory />} />
                 <Route path="return-history" element={<ReturnHistory />} />
+                <Route path="suppliers" element={<SupplierManagement />} />
+                <Route path="supplier-debt" element={<SupplierDebtManagement />} />
+                <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
+                <Route path="expenses" element={<ExpenseManagement />} />
+                <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
+                <Route path="transactions" element={<InventoryTransactionManagement />} />
               </Route>
 
               {/* --- ROUTE OWNER & STAFF --- */}
@@ -141,16 +147,10 @@ function App() {
               <Route path="export" element={<StockExport />} />
               <Route path="reports" element={<InventoryReports />} />
               <Route path="inventory-summary" element={<InventorySummaryReport />} />
-              <Route path="transactions" element={<InventoryTransactionManagement />} />
               <Route path="inventory-check" element={<InventoryCheckList />} />
               <Route path="goods-issue" element={<GoodsIssueList />} />
               <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
               <Route path="orders" element={<OrderList />} />
-              <Route path="suppliers" element={<SupplierManagement />} />
-              <Route path="supplier-debt" element={<SupplierDebtManagement />} />
-              <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
-              <Route path="expenses" element={<ExpenseManagement />} />
-              <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
             </Route>
           </Route>
 
