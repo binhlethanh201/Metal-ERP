@@ -270,27 +270,52 @@ export const ShiftManagement = () => {
         filteredOrders.map((o) => (o.invoiceCode || '').toLowerCase()).filter(Boolean)
       );
       const shiftStartUTCForReturns = new Date(openShift.startedAt).getTime();
-      const shiftRefundTotal = allReturns
-        .filter((r) => {
-          const rStatus = String(r.status || '').toUpperCase();
-          const rType = String(r.returnType || r.return_type || '').toUpperCase();
-          const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
-          const rInvoice = (r.invoiceCode || '').toLowerCase();
-          return (
-            rStatus !== 'CANCELLED' &&
-            rType === 'REFUND' &&
-            rDate >= shiftStartUTCForReturns &&
-            shiftInvoiceCodes.has(rInvoice)
-          );
-        })
-        .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
+      const shiftValidReturns = allReturns.filter((r) => {
+        const rStatus = String(r.status || '').toUpperCase();
+        const rType = String(r.returnType || r.return_type || '').toUpperCase();
+        const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
+        const rInvoice = (r.invoiceCode || '').toLowerCase();
+        return (
+          rStatus !== 'CANCELLED' &&
+          rType === 'REFUND' &&
+          rDate >= shiftStartUTCForReturns &&
+          shiftInvoiceCodes.has(rInvoice)
+        );
+      });
+
+      const shiftRefundTotal = shiftValidReturns.reduce(
+        (sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0),
+        0
+      );
 
       // Tính stats từ orders — net revenue = gross - hoàn trả (REFUND) trong ca
       const grossRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-      const totalDiscount = filteredOrders.reduce(
+      let totalDiscount = filteredOrders.reduce(
         (sum, o) => sum + (o.discountAmount || o.discount || 0),
         0
       );
+
+      // Trừ đi phần discount của các đơn đã hoàn trả
+      let refundedDiscountTotal = 0;
+      shiftValidReturns.forEach((r) => {
+        const rInvoice = (r.invoiceCode || '').toLowerCase();
+        const originalOrder = filteredOrders.find(
+          (o) => (o.invoiceCode || '').toLowerCase() === rInvoice
+        );
+        if (originalOrder) {
+          const discount = originalOrder.discountAmount || originalOrder.discount || 0;
+          const rAmount = parseFloat(r.refundAmount || r.refund_amount || 0);
+          if (discount > 0 && originalOrder.totalAmount > 0) {
+            // Nếu hoàn đủ tiền >= totalAmount thì trừ full discount, nếu không thì trừ theo tỷ lệ
+            if (rAmount >= originalOrder.totalAmount) {
+              refundedDiscountTotal += discount;
+            } else {
+              refundedDiscountTotal += (rAmount / originalOrder.totalAmount) * discount;
+            }
+          }
+        }
+      });
+      totalDiscount = Math.max(0, totalDiscount - refundedDiscountTotal);
       const totalRevenue = grossRevenue - shiftRefundTotal;
       const orderCount = filteredOrders.length;
       const cashSales = filteredOrders

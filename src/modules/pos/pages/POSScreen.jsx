@@ -119,7 +119,8 @@ const POSScreen = () => {
     const sortedTiers = [...discountTiers].sort((a, b) => b.minOrderValue - a.minOrderValue);
     const applicableTier = sortedTiers.find((t) => cart.subtotal >= t.minOrderValue && t.isActive);
     if (!applicableTier) return null;
-    const discountAmount = Math.round(cart.subtotal * (applicableTier.discountPercent / 100));
+    const discountAmount =
+      Math.floor((cart.subtotal * (applicableTier.discountPercent / 100)) / 1000) * 1000;
     return {
       discountPercent: applicableTier.discountPercent,
       discountAmount,

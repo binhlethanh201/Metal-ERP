@@ -11,7 +11,7 @@ import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { formatDateTime } from '../../../shared/utils/formatDate';
+import { formatDate } from '../../../shared/utils/formatDate';
 import {
   getReturns,
   cancelReturn,
@@ -20,6 +20,9 @@ import {
   getOrders,
 } from '../services/posService';
 import ReturnForm from '../components/return/ReturnForm';
+
+const VN_TZ = 'Asia/Ho_Chi_Minh';
+const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
 
 const STATUS_CONFIG = {
   PENDING: { label: 'Chờ duyệt', variant: 'warning' },
@@ -380,7 +383,9 @@ const ReturnOrderPage = () => {
       key: 'createdAt',
       header: 'Ngày tạo',
       width: '140px',
-      render: (v) => <span className="text-xs text-slate-500">{v ? formatDateTime(v) : '-'}</span>,
+      render: (v) => (
+        <span className="text-xs text-slate-500">{v ? formatDateTimeVN(v) : '-'}</span>
+      ),
     },
     {
       key: 'customerName',
@@ -602,7 +607,7 @@ const ReturnOrderPage = () => {
                     {detail.returnCode}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {detail.createdAt ? formatDateTime(detail.createdAt) : '-'}
+                    {detail.createdAt ? formatDateTimeVN(detail.createdAt) : '-'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

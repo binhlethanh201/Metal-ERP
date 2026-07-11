@@ -11,7 +11,7 @@ import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { formatDateTime } from '../../../shared/utils/formatDate';
+import { formatDate } from '../../../shared/utils/formatDate';
 import {
   getCustomers,
   createCustomer,
@@ -21,6 +21,9 @@ import {
   getCustomerOrders,
 } from '../services/posService';
 import { CUSTOMER_GROUPS } from '../data/posMockData';
+
+const VN_TZ = 'Asia/Ho_Chi_Minh';
+const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
 
 const GROUP_COLORS = {
   'Cá nhân': 'info',
@@ -43,8 +46,8 @@ const mapCustomer = (c) => ({
   totalSpent: parseFloat(c.totalSpent || 0),
   orderCount: parseInt(c.orderCount || 0),
   returnCount: parseInt(c.returnCount || 0),
-  lastVisit: c.lastVisit ? formatDateTime(c.lastVisit) : '-',
-  createdAt: c.createdAt ? formatDateTime(c.createdAt) : '-',
+  lastVisit: c.lastVisit ? formatDateTimeVN(c.lastVisit) : '-',
+  createdAt: c.createdAt ? formatDateTimeVN(c.createdAt) : '-',
 });
 
 const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);

@@ -10,8 +10,11 @@ import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { formatDateTime } from '../../../shared/utils/formatDate';
+import { formatDate } from '../../../shared/utils/formatDate';
 import { getOrders, getInvoice, getReturns } from '../services/posService';
+
+const VN_TZ = 'Asia/Ho_Chi_Minh';
+const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
 
 // Mock data fallback — dùng khi API chưa có dữ liệu
 const MOCK_ORDERS = [
@@ -543,7 +546,7 @@ const OrderHistory = () => {
 	<div class="c">
 	  <p class="bold lg">HÓA ĐƠN BÁN HÀNG</p>
 	  <p style="font-size:13px;color:#555">Mã: ${order.id}</p>
-	  <p style="font-size:13px;color:#555">${formatDateTime(order.date || order.createdAt)}</p>
+	  <p style="font-size:13px;color:#555">${formatDateTimeVN(order.date || order.createdAt)}</p>
 	</div>
 	<hr>
 	<table>
@@ -585,9 +588,24 @@ const OrderHistory = () => {
 
   const getVNDateStr = (dateStr) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
+    // Chuẩn hóa ISO: cắt microsecond về millisecond để tránh Invalid Date trên một số browser
+    let normalized = typeof dateStr === 'string' ? dateStr.replace(/(\.\d{3})\d+/, '$1') : dateStr;
+    if (
+      typeof normalized === 'string' &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(normalized)
+    ) {
+      normalized += 'Z';
+    }
+    const d = new Date(normalized);
     if (isNaN(d.getTime())) return '';
-    return new Date(d.getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    // Convert sang múi giờ Việt Nam (UTC+7) bằng cách dùng Intl với timeZone, không phụ thuộc browser TZ
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return fmt.format(d); // en-CA trả về "YYYY-MM-DD"
   };
 
   const todayStr = getVNDateStr(new Date());
@@ -653,11 +671,12 @@ const OrderHistory = () => {
         results.forEach((result, idx) => {
           if (result.status === 'fulfilled' && result.value) {
             const mapped = mapOrder(result.value);
-            // Chỉ cập nhật nếu backfill cho ra totalAmount > 0 (tránh ghi đè data tốt bằng data xấu)
-            if (!mapped.totalAmount || mapped.totalAmount === 0) return;
             const code = needFetch[idx].invoiceCode;
             const orderIdx = updated.findIndex((o) => o.invoiceCode === code);
-            if (orderIdx !== -1) updated[orderIdx] = { ...updated[orderIdx], ...mapped };
+            if (orderIdx === -1) return;
+            // Chỉ ghi đè nếu mapped.totalAmount > 0; giữ nguyên nếu detail trả về 0 hoặc thiếu
+            if (!mapped.totalAmount || mapped.totalAmount === 0) return;
+            updated[orderIdx] = { ...updated[orderIdx], ...mapped };
           }
         });
         return updated;
@@ -671,6 +690,18 @@ const OrderHistory = () => {
     return orderDateVN === todayStr;
   });
   const todayGross = todayOrders.reduce((s, o) => s + (o.totalAmount || o.total || 0), 0);
+  console.log('[OrderHistory] todayRevenue debug:', {
+    browserTZ: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    todayStr,
+    todayOrdersCount: todayOrders.length,
+    todayGross,
+    todayOrdersSample: todayOrders.slice(0, 3).map((o) => ({
+      code: o.invoiceCode,
+      createdAt: o.createdAt,
+      vnDate: getVNDateStr(o.createdAt),
+      totalAmount: o.totalAmount,
+    })),
+  });
 
   // Doanh thu thực = Doanh thu bán - Tổng hoàn trả (REFUND) trong ngày hôm nay
   const todayRefunds = returnsData
@@ -681,7 +712,7 @@ const OrderHistory = () => {
       return rStatus !== 'CANCELLED' && rType === 'REFUND' && rDateVN === todayStr;
     })
     .reduce((sum, r) => sum + parseFloat(r.refundAmount || r.refund_amount || 0), 0);
-  const todayRevenue = Math.max(0, todayGross - todayRefunds);
+  const todayRevenue = todayGross - todayRefunds;
   const todayCount = todayOrders.length;
 
   // Build map: invoiceCode -> totalRefundedAmount (để hiển thị badge)
@@ -736,7 +767,7 @@ const OrderHistory = () => {
       width: '140px',
       render: (v, row) => (
         <span className="text-xs text-slate-500">
-          {v ? formatDateTime(v) : row.date ? formatDateTime(row.date) : '-'}
+          {v ? formatDateTimeVN(v) : row.date ? formatDateTimeVN(row.date) : '-'}
         </span>
       ),
     },
@@ -1030,7 +1061,7 @@ const OrderHistory = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-mono text-sm font-bold text-[#004785]">{selected.id}</h3>
-                  <p className="text-xs text-slate-400">{formatDateTime(selected.date)}</p>
+                  <p className="text-xs text-slate-400">{formatDateTimeVN(selected.date)}</p>
                 </div>
                 <button
                   type="button"
