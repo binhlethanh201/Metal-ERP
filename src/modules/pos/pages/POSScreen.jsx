@@ -54,7 +54,24 @@ const POSScreen = () => {
   const preselectedCustomer = location.state?.selectedCustomer;
   const loadedDraft = useRef(null);
 
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const CUSTOMER_SESSION_KEY = 'pos_selected_customer';
+  const [selectedCustomer, setSelectedCustomer] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(CUSTOMER_SESSION_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Persist selected customer to sessionStorage (giữ tên KH khi chuyển trang)
+  useEffect(() => {
+    if (selectedCustomer) {
+      sessionStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(selectedCustomer));
+    } else {
+      sessionStorage.removeItem(CUSTOMER_SESSION_KEY);
+    }
+  }, [selectedCustomer]);
   const [showPayModal, setShowPayModal] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -72,6 +89,8 @@ const POSScreen = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   // Lưu tạm invoiceId và paymentId để xử lý đơn treo
   const [pendingInvoice, setPendingInvoice] = useState(null);
+  // Lưu các dòng thanh toán đã xử lý để dùng khi confirm QR
+  const [pendingPayLines, setPendingPayLines] = useState([]);
 
   // UOM: Unit selector modal
   const [showUnitSelector, setShowUnitSelector] = useState(false);
@@ -201,18 +220,6 @@ const POSScreen = () => {
     });
   }, [currentOrderCode, selectedCustomer, setFooterInfo]);
 
-  // Loading indicator (after all hooks - OK)
-  if (productsLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[#004785]" />
-          <p className="text-sm font-semibold text-slate-600">Đang tải sản phẩm...</p>
-        </div>
-      </div>
-    );
-  }
-
   // ---- Thanh toán ----
   const finalTotal = Math.max(0, cart.subtotal - (discountInfo?.discountAmount || 0));
   const totalPaid = payLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
@@ -334,7 +341,10 @@ const POSScreen = () => {
         discount: discountInfo?.discountAmount || 0,
 
         total: finalTotal,
-        payLines: lines.map((l) => ({ method: PAYMENT_LABELS[l.method], amount: l.amount })),
+        payLines: lines.map((l) => ({
+          method: PAYMENT_LABELS[l.method.toLowerCase()] || l.method,
+          amount: l.amount,
+        })),
         totalPaid: totalPaidAmount,
         change: Math.max(0, totalPaidAmount - finalTotal),
         customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
@@ -363,7 +373,10 @@ const POSScreen = () => {
         discount: discountInfo?.discountAmount || 0,
 
         total: finalTotal,
-        payLines: lines.map((l) => ({ method: PAYMENT_LABELS[l.method], amount: l.amount })),
+        payLines: lines.map((l) => ({
+          method: PAYMENT_LABELS[l.method.toLowerCase()] || l.method,
+          amount: l.amount,
+        })),
         totalPaid: totalPaidAmount,
         change: Math.max(0, totalPaidAmount - finalTotal),
         customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
@@ -506,6 +519,7 @@ const POSScreen = () => {
         // Lấy payment Transfer để hiển QR
         const transferLine = lines.find((l) => l.method === 'Transfer' && l.amount > 0);
         if (transferLine) {
+          setPendingPayLines(lines); // Lưu tất cả dòng thanh toán (cả Cash + Transfer)
           await handleOpenQRPayment(invoiceId, transferLine.amount, invoice.invoiceCode);
         } else {
           // Không có Transfer → finalize luôn
@@ -621,6 +635,15 @@ const POSScreen = () => {
         }
       } catch (_) {}
       // 4. Hiển thị thành công
+      const payLinesResolved =
+        pendingPayLines.length > 0
+          ? pendingPayLines.map((l) => ({
+              method: PAYMENT_LABELS[l.method.toLowerCase()] || l.method,
+              amount: l.amount,
+            }))
+          : [{ method: 'Chuyển khoản', amount: finalTotal }];
+      const totalPaidResolved =
+        pendingPayLines.length > 0 ? pendingPayLines.reduce((s, l) => s + l.amount, 0) : finalTotal;
       const order = {
         id: pendingInvoice.invoiceCode || pendingInvoice.invoiceId,
         date: new Date().toISOString(),
@@ -629,15 +652,16 @@ const POSScreen = () => {
         discount: discountInfo?.discountAmount || 0,
 
         total: finalTotal,
-        payLines: [{ method: 'Chuyển khoản', amount: finalTotal }],
-        totalPaid: finalTotal,
-        change: 0,
+        payLines: payLinesResolved,
+        totalPaid: totalPaidResolved,
+        change: Math.max(0, totalPaidResolved - finalTotal),
         customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
       };
       setLastOrder(order);
       setShowQRModal(false);
       setQrData(null);
       setPendingInvoice(null);
+      setPendingPayLines([]);
       // Xóa khỏi localStorage
       try {
         const pendingOrders = JSON.parse(localStorage.getItem('pos_pending_orders') || '[]');
@@ -647,9 +671,7 @@ const POSScreen = () => {
       // Lưu phương thức thanh toán để OrderHistory hiển thị
       try {
         const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
-        savedPM[pendingInvoice.invoiceId] = JSON.stringify([
-          { method: 'Chuyển khoản', amount: finalTotal },
-        ]);
+        savedPM[pendingInvoice.invoiceId] = JSON.stringify(payLinesResolved);
         localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
       } catch (_) {}
       setShowPayModal(false);
