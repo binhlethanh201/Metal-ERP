@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Package, CalendarClock, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
@@ -18,12 +18,36 @@ export const ImportTicketForm = ({
   onSubmit,
   formatCurrency,
 }) => {
+  const containerRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+
   const [supplierQuery, setSupplierQuery] = useState(selectedSupplier?.name || '');
+
+  // Sync input khi selectedSupplier thay đổi từ parent (API load)
+  useEffect(() => {
+    if (selectedSupplier) {
+      setSupplierQuery(selectedSupplier.name || '');
+    }
+  }, [selectedSupplier]);
+
+  // Click outside để đóng dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const supplierSuggestions = useMemo(() => {
     const keyword = supplierQuery.trim().toLowerCase();
-    if (!keyword) return suppliers.slice(0, 5);
-    return suppliers.filter((s) => `${s.name} ${s.phone}`.toLowerCase().includes(keyword));
+    if (!keyword) return suppliers.slice(0, 20);
+    return suppliers.filter((s) =>
+      `${s.code || ''} ${s.name || ''} ${s.phone || ''}`.toLowerCase().includes(keyword)
+    );
   }, [suppliers, supplierQuery]);
 
   return (
@@ -64,30 +88,38 @@ export const ImportTicketForm = ({
           </select>
         </label>
 
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
           <Input
             label="Nhà cung cấp / Đối tượng"
             value={supplierQuery}
             onChange={(e) => {
               setSupplierQuery(e.target.value);
-              onSelectSupplier(null);
+              setIsOpen(true);
+              if (selectedSupplier) onSelectSupplier(null);
             }}
-            placeholder="Tìm theo tên hoặc SĐT nhà cung cấp"
+            onFocus={() => setIsOpen(true)}
+            placeholder="Tìm theo mã, tên hoặc SĐT nhà cung cấp"
           />
-          {!selectedSupplier && supplierSuggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg">
+          {isOpen && supplierSuggestions.length > 0 && (
+            <div
+              ref={dropdownRef}
+              className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg"
+            >
               {supplierSuggestions.map((sup) => (
                 <button
                   key={sup.id}
                   type="button"
-                  onClick={() => {
+                  onMouseDown={() => {
                     onSelectSupplier(sup);
-                    setSupplierQuery(sup.name);
+                    setSupplierQuery(sup.name || '');
+                    setIsOpen(false);
                   }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-slate-50"
                 >
-                  <span className="font-semibold text-slate-800">{sup.name}</span>
-                  <span className="text-xs text-slate-500">{sup.phone}</span>
+                  <span className="font-semibold text-slate-800">{sup.name || '--'}</span>
+                  <span className="text-xs text-slate-500">
+                    {[sup.code, sup.phone].filter(Boolean).join(' - ')}
+                  </span>
                 </button>
               ))}
             </div>
