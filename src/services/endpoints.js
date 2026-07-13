@@ -28,6 +28,10 @@ export const ENDPOINTS = {
     STAFF_UNASSIGN_BRANCH: (id, branchId) => `/api/owner/staffs/${id}/unassign-branch/${branchId}`,
     STAFF_TOGGLE_STATUS: (id) => `/api/owner/staffs/${id}/toggle-status`,
     STAFF_AVAILABLE_PERMISSIONS: '/api/owner/staffs/available-permissions',
+
+    // Discount Tiers (Chiết khấu theo giá trị đơn hàng)
+    ORDER_DISCOUNT_TIERS: '/api/order-discount-tiers',
+    ORDER_DISCOUNT_TIER_DETAIL: (id) => `/api/order-discount-tiers/${id}`,
   },
 
   // ============ INVENTORY (Tổng kho) ============

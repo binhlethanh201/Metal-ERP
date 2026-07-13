@@ -70,6 +70,7 @@ const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManageme
 const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement'));
 const ShiftHistory = lazy(() => import('./modules/owner/pages/ShiftHistory'));
 const ReturnHistory = lazy(() => import('./modules/owner/pages/ReturnHistory'));
+const StoreSettings = lazy(() => import('./modules/owner/pages/StoreSettings'));
 
 // Report Module
 const OwnerReports = lazy(() => import('./modules/report/pages/OwnerReports'));
@@ -129,6 +130,7 @@ function App() {
               <Route element={<PrivateRoute allowedRoles={['Owner']} />}>
                 <Route path="owner-dashboard" element={<OwnerDashboard />} />
                 <Route path="branches" element={<BranchManagement />} />
+                <Route path="store-settings" element={<StoreSettings />} />
                 <Route path="employees" element={<StaffManagement />} />
                 <Route path="owner-reports" element={<OwnerReports />} />
                 <Route path="shift-history" element={<ShiftHistory />} />

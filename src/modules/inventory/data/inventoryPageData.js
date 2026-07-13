@@ -84,6 +84,7 @@ export const sidebarItems = [
     children: [
       { label: 'Quản lý nhân viên', path: '/inventory/employees' },
       { label: 'Lịch sử ca bán', path: '/inventory/shift-history' },
+      { label: 'Cài đặt cửa hàng', path: '/inventory/store-settings' },
     ],
   },
   {
