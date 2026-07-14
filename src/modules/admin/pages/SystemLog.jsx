@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
-import { getLogList, exportLogs } from '../services/adminService';
+import { getLogList, getLogDetail, exportLogs } from '../services/adminService';
 import LogFilterBar from '../components/log/LogFilterBar';
 import LogTable from '../components/log/LogTable';
 import LogDetailModal from '../components/log/LogDetailModal';
@@ -35,13 +35,19 @@ const SystemLog = () => {
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
+      // 1. Filter by Search Term
       const matchesSearch =
         (log.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (log.source || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (log.action || '').toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
+
+      // 2. Filter by Level (Client-side fallback)
+      const logLvl = log.level ? log.level.toUpperCase() : 'INFO'; // Default empty level to INFO
+      const matchesLevel = filterLevel === 'ALL' || logLvl === filterLevel;
+
+      return matchesSearch && matchesLevel;
     });
-  }, [logs, searchTerm]);
+  }, [logs, searchTerm, filterLevel]);
 
   const handleExportData = async (format) => {
     try {
@@ -54,6 +60,16 @@ const SystemLog = () => {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Export error:', err);
+    }
+  };
+
+  const handleRowClick = async (logItem) => {
+    try {
+      const detail = await getLogDetail(logItem.logId);
+      setSelectedLog(detail || logItem);
+    } catch (err) {
+      console.error('Fetch detail error:', err);
+      setSelectedLog(logItem); // fallback
     }
   };
 
@@ -101,7 +117,7 @@ const SystemLog = () => {
           {error}
         </div>
       )}
-      {!loading && !error && <LogTable logs={filteredLogs} onRowClick={setSelectedLog} />}
+      {!loading && !error && <LogTable logs={filteredLogs} onRowClick={handleRowClick} />}
 
       <LogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />
     </div>

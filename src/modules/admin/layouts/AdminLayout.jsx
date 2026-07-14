@@ -101,14 +101,17 @@ const AdminLayout = () => {
     },
     {
       title: 'Quản trị Người dùng',
-      items: [{ label: 'Quản lý Chủ Cửa Hàng', path: '/admin/users', badge: null, icon: 'groups' }],
-    },
-    {
-      title: 'Quản trị Cửa hàng',
       items: [
-        { label: 'Duyệt Cửa hàng mới', path: '/admin/approvals', badge: null, icon: 'store' },
+        { label: 'Quản lý Người dùng', path: '/admin/users', badge: null, icon: 'groups' },
+        {
+          label: 'Vai trò & Phân quyền',
+          path: '/admin/roles',
+          badge: null,
+          icon: 'admin_panel_settings',
+        },
       ],
     },
+
     {
       title: 'VẬN HÀNH & HỆ THỐNG',
       items: [

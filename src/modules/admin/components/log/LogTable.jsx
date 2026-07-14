@@ -2,47 +2,53 @@ import React from 'react';
 
 const LogTable = ({ logs, onRowClick }) => {
   return (
-    <div className="overflow-hidden rounded-lg border border-outline-variant bg-inverse-surface shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
       <div className="min-h-[400px] overflow-x-auto">
-        <table className="w-full text-left font-mono text-xs text-inverse-on-surface">
+        <table className="w-full text-left text-xs text-on-surface">
           <thead>
-            <tr className="border-b border-outline/30 bg-on-surface text-[10px] uppercase tracking-wider text-outline-variant">
-              <th className="px-4 py-3 font-semibold">Timestamp</th>
-              <th className="px-4 py-3 font-semibold">Level</th>
-              <th className="px-4 py-3 font-semibold">Source</th>
-              <th className="px-4 py-3 font-semibold">Message Detail</th>
+            <tr className="border-b border-outline-variant bg-surface-container-low text-[10px] uppercase tracking-wider text-on-surface-variant">
+              <th className="px-4 py-3 font-bold">Thời gian (Timestamp)</th>
+              <th className="px-4 py-3 font-bold">Mức độ (Level)</th>
+              <th className="px-4 py-3 font-bold">Nguồn (Source)</th>
+              <th className="px-4 py-3 font-bold">Hành động (Action)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline/20">
+          <tbody className="divide-y divide-outline-variant">
             {logs.map((log) => (
               <tr
                 key={log.logId}
                 onClick={() => onRowClick?.(log)}
-                className="cursor-pointer transition-colors hover:bg-on-surface/50"
+                className="cursor-pointer transition-colors hover:bg-surface-container-low"
               >
-                <td className="whitespace-nowrap px-4 py-3 text-secondary-fixed-dim opacity-80">
+                <td className="whitespace-nowrap px-4 py-3 text-[11px] font-medium text-on-surface-variant">
                   {log.timestamp
                     ? new Date(log.timestamp).toLocaleString('vi-VN', { hour12: false })
                     : '—'}
                 </td>
                 <td className="px-4 py-3">
                   <span
-                    className={`rounded-sm px-1.5 py-0.5 font-bold ${
-                      log.level === 'ERROR'
-                        ? 'bg-error text-on-error'
-                        : log.level === 'WARN'
+                    className={`rounded-sm px-2 py-1 text-[10px] font-bold ${
+                      (log.level || 'INFO').toUpperCase() === 'ERROR'
+                        ? 'bg-error-container text-error'
+                        : (log.level || 'INFO').toUpperCase() === 'WARN'
                           ? 'bg-secondary-container text-on-secondary-container'
-                          : 'bg-tertiary-container text-on-tertiary-container'
+                          : 'bg-surface-container-high text-on-surface'
                     }`}
                   >
-                    {log.level}
+                    {(log.level || 'INFO').toUpperCase()}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 font-bold text-primary-fixed-dim">
+                <td className="whitespace-nowrap px-4 py-3 font-bold text-primary">
                   {log.source || '—'}
                 </td>
-                <td className="px-4 py-3 leading-relaxed opacity-90">
-                  {log.description || log.action}
+                <td className="px-4 py-3">
+                  <div className="font-bold">{log.action}</div>
+                  <div
+                    className="mt-0.5 max-w-xl truncate text-[11px] text-on-surface-variant"
+                    title={log.description}
+                  >
+                    {log.description}
+                  </div>
                 </td>
               </tr>
             ))}

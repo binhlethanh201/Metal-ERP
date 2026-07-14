@@ -59,7 +59,9 @@ const ReturnOrderPage = lazy(() => import('./modules/pos/pages/ReturnOrderPage')
 // Admin Module
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('./modules/admin/pages/AdminDashboard'));
-const OwnerAccountsManagement = lazy(() => import('./modules/admin/pages/OwnerAccountsManagement'));
+const AdminUserManagement = lazy(() => import('./modules/admin/pages/AdminUserManagement'));
+const AdminUserDetail = lazy(() => import('./modules/admin/pages/AdminUserDetail'));
+const AdminRoleManagement = lazy(() => import('./modules/admin/pages/AdminRoleManagement'));
 const StoreApprovals = lazy(() => import('./modules/admin/pages/StoreApprovals'));
 const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotifications'));
 const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
@@ -160,7 +162,9 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={['Admin']} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<OwnerAccountsManagement />} />
+              <Route path="users" element={<AdminUserManagement />} />
+              <Route path="users/:id" element={<AdminUserDetail />} />
+              <Route path="roles" element={<AdminRoleManagement />} />
               <Route path="approvals" element={<StoreApprovals />} />
               <Route path="notifications" element={<SystemNotifications />} />
               <Route path="logs" element={<SystemLog />} />

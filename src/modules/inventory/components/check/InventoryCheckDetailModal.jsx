@@ -147,6 +147,17 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
       return;
     }
 
+    // Validate Frontend: Kiểm tra không cho phép nhập số âm
+    const hasNegative = detailData?.details.some((item) => {
+      const val = actualValues[item.detailId];
+      return val !== '' && Number(val) < 0;
+    });
+
+    if (hasNegative) {
+      alert('Số lượng kiểm đếm thực tế không được phép nhỏ hơn 0!');
+      return;
+    }
+
     setActionLoading(true);
     setError('');
     try {

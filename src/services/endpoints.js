@@ -189,18 +189,21 @@ export const ENDPOINTS = {
     DASHBOARD_EVENTS: '/api/admin/dashboard/recent-events',
     DASHBOARD_EXPORT: '/api/admin/dashboard/export',
 
-    // Owner Accounts (Quản lý Chủ cửa hàng)
-    OWNER_LIST: '/api/admin/owners',
-    OWNER_DETAIL: (id) => `/api/admin/owners/${id}`,
-    OWNER_CREATE: '/api/admin/owners',
-    OWNER_UPDATE: (id) => `/api/admin/owners/${id}`,
-    OWNER_STATUS: (id) => `/api/admin/owners/${id}/status`,
-    OWNER_BAN: (id) => `/api/admin/owners/${id}/ban`,
+    // User Accounts (Quản lý Người dùng)
+    USER_LIST: '/api/admin/users',
+    USER_DETAIL: (id) => `/api/admin/users/${id}`,
+    USER_CREATE: '/api/admin/users',
+    USER_UPDATE: (id) => `/api/admin/users/${id}`,
+    USER_ROLES: (id) => `/api/admin/users/${id}/roles`,
+    USER_STATUS: (id) => `/api/admin/users/${id}/status`,
+    USER_RESET_PASSWORD: (id) => `/api/admin/users/${id}/reset-password`,
+    USER_ACTIVITIES: (id) => `/api/admin/users/${id}/activities`,
 
-    // RBAC - Phân quyền toàn cục
-    RBAC_PERMISSIONS: '/api/admin/rbac/permissions',
-    RBAC_ROLES: '/api/admin/rbac/roles',
-    RBAC_ROLE_PERMISSIONS: (id) => `/api/admin/rbac/roles/${id}/permissions`,
+    // Roles & Permissions (Quản lý Quyền)
+    ROLE_LIST: '/api/admin/roles',
+    ROLE_PERMISSIONS: '/api/admin/roles/permissions',
+    ROLE_MATRIX: '/api/admin/roles/permission-matrix',
+    ROLE_UPDATE_PERMISSIONS: (id) => `/api/admin/roles/${id}/permissions`,
 
     // Store Approvals
     APPROVAL_LIST: '/api/admin/store-approvals',

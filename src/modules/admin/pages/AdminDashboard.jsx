@@ -173,16 +173,10 @@ const AdminDashboard = () => {
         </h3>
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={() => navigate('/admin/approvals')}
-            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
-          >
-            <Icon name="store" size={14} className="text-primary" /> Duyệt cấp Cửa hàng
-          </button>
-          <button
             onClick={() => navigate('/admin/users')}
             className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2 text-xs font-bold text-on-surface transition-all hover:bg-surface-container-high"
           >
-            <Icon name="groups" size={14} className="text-emerald-700" /> Quản lý Chủ Cửa Hàng
+            <Icon name="groups" size={14} className="text-emerald-700" /> Quản lý Người Dùng
           </button>
           <button
             onClick={() => navigate('/admin/notifications')}
