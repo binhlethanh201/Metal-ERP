@@ -124,6 +124,7 @@ const POSScreen = () => {
 
   const {
     products: posApiProducts,
+    // eslint-disable-next-line no-unused-vars
     loading: productsLoading,
     refetch: refetchProducts,
   } = usePosProductList(search);

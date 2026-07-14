@@ -1,5 +1,4 @@
 import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
-import ENDPOINTS from '../../../services/endpoints';
 
 // Dành cho GET (Staff & Owner)
 const GET_DISCOUNT_TIERS_URL = '/api/order-discount-tiers';
