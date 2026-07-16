@@ -504,26 +504,62 @@ const POSScreen = () => {
             })
           )
         );
-        // Tạo payment cho từng dòng (chỉ khi amount > 0)
-        // Chỉ tạo Cash ở đây, Transfer sẽ được tạo trong handleOpenQRPayment
-        for (const line of lines) {
-          if (line.amount <= 0) continue;
-          if (line.method === 'Cash') {
-            await createPayment(invoiceId, {
-              method: 'Cash',
-              amount: line.amount,
-              cashReceived: line.amount,
+        // Tạo payment Combined duy nhất
+        const validLines = lines.filter((l) => l.amount > 0);
+        if (validLines.length === 0) throw new Error('Không có số tiền hợp lệ');
+
+        const paymentRes = await createPayment(invoiceId, {
+          method: 'Combined',
+          amount: finalTotal,
+          paymentLines: validLines.map((l) => ({
+            method: l.method,
+            amount: l.amount,
+            cashReceived: l.method === 'Cash' ? l.amount : null,
+          })),
+        });
+
+        const payments = paymentRes.data || paymentRes;
+        const transferPayment = Array.isArray(payments)
+          ? payments.find((p) => p.Method === 'Transfer' || p.method === 'Transfer')
+          : null;
+
+        if (transferPayment) {
+          setPendingPayLines(lines);
+          setQrData({
+            paymentId: transferPayment.PaymentId || transferPayment.paymentId,
+            qrImageBase64: transferPayment.qrImageBase64 || transferPayment.QRImageBase64,
+            transactionContent: transferPayment.transactionContent || transferPayment.VietQRString,
+            amount: transferPayment.Amount || transferPayment.amount,
+            bankAccountNumber: transferPayment.bankAccountNumber || '0975849675',
+            bankName: transferPayment.bankName || 'MB Bank',
+          });
+          setPendingInvoice({
+            invoiceId,
+            invoiceCode: invoice.invoiceCode || `INV-${invoiceId.toString().slice(0, 8)}`,
+          });
+          try {
+            const pendingOrders = JSON.parse(localStorage.getItem('pos_pending_orders') || '[]');
+            pendingOrders.push({
+              invoiceId,
+              paymentId: transferPayment.PaymentId || transferPayment.paymentId,
+              amount: transferPayment.Amount || transferPayment.amount,
+              createdAt: new Date().toISOString(),
+              customer: selectedCustomer?.name || 'Khách lẻ',
             });
-          }
-          // Transfer sẽ được tạo trong handleOpenQRPayment để hiển QR
-        }
-        // Lấy payment Transfer để hiển QR
-        const transferLine = lines.find((l) => l.method === 'Transfer' && l.amount > 0);
-        if (transferLine) {
-          setPendingPayLines(lines); // Lưu tất cả dòng thanh toán (cả Cash + Transfer)
-          await handleOpenQRPayment(invoiceId, transferLine.amount, invoice.invoiceCode);
+            localStorage.setItem('pos_pending_orders', JSON.stringify(pendingOrders));
+          } catch (_) {}
+          try {
+            const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
+            savedPM[invoiceId] = JSON.stringify([
+              { method: 'Chuyển khoản', amount: transferPayment.Amount || transferPayment.amount },
+            ]);
+            localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
+          } catch (_) {}
+
+          setShowPayModal(false);
+          setShowQRModal(true);
+          setPaying(false);
         } else {
-          // Không có Transfer → finalize luôn
           await finalizeInvoice(invoiceId);
           showNotice('Thanh toán thành công!');
           setShowPayModal(false);
