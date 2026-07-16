@@ -617,54 +617,102 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
             </Section>
 
             <Section title="Vị trí, trọng lượng, kích thước" defaultOpen>
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-1">
-                  <div className="mb-1 flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-700">Vị trí Kệ/Tủ</label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        f.setNewLocationName('');
-                        f.setCreateLocationModalOpen(true);
-                      }}
-                      className="text-sm font-semibold text-[#004785] hover:underline"
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="space-y-1">
+                    <div className="mb-1 flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">Vị trí Kệ/Tủ</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          f.setNewLocationName('');
+                          f.setCreateLocationModalOpen(true);
+                        }}
+                        className="text-sm font-semibold text-[#004785] hover:underline"
+                      >
+                        Tạo mới
+                      </button>
+                    </div>
+                    <select
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+                      value={f.form.shelfLocation || ''}
+                      onChange={(e) => f.handleChange('shelfLocation', e.target.value)}
                     >
-                      Tạo mới
-                    </button>
+                      <option value="">Chọn vị trí...</option>
+                      {(Array.isArray(f.locations) ? f.locations : []).map((loc) => (
+                        <option key={loc} value={loc}>
+                          {loc}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <select
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
-                    value={f.form.shelfLocation || ''}
-                    onChange={(e) => f.handleChange('shelfLocation', e.target.value)}
-                  >
-                    <option value="">Chọn vị trí...</option>
-                    {(Array.isArray(f.locations) ? f.locations : []).map((loc) => (
-                      <option key={loc} value={loc}>
-                        {loc}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-1">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Trọng lượng
+                    </label>
+                    <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-[#004785]">
+                      <input
+                        className="flex-1 border-none bg-transparent px-3 py-2 text-right focus:outline-none"
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={f.form.weight ?? ''}
+                        onChange={(e) => f.handleChange('weight', e.target.value)}
+                      />
+                      <select
+                        className="border-l border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none"
+                        value={['g', 'kg'].includes(f.form.weightUnit) ? f.form.weightUnit : 'g'}
+                        onChange={(e) => f.handleChange('weightUnit', e.target.value)}
+                      >
+                        <option value="g">g</option>
+                        <option value="kg">kg</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Trọng lượng
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Kích thước (Dài × Rộng × Cao)
                   </label>
-                  <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-[#004785]">
+                  <div className="flex items-center gap-2">
                     <input
-                      className="flex-1 border-none bg-transparent px-3 py-2 text-right focus:outline-none"
+                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none"
                       type="number"
                       min="0"
                       step="any"
-                      value={f.form.weight ?? ''}
-                      onChange={(e) => f.handleChange('weight', e.target.value)}
+                      placeholder="Dài"
+                      value={f.form.length ?? ''}
+                      onChange={(e) => f.handleChange('length', e.target.value)}
+                    />
+                    <span className="font-bold text-slate-400">×</span>
+                    <input
+                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none"
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Rộng"
+                      value={f.form.width ?? ''}
+                      onChange={(e) => f.handleChange('width', e.target.value)}
+                    />
+                    <span className="font-bold text-slate-400">×</span>
+                    <input
+                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none"
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Cao"
+                      value={f.form.height ?? ''}
+                      onChange={(e) => f.handleChange('height', e.target.value)}
                     />
                     <select
-                      className="border-l border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none"
-                      value={['g', 'kg'].includes(f.form.weightUnit) ? f.form.weightUnit : 'g'}
-                      onChange={(e) => f.handleChange('weightUnit', e.target.value)}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none"
+                      value={['mm', 'cm', 'm'].includes(f.form.sizeUnit) ? f.form.sizeUnit : 'mm'}
+                      onChange={(e) => f.handleChange('sizeUnit', e.target.value)}
                     >
-                      <option value="g">g</option>
-                      <option value="kg">kg</option>
+                      <option value="mm">mm</option>
+                      <option value="cm">cm</option>
+                      <option value="m">m</option>
                     </select>
                   </div>
                 </div>

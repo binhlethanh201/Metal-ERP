@@ -408,6 +408,11 @@ export const useProductQuickAdd = (onSave) => {
       try {
         const payload = buildPayload();
         console.log('[Demo] Lưu sản phẩm mới:', payload);
+        // Build a formatted specification string from dimensions if present
+        const ai = payload.additionalInfo || {};
+        const dims = [ai.width, ai.length, ai.height].filter(Boolean).join(' × ');
+        const spec = ai.sizeRange || (dims ? dims + (ai.sizeUnit ? ` ${ai.sizeUnit}` : '') : '');
+
         const savedProduct = {
           id: genCode('SP'),
           code: payload.sku,
@@ -415,6 +420,10 @@ export const useProductQuickAdd = (onSave) => {
           unit: payload.unit,
           price: payload.purchasePrice || 0,
           stock: payload.importQuantity || 0,
+          // Bao gồm thông tin bổ sung (kích thước, trọng lượng, vị trí, mô tả...)
+          ...ai,
+          // Đồng thời gán `specification` để ProductDetailPanel hiển thị giống flow edit/add
+          ...(spec ? { specification: spec } : {}),
         };
         if (mode === 'duplicate') {
           onSave?.(savedProduct);

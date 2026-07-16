@@ -8,25 +8,20 @@ export const extractProductList = (response) => {
 };
 
 export const buildDimensionText = (product = {}) => {
-  const specification = product?.specification || '';
+  const specification = product?.specification || product?.Specification || '';
   if (specification) return specification;
 
-  const width = product?.width || '';
-  const length = product?.length || '';
-  const weight = product?.weight || '';
-  const weightUnit = product?.weightUnit || '';
-  const sizeUnit = product?.sizeUnit || '';
+  const width = product?.width ?? product?.Width ?? '';
+  const length = product?.length ?? product?.Length ?? '';
+  const height = product?.height ?? product?.Height ?? '';
+  const sizeUnit = product?.sizeUnit || product?.SizeUnit || '';
 
-  const sizeParts = [width, length].filter(
+  const sizeParts = [width, length, height].filter(
     (v) => v !== undefined && v !== null && `${v}`.trim() !== ''
   );
-  const sizeText = sizeParts.join(' x ');
-  const weightText = weight ? `${weight}${weightUnit || ''}` : '';
-
-  if (sizeText && weightText && sizeUnit) return `${sizeText}${sizeUnit}, ${weightText}`;
-  if (sizeText && weightText) return `${sizeText}, ${weightText}`;
-  if (sizeText && sizeUnit) return `${sizeText}${sizeUnit}`;
-  return sizeText || weightText || '';
+  if (!sizeParts.length) return '';
+  const sizeText = sizeParts.join(' × ');
+  return sizeUnit ? `${sizeText} ${sizeUnit}` : sizeText;
 };
 
 /**
@@ -71,11 +66,12 @@ export const normalizeProduct = (product = {}, index = 0) => {
     attributes: Array.isArray(product.attributes) ? product.attributes : [],
     conversionUnits: Array.isArray(product.conversionUnits) ? product.conversionUnits : [],
     specification: product.specification || '',
-    weight: product.weight || null,
-    weightUnit: product.weightUnit || '',
-    width: product.width || null,
-    length: product.length || null,
-    height: product.height || null,
+    weight: product.weight ?? product.Weight ?? null,
+    weightUnit: product.weightUnit || product.WeightUnit || '',
+    width: product.width ?? product.Width ?? null,
+    length: product.length ?? product.Length ?? null,
+    height: product.height ?? product.Height ?? null,
+    sizeUnit: product.sizeUnit || product.SizeUnit || 'mm',
     dimension: buildDimensionText(product) || 'Chưa có',
     // status: trạng thái TỒN KHO (hiển thị dạng chữ + màu), không phải trạng thái kinh doanh
     status: product.status || (availableStock > 0 ? 'Sẵn hàng' : 'Hết hàng'),
@@ -93,23 +89,13 @@ export const normalizeProduct = (product = {}, index = 0) => {
 
 export const buildSpecification = (form) => {
   if (form.specification) return form.specification;
-  const sizeParts = [form.width, form.length].filter(
+  const sizeParts = [form.width, form.length, form.height].filter(
     (v) => v !== undefined && v !== null && `${v}`.trim() !== ''
   );
-  const weightText = [form.weight, form.weightUnit].filter(
-    (v) => v !== undefined && v !== null && `${v}`.trim() !== ''
-  );
-  if (!sizeParts.length && !weightText.length && !form.height) return '';
-  const sizeText = sizeParts.join(' x ');
-  const unit = form.sizeUnit || form.weightUnit || '';
-  const weightValue = form.weight ? `${form.weight}${form.weightUnit || ''}` : '';
-  if (sizeText && weightValue && unit) return `${sizeText}${unit}, ${weightValue}`;
-  if (sizeText && weightValue) return `${sizeText}, ${weightValue}`;
-  if (sizeText && unit) return `${sizeText}${unit}`;
-  if (sizeText) return sizeText;
-  if (weightValue) return weightValue;
-  if (form.height && unit) return `${form.height}${unit}`;
-  return `${form.height || ''}`.trim();
+  if (!sizeParts.length) return '';
+  const sizeText = sizeParts.join(' × ');
+  const unit = form.sizeUnit || '';
+  return unit ? `${sizeText} ${unit}` : sizeText;
 };
 
 // Chuẩn hóa Payload CREATE (ProductUpsertDto - camelCase chuẩn)
