@@ -64,17 +64,17 @@ export const CancelTicketModal = ({
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800">
             <div className="mb-1 flex items-start gap-2 font-semibold text-amber-900">
               <AlertTriangle size={15} className="mt-0.5 flex-shrink-0 text-amber-600" />
-              <span>Lưu ý: Rollback tồn kho tự động</span>
+              <span>Lưu ý: Hoàn lại tồn kho tự động</span>
             </div>
-            Phiếu này đã ở trạng thái <strong>COMPLETED</strong>. Khi hủy, hệ thống sẽ tự động{' '}
-            <strong>cập nhật lại (hoàn lại) số lượng tồn kho thực tế</strong>.
+            Phiếu này đã được xác nhận kho (Hoàn tất). Khi hủy, hệ thống sẽ tự động{' '}
+            <strong>hoàn lại số lượng tồn kho thực tế</strong>.
           </div>
         ) : (
           <div className="flex items-start gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3.5 text-xs text-blue-800">
             <Info size={15} className="mt-0.5 flex-shrink-0 text-blue-600" />
             <div>
-              Phiếu đang ở trạng thái <strong>PENDING</strong> (chưa xác nhận vào kho). Hủy phiếu sẽ
-              không làm ảnh hưởng đến số lượng tồn kho.
+              Phiếu đang chờ xác nhận kho (chưa cập nhật tồn). Hủy phiếu sẽ không làm ảnh hưởng đến
+              số lượng tồn kho.
             </div>
           </div>
         )}

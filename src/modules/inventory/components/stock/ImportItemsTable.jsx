@@ -17,18 +17,27 @@ export const ImportItemsTable = ({
     {
       key: 'index',
       header: 'STT',
-      width: 56,
+      width: 48,
+      align: 'center',
       render: (_, row) => items.findIndex((i) => i.id === row.id) + 1,
     },
     {
       key: 'productCode',
       header: 'Mã hàng',
+      width: 120,
       render: (val) => <span className="font-bold text-slate-800">{val}</span>,
     },
-    { key: 'productName', header: 'Tên hàng' },
+    {
+      key: 'productName',
+      header: 'Tên hàng',
+      width: 160,
+      render: (val) => <span className="block truncate">{val || '---'}</span>,
+    },
     {
       key: 'unitName',
       header: 'ĐVT',
+      width: 70,
+      align: 'center',
       render: (_, row) => (
         <span className="text-slate-500">{row.unitName || row.unit || '---'}</span>
       ),
@@ -36,6 +45,8 @@ export const ImportItemsTable = ({
     {
       key: 'stock',
       header: 'Tồn kho',
+      width: 90,
+      align: 'right',
       render: (_, row) => {
         const stock = row.actualStock ?? row.stock ?? row.availableStock ?? 0;
         return (
@@ -49,75 +60,83 @@ export const ImportItemsTable = ({
       key: 'quantity',
       header: 'Số lượng',
       width: 110,
-      render: (val, row) => (
-        <input
-          type="text"
-          inputMode="numeric"
-          value={val}
-          onChange={(e) => {
-            const v = e.target.value.replace(/[^0-9]/g, '');
-            if (v === '' || (/^\d+$/.test(v) && Number(v) <= 999999))
-              onUpdateItem(row.id, 'quantity', v);
-          }}
-          onKeyDown={(e) => {
-            if (
-              [
-                'Backspace',
-                'Delete',
-                'Tab',
-                'Escape',
-                'Enter',
-                'ArrowLeft',
-                'ArrowRight',
-                'ArrowUp',
-                'ArrowDown',
-                'Home',
-                'End',
-              ].includes(e.key)
-            )
-              return;
-            if (!/^\d$/.test(e.key)) e.preventDefault();
-          }}
-          className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm font-semibold outline-none focus:border-[#004785]"
-        />
-      ),
+      align: 'right',
+      render: (val, row) => {
+        const fmtVal = val ? Number(val).toLocaleString('vi-VN') : '';
+        return (
+          <input
+            type="text"
+            inputMode="numeric"
+            value={fmtVal}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+              if (raw === '' || (/^\d+$/.test(raw) && Number(raw) <= 999999))
+                onUpdateItem(row.id, 'quantity', raw);
+            }}
+            onKeyDown={(e) => {
+              if (
+                [
+                  'Backspace',
+                  'Delete',
+                  'Tab',
+                  'Escape',
+                  'Enter',
+                  'ArrowLeft',
+                  'ArrowRight',
+                  'ArrowUp',
+                  'ArrowDown',
+                  'Home',
+                  'End',
+                ].includes(e.key)
+              )
+                return;
+              if (!/^\d$/.test(e.key)) e.preventDefault();
+            }}
+            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm font-semibold outline-none focus:border-[#004785]"
+          />
+        );
+      },
     },
     {
       key: 'costPrice',
       header: 'Đơn giá nhập',
       width: 140,
-      render: (val, row) => (
-        <input
-          type="text"
-          inputMode="numeric"
-          value={val}
-          onChange={(e) => {
-            const v = e.target.value.replace(/[^0-9]/g, '');
-            if (v === '' || (/^\d+$/.test(v) && Number(v) <= 999999999))
-              onUpdateItem(row.id, 'costPrice', v);
-          }}
-          onKeyDown={(e) => {
-            if (
-              [
-                'Backspace',
-                'Delete',
-                'Tab',
-                'Escape',
-                'Enter',
-                'ArrowLeft',
-                'ArrowRight',
-                'ArrowUp',
-                'ArrowDown',
-                'Home',
-                'End',
-              ].includes(e.key)
-            )
-              return;
-            if (!/^\d$/.test(e.key)) e.preventDefault();
-          }}
-          className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm outline-none focus:border-[#004785]"
-        />
-      ),
+      align: 'right',
+      render: (val, row) => {
+        const fmtVal = val ? Number(val).toLocaleString('vi-VN') : '';
+        return (
+          <input
+            type="text"
+            inputMode="numeric"
+            value={fmtVal}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+              if (raw === '' || (/^\d+$/.test(raw) && Number(raw) <= 999999999))
+                onUpdateItem(row.id, 'costPrice', raw);
+            }}
+            onKeyDown={(e) => {
+              if (
+                [
+                  'Backspace',
+                  'Delete',
+                  'Tab',
+                  'Escape',
+                  'Enter',
+                  'ArrowLeft',
+                  'ArrowRight',
+                  'ArrowUp',
+                  'ArrowDown',
+                  'Home',
+                  'End',
+                ].includes(e.key)
+              )
+                return;
+              if (!/^\d$/.test(e.key)) e.preventDefault();
+            }}
+            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm outline-none focus:border-[#004785]"
+          />
+        );
+      },
     },
     {
       key: 'total',
@@ -144,6 +163,8 @@ export const ImportItemsTable = ({
     {
       key: 'actions',
       header: '',
+      width: 56,
+      align: 'center',
       render: (_, row) => (
         <IconButton
           icon={Trash2}

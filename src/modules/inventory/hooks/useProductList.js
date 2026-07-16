@@ -264,12 +264,13 @@ export const useProductList = (queryParams) => {
       refetch();
     } catch (error) {
       console.error('🚨 API Error Detail:', error);
-      const errorMsg =
-        error?.data?.errors?.join?.('\n') ||
-        error?.data?.message ||
-        error?.message ||
-        'Không thể lưu sản phẩm. Vui lòng kiểm tra lại thông tin và thử lại.';
-      alert(errorMsg);
+      const detail = error?.data?.errors;
+      const isValidation = Array.isArray(detail) || error?.data?.message?.includes('không hợp lệ');
+      alert(
+        isValidation
+          ? 'Lỗi tạo sản phẩm, vui lòng thử lại.'
+          : error?.data?.message || error?.message || 'Lỗi tạo sản phẩm, vui lòng thử lại.'
+      );
     }
   };
 
