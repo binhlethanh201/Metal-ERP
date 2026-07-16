@@ -235,6 +235,11 @@ export const ENDPOINTS = {
     UPDATE_PROFILE: '/profile',
   },
 
+  // ============ CHATBOT (Trợ lý AI) ============
+  CHATBOT: {
+    SEND_MESSAGE: '/api/chatbot/message',
+  },
+
   // ============ GOODS ISSUE (Xuất Kho) ============
   GOODS_ISSUE: {
     // Danh sách & CRUD phiếu xuất
