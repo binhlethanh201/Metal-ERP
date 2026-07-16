@@ -153,12 +153,6 @@ const DescTabPanel = ({ row, loading, onEdit }) => {
   );
 };
 
-const PlaceholderTab = ({ title }) => (
-  <div className="flex min-h-[200px] items-center justify-center text-sm text-slate-400">
-    {title} - Đang phát triển
-  </div>
-);
-
 const StatusToggleModal = ({ open, onClose, onConfirm, isActive }) => {
   if (!open) return null;
   const isStopping = isActive !== false;
