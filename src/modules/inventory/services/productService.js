@@ -38,6 +38,8 @@ export const toggleProductStatusBulk = (ids, isActive) =>
 
 // Categories APIs
 export const getCategories = () => apiGet(`${BASE}/categories`);
+export const createCategory = (name) =>
+  apiPost(`${BASE}/categories`, { name: (name || '').trim() });
 export const renameCategory = (oldName, newName) =>
   apiPut(`${BASE}/categories/rename`, {
     oldName: (oldName || '').trim(),
@@ -47,6 +49,7 @@ export const deleteCategory = (name) => apiDelete(`${BASE}/categories/${encodeUR
 
 // Brands APIs
 export const getBrands = () => apiGet(`${BASE}/brands`);
+export const createBrand = (name) => apiPost(`${BASE}/brands`, { name: (name || '').trim() });
 export const renameBrand = (oldName, newName) =>
   apiPut(`${BASE}/brands/rename`, {
     oldName: (oldName || '').trim(),

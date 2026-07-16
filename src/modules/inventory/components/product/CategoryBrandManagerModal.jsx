@@ -8,9 +8,11 @@ import {
   getCategories,
   renameCategory,
   deleteCategory,
+  createCategory,
   getBrands,
   renameBrand,
   deleteBrand,
+  createBrand,
 } from '../../services/productService';
 
 // Gộp message + errors[] từ response lỗi API (vd 400/404 trong doc mới)
@@ -41,6 +43,32 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
       setItems([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [createName, setCreateName] = useState('');
+
+  const handleCreate = async () => {
+    const trimmed = (createName || '').trim();
+    if (!trimmed) return;
+    try {
+      const res =
+        activeTab === 'categories' ? await createCategory(trimmed) : await createBrand(trimmed);
+      if (res?.success) {
+        alert(res?.message || 'Tạo mới thành công');
+        setCreateName('');
+        // Thêm vào danh sách local ngay (API chỉ trả success, không insert DB)
+        setItems((prev) => {
+          const exists = prev.some((item) => item.name.toLowerCase() === trimmed.toLowerCase());
+          if (exists) return prev;
+          return [...prev, { name: trimmed, productCount: 0 }].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          );
+        });
+        onSuccess?.();
+      }
+    } catch (err) {
+      alert(extractErrorMessage(err, 'Lỗi tạo mới'));
     }
   };
 
@@ -210,6 +238,21 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
             <span className="absolute bottom-0 left-0 h-0.5 w-full rounded-t-md bg-blue-600" />
           )}
         </button>
+      </div>
+
+      <div className="mb-4 flex items-center gap-2">
+        <input
+          className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+          placeholder={
+            activeTab === 'categories' ? 'Nhập tên nhóm hàng mới...' : 'Nhập tên thương hiệu mới...'
+          }
+          value={createName}
+          onChange={(e) => setCreateName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+        />
+        <Button variant="primary" onClick={handleCreate}>
+          Thêm mới
+        </Button>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200">
