@@ -6,7 +6,7 @@ import { getSuppliers } from '../../services/supplierService';
 
 // Style select đồng bộ với input trong Input.jsx (border-slate-200, focus:border-[#004785])
 const selectClass =
-  'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50';
+  'w-full min-w-0 max-w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 truncate';
 
 const FilterField = ({ label, children }) => (
   <div className="space-y-1.5">
@@ -97,7 +97,7 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="Bộ lọc"
-      widthClass="max-w-sm"
+      widthClass="max-w-md"
       footer={
         <>
           <Button variant="secondary" size="sm" onClick={handleReset}>
@@ -109,7 +109,7 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
         </>
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-5 overflow-hidden">
         <FilterField label="Trạng thái hàng hóa">
           <select
             className={selectClass}

@@ -50,7 +50,7 @@ export const Drawer = ({
 
       {/* Panel */}
       <div
-        className={`fixed right-0 top-0 flex h-full w-full ${widthClass} flex-col bg-white shadow-xl transition-transform duration-200 ease-out ${animateIn ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 flex h-full w-full ${widthClass} flex-col overflow-hidden bg-white shadow-xl transition-transform duration-200 ease-out ${animateIn ? 'translate-x-0' : 'translate-x-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - cố định */}

@@ -209,7 +209,31 @@ export const ProductTable = ({
                   {fmtMoney(row.costPrice)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-slate-900">
-                  {(row.actualStock ?? row.stock ?? 0).toLocaleString('vi-VN')}
+                  <div className="inline-flex items-center gap-1.5">
+                    {(row.actualStock ?? row.stock ?? 0).toLocaleString('vi-VN')}
+                    {row.minimumStock > 0 &&
+                      (row.actualStock ?? row.stock ?? 0) <= row.minimumStock && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600"
+                          title={`Tồn kho thấp hơn ngưỡng tối thiểu (${row.minimumStock})`}
+                        >
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                            />
+                          </svg>
+                          Thấp
+                        </span>
+                      )}
+                  </div>
                 </td>
                 <td className="truncate whitespace-nowrap px-4 py-3 text-slate-500">
                   {row.shelfLocation || row.location || '---'}

@@ -524,10 +524,10 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
 
             <Section
               title="Tồn kho"
-              subtitle="Thiết lập số lượng tồn kho thực tế và khả dụng."
+              subtitle="Thiết lập số lượng tồn kho thực tế, khả dụng và ngưỡng cảnh báo."
               defaultOpen
             >
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
                 <Input
                   label="Tồn kho thực tế"
                   type="number"
@@ -567,6 +567,36 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                   onChange={(e) => {
                     const v = e.target.value;
                     if (v === '' || /^\d+$/.test(v)) f.handleChange('availableStock', v);
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      [
+                        'Backspace',
+                        'Delete',
+                        'Tab',
+                        'Escape',
+                        'Enter',
+                        'ArrowLeft',
+                        'ArrowRight',
+                        'ArrowUp',
+                        'ArrowDown',
+                        'Home',
+                        'End',
+                      ].includes(e.key)
+                    )
+                      return;
+                    if (!/^\d$/.test(e.key)) e.preventDefault();
+                  }}
+                />
+                <Input
+                  label="Tồn kho tối thiểu (cảnh báo)"
+                  type="number"
+                  min="0"
+                  className="text-right font-semibold text-amber-600"
+                  value={f.form.minimumStock !== '' ? f.form.minimumStock : '0'}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d+$/.test(v)) f.handleChange('minimumStock', v);
                   }}
                   onKeyDown={(e) => {
                     if (
