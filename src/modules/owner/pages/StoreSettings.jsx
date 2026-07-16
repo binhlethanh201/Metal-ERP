@@ -12,7 +12,7 @@ import DiscountTierModal from '../components/settings/DiscountTierModal';
  */
 const StoreSettings = () => {
   // Lấy danh sách chi nhánh
-  const { branches, loading: branchesLoading } = useBranchManager();
+  const { branches } = useBranchManager();
 
   // Chi nhánh được chọn - dùng branch đầu tiên
   const [selectedBranchId, setSelectedBranchId] = useState('');
@@ -32,9 +32,6 @@ const StoreSettings = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTier, setEditingTier] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  // Current branch info
-  const currentBranch = branches.find((b) => b.branchId === selectedBranchId);
 
   // Xử lý mở modal thêm/sửa
   const handleOpenModal = (tier = null) => {
@@ -82,19 +79,6 @@ const StoreSettings = () => {
           <p className="mt-1 text-gray-600">Quản lý chiết khấu theo giá trị đơn hàng</p>
         </div>
       </div>
-
-      {/* Hiển thị chi nhánh hiện tại */}
-      <Card className="!p-4">
-        <div className="flex items-center gap-2">
-          <Icon name="store" size={20} className="text-[#004785]" />
-          <span className="font-medium text-slate-700">Cửa hàng:</span>
-          <span className="font-semibold text-[#004785]">
-            {branchesLoading
-              ? 'Đang tải...'
-              : currentBranch?.branchName || currentBranch?.branchCode || 'Đang xác định...'}
-          </span>
-        </div>
-      </Card>
 
       {/* Nội dung chiết khấu */}
       {selectedBranchId ? (

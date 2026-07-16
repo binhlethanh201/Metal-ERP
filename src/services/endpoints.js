@@ -95,7 +95,6 @@ export const ENDPOINTS = {
     REJECT_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reject`,
     GET_NOTIFICATIONS: '/api/InventoryCheck/notifications',
     MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/read',
-    INVENTORY_SUMMARY_REPORT: '/api/inventory/summary-report',
 
     // ================= Stock =================
     GET_STOCK: '/api/Stock',
