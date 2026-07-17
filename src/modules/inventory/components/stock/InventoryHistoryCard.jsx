@@ -57,15 +57,6 @@ export const InventoryHistoryCard = ({
 
   const todayString = new Date().toISOString().split('T')[0];
 
-  // Lọc ticket theo từ khoá tìm kiếm
-  const kw = searchText.toLowerCase().trim();
-  const filteredTickets = kw
-    ? tickets.filter((t) => {
-        const code = (t.ticketCode || '').toLowerCase();
-        const product = (t.productName || '').toLowerCase();
-        return code.includes(kw) || product.includes(kw);
-      })
-    : tickets;
 
   const [filters, setFilters] = useState({
     status: '',
