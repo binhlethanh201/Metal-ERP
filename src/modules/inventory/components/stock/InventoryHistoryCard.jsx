@@ -47,6 +47,7 @@ export const InventoryHistoryCard = ({
   onReload,
   onNotify,
   branches = [],
+  searchText = '',
 }) => {
   const [cancellingTicket, setCancellingTicket] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
@@ -70,11 +71,64 @@ export const InventoryHistoryCard = ({
     status: '',
     ticketType: '',
     fromDate: '',
-    toDate: todayString,
+    toDate: '', // Để trống để hiển thị tất cả
     branchId: '',
     pageNumber: 1,
-    pageSize: 20,
+    pageSize: 100,
   });
+
+  // Lọc ticket theo từ khoá tìm kiếm và các filter
+  const kw = searchText.toLowerCase().trim();
+  let filteredTickets = tickets;
+
+  // Lọc theo từ khóa tìm kiếm
+  if (kw) {
+    filteredTickets = filteredTickets.filter((t) => {
+      const code = (t.ticketCode || '').toLowerCase();
+      const product = (t.productName || '').toLowerCase();
+      return code.includes(kw) || product.includes(kw);
+    });
+  }
+
+  // Lọc theo status (client-side filter)
+  if (filters.status && filters.status !== 'ALL') {
+    const normalizedFilter = filters.status.toUpperCase();
+    filteredTickets = filteredTickets.filter((t) => {
+      const ticketStatus = (t.status || '').toUpperCase();
+      return ticketStatus === normalizedFilter;
+    });
+  }
+
+  // Lọc theo ngày
+  if (filters.fromDate) {
+    const fromDateStr = filters.fromDate;
+    filteredTickets = filteredTickets.filter((t) => {
+      const ticketDate = t.date || t.createdAt;
+      if (!ticketDate) return false;
+      return ticketDate >= fromDateStr;
+    });
+  }
+  if (filters.toDate) {
+    const toDateStr = filters.toDate;
+    filteredTickets = filteredTickets.filter((t) => {
+      const ticketDate = t.date || t.createdAt;
+      if (!ticketDate) return false;
+      return ticketDate <= toDateStr;
+    });
+  }
+
+  // Client-side pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+  const totalItems = filteredTickets.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   const handleChangeFilter = (key, value) => {
     const newFilters = { ...filters, [key]: value, pageNumber: 1 };
@@ -87,12 +141,13 @@ export const InventoryHistoryCard = ({
       status: '',
       ticketType: '',
       fromDate: '',
-      toDate: todayString,
+      toDate: '', // Để trống để hiển thị tất cả
       branchId: '',
       pageNumber: 1,
       pageSize: 20,
     };
     setFilters(defaultFilters);
+    setCurrentPage(1); // Reset về trang 1
     if (onReload) onReload(defaultFilters);
   };
 
@@ -347,10 +402,60 @@ export const InventoryHistoryCard = ({
       <div className="px-0">
         <Table
           columns={columns}
-          data={filteredTickets}
+          data={paginatedTickets}
           loading={isLoading}
           emptyMessage="Chưa có phiếu nào trong hệ thống"
         />
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+            <div className="text-sm text-slate-500">
+              Trang {currentPage} / {totalPages} ({totalItems} phiếu)
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="rounded border border-slate-200 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Trước
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`rounded border px-3 py-1 text-sm ${
+                      currentPage === pageNum
+                        ? 'border-[#004785] bg-[#004785] text-white'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="rounded border border-slate-200 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <CancelTicketModal

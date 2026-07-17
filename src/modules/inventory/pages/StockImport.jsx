@@ -109,7 +109,7 @@ export const StockImport = () => {
   const loadInwardHistory = useCallback(async (filterParams = {}) => {
     setIsLoadingHistory(true);
     try {
-      const queryParams = { pageNumber: 1, pageSize: 20, ...filterParams };
+      const queryParams = { pageNumber: 1, pageSize: 100, ...filterParams };
       const res = await getInwardInventories(queryParams);
       setInwardsList(extractList(res).map(normalizeInwardRow).filter(Boolean));
     } catch {
