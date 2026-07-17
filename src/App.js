@@ -18,6 +18,10 @@ import ServerError from './pages/errors/ServerError';
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 
+// Account settings
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettings/AccountSettingsPage'));
+const AccountSettingsLayout = lazy(() => import('./pages/AccountSettings/AccountSettingsLayout'));
+
 // Inventory Module
 const InventoryLayout = lazy(() => import('./modules/inventory/layouts/InventoryLayout'));
 const InventoryDashboard = lazy(() => import('./modules/inventory/pages/InventoryDashboard'));
@@ -102,6 +106,16 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* PRIVATE & PROTECTED ROUTES */}
+          {/* ACCOUNT SETTINGS ROUTE */}
+          <Route
+            element={
+              <PrivateRoute allowedRoles={['Owner', 'SalesStaff', 'InventoryStaff', 'Admin']} />
+            }
+          >
+            <Route path="/account-settings" element={<AccountSettingsLayout />}>
+              <Route index element={<AccountSettingsPage />} />
+            </Route>
+          </Route>
 
           {/* MODULE POS */}
           <Route element={<PrivateRoute allowedRoles={['Owner', 'SalesStaff']} />}>
