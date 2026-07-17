@@ -9,8 +9,8 @@ const RegisterPage = () => {
   const [step, setStep] = useState(1);
   const [registerData, setRegisterData] = useState({ email: '', devOtp: '' });
 
-  const handleStep1Success = (email, devOtp) => {
-    setRegisterData({ email, devOtp });
+  const handleStep1Success = (email) => {
+    setRegisterData({ email, devOtp: '' });
     setStep(2);
   };
 
@@ -30,7 +30,7 @@ const RegisterPage = () => {
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
             {step === 1 ? (
-              'Khởi tạo Master Tenant để quản lý chuỗi cung ứng của bạn.'
+              'Khởi tạo để quản lý cửa hàng của bạn.'
             ) : (
               <>
                 Mã xác thực đã được gửi đến{' '}

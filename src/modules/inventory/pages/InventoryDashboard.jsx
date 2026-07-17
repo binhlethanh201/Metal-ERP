@@ -1,7 +1,5 @@
 import React from 'react';
-// import { useOutletContext } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
-import AiChatWidget from '../components/home/AiChatWidget';
 import KPICard from '../components/home/KPICard';
 import FinanceMetric from '../components/home/FinanceMetric';
 import { getInventoryDashboard } from '../services/inventoryService';
@@ -26,8 +24,6 @@ const mapDashboard = (data) => {
 };
 
 const InventoryDashboard = () => {
-  // const { setActiveHubKey } = useOutletContext();
-
   const [dashboard, setDashboard] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -61,31 +57,6 @@ const InventoryDashboard = () => {
     transactions = fallbackTxs,
     cash = fallbackCash,
   } = dashboard || {};
-
-  const [isAssistantOpen, setIsAssistantOpen] = React.useState(false);
-  const [assistantInput, setAssistantInput] = React.useState('');
-  const [assistantMessages, setAssistantMessages] = React.useState([
-    {
-      id: 'assistant-welcome',
-      role: 'assistant',
-      text: 'Xin chào! Tôi là trợ lý ảo. Bạn muốn tra cứu tồn kho, đơn hàng hay báo cáo nào?',
-    },
-  ]);
-
-  const handleAssistantSend = () => {
-    const value = assistantInput.trim();
-    if (!value) return;
-    setAssistantMessages((prev) => [
-      ...prev,
-      { id: `user-${Date.now()}`, role: 'user', text: value },
-      {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        text: 'Đã nhận yêu cầu. Tôi sẽ hỗ trợ bạn ngay sau khi đồng bộ dữ liệu nghiệp vụ.',
-      },
-    ]);
-    setAssistantInput('');
-  };
 
   if (loading) {
     return (
@@ -261,16 +232,6 @@ const InventoryDashboard = () => {
           </div>
         </article>
       </div>
-
-      {/* 4. Trợ lý ảo AI Floating Button */}
-      <AiChatWidget
-        isOpen={isAssistantOpen}
-        onToggle={setIsAssistantOpen}
-        messages={assistantMessages}
-        input={assistantInput}
-        setInput={setAssistantInput}
-        onSend={handleAssistantSend}
-      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   AreaChart,
   Area,
@@ -11,7 +11,6 @@ import {
 } from 'recharts';
 
 import Icon from '../../../shared/components/Icon';
-import AiChatWidget from '../components/dashboard/AiChatWidget';
 import KPICard from '../components/dashboard/KPICard';
 import FinanceMetric from '../components/dashboard/FinanceMetric';
 import useOwnerDashboard from '../hooks/useOwnerDashboard';
@@ -60,31 +59,6 @@ const ChartTooltip = ({ active, payload, label }) => {
 /* ════════════════════════════════════════════════════════ */
 const InventoryDashboard = () => {
   const { data, loading, error, refetch } = useOwnerDashboard();
-
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
-  const [assistantInput, setAssistantInput] = useState('');
-  const [assistantMessages, setAssistantMessages] = useState([
-    {
-      id: 'assistant-welcome',
-      role: 'assistant',
-      text: 'Xin chào! Tôi là trợ lý ảo MEP. Bạn muốn tra cứu tồn kho, đơn hàng hay báo cáo nào?',
-    },
-  ]);
-
-  const handleAssistantSend = () => {
-    const value = assistantInput.trim();
-    if (!value) return;
-    setAssistantMessages((prev) => [
-      ...prev,
-      { id: `user-${Date.now()}`, role: 'user', text: value },
-      {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        text: 'Đã nhận yêu cầu. Tôi sẽ hỗ trợ bạn ngay sau khi đồng bộ dữ liệu nghiệp vụ.',
-      },
-    ]);
-    setAssistantInput('');
-  };
 
   /* ── Trạng thái lỗi ── */
   if (error) {
@@ -602,16 +576,6 @@ const InventoryDashboard = () => {
           ))}
         </section>
       )}
-
-      {/* ── AI Chat Widget ── */}
-      <AiChatWidget
-        isOpen={isAssistantOpen}
-        onToggle={setIsAssistantOpen}
-        messages={assistantMessages}
-        input={assistantInput}
-        setInput={setAssistantInput}
-        onSend={handleAssistantSend}
-      />
     </div>
   );
 };

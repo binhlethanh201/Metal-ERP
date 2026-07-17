@@ -13,14 +13,11 @@ const RegisterStep1Email = ({ onNextStep }) => {
       setError('Vui lòng nhập email doanh nghiệp.');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
-      const response = await registerStartRequest({ email });
-      // Chuyển sang bước 2, truyền email và devOtp (nếu có) lên component cha
-      onNextStep(email, response?.otp || '');
+      await registerStartRequest({ email });
+      onNextStep(email);
     } catch (err) {
       setError(err?.message || 'Email này đã được đăng ký tài khoản.');
     } finally {

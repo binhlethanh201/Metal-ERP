@@ -2,6 +2,7 @@ import React, { Suspense, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import InventorySidebar from '../components/home/InventorySidebar';
 import InventoryHeader from '../components/home/InventoryHeader';
+import AiChatWidget from '../../../shared/components/AiChatWidget';
 
 const InventoryLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -23,6 +24,7 @@ const InventoryLayout = () => {
               <Outlet />
             </div>
           </Suspense>
+          <AiChatWidget />
         </main>
       </div>
     </div>

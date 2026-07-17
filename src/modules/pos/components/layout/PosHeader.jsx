@@ -1,4 +1,6 @@
-/** * Header POS - Thanh ngang top, nằm trong flex layout. */
+/**
+ * Header POS - Thanh ngang top, nằm trong flex layout.
+ */
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
@@ -21,9 +23,16 @@ const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
+
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleGoToAccountSettings = () => {
+    setIsProfileOpen(false);
+    navigate('/account-settings');
   };
 
   return (
@@ -53,27 +62,45 @@ const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
           <button
             type="button"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#004785] text-sm font-bold text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#004785] text-sm font-bold text-white transition-transform active:scale-95"
           >
             {(user?.fullName || user?.name || 'A').charAt(0).toUpperCase()}
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-              <div className="border-b border-slate-100 px-4 py-3">
-                <p className="text-sm font-bold text-slate-900">
-                  {user?.fullName || user?.name || 'Admin'}
+            <div className="animate-fadeIn absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+              {/* User info */}
+              <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+                <p className="text-sm font-bold text-slate-800">
+                  {user?.fullName || user?.name || 'Người dùng'}
                 </p>
-                <p className="truncate text-xs text-slate-400">{user?.email || ''}</p>
+                <p className="mt-0.5 truncate text-[11px] font-semibold uppercase text-slate-500">
+                  {userRoles.join(', ')}
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
-              >
-                <Icon name="logout" className="text-base" />
-                Đăng xuất
-              </button>
+
+              {/* Menu items */}
+              <div className="p-1">
+                {/* Cài đặt tài khoản */}
+                <button
+                  onClick={handleGoToAccountSettings}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  <Icon name="settings" size={16} className="text-slate-500" />
+                  Cài đặt tài khoản
+                </button>
+
+                <div className="my-1 border-t border-slate-100" />
+
+                {/* Đăng xuất */}
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <Icon name="logout" size={16} />
+                  Đăng xuất
+                </button>
+              </div>
             </div>
           )}
         </div>
