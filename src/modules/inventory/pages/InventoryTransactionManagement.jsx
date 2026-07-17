@@ -12,6 +12,7 @@ import {
   cancelInwardInventory,
   cancelOutwardInventory,
 } from '../services/inventoryService';
+import { getSupplierDetail, getSuppliers } from '../services/supplierService';
 
 // Format helpers
 const formatCurrency = (value) =>
@@ -51,14 +52,23 @@ const normalizeInwardInventory = (item) => ({
   type: 'INWARD',
   ticketCode: item?.ticketCode || '-',
   createdAt: item?.createdAt,
-  partyName: item?.supplierName || item?.partyName || '-',
+  partyName:
+    item?.supplierName ||
+    item?.SupplierName ||
+    item?.supplier?.supplierName ||
+    item?.supplier?.SupplierName ||
+    item?.supplier?.name ||
+    item?.Supplier?.Name ||
+    (typeof item?.supplier === 'string' ? item.supplier : null) ||
+    item?.partyName ||
+    '-',
   partyId: item?.supplierId || null,
   itemCount: item?.items?.length || 0,
   totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
   totalAmount:
     item?.items?.reduce((sum, i) => {
       const qty = Number(i.quantity || 0);
-      const price = Number(i.costPrice || i.actualQuantity || 0);
+      const price = Number(i.costPrice || i.unitPrice || i.UnitPrice || 0);
       return sum + qty * price;
     }, 0) || 0,
   createdByName: item?.userName || item?.createdByName || '-',
@@ -77,14 +87,27 @@ const normalizeOutwardInventory = (item) => ({
   type: 'OUTWARD',
   ticketCode: item?.ticketCode || '-',
   createdAt: item?.createdAt,
-  partyName: item?.customerName || item?.partyName || '-',
+  partyName:
+    item?.customerName ||
+    item?.CustomerName ||
+    item?.customer?.customerName ||
+    item?.customer?.CustomerName ||
+    item?.customer?.name ||
+    item?.Customer?.Name ||
+    item?.targetName ||
+    item?.TargetName ||
+    item?.partnerName ||
+    item?.PartnerName ||
+    (typeof item?.customer === 'string' ? item.customer : null) ||
+    item?.partyName ||
+    '-',
   partyId: item?.customerId || null,
   itemCount: item?.items?.length || 0,
   totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
   totalAmount:
     item?.items?.reduce((sum, i) => {
       const qty = Number(i.quantity || 0);
-      const price = Number(i.costPrice || i.actualQuantity || 0);
+      const price = Number(i.costPrice || i.unitPrice || i.UnitPrice || 0);
       return sum + qty * price;
     }, 0) || 0,
   createdByName: item?.userName || item?.createdByName || '-',
@@ -102,9 +125,9 @@ const normalizeItem = (item) => ({
   id: item?.ticketItemId || item?.branchProductId,
   productCode: item?.productCode || '-',
   productName: item?.productName || '-',
-  unit: item?.unit || '-',
+  unit: item?.unit || item?.Unit || item?.unitName || item?.UnitName || '-',
   quantity: Number(item?.quantity || 0),
-  costPrice: Number(item?.costPrice || item?.actualQuantity || 0),
+  costPrice: Number(item?.costPrice || item?.unitPrice || item?.UnitPrice || 0),
   imageUrl: item?.imageUrl || null,
 });
 
@@ -174,7 +197,6 @@ export const InventoryTransactionManagement = () => {
 
   // State
   const [activeTab, setActiveTab] = useState('ALL');
-  const [typeFilter, setTypeFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -192,7 +214,7 @@ export const InventoryTransactionManagement = () => {
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
-    pageSize: 20,
+    pageSize: 100,
     totalItems: 0,
   });
 
@@ -208,6 +230,42 @@ export const InventoryTransactionManagement = () => {
     [pagination.currentPage, pagination.pageSize, statusFilter, dateFrom, dateTo]
   );
 
+  // Fetch stats
+  const fetchStats = useCallback(async () => {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const [inwardRes, outwardRes, pendingIn, pendingOut] = await Promise.all([
+        getInwardInventories({ pageSize: 1, pageNumber: 1 }),
+        getOutwardInventories({ pageSize: 1, pageNumber: 1 }),
+        getInwardInventories({ pageSize: 1, status: 'PENDING' }),
+        getOutwardInventories({ pageSize: 1, status: 'PENDING' }),
+      ]);
+
+      setStats({
+        totalInward: inwardRes?.data?.totalCount || 0,
+        totalOutward: outwardRes?.data?.totalCount || 0,
+        todayInwardValue: 0,
+        todayOutwardValue: 0,
+        pendingCount: (pendingIn?.data?.totalCount || 0) + (pendingOut?.data?.totalCount || 0),
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+      setStats({
+        totalInward: 0,
+        totalOutward: 0,
+        todayInwardValue: 0,
+        todayOutwardValue: 0,
+        pendingCount: 0,
+      });
+    }
+  }, []);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   // Fetch data
   const fetchData = useCallback(
     async (showLoading = true) => {
@@ -220,11 +278,45 @@ export const InventoryTransactionManagement = () => {
           getOutwardInventories(filterParams),
         ]);
 
+        // Load danh sách nhà cung cấp để tra cứu tên
+        let supplierMap = {};
+        try {
+          const supRes = await getSuppliers({ pageSize: 1000 });
+          const supList = Array.isArray(supRes)
+            ? supRes
+            : supRes?.data?.items || supRes?.data || [];
+          (supList || []).forEach((s) => {
+            if (s.id) supplierMap[s.id] = s.name || s.supplierName || '';
+          });
+        } catch {} // eslint-disable-line no-empty
+
         if (inwardRes?.success && inwardRes?.data) {
-          setInwardData(inwardRes.data.items?.map(normalizeInwardInventory) || []);
+          setInwardData(
+            (inwardRes.data.items || []).map((item) => {
+              const normalized = normalizeInwardInventory(item);
+              if (normalized.partyName === '-' && item.supplierId && supplierMap[item.supplierId]) {
+                return { ...normalized, partyName: supplierMap[item.supplierId] };
+              }
+              return normalized;
+            })
+          );
         }
         if (outwardRes?.success && outwardRes?.data) {
-          setOutwardData(outwardRes.data.items?.map(normalizeOutwardInventory) || []);
+          setOutwardData(
+            (outwardRes.data.items || []).map((item) => {
+              const normalized = normalizeOutwardInventory(item);
+              // Tra cứu tên đối tượng xuất từ localStorage
+              if (item.ticketCode && normalized.partyName === '-') {
+                try {
+                  const localName = (
+                    localStorage.getItem(`outward_party_${item.ticketCode}`) || ''
+                  ).replace(/^.*?:\s*/g, '');
+                  if (localName) return { ...normalized, partyName: localName };
+                } catch {} // eslint-disable-line no-empty
+              }
+              return normalized;
+            })
+          );
         }
 
         const inwardTotal = inwardRes?.data?.totalCount || 0;
@@ -247,56 +339,36 @@ export const InventoryTransactionManagement = () => {
     [buildFilterParams]
   );
 
-  // Fetch stats once on mount
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const [inwardRes, outwardRes] = await Promise.all([
-          getInwardInventories({ pageSize: 1, fromDate: today, toDate: today }),
-          getOutwardInventories({ pageSize: 1, fromDate: today, toDate: today }),
-        ]);
-
-        const todayInwardValue =
-          inwardRes?.data?.items?.reduce((sum, item) => {
-            return (
-              sum +
-              (item.items?.reduce(
-                (s, i) => s + Number(i.quantity || 0) * Number(i.costPrice || 0),
-                0
-              ) || 0)
-            );
-          }, 0) || 0;
-
-        const todayOutwardValue =
-          outwardRes?.data?.items?.reduce((sum, item) => {
-            return (
-              sum +
-              (item.items?.reduce(
-                (s, i) => s + Number(i.quantity || 0) * Number(i.costPrice || 0),
-                0
-              ) || 0)
-            );
-          }, 0) || 0;
-
-        setStats({
-          totalInward: inwardRes?.data?.totalCount || 0,
-          totalOutward: outwardRes?.data?.totalCount || 0,
-          todayInwardValue,
-          todayOutwardValue,
-          pendingCount: 0,
-        });
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
-      }
-    };
-    fetchStats();
-  }, []);
-
   // Re-fetch data when filters/pagination change
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Cập nhật giá trị hôm nay khi dữ liệu thay đổi
+  useEffect(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const isToday = (d) => {
+      const date = new Date(d);
+      return date >= todayStart && date <= todayEnd;
+    };
+    const calcValue = (items) =>
+      items
+        .filter((t) => t.status === 'COMPLETED' && isToday(t.createdAt))
+        .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+
+    setStats((prev) =>
+      prev
+        ? {
+            ...prev,
+            todayInwardValue: calcValue(inwardData),
+            todayOutwardValue: calcValue(outwardData),
+          }
+        : prev
+    );
+  }, [inwardData, outwardData]);
 
   // Filter data based on tab and search
   const filteredData = useMemo(() => {
@@ -347,11 +419,37 @@ export const InventoryTransactionManagement = () => {
           : getOutwardInventory(transaction.id);
 
       const res = await apiCall;
-      if (res?.success && res?.data) {
-        const normalized =
+      // API có thể trả về { success, data } hoặc trực tiếp object
+      const rawData = res?.data || res;
+      if (rawData && (rawData.stockTicketId || rawData.ticketCode || rawData.items)) {
+        let normalized =
           transaction.type === 'INWARD'
-            ? normalizeInwardInventory(res.data)
-            : normalizeOutwardInventory(res.data);
+            ? normalizeInwardInventory(rawData)
+            : normalizeOutwardInventory(rawData);
+        // Tra cứu tên nhà cung cấp từ supplierId nếu chưa có tên
+        if (transaction.type === 'INWARD' && rawData.supplierId && normalized.partyName === '-') {
+          try {
+            const supRes = await getSupplierDetail(rawData.supplierId);
+            const supData = supRes?.data || supRes;
+            if (supData) {
+              normalized = {
+                ...normalized,
+                partyName: supData.name || supData.supplierName || '-',
+              };
+            }
+          } catch {}
+        }
+        // Tra cứu tên đối tượng xuất từ localStorage
+        if (transaction.type === 'OUTWARD' && rawData.ticketCode && normalized.partyName === '-') {
+          try {
+            const localName = (
+              localStorage.getItem(`outward_party_${rawData.ticketCode}`) || ''
+            ).replace(/^.*?:\s*/g, '');
+            if (localName) {
+              normalized = { ...normalized, partyName: localName };
+            }
+          } catch {} // eslint-disable-line no-empty
+        }
         setSelectedTransaction(normalized);
       } else {
         setSelectedTransaction(transaction);
@@ -397,39 +495,37 @@ export const InventoryTransactionManagement = () => {
   };
 
   // Handle filter changes
-  const handleTypeFilterChange = (value) => {
-    setTypeFilter(value);
-    setActiveTab(value === 'ALL' ? 'ALL' : value);
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  };
-
   const handleStatusFilterChange = (value) => {
     setStatusFilter(value);
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
-  // Handle refresh
-  const handleRefresh = () => {
+  // Handle reset all filters
+  const handleReset = () => {
+    setActiveTab('ALL');
+    setStatusFilter('ALL');
+    setSearchTerm('');
+    setDateFrom('');
+    setDateTo('');
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
     fetchData(false);
   };
 
   return (
     <div className="mx-auto max-w-[1600px] pb-8">
       {/* Header with Stats */}
-      <section className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
+      <section className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
         <StatsCard
           title="Tổng phiếu nhập"
           value={loading ? '...' : (stats?.totalInward || 0).toLocaleString()}
           icon={Plus}
           iconBg="bg-emerald-100 text-emerald-600"
-          subtitle="Tất cả chi nhánh"
         />
         <StatsCard
           title="Tổng phiếu xuất"
           value={loading ? '...' : (stats?.totalOutward || 0).toLocaleString()}
           icon={Minus}
           iconBg="bg-rose-100 text-rose-600"
-          subtitle="Tất cả chi nhánh"
         />
         <StatsCard
           title="Giá trị nhập hôm nay"
@@ -450,30 +546,12 @@ export const InventoryTransactionManagement = () => {
           iconBg="bg-amber-100 text-amber-600"
           subtitle="Cần xử lý"
         />
-        <StatsCard
-          title="Hành động"
-          value=""
-          icon={Package}
-          iconBg="bg-slate-100 text-slate-600"
-          subtitle="Tạo phiếu mới"
-        />
       </section>
 
       {/* Action Buttons */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {/* Type Filter */}
-          <FilterDropdown
-            label="Loại"
-            options={[
-              { value: 'ALL', label: 'Tất cả' },
-              { value: 'INWARD', label: 'Nhập kho' },
-              { value: 'OUTWARD', label: 'Xuất kho' },
-            ]}
-            value={typeFilter}
-            onChange={handleTypeFilterChange}
-          />
-
           {/* Status Filter */}
           <FilterDropdown
             label="Trạng thái"
@@ -517,11 +595,11 @@ export const InventoryTransactionManagement = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={handleRefresh}
+            onClick={handleReset}
             className="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
             <RefreshCw className="h-4 w-4" />
-            Làm mới
+            Đặt lại
           </button>
           <button
             onClick={() => navigate('/inventory/import')}
@@ -598,7 +676,7 @@ export const InventoryTransactionManagement = () => {
                   Ngày tạo
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  NCC / Khách hàng
+                  Đối tượng
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Số mặt hàng
@@ -607,7 +685,7 @@ export const InventoryTransactionManagement = () => {
                   Tổng SL
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Tổng tiền
+                  Tổng tiền / Hao hụt
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Người tạo
@@ -659,8 +737,14 @@ export const InventoryTransactionManagement = () => {
                     <td className="px-4 py-3 text-right font-medium text-slate-900">
                       {(row.totalQuantity || 0).toLocaleString('vi-VN')}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">
-                      {formatCurrency(row.totalAmount)}
+                    <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900">
+                      {row.type === 'OUTWARD' && row.totalAmount === 0 ? (
+                        <span className="text-xs italic text-slate-400">
+                          {row.reason || row.ticketType || '-'}
+                        </span>
+                      ) : (
+                        formatCurrency(row.totalAmount)
+                      )}
                     </td>
                     <td className="px-4 py-3 text-slate-600">{row.createdByName}</td>
                     <td className="px-4 py-3">

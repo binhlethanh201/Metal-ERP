@@ -20,6 +20,7 @@ import {
   cancelInwardInventory,
   cancelOutwardInventory,
 } from '../../services/inventoryService';
+import { getSupplierDetail } from '../../services/supplierService';
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import IconButton from '../../../../shared/components/IconButton';
@@ -91,6 +92,24 @@ export const TicketDetailModal = ({
           setDetail(data);
           setEditReason(data.reason || '');
           setEditNote(data.note || '');
+
+          // Tra cứu tên nhà cung cấp từ supplierId
+          if (type === 'INWARD' && data.supplierId) {
+            try {
+              const supRes = await getSupplierDetail(data.supplierId);
+              const supData = supRes?.data || supRes;
+              data._partyName = supData?.name || supData?.supplierName || '';
+            } catch {
+              data._partyName = '';
+            }
+          } else if (type === 'OUTWARD') {
+            // Tra cứu từ localStorage (lưu khi tạo phiếu xuất)
+            try {
+              data._partyName = (
+                localStorage.getItem(`outward_party_${data.ticketCode}`) || ''
+              ).replace(/^.*?:\s*/g, '');
+            } catch {} // eslint-disable-line no-empty
+          }
         }
       } catch (error) {
         notifyRef.current &&
@@ -313,10 +332,20 @@ export const TicketDetailModal = ({
               {type === 'OUTWARD' && (
                 <div className="sm:col-span-4">
                   <span className="block text-xs font-semibold uppercase text-slate-500">
-                    Đối tượng xuất
+                    Đối tượng
                   </span>
                   <div className="mt-1 font-semibold text-slate-800">
-                    {detail.targetName || detail.customerName || detail.partnerName || '---'}
+                    {detail._partyName || '---'}
+                  </div>
+                </div>
+              )}
+              {type === 'INWARD' && (
+                <div className="sm:col-span-4">
+                  <span className="block text-xs font-semibold uppercase text-slate-500">
+                    Nhà cung cấp
+                  </span>
+                  <div className="mt-1 font-semibold text-slate-800">
+                    {detail._partyName || '---'}
                   </div>
                 </div>
               )}
@@ -400,7 +429,9 @@ export const TicketDetailModal = ({
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-600">
                       <th className="px-3 py-3">Mã hàng</th>
                       <th className="px-3 py-3">Tên sản phẩm</th>
+                      <th className="w-16 px-3 py-3 text-center">ĐVT</th>
                       {type === 'INWARD' && <th className="px-3 py-3 text-right">Đơn giá nhập</th>}
+                      {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Đơn giá</th>}
                       {isCompleted && (
                         <th className="px-3 py-3 text-right text-slate-500">Tồn trước</th>
                       )}
@@ -411,6 +442,7 @@ export const TicketDetailModal = ({
                         <th className="px-3 py-3 text-right text-green-700">Tồn sau</th>
                       )}
                       {type === 'INWARD' && <th className="px-3 py-3 text-right">Thành tiền</th>}
+                      {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Thành tiền</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -439,9 +471,17 @@ export const TicketDetailModal = ({
                             <td className="px-3 py-3 font-medium text-slate-800">
                               {item.productName || 'Sản phẩm'}
                             </td>
+                            <td className="px-3 py-3 text-center text-slate-600">
+                              {item.unit || item.Unit || item.unitName || item.UnitName || '---'}
+                            </td>
                             {type === 'INWARD' && (
                               <td className="px-3 py-3 text-right text-slate-600">
                                 {formatCurrency(item.costPrice)}
+                              </td>
+                            )}
+                            {type === 'OUTWARD' && (
+                              <td className="px-3 py-3 text-right text-slate-600">
+                                {formatCurrency(item.unitPrice || item.UnitPrice || 0)}
                               </td>
                             )}
                             {isCompleted && (
@@ -460,6 +500,13 @@ export const TicketDetailModal = ({
                             {type === 'INWARD' && (
                               <td className="px-3 py-3 text-right font-bold text-slate-900">
                                 {formatCurrency(qty * Number(item.costPrice || 0))}
+                              </td>
+                            )}
+                            {type === 'OUTWARD' && (
+                              <td className="px-3 py-3 text-right font-bold text-slate-900">
+                                {formatCurrency(
+                                  qty * Number(item.unitPrice || item.UnitPrice || 0)
+                                )}
                               </td>
                             )}
                           </tr>

@@ -10,14 +10,34 @@ const normalizeTransaction = (item, type) => {
     ticketCode: item?.ticketCode || '-',
     createdAt: item?.createdAt,
     partyName: isInward
-      ? item?.supplierName || item?.partyName || 'Nhà cung cấp lẻ'
-      : item?.customerName || item?.partyName || 'Khách hàng lẻ',
+      ? item?.supplierName ||
+        item?.SupplierName ||
+        item?.supplier?.supplierName ||
+        item?.supplier?.SupplierName ||
+        item?.supplier?.name ||
+        item?.Supplier?.Name ||
+        (typeof item?.supplier === 'string' ? item.supplier : null) ||
+        item?.partyName ||
+        'Nhà cung cấp lẻ'
+      : item?.customerName ||
+        item?.CustomerName ||
+        item?.customer?.customerName ||
+        item?.customer?.CustomerName ||
+        item?.customer?.name ||
+        item?.Customer?.Name ||
+        item?.targetName ||
+        item?.TargetName ||
+        item?.partnerName ||
+        item?.PartnerName ||
+        (typeof item?.customer === 'string' ? item.customer : null) ||
+        item?.partyName ||
+        'Khách hàng lẻ',
     itemCount: item?.items?.length || 0,
     totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
     totalAmount:
       item?.items?.reduce((sum, i) => {
         const qty = Number(i.quantity || 0);
-        const price = Number(i.costPrice || i.actualQuantity || 0);
+        const price = Number(i.costPrice || 0);
         return sum + qty * price;
       }, 0) || 0,
     createdByName: item?.userName || item?.createdByName || '-',
@@ -180,7 +200,11 @@ export const useInventoryTransactions = () => {
           ? await inventoryService.getInwardInventory(transaction.id)
           : await inventoryService.getOutwardInventory(transaction.id);
 
-      if (res?.success) {
+      // API có thể trả về { success, data } hoặc trực tiếp object
+      const rawData = res?.data || res;
+      if (rawData && (rawData.stockTicketId || rawData.ticketCode || rawData.items)) {
+        setSelectedTransaction(normalizeTransaction(rawData, transaction.type));
+      } else if (res?.success) {
         setSelectedTransaction(normalizeTransaction(res.data, transaction.type));
       }
     } catch (error) {

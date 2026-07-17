@@ -321,12 +321,12 @@ export const InventoryHistoryCard = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onReload(filters)}
+              onClick={handleResetFilter}
               disabled={isLoading}
               className="flex items-center gap-1.5"
             >
               <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-              Làm mới
+              Đặt lại
             </Button>
           )}
         </div>
