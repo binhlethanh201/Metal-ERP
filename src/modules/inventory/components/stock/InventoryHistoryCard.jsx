@@ -47,7 +47,6 @@ export const InventoryHistoryCard = ({
   onReload,
   onNotify,
   branches = [],
-  searchText = '',
 }) => {
   const [cancellingTicket, setCancellingTicket] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
