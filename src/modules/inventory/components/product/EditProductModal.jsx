@@ -327,96 +327,353 @@ const AttributeEditor = ({ f }) => (
 
 const UnitManagement = ({ f }) => (
   <div className="mb-8">
-    <h4 className="mb-1 text-lg font-bold text-slate-900">Đơn vị tính</h4>
-    <p className="mb-6 text-sm text-slate-500">Thêm đơn vị bán hoặc nhập như chai, lốc, thùng.</p>
-
-    <div className="mb-6 flex flex-wrap items-end gap-5">
-      <div className="min-w-[200px] flex-1">
-        <Input
-          label="Tên đơn vị cơ bản"
-          placeholder="Ví dụ: chai"
-          value={f.form.baseUnit?.name || ''}
-          onChange={(e) =>
-            f.handleChange('baseUnit', { ...(f.form.baseUnit || {}), name: e.target.value })
-          }
-        />
+    <div className="mb-6 flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+        <Icon name="inventory_2" size={20} />
       </div>
-      <div className="w-40">
-        <Input
-          label="Giá bán"
-          className="text-right"
-          value={fmtMoney(f.form.baseUnit?.price || 0)}
-          onChange={(e) =>
-            f.handleChange('baseUnit', {
-              ...(f.form.baseUnit || {}),
-              price: Number(e.target.value.replaceAll('.', '').replaceAll(',', '')) || 0,
-            })
-          }
-        />
-      </div>
-      <div className="flex items-center space-x-2 pb-3">
-        <Toggle
-          checked={!!f.form.baseUnit?.directSale}
-          onChange={(checked) =>
-            f.handleChange('baseUnit', { ...(f.form.baseUnit || {}), directSale: checked })
-          }
-        />
-        <label className="cursor-pointer text-sm text-slate-700">Bán trực tiếp</label>
+      <div>
+        <h4 className="text-lg font-bold text-slate-900">Đơn vị tính</h4>
+        <p className="text-sm text-slate-500">
+          Quản lý đơn vị cơ bản và đơn vị quy đổi để bán hàng linh hoạt
+        </p>
       </div>
     </div>
 
-    {(f.form.conversionUnits || []).length > 0 && (
-      <div className="mb-6 border-t border-slate-200" />
-    )}
-    {(f.form.conversionUnits || []).length > 0 && (
-      <div className="mb-6 space-y-3">
-        <h5 className="text-sm font-semibold text-slate-700">Đơn vị quy đổi</h5>
-        {(f.form.conversionUnits || []).map((unit) => (
-          <div
-            key={unit.id}
-            className="flex flex-wrap items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
-          >
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium text-slate-700">1</span>
-              <span className="font-semibold text-slate-900">{unit.name}</span>
-              <span className="font-semibold text-slate-600">=</span>
-              <span className="font-medium text-slate-700">{unit.rate || unit.convertValue}</span>
-              <span className="font-semibold text-slate-900">{f.form.baseUnit?.name || 'Cái'}</span>
-            </div>
-            <div className="flex-1" />
-            <div className="text-right text-sm font-medium text-slate-700">
-              {unit.price
-                ? fmtMoney(unit.price)
-                : fmtMoney(
-                    (Number(f.form.baseUnit?.price) || 0) *
-                      (Number(unit.rate || unit.convertValue) || 1)
-                  )}{' '}
-              đ
-            </div>
-            <div className="flex items-center gap-2">
-              <Toggle
-                checked={unit.directSale !== false}
-                onChange={(checked) => f.updateConversionUnit(unit.id, 'directSale', checked)}
-              />
-              <span className="text-sm text-slate-600">Bán</span>
-            </div>
-            <IconButton
-              icon={({ size }) => <Icon name="delete" size={size} />}
-              variant="danger"
-              onClick={() => f.removeConversionUnit(unit.id)}
+    {/* Đơn vị cơ bản */}
+    <div className="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+            1
+          </span>
+          <span className="text-sm font-semibold text-slate-700">Đơn vị cơ bản</span>
+        </div>
+      </div>
+      <div className="p-5">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[200px] flex-1">
+            <Input
+              label="Tên đơn vị"
+              placeholder="Ví dụ: Cái, Chai, Kg"
+              value={f.form.baseUnit?.name || ''}
+              onChange={(e) =>
+                f.handleChange('baseUnit', { ...(f.form.baseUnit || {}), name: e.target.value })
+              }
             />
           </div>
-        ))}
+          <div className="w-48">
+            <Input
+              label="Giá bán"
+              className="text-right"
+              value={fmtMoney(f.form.baseUnit?.price || 0)}
+              onChange={(e) =>
+                f.handleChange('baseUnit', {
+                  ...(f.form.baseUnit || {}),
+                  price: Number(e.target.value.replaceAll('.', '').replaceAll(',', '')) || 0,
+                })
+              }
+            />
+          </div>
+          <div className="flex items-center gap-2 pb-3">
+            <Toggle
+              checked={!!f.form.baseUnit?.directSale}
+              onChange={(checked) =>
+                f.handleChange('baseUnit', { ...(f.form.baseUnit || {}), directSale: checked })
+              }
+            />
+            <label className="cursor-pointer text-sm font-medium text-slate-700">
+              Cho phép bán lẻ
+            </label>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-400">
+          Đây là đơn vị nhỏ nhất, dùng để quy đổi các đơn vị khác (ví dụ: 1 thùng = 12 cái)
+        </p>
       </div>
-    )}
+    </div>
 
-    <Button
-      variant="outline"
-      onClick={() => f.setAddConversionUnitModal(true)}
-      className="flex items-center gap-1"
+    {/* Đơn vị quy đổi */}
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+            2
+          </span>
+          <span className="text-sm font-semibold text-slate-700">Đơn vị quy đổi</span>
+          {(f.form.conversionUnits || []).length > 0 && (
+            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+              {f.form.conversionUnits.length} đơn vị
+            </span>
+          )}
+        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => f.setAddConversionUnitModal(true)}
+          className="flex items-center gap-1.5"
+        >
+          <Icon name="add" size={16} /> Thêm đơn vị
+        </Button>
+      </div>
+
+      <div className="p-5">
+        {(f.form.conversionUnits || []).length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full min-w-max text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Đơn vị
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Quy đổi
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Giá bán
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Bán
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Xóa
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {(f.form.conversionUnits || []).map((unit) => (
+                  <tr key={unit.id} className="transition-colors hover:bg-blue-50/50">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-800">
+                        {unit.name}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      1 <span className="font-semibold text-slate-900">{unit.name}</span>
+                      <span className="mx-1.5 text-slate-300">=</span>
+                      <span className="font-semibold text-slate-900">
+                        {unit.rate || unit.convertValue}
+                      </span>{' '}
+                      <span className="text-slate-500">{f.form.baseUnit?.name || 'Cái'}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-semibold text-slate-900">
+                        {unit.price
+                          ? fmtMoney(unit.price)
+                          : fmtMoney(
+                              (Number(f.form.baseUnit?.price) || 0) *
+                                (Number(unit.rate || unit.convertValue) || 1)
+                            )}
+                      </span>
+                      <span className="ml-0.5 text-slate-400">₫</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center">
+                        <Toggle
+                          checked={unit.directSale !== false}
+                          onChange={(checked) =>
+                            f.updateConversionUnit(unit.id, 'directSale', checked)
+                          }
+                        />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Xóa đơn vị "${unit.name}"?`)) {
+                            f.removeConversionUnit(unit.id);
+                          }
+                        }}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        title={`Xóa đơn vị ${unit.name}`}
+                      >
+                        <Icon name="delete" size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+              <Icon name="add" size={24} className="text-slate-300" />
+            </div>
+            <p className="text-sm font-medium text-slate-600">Chưa có đơn vị quy đổi</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Thêm đơn vị như thùng, lốc, bộ để bán theo nhiều quy cách
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => f.setAddConversionUnitModal(true)}
+              className="mt-4 flex items-center gap-1.5"
+            >
+              <Icon name="add" size={14} /> Thêm đơn vị đầu tiên
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* Modal thêm đơn vị quy đổi */}
+    <Modal
+      isOpen={f.addConversionUnitModal}
+      onClose={() => f.setAddConversionUnitModal(false)}
+      title="Thêm đơn vị quy đổi"
+      size="md"
+      footer={
+        <>
+          <Button variant="secondary" onClick={() => f.setAddConversionUnitModal(false)}>
+            Bỏ qua
+          </Button>
+          <Button variant="primary" onClick={f.addConversionUnitHandler}>
+            Thêm
+          </Button>
+        </>
+      }
     >
-      <Icon name="add" size={18} /> Thêm đơn vị
-    </Button>
+      <div className="space-y-5">
+        {/* Tên đơn vị */}
+        <Input
+          label="Tên đơn vị"
+          placeholder="Ví dụ: lốc, thùng"
+          value={f.newConversionUnit.name || ''}
+          onChange={(e) => f.setNewConversionUnit({ ...f.newConversionUnit, name: e.target.value })}
+          autoFocus
+        />
+
+        {/* Preview công thức */}
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm font-medium text-blue-900">Công thức quy đổi:</p>
+          <p className="mt-1 text-base">
+            <span className="font-semibold">1 {f.newConversionUnit.name || '[tên đơn vị]'}</span>
+            <span className="mx-2">=</span>
+            <span className="font-semibold">{f.newConversionUnit.convertValue || '?'}</span>
+            <span className="ml-2">
+              {f.newConversionUnit.convertFrom || f.form.baseUnit?.name || '[đơn vị gốc]'}
+            </span>
+          </p>
+        </div>
+
+        {/* Giá trị quy đổi + Đơn vị gốc */}
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Giá trị quy đổi"
+            placeholder={`Ví dụ: 4, 20`}
+            type="text"
+            inputMode="numeric"
+            value={f.newConversionUnit.convertValue || ''}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/\D/g, '');
+              f.setNewConversionUnit({
+                ...f.newConversionUnit,
+                convertValue: raw,
+                rate: raw,
+              });
+            }}
+          />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Đơn vị quy đổi từ
+            </label>
+            <select
+              value={f.newConversionUnit.convertFrom || ''}
+              onChange={(e) =>
+                f.setNewConversionUnit({ ...f.newConversionUnit, convertFrom: e.target.value })
+              }
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Chọn đơn vị</option>
+              {f.form.baseUnit?.name && (
+                <option value={f.form.baseUnit.name}>{f.form.baseUnit.name}</option>
+              )}
+              {(f.form.conversionUnits || []).map((u) => (
+                <option key={u.id || u.name} value={u.name}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Giá bán */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">Giá bán</label>
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={f.newConversionUnit.price ? fmtMoney(Number(f.newConversionUnit.price)) : ''}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, '');
+                f.setNewConversionUnit({
+                  ...f.newConversionUnit,
+                  price: raw ? Number(raw) : '',
+                });
+              }}
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-8 text-right text-base font-semibold text-slate-900 transition-colors placeholder:text-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+              ₫
+            </span>
+          </div>
+          {/* Giá đề xuất tự tính */}
+          {(() => {
+            const base = Number(f.form.baseUnit?.price) || 0;
+            const cv = Number(f.newConversionUnit.convertValue) || 0;
+            const from = f.newConversionUnit.convertFrom || f.form.baseUnit?.name || '';
+            if (!base || !cv || !from) return null;
+            const unitsByName = (f.form.conversionUnits || []).reduce((acc, u) => {
+              acc[u.name] = u;
+              return acc;
+            }, {});
+            const computeMul = (un, visited = new Set()) => {
+              if (!un || visited.has(un)) return null;
+              if (un === f.form.baseUnit?.name) return 1;
+              const u = unitsByName[un];
+              if (!u) return null;
+              visited.add(un);
+              const pm = computeMul(u.convertFrom, visited);
+              return pm == null ? null : Number(u.convertValue) * pm;
+            };
+            const mult =
+              from === f.form.baseUnit?.name
+                ? cv
+                : (() => {
+                    const pm = computeMul(from);
+                    return pm == null ? null : cv * pm;
+                  })();
+            if (!mult) return null;
+            const suggestPrice = base * mult;
+            return (
+              <p className="mt-1.5 text-xs text-emerald-600">
+                ✦ Giá đề xuất: <span className="font-semibold">{fmtMoney(suggestPrice)}</span>
+                <span className="ml-0.5">₫</span>
+              </p>
+            );
+          })()}
+        </div>
+
+        {/* Checkbox bán */}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="direct-sell"
+            checked={f.newConversionUnit.directSale || false}
+            onChange={(e) =>
+              f.setNewConversionUnit({ ...f.newConversionUnit, directSale: e.target.checked })
+            }
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label htmlFor="direct-sell" className="cursor-pointer text-sm text-slate-700">
+            Cho phép bán đơn vị này
+          </label>
+        </div>
+      </div>
+    </Modal>
   </div>
 );
 
@@ -922,80 +1179,6 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
           value={f.editAttrValue}
           onChange={(e) => f.setEditAttrValue(e.target.value)}
         />
-      </Modal>
-
-      <Modal
-        isOpen={f.addConversionUnitModal}
-        onClose={() => f.setAddConversionUnitModal(false)}
-        title="Thêm đơn vị quy đổi"
-        size="md"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => f.setAddConversionUnitModal(false)}>
-              Bỏ qua
-            </Button>
-            <Button variant="primary" onClick={f.addConversionUnitHandler}>
-              Thêm
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <Input
-            label="Tên đơn vị"
-            placeholder="Ví dụ: lốc, thùng"
-            value={f.newConversionUnit.name || ''}
-            onChange={(e) =>
-              f.setNewConversionUnit({ ...f.newConversionUnit, name: e.target.value })
-            }
-            autoFocus
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Giá trị quy đổi (Rate)"
-              type="number"
-              value={f.newConversionUnit.rate || f.newConversionUnit.convertValue || ''}
-              onChange={(e) =>
-                f.setNewConversionUnit({
-                  ...f.newConversionUnit,
-                  rate: e.target.value,
-                  convertValue: e.target.value,
-                })
-              }
-              min="1"
-            />
-            <Input
-              label="Giá bán"
-              type="number"
-              value={f.newConversionUnit.price || ''}
-              onChange={(e) =>
-                f.setNewConversionUnit({ ...f.newConversionUnit, price: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Đơn vị gốc</label>
-            <select
-              value={f.newConversionUnit.convertFrom || ''}
-              onChange={(e) =>
-                f.setNewConversionUnit({ ...f.newConversionUnit, convertFrom: e.target.value })
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
-            >
-              <option value="">
-                Chọn đơn vị gốc (Mặc định: {f.form.baseUnit?.name || 'Chưa có'})
-              </option>
-              {f.form.baseUnit?.name && (
-                <option value={f.form.baseUnit.name}>{f.form.baseUnit.name}</option>
-              )}
-              {(f.form.conversionUnits || []).map((u) => (
-                <option key={u.id || u.name} value={u.name}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
       </Modal>
     </>
   );
