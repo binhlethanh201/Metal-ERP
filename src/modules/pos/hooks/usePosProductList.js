@@ -1,9 +1,11 @@
 /**
  * Hook lấy danh sách sản phẩm cho POS từ API /pos/products
+ * Kết hợp với Inventory API để lọc sản phẩm đã ngừng hoạt động.
  * Backend: http://localhost:5100/api/pos/products
  */
 import { useState, useEffect, useCallback } from 'react';
 import { getPosProducts } from '../services/posService';
+import { getProducts } from '../../../modules/inventory/services/productService';
 
 // Mock data fallback khi API không hoạt động
 const MOCK_POS_PRODUCTS = [
@@ -74,6 +76,15 @@ const normalizePosProduct = (p) => {
     availableStock: parseFloat(p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0),
     categoryName: p.CategoryName ?? p.categoryName ?? p.category ?? '',
     image: p.ImageUrl ?? p.imageUrl ?? p.image ?? '',
+    // Trạng thái kinh doanh: active/inactive (từ Inventory hoặc trường Status của API)
+    productStatus:
+      p.ProductStatus ??
+      p.productStatus ??
+      p.IsActive ??
+      p.isActive ??
+      p.Status ??
+      p.status ??
+      'active',
     status:
       (p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0
         ? 'Còn hàng'
@@ -98,24 +109,62 @@ export const usePosProductList = (searchTerm = '') => {
     setLoading(true);
     setError(null);
     try {
+      // 1. Lấy sản phẩm từ POS API
       const response = await getPosProducts(term ? { search: term } : {});
-      // API trả PascalCase Items - hỗ trợ cả lowercase
       const items = Array.isArray(response)
         ? response
         : (response?.Items ?? response?.items ?? response?.data ?? []);
 
       if (items.length > 0) {
-        setProducts(items.map(normalizePosProduct));
+        const normalized = items.map(normalizePosProduct);
+
+        // 2. Lấy danh sách ID sản phẩm còn hoạt động từ Inventory API
+        try {
+          const invResponse = await getProducts({ pageSize: 1000, status: 'active' });
+          const invItems =
+            invResponse?.data?.items ??
+            invResponse?.Items ??
+            invResponse?.items ??
+            invResponse?.data ??
+            [];
+          const activeIds = new Set(
+            (Array.isArray(invItems) ? invItems : [])
+              .filter((p) => {
+                const s =
+                  p.productStatus ??
+                  p.ProductStatus ??
+                  p.status ??
+                  p.Status ??
+                  p.isActive ??
+                  p.IsActive ??
+                  'active';
+                return String(s) !== 'inactive' && String(s) !== 'false' && s !== false;
+              })
+              .map((p) => String(p.id ?? p.productId ?? p.ProductId ?? ''))
+              .filter(Boolean)
+          );
+
+          if (activeIds.size > 0) {
+            setProducts(normalized.filter((p) => activeIds.has(String(p.productId))));
+          } else {
+            setProducts(normalized.filter((p) => p.productStatus !== 'inactive'));
+          }
+        } catch (e) {
+          console.warn('Không thể lấy trạng thái từ Inventory, dùng filter mặc định:', e);
+          setProducts(normalized.filter((p) => p.productStatus !== 'inactive'));
+        }
         setIsMock(false);
       } else {
-        setProducts(MOCK_POS_PRODUCTS.map(normalizePosProduct));
-        setIsMock(true);
+        // API trả về danh sách rỗng (không có sản phẩm nào) -> không fallback về mock data
+        setProducts([]);
+        setIsMock(false);
       }
     } catch (err) {
       console.error('Lỗi lấy sản phẩm POS:', err);
       setError(err.message || 'Không thể tải sản phẩm');
-      setProducts(MOCK_POS_PRODUCTS.map(normalizePosProduct));
-      setIsMock(true);
+      setProducts(
+        MOCK_POS_PRODUCTS.map(normalizePosProduct).filter((p) => p.productStatus !== 'inactive')
+      );
     } finally {
       setLoading(false);
     }
