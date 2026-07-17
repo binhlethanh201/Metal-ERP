@@ -123,7 +123,7 @@ export const StockExport = () => {
   const loadData = async (filterParams = {}) => {
     setIsLoading(true);
     try {
-      const queryParams = { pageNumber: 1, pageSize: 50, ...filterParams };
+      const queryParams = { pageNumber: 1, pageSize: 100, ...filterParams };
 
       // Load sản phẩm - độc lập với lịch sử phiếu
       try {
