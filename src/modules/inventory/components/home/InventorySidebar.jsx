@@ -175,9 +175,10 @@ const InventorySidebar = ({ open = true, onToggle }) => {
       <button
         type="button"
         onClick={onToggle}
-        className={`z-50 flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full border border-slate-200 bg-white shadow-md transition-all hover:bg-slate-50 ${
+        className={`inventory-sidebar-toggle z-50 flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full border border-slate-200 bg-white shadow-md transition-all hover:bg-slate-50 ${
           open ? '-ml-4 mr-1' : 'ml-2'
         }`}
+        aria-label="Toggle sidebar"
       >
         <svg
           className={`h-4 w-4 text-slate-500 transition-transform ${open ? '' : 'rotate-180'}`}

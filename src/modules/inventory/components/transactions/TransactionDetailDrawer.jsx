@@ -39,6 +39,24 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
     };
   }, [isOpen, onClose]);
 
+  // Khi Drawer mở, làm mờ/khóa nút thu gọn sidebar để không che UI chính
+  useEffect(() => {
+    try {
+      const toggleBtn = document.querySelector('.inventory-sidebar-toggle');
+      if (!toggleBtn) return;
+      if (isOpen) {
+        toggleBtn.classList.add('opacity-30', 'pointer-events-none');
+      } else {
+        toggleBtn.classList.remove('opacity-30', 'pointer-events-none');
+      }
+      return () => {
+        toggleBtn.classList.remove('opacity-30', 'pointer-events-none');
+      };
+    } catch (e) {
+      // ignore
+    }
+  }, [isOpen]);
+
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
