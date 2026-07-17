@@ -15,6 +15,8 @@ const StaffManagement = () => {
     detailLoading,
     search,
     setSearch,
+    statusFilter,
+    setStatusFilter,
     page,
     setPage,
     paginationMeta,
@@ -106,6 +108,31 @@ const StaffManagement = () => {
           }}
           icon={<Icon name="search" size={18} />}
         />
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1">
+        {[
+          { key: 'active', label: 'Đang hoạt động' },
+          { key: 'all', label: 'Tất cả' },
+          { key: 'deleted', label: 'Đã ẩn' },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => {
+              setStatusFilter(tab.key);
+              setPage(1);
+            }}
+            className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+              statusFilter === tab.key
+                ? 'bg-white text-blue-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <StaffTable

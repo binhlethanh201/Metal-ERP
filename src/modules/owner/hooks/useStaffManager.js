@@ -7,6 +7,7 @@ import {
   updateStaff,
   toggleStaffStatus,
   deleteStaff,
+  checkStaffRelations,
 } from '../services/staffService';
 
 // --- Helper: lấy userId hiện tại từ JWT lưu trong storage (key 'authToken', khớp apiClient.js) ---
@@ -50,13 +51,14 @@ export const useStaffManager = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [paginationMeta, setPaginationMeta] = useState({ totalCount: 0, totalPages: 1 });
 
   const fetchStaffs = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await getStaffs({ page, pageSize, search });
+      const response = await getStaffs({ page, pageSize, search, status: statusFilter });
       if (response?.success && response?.data) {
         setStaffs(response.data.items || []);
         setPaginationMeta({
@@ -69,7 +71,7 @@ export const useStaffManager = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search]);
+  }, [page, pageSize, search, statusFilter]);
 
   const fetchAvailablePermissions = useCallback(async () => {
     try {
@@ -145,30 +147,48 @@ export const useStaffManager = () => {
   };
 
   const handleDeleteStaff = async (id) => {
-    if (
-      !window.confirm(
-        'CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn nhân viên này? Hành động này không thể hoàn tác.'
-      )
-    ) {
+    // Bước 1: Gọi API check-relations
+    let checkResult;
+    try {
+      checkResult = await checkStaffRelations(id);
+    } catch (err) {
+      alert(formatApiError(err, 'Không thể kiểm tra dữ liệu liên quan đến nhân viên.'));
       return;
     }
+
+    const relations = checkResult?.data;
+    let confirmed = true;
+
+    // Bước 2: Nếu có quan hệ dữ liệu, hiển thị popup cảnh báo
+    if (relations?.hasRelations) {
+      const warnings = [];
+      if (relations.invoiceCount > 0) warnings.push(`${relations.invoiceCount} hóa đơn`);
+      if (relations.orderCount > 0) warnings.push(`${relations.orderCount} đơn hàng`);
+      if (relations.returnOrderCount > 0)
+        warnings.push(`${relations.returnOrderCount} phiếu trả hàng`);
+      if (relations.purchaseOrderCount > 0)
+        warnings.push(`${relations.purchaseOrderCount} đơn mua hàng`);
+      if (relations.shiftCount > 0) warnings.push(`${relations.shiftCount} ca làm việc`);
+      if (relations.stockTicketCount > 0) warnings.push(`${relations.stockTicketCount} phiếu kho`);
+
+      confirmed = window.confirm(
+        `Nhân viên này có liên kết với: ${warnings.join(', ')}.\nNếu xóa, các dữ liệu liên quan sẽ bị ảnh hưởng. Bạn có chắc muốn xóa?`
+      );
+    } else {
+      confirmed = window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?');
+    }
+
+    if (!confirmed) return;
+
+    // Bước 3: Thực hiện xóa mềm
     try {
       const response = await deleteStaff(id);
       if (response?.success) {
-        alert(response.message || 'Đã xóa hoàn toàn nhân viên ra khỏi hệ thống.');
+        alert(response.message || 'Đã xóa nhân viên.');
         fetchStaffs();
       }
     } catch (err) {
-      if (err?.status === 400 || err?.data?.errors) {
-        alert(
-          formatApiError(
-            err,
-            'Không thể xóa vì nhân viên đã phát sinh dữ liệu nghiệp vụ. Khuyên dùng: Chuyển sang chức năng "Vô hiệu hóa".'
-          )
-        );
-      } else {
-        alert(formatApiError(err, 'Lỗi khi xóa nhân viên.'));
-      }
+      alert(formatApiError(err, 'Lỗi khi xóa nhân viên.'));
     }
   };
 
@@ -183,6 +203,8 @@ export const useStaffManager = () => {
     pageSize,
     search,
     setSearch,
+    statusFilter,
+    setStatusFilter,
     paginationMeta,
     currentUserId,
     fetchStaffDetail,

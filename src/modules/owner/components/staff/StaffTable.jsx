@@ -29,6 +29,13 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
       ),
     },
     {
+      key: 'branch',
+      header: 'Chi nhánh',
+      render: (_, staff) => (
+        <div className="font-medium text-slate-700">{staff.branchName || '---'}</div>
+      ),
+    },
+    {
       key: 'status',
       header: 'Trạng thái',
       render: (_, staff) => {
@@ -64,7 +71,7 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
               space="admin"
               disabled={isSelf}
               onClick={() => !isSelf && onDelete(staff.userId)}
-              title={isSelf ? 'Không thể tự xóa' : 'Xóa vĩnh viễn'}
+              title={isSelf ? 'Không thể tự xóa' : 'Xóa nhân viên'}
             />
           </div>
         );
