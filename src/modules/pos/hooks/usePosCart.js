@@ -74,7 +74,7 @@ export const usePosCart = (initialItems = []) => {
       else displayUnit = `${unitName} (1/${Math.round(1 / convertValue)} ${baseUnit})`; // Mét (1/100 Cuộn)
 
       // Lấy stock (API trả về đã là base unit)
-      const baseStock = product.availableStock ?? product.stock ?? 0;
+      const baseStock = product.baseStock ?? product.availableStock ?? product.stock ?? 0;
 
       // === FIX: Kiểm tra stock overdraw cho cùng productId ===
       // Tính base units đã sử dụng bởi các items khác cùng productId (loại trừ existed)
@@ -127,7 +127,7 @@ export const usePosCart = (initialItems = []) => {
       const convertValue = selectedUnit?.convertValue || 1;
       const price = selectedUnit?.price ?? product.price;
       const baseUnit = product.unit || 'Cái';
-      const baseStock = product.availableStock ?? product.stock ?? 0;
+      const baseStock = product.baseStock ?? product.availableStock ?? product.stock ?? 0;
 
       if (existed) {
         // Nếu đã tồn tại, cập nhật quantity về giá trị mới (thay vì cộng dồn)
