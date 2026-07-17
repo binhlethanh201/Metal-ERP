@@ -58,7 +58,11 @@ export const useStaffManager = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await getStaffs({ page, pageSize, search, status: statusFilter });
+      let isActiveParam = undefined;
+      if (statusFilter === 'active') isActiveParam = true;
+      else if (statusFilter === 'deleted') isActiveParam = false;
+
+      const response = await getStaffs({ page, pageSize, search, isActive: isActiveParam });
       if (response?.success && response?.data) {
         setStaffs(response.data.items || []);
         setPaginationMeta({

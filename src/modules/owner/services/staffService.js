@@ -5,12 +5,12 @@ import ENDPOINTS from '../../../services/endpoints';
  * Lấy danh sách nhân viên do Owner hiện tại tạo (CreatedBy == ownerId)
  * @param {Object} params - { page = 1, pageSize = 20, search }
  */
-export const getStaffs = ({ page = 1, pageSize = 20, search = '', status = '' } = {}) => {
+export const getStaffs = ({ page = 1, pageSize = 20, search = '', isActive } = {}) => {
   const queryParams = new URLSearchParams();
   if (page) queryParams.set('page', page);
   if (pageSize) queryParams.set('pageSize', pageSize);
   if (search && search.trim() !== '') queryParams.set('search', search.trim());
-  if (status) queryParams.set('status', status);
+  if (isActive !== undefined && isActive !== null) queryParams.set('isActive', isActive);
 
   const queryString = queryParams.toString();
   return apiGet(`${ENDPOINTS.OWNER.STAFFS}${queryString ? `?${queryString}` : ''}`);

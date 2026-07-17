@@ -166,6 +166,7 @@ export const ENDPOINTS = {
     CREATE_PAYMENT: (invoiceId) => `/pos/invoices/${invoiceId}/payments`,
     GET_PAYMENT_QR: (paymentId) => `/pos/payments/${paymentId}/qr`,
     CONFIRM_TRANSFER: (paymentId) => `/pos/payments/${paymentId}/confirm-transfer`,
+    CANCEL_PAYMENT: (paymentId) => `/pos/payments/${paymentId}/cancel`,
 
     // --- Shift Management ---
     START_SHIFT: '/pos/shifts/start',

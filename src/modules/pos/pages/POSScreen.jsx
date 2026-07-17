@@ -24,6 +24,7 @@ import {
   createPayment,
   finalizeInvoice,
   confirmTransfer,
+  cancelPayment,
 } from '../services/posService';
 
 const PAYMENT_LABELS = { cash: 'Tiền mặt', transfer: 'Chuyển khoản' };
@@ -60,7 +61,7 @@ const mapToPosProduct = (p) => {
 };
 
 const POSScreen = () => {
-  const { search, setSearch, showNotice, quickAddCust, setDrafts, setFooterInfo } =
+  const { search, setSearch, showNotice, quickAddCust, drafts, setDrafts, setFooterInfo } =
     useOutletContext();
   const location = useLocation();
   const draftData = location.state?.draft;
@@ -853,6 +854,21 @@ const POSScreen = () => {
     }
   };
 
+  const handleRefreshQR = async () => {
+    if (!qrData || !pendingInvoice) return;
+    try {
+      setConfirmLoading(true);
+      await cancelPayment(qrData.paymentId);
+      // Gọi lại tạo mới sau khi huỷ thành công
+      await handleOpenQRPayment(pendingInvoice.invoiceId, qrData.amount, pendingInvoice.invoiceCode);
+    } catch (err) {
+      console.error('[POS] Refresh QR error:', err);
+      showNotice('Lỗi làm mới QR: ' + (err.message || 'Không thể tạo mã mới'));
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="flex flex-1 gap-2 overflow-hidden p-3">
@@ -873,6 +889,10 @@ const POSScreen = () => {
               onSaveDraft={() => {
                 if (cart.cart.length === 0) {
                   showNotice('Giỏ hàng trống, không có gì để lưu');
+                  return;
+                }
+                if (drafts.length >= 20) {
+                  showNotice('Số lượng đơn hàng nháp đã đạt giới hạn tối đa. Vui lòng xử lý đơn cũ trước khi lưu thêm.');
                   return;
                 }
                 const draft = {
@@ -961,7 +981,8 @@ const POSScreen = () => {
         onClose={() => setShowQRModal(false)}
         qrData={qrData}
         onConfirm={handleQRConfirm}
-        loading={confirmLoading}
+        onRefresh={handleRefreshQR}
+        loading={confirmLoading || paying}
       />
 
       <SuccessModal

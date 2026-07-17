@@ -54,8 +54,6 @@ export const InventoryHistoryCard = ({
   const [viewingId, setViewingId] = useState(null);
   const [searchText, setSearchText] = useState('');
 
-  const todayString = new Date().toISOString().split('T')[0];
-
 
   const [filters, setFilters] = useState({
     status: '',

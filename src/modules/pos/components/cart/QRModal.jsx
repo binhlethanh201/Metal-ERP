@@ -10,7 +10,7 @@ import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
-const QRModal = ({ isOpen, onClose, qrData, onConfirm, loading }) => {
+const QRModal = ({ isOpen, onClose, qrData, onConfirm, onRefresh, loading }) => {
   if (!qrData) return null;
 
   const { qrImageBase64, transactionContent, amount, bankAccountNumber, bankName, paymentId } =
@@ -31,8 +31,13 @@ const QRModal = ({ isOpen, onClose, qrData, onConfirm, loading }) => {
       footer={
         <div className="flex gap-2">
           <Button variant="secondary" onClick={onClose}>
-            Đóng
+            Đóng/Hủy
           </Button>
+          {onRefresh && (
+            <Button variant="outline" onClick={onRefresh} loading={loading}>
+              Làm mới mã
+            </Button>
+          )}
           <Button variant="success" onClick={handleConfirm} loading={loading}>
             Xác nhận đã nhận tiền
           </Button>

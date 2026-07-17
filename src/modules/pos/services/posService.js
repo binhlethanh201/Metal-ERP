@@ -91,6 +91,10 @@ export const confirmTransfer = (paymentId) => {
   return apiPosPost(ENDPOINTS.POS.CONFIRM_TRANSFER(paymentId), {});
 };
 
+export const cancelPayment = (paymentId) => {
+  return apiPosPost(ENDPOINTS.POS.CANCEL_PAYMENT(paymentId), {});
+};
+
 // ============ Shift Management ============
 // POST /pos/shifts/start → ShiftDto (status = OPEN)
 // GET  /pos/shifts/:id/summary → ShiftDto
