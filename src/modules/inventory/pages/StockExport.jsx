@@ -539,6 +539,14 @@ export const StockExport = () => {
                   onChange={(e) => {
                     setTargetType(e.target.value);
                     setTargetName('');
+                    // Đồng bộ lý do xuất kho theo đối tượng
+                    const targetReasonMap = {
+                      'Khách hàng': 'Xuất bán hàng',
+                      'Nhà cung cấp': 'Trả hàng nhà cung cấp',
+                      'Nội bộ': 'Xuất nội bộ / Điều chuyển',
+                    };
+                    const mapped = targetReasonMap[e.target.value];
+                    if (mapped && reasonType !== '__other__') setReasonType(mapped);
                   }}
                 >
                   {TARGET_OPTIONS.map((opt) => (
@@ -613,7 +621,7 @@ export const StockExport = () => {
                     'Xuất nội bộ / Điều chuyển': 'Nội bộ',
                   };
                   const mapped = reasonTargetMap[e.target.value];
-                  if (mapped) {
+                  if (mapped && targetType !== '__other__') {
                     setTargetType(mapped);
                     setTargetName('');
                   }
