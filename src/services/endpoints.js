@@ -28,6 +28,7 @@ export const ENDPOINTS = {
     STAFF_UNASSIGN_BRANCH: (id, branchId) => `/api/owner/staffs/${id}/unassign-branch/${branchId}`,
     STAFF_TOGGLE_STATUS: (id) => `/api/owner/staffs/${id}/toggle-status`,
     STAFF_AVAILABLE_PERMISSIONS: '/api/owner/staffs/available-permissions',
+    STAFF_CHECK_RELATIONS: (id) => `/api/owner/staffs/${id}/check-relations`,
 
     // Discount Tiers (Chiết khấu theo giá trị đơn hàng)
     ORDER_DISCOUNT_TIERS: '/api/order-discount-tiers',
@@ -47,6 +48,18 @@ export const ENDPOINTS = {
     DELETE_PRODUCT: (id) => `/api/Products/${id}`,
     TOGGLE_PRODUCT_STATUS: (id) => `/api/Products/${id}/toggle-status`,
     TOGGLE_PRODUCT_STATUS_BULK: '/api/Products/toggle-status-bulk',
+
+    // ================= Locations =================
+    GET_PRODUCT_LOCATIONS: '/api/products/locations',
+    CREATE_PRODUCT_LOCATION: '/api/products/locations',
+    RENAME_PRODUCT_LOCATION: '/api/products/locations',
+    DELETE_PRODUCT_LOCATION: (name) => `/api/products/locations/${encodeURIComponent(name)}`,
+
+    // ================= Attribute Types =================
+    GET_ATTRIBUTE_TYPES: '/api/products/attribute-types',
+    CREATE_ATTRIBUTE_TYPE: '/api/products/attribute-types',
+    UPDATE_ATTRIBUTE_TYPE: (id) => `/api/products/attribute-types/${id}`,
+    DELETE_ATTRIBUTE_TYPE: (id) => `/api/products/attribute-types/${id}`,
 
     // ================= Suppliers =================
     GET_SUPPLIERS: '/api/suppliers',

@@ -1,14 +1,11 @@
 /**
- * useProductAttributes - Quản lý thuộc tính sản phẩm + available attributes LS + modal toggles.
+ * useProductAttributes - Quản lý thuộc tính sản phẩm + available attributes từ API + modal toggles.
  */
-import { useState } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useState, useEffect } from 'react';
+import { getAttributeTypes, createAttributeType } from '../services/productService';
 
 export const useProductAttributes = (form, setForm) => {
-  const [availableAttributes, persistAvailableAttributes] = useLocalStorage('availableAttributes', [
-    'HÃNG',
-    'MAQUF',
-  ]);
+  const [availableAttributes, setAvailableAttributes] = useState([]);
   const [createAttrModalOpen, setCreateAttrModalOpen] = useState(false);
   const [newAttrName, setNewAttrName] = useState('');
   const [editAttrModalOpen, setEditAttrModalOpen] = useState(false);
@@ -16,10 +13,32 @@ export const useProductAttributes = (form, setForm) => {
   const [editAttrValue, setEditAttrValue] = useState('');
   const [editingAttrId, setEditingAttrId] = useState(null);
 
-  const addAvailableAttribute = (name) => {
+  // Load danh sách loại thuộc tính từ API
+  useEffect(() => {
+    getAttributeTypes()
+      .then((res) => {
+        if (res?.success && Array.isArray(res?.data)) {
+          setAvailableAttributes(res.data.map((item) => item.typeName));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const persistAvailableAttributes = (next) => {
+    const resolved = typeof next === 'function' ? next(availableAttributes) : next;
+    setAvailableAttributes(resolved);
+  };
+
+  const addAvailableAttribute = async (name) => {
     const n = (name || '').trim();
     if (!n) return;
-    persistAvailableAttributes((prev) => (prev.includes(n) ? prev : [...prev, n]));
+    // Optimistic update: thêm ngay vào local state
+    setAvailableAttributes((prev) => (prev.includes(n) ? prev : [...prev, n]));
+    try {
+      await createAttributeType(n);
+    } catch (err) {
+      console.error('Lỗi đồng bộ attribute type lên server:', err);
+    }
   };
 
   const addAttrRow = () => {

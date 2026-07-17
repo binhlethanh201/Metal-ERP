@@ -234,7 +234,7 @@ const ImageUploader = ({
 const AttributeEditor = ({ f }) => (
   <>
     <h4 className="mb-1 text-lg font-semibold text-slate-800">Thuộc tính</h4>
-    <p className="mb-5 text-sm text-slate-500">Thêm đặc điểm như hương vị, dung tích, màu sắc</p>
+    <p className="mb-5 text-sm text-slate-500">Thêm đặc điểm thuộc tính của sản phẩm</p>
     <div className="space-y-3">
       {(f.form.attributes || []).map((attr) => (
         <div
@@ -907,31 +907,23 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
               <div className="space-y-5">
                 <div className="grid grid-cols-2 gap-5">
                   <div className="space-y-1">
-                    <div className="mb-1 flex items-center justify-between">
-                      <label className="text-sm font-medium text-slate-700">Vị trí Kệ/Tủ</label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          f.setNewLocationName('');
-                          f.setCreateLocationModalOpen(true);
-                        }}
-                        className="text-sm font-semibold text-[#004785] hover:underline"
-                      >
-                        Tạo mới
-                      </button>
-                    </div>
-                    <select
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+                    <AutocompleteInput
+                      label="Vị trí Kệ/Tủ"
                       value={f.form.shelfLocation || ''}
-                      onChange={(e) => f.handleChange('shelfLocation', e.target.value)}
+                      onChange={(val) => f.handleChange('shelfLocation', val)}
+                      options={Array.isArray(f.locations) ? f.locations : []}
+                      placeholder="Tìm hoặc chọn vị trí..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        f.setNewLocationName('');
+                        f.setCreateLocationModalOpen(true);
+                      }}
+                      className="mt-1 text-sm font-semibold text-[#004785] hover:underline"
                     >
-                      <option value="">Chọn vị trí...</option>
-                      {(Array.isArray(f.locations) ? f.locations : []).map((loc) => (
-                        <option key={loc} value={loc}>
-                          {loc}
-                        </option>
-                      ))}
-                    </select>
+                      + Tạo vị trí mới
+                    </button>
                   </div>
                   <div className="space-y-1">
                     <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -1041,8 +1033,8 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
             </Button>
             <Button
               variant="primary"
-              onClick={() => {
-                f.saveNewLocation(f.newLocationName);
+              onClick={async () => {
+                await f.saveNewLocation(f.newLocationName);
                 f.setCreateLocationModalOpen(false);
                 f.setNewLocationName('');
               }}
@@ -1057,12 +1049,13 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
           required
           value={f.newLocationName}
           onChange={(e) => f.setNewLocationName(e.target.value)}
-          onKeyDown={(e) =>
-            e.key === 'Enter' &&
-            (f.saveNewLocation(f.newLocationName),
-            f.setCreateLocationModalOpen(false),
-            f.setNewLocationName(''))
-          }
+          onKeyDown={async (e) => {
+            if (e.key === 'Enter') {
+              await f.saveNewLocation(f.newLocationName);
+              f.setCreateLocationModalOpen(false);
+              f.setNewLocationName('');
+            }
+          }}
           autoFocus
         />
       </Modal>
@@ -1088,10 +1081,10 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
             </Button>
             <Button
               variant="primary"
-              onClick={() => {
+              onClick={async () => {
                 const name = (f.newAttrName || '').trim();
                 if (name) {
-                  f.addAvailableAttribute(name);
+                  await f.addAvailableAttribute(name);
                   if (f.editingAttrId) f.updateAttr(f.editingAttrId, 'name', name);
                 }
                 f.setCreateAttrModalOpen(false);

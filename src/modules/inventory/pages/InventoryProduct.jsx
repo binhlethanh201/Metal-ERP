@@ -6,6 +6,7 @@ import { useProductList } from '../hooks/useProductList';
 import { ProductFilterDrawer } from '../components/product/ProductFilterDrawer';
 import { ProductTable } from '../components/product/ProductTable';
 import { CategoryBrandManagerModal } from '../components/product/CategoryBrandManagerModal';
+import { LocationAttributeModal } from '../components/product/LocationAttributeModal';
 import { EditProductModal } from '../components/product/EditProductModal';
 
 export const ProductManagement = () => {
@@ -13,6 +14,7 @@ export const ProductManagement = () => {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [locationAttrModalOpen, setLocationAttrModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [initialEditTab, setInitialEditTab] = useState('info');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -175,7 +177,7 @@ export const ProductManagement = () => {
               onClick={() => setFilterDrawerOpen(true)}
               className="relative flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
             >
-              <Icon name="ListFilter" size={16} className="text-slate-500" />
+              <Icon name="Layers" size={16} className="text-slate-500" />
               Bộ lọc
               {activeFilterCount > 0 && (
                 <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#004785] px-1 text-[11px] font-bold text-white">
@@ -192,6 +194,14 @@ export const ProductManagement = () => {
             >
               <Icon name="Bookmark" className="text-sm text-slate-500" />
               Nhóm hàng & Thương hiệu
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              onClick={() => setLocationAttrModalOpen(true)}
+            >
+              <Icon name="location_on" className="text-sm text-slate-500" />
+              Vị trí & Thuộc tính
             </button>
             <button
               type="button"
@@ -290,6 +300,12 @@ export const ProductManagement = () => {
       <CategoryBrandManagerModal
         open={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
+        onSuccess={() => refetch()}
+      />
+
+      <LocationAttributeModal
+        open={locationAttrModalOpen}
+        onClose={() => setLocationAttrModalOpen(false)}
         onSuccess={() => refetch()}
       />
     </div>
