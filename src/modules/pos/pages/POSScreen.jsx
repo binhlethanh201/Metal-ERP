@@ -194,13 +194,8 @@ const POSScreen = () => {
   useEffect(() => {
     if (draftData && draftData.id !== loadedDraft.current) {
       loadedDraft.current = draftData.id;
-      // Nap items vao cart - dùng addToCartWithQuantity để giữ nguyên quantity từ draft
-      draftData.items.forEach((item) => {
-        const selectedUnit = item.selectedUnit
-          ? { name: item.selectedUnit, convertValue: item.convertValue, price: item.price }
-          : null;
-        cart.addToCartWithQuantity(item, item.quantity, selectedUnit);
-      });
+      // Load trực tiếp items vào cart, giữ nguyên id và quantity gốc từ draft
+      cart.loadDraft(draftData.items);
       setSelectedCustomer(draftData.customer);
       // Xoa draft khoi danh sach
       setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));

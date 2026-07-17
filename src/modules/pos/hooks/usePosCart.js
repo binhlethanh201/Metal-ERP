@@ -246,6 +246,21 @@ export const usePosCart = (initialItems = []) => {
     localStorage.removeItem(CART_STORAGE_KEY);
   }, []);
 
+  /**
+   * Load draft items trực tiếp vào cart (giữ nguyên id, quantity từ draft)
+   * Không qua addToCartWithQuantity để tránh lỗi tính toán lại id và quantity
+   */
+  const loadDraft = useCallback((items) => {
+    setCart(
+      items.map((item) => ({
+        ...item,
+        id: item.id,
+        quantity: item.quantity,
+      }))
+    );
+    localStorage.removeItem(CART_STORAGE_KEY);
+  }, []);
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = 0; // Voucher removed; tier discount applied separately in PaymentModal
   const total = subtotal;
@@ -265,6 +280,7 @@ export const usePosCart = (initialItems = []) => {
     setPaymentMethod,
     addToCart,
     addToCartWithQuantity,
+    loadDraft,
     changeQty,
     setItemQuantity,
     removeItem,

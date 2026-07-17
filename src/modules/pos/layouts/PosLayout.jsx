@@ -2,7 +2,7 @@
  * Bộ khung Layout dùng chung cho toàn phân hệ bán hàng POS.
  * Thiết kế dạng bảng: sidebar | content (cart | products) | footer
  */
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import PosSidebar from '../components/layout/PosSidebar';
 import PosHeader from '../components/layout/PosHeader';
@@ -16,6 +16,8 @@ const ROUTE_TO_MENU = {
   '/pos/returns': 'Đổi trả',
 };
 
+const DRAFTS_STORAGE_KEY = 'pos_drafts';
+
 const PosLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,7 +25,14 @@ const PosLayout = () => {
   const [search, setSearch] = useState('');
   const [notice, setNotice] = useState('');
   const [quickAddCust, setQuickAddCust] = useState(0);
-  const [drafts, setDrafts] = useState([]);
+  const [drafts, setDrafts] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DRAFTS_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [footerInfo, setFooterInfo] = useState({
     orderCode: '---',
@@ -31,6 +40,13 @@ const PosLayout = () => {
     points: '0 pts',
   });
   const noticeTimer = useRef(null);
+
+  // Lưu đơn nháp xuống localStorage để không bị mất khi F5
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+    } catch {}
+  }, [drafts]);
 
   const currentPath = location.pathname.replace(/\/$/, '');
   const activeMenu = ROUTE_TO_MENU[currentPath] || 'Máy bán hàng';
