@@ -281,6 +281,7 @@ export const useProductList = (queryParams) => {
     setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
     try {
       await deleteProduct(id);
+      refetch(); // Tải lại dữ liệu từ API sau khi xóa
     } catch (error) {
       console.error('Delete failed:', error);
       alert('Không thể xóa sản phẩm. Vui lòng thử lại.');

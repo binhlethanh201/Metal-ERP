@@ -16,6 +16,7 @@ export const ProductManagement = () => {
   const [productToEdit, setProductToEdit] = useState(null);
   const [initialEditTab, setInitialEditTab] = useState('info');
   const [selectedIds, setSelectedIds] = useState([]);
+  const [successMsg, setSuccessMsg] = useState('');
 
   const filters = useProductFilters();
   const activeQueryParams = filters.queryParams;
@@ -56,12 +57,23 @@ export const ProductManagement = () => {
     if (totalPages > 0 && currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage, setCurrentPage]);
 
+  // Tự động ẩn thông báo thành công sau 2.5s
+  useEffect(() => {
+    if (!successMsg) return;
+    const timer = setTimeout(() => setSuccessMsg(''), 2500);
+    return () => clearTimeout(timer);
+  }, [successMsg]);
+
   const handleSave = (updated) => {
+    const isUpdate = Boolean(
+      productToEdit?.id && !productToEdit.id.toString().startsWith('SP-DRAFT')
+    );
     handleSaveProduct(updated, productToEdit, () => {
       filters.setCurrentPage(1);
       setEditModalOpen(false);
       setProductToEdit(null);
       refetch();
+      setSuccessMsg(isUpdate ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
     });
   };
 
@@ -81,6 +93,12 @@ export const ProductManagement = () => {
 
   return (
     <div className="mt-2 w-full space-y-4 text-slate-800">
+      {/* Toast thông báo thành công */}
+      {successMsg && (
+        <div className="fixed left-1/2 top-5 z-[100] -translate-x-1/2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-2xl">
+          {successMsg}
+        </div>
+      )}
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Hàng hóa</h1>
