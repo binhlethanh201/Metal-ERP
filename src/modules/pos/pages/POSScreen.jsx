@@ -14,6 +14,7 @@ import QRModal from '../components/cart/QRModal';
 import SuccessModal from '../components/order/SuccessModal';
 import ReceiptModal from '../components/order/ReceiptModal';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
+import Icon from '../../../shared/components/Icon';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
 import { usePosCart } from '../hooks/usePosCart';
 import { usePosProducts } from '../hooks/usePosProducts';
@@ -138,13 +139,17 @@ const POSScreen = () => {
 
   const {
     products: posApiProducts,
-    // eslint-disable-next-line no-unused-vars
     loading: productsLoading,
+    error: productsError,
     refetch: refetchProducts,
   } = usePosProductList(search);
   const posProducts = useMemo(() => posApiProducts.map(mapToPosProduct), [posApiProducts]);
 
   const cart = usePosCart([]);
+
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
+  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+  const hasSaleCreate = user?.permissions?.includes('SALE_CREATE') || isOwner;
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
   // Calculate discount info based on subtotal
@@ -164,16 +169,24 @@ const POSScreen = () => {
 
   const handleAddToCart = useCallback(
     (p, selectedUnit = null) => {
+      if (!hasSaleCreate) {
+        showNotice('Bạn không có quyền thực hiện chức năng này.', 'error');
+        return;
+      }
       cart.addToCart(p, selectedUnit);
     },
-    [cart]
+    [cart, hasSaleCreate, showNotice]
   );
 
   // UOM: Mở modal chọn đơn vị
   const handleOpenUnitSelector = useCallback((product) => {
+    if (!hasSaleCreate) {
+      showNotice('Bạn không có quyền thực hiện chức năng này.', 'error');
+      return;
+    }
     setSelectedProductForUnit(product);
     setShowUnitSelector(true);
-  }, []);
+  }, [hasSaleCreate, showNotice]);
 
   // UOM: Xử lý khi chọn đơn vị xong
   const handleUnitSelected = useCallback(
@@ -944,15 +957,47 @@ const POSScreen = () => {
                 placeholder="Tìm sản phẩm..."
                 className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
               />
+              {productsLoading && posProducts.length > 0 && (
+                <div className="ml-2 animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-blue-600"></div>
+              )}
             </div>
           </div>
-          <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-2">
-            <ProductGrid
-              products={filteredProducts}
-              onAddToCart={handleAddToCart}
-              onOpenUnitSelector={handleOpenUnitSelector}
-              singleColumn
-            />
+          <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-2 relative">
+            {productsLoading && posProducts.length === 0 ? (
+              <div className="p-4 space-y-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="flex gap-4 animate-pulse">
+                    <div className="h-16 w-16 bg-slate-200 rounded-lg shrink-0"></div>
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-slate-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : productsError ? (
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+                <div className="mb-4 rounded-full bg-red-50 p-4 text-red-500">
+                  <Icon name="cloud_off" size={32} />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-slate-800">Lỗi kết nối</h3>
+                <p className="mb-4 text-sm text-slate-500">{productsError}</p>
+                <button
+                  onClick={refetchProducts}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : (
+              <ProductGrid
+                products={filteredProducts}
+                onAddToCart={handleAddToCart}
+                onOpenUnitSelector={handleOpenUnitSelector}
+                singleColumn
+              />
+            )}
           </div>
         </div>
       </div>

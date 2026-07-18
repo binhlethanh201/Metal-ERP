@@ -7,59 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getPosProducts } from '../services/posService';
 import { getProducts } from '../../../modules/inventory/services/productService';
 
-// Mock data fallback khi API không hoạt động
-const MOCK_POS_PRODUCTS = [
-  {
-    productId: '1',
-    productCode: 'SP001',
-    productName: 'Búa sắt cán gỗ 500g',
-    barcode: '8934001',
-    unit: 'Cái',
-    retailPrice: 120000,
-    availableStock: 50,
-    categoryName: 'Dụng cụ cầm tay',
-  },
-  {
-    productId: '2',
-    productCode: 'SP002',
-    productName: 'Tua vít 6pcs đa năng',
-    barcode: '8934002',
-    unit: 'Bộ',
-    retailPrice: 85000,
-    availableStock: 30,
-    categoryName: 'Dụng cụ cầm tay',
-  },
-  {
-    productId: '3',
-    productCode: 'SP003',
-    productName: 'Kìm cắt 6 inch',
-    barcode: '8934003',
-    unit: 'Cái',
-    retailPrice: 65000,
-    availableStock: 25,
-    categoryName: 'Dụng cụ cầm tay',
-  },
-  {
-    productId: '4',
-    productCode: 'SP004',
-    productName: 'Thước kéo 5m',
-    barcode: '8934007',
-    unit: 'Cái',
-    retailPrice: 80000,
-    availableStock: 40,
-    categoryName: 'Dụng cụ đo lường',
-  },
-  {
-    productId: '5',
-    productCode: 'SP005',
-    productName: 'Ống nước PVC 34mm',
-    barcode: '8934018',
-    unit: 'Cây',
-    retailPrice: 95000,
-    availableStock: 100,
-    categoryName: 'Ống và phụ kiện',
-  },
-];
+// Removed MOCK_POS_PRODUCTS
 
 const normalizePosProduct = (p) => {
   // API trả PascalCase - hỗ trợ cả lowercase
@@ -162,9 +110,7 @@ export const usePosProductList = (searchTerm = '') => {
     } catch (err) {
       console.error('Lỗi lấy sản phẩm POS:', err);
       setError(err.message || 'Không thể tải sản phẩm');
-      setProducts(
-        MOCK_POS_PRODUCTS.map(normalizePosProduct).filter((p) => p.productStatus !== 'inactive')
-      );
+      setProducts([]);
     } finally {
       setLoading(false);
     }

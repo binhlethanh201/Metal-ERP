@@ -117,6 +117,9 @@ const normalizeLoginResponse = (response) => {
     if (finalUser.PhoneNumber && !finalUser.phone) finalUser.phone = finalUser.PhoneNumber;
     if (!finalUser.email) finalUser.email = finalUser.phone || finalUser.username || '';
     if (!finalUser.role) finalUser.role = finalUser.roleId || finalUser.role || 'store_owner';
+    if (response?.data?.permissions || response?.result?.permissions || response?.permissions) {
+      finalUser.permissions = response?.data?.permissions || response?.result?.permissions || response?.permissions;
+    }
   }
 
   return {
