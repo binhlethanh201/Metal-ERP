@@ -74,3 +74,26 @@ export const checkStaffRelations = (id) => {
 export const deleteStaff = (id) => {
   return apiDelete(ENDPOINTS.OWNER.STAFF_DETAIL(id));
 };
+
+/**
+ * Lấy danh sách nhân viên đã xóa mềm
+ */
+export const getDeletedStaffs = () => {
+  return apiGet(ENDPOINTS.OWNER.STAFFS + '/deleted');
+};
+
+/**
+ * Khôi phục nhân viên đã xóa mềm
+ * @param {string} id - GUID của nhân viên
+ */
+export const restoreStaff = (id) => {
+  return apiPost(ENDPOINTS.OWNER.STAFFS + `/${id}/restore`);
+};
+
+/**
+ * Xóa vĩnh viễn nhân viên (hard delete)
+ * @param {string} id - GUID của nhân viên
+ */
+export const permanentDeleteStaff = (id) => {
+  return apiDelete(ENDPOINTS.OWNER.STAFFS + `/${id}/permanent`);
+};

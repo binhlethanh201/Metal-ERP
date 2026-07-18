@@ -6,6 +6,7 @@ import IconButton from '../../../shared/components/IconButton';
 import { useStaffManager } from '../hooks/useStaffManager';
 import StaffTable from '../components/staff/StaffTable';
 import StaffModal from '../components/staff/StaffModal';
+import DeletedStaffsModal from '../components/staff/DeletedStaffsModal';
 
 const StaffManagement = () => {
   const {
@@ -30,6 +31,7 @@ const StaffManagement = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [isDeletedModalOpen, setIsDeletedModalOpen] = useState(false);
 
   const openCreateModal = () => {
     setEditingStaff(null);
@@ -111,28 +113,39 @@ const StaffManagement = () => {
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1">
-        {[
-          { key: 'active', label: 'Đang hoạt động' },
-          { key: 'all', label: 'Tất cả' },
-          { key: 'deleted', label: 'Đã ẩn' },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => {
-              setStatusFilter(tab.key);
-              setPage(1);
-            }}
-            className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
-              statusFilter === tab.key
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-2">
+        <div className="flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1">
+          {[
+            { key: 'active', label: 'Đang hoạt động' },
+            { key: 'all', label: 'Tất cả' },
+            { key: 'deleted', label: 'Đã ẩn' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setStatusFilter(tab.key);
+                setPage(1);
+              }}
+              className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+                statusFilter === tab.key
+                  ? 'bg-white text-blue-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsDeletedModalOpen(true)}
+          className="flex items-center gap-1.5 border-slate-300 text-slate-600 hover:bg-slate-50"
+        >
+          <Icon name="delete" size={16} />
+          Đã xóa
+        </Button>
       </div>
 
       <StaffTable
@@ -170,6 +183,15 @@ const StaffManagement = () => {
         staff={editingStaff}
         permissions={permissions}
         onSave={onSave}
+      />
+
+      <DeletedStaffsModal
+        isOpen={isDeletedModalOpen}
+        onClose={() => setIsDeletedModalOpen(false)}
+        onSuccess={() => {
+          // Refresh the current staff list after restore/delete
+          setStatusFilter(statusFilter);
+        }}
       />
     </div>
   );
