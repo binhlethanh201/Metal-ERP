@@ -25,7 +25,7 @@ const renderStatusBadge = (status) => {
     case 'PENDING':
       return (
         <Badge variant="warning" size="sm" className="inline-flex animate-pulse items-center gap-1">
-          <Clock size={12} /> Chờ duyệt kho
+          <Clock size={12} /> Chờ duyệt
         </Badge>
       );
     case 'CANCELLED':
@@ -53,7 +53,6 @@ export const InventoryHistoryCard = ({
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [viewingId, setViewingId] = useState(null);
   const [searchText, setSearchText] = useState('');
-
 
   const [filters, setFilters] = useState({
     status: '',

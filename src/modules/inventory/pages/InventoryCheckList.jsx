@@ -106,7 +106,7 @@ const InventoryCheckList = () => {
       case 'Completed':
         return (
           <Badge variant="success" size="sm" className="inline-flex items-center gap-1">
-            <CheckCircle2 size={12} /> Hoàn thành
+            <CheckCircle2 size={12} /> Hoàn tất
           </Badge>
         );
       case 'Cancelled':
