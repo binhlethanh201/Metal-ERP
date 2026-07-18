@@ -1,0 +1,425 @@
+import React, { useState } from 'react';
+import Card from '../../../../shared/components/Card';
+import Button from '../../../../shared/components/Button';
+import Icon from '../../../../shared/components/Icon';
+import Modal from '../../../../shared/components/Modal';
+import { useCategoryReturnPolicies } from '../../hooks/useCategoryReturnPolicies';
+
+const formatDuration = (totalDays) => {
+  if (!totalDays) return '';
+  let remaining = parseInt(totalDays);
+  const years = Math.floor(remaining / 365);
+  remaining %= 365;
+  const months = Math.floor(remaining / 30);
+  const days = remaining % 30;
+  const parts = [];
+  if (years) parts.push(`${years} năm`);
+  if (months) parts.push(`${months} tháng`);
+  if (days) parts.push(`${days} ngày`);
+  return parts.join(' ') || '0 ngày';
+};
+
+const UNIT_OPTIONS = [
+  { value: 'days', label: 'ngày' },
+  { value: 'months', label: 'tháng' },
+  { value: 'years', label: 'năm' },
+];
+
+const toTotalDays = (val, unit) => {
+  const num = parseInt(val) || 0;
+  if (unit === 'years') return num * 365;
+  if (unit === 'months') return num * 30;
+  return num;
+};
+
+const fromTotalDays = (totalDays) => {
+  if (!totalDays) return { value: '', unit: 'days' };
+  let remaining = parseInt(totalDays);
+  const years = Math.floor(remaining / 365);
+  if (years > 0) return { value: String(years), unit: 'years' };
+  remaining %= 365;
+  const months = Math.floor(remaining / 30);
+  if (months > 0) return { value: String(months), unit: 'months' };
+  const days = remaining % 30;
+  return { value: String(days || ''), unit: 'days' };
+};
+
+const DurationInput = ({ label, value, onChange, hint }) => {
+  const handleValueChange = (newVal) => {
+    if (newVal === '' || /^\d*$/.test(newVal)) onChange({ ...value, value: newVal });
+  };
+  const handleUnitChange = (newUnit) => {
+    onChange({ ...value, unit: newUnit });
+  };
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={value.value}
+          onChange={(e) => handleValueChange(e.target.value)}
+          placeholder="0"
+          className="w-24 rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm focus:border-[#004785] focus:outline-none"
+        />
+        <select
+          value={value.unit}
+          onChange={(e) => handleUnitChange(e.target.value)}
+          className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+        >
+          {UNIT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      {!value.value && (
+        <p className="mt-1 text-xs italic text-slate-400">Để trống = không cho phép</p>
+      )}
+      <p className="mt-1 text-xs text-slate-400">{hint}</p>
+    </div>
+  );
+};
+
+const CategoryReturnPolicy = ({ branchId }) => {
+  const {
+    categories,
+    policies,
+    loading,
+    saving,
+    error,
+    message,
+    updatePolicy,
+    savePolicies,
+    clearMessage,
+    clearError,
+  } = useCategoryReturnPolicies(branchId);
+
+  const [showModal, setShowModal] = useState(false);
+  const [editCategory, setEditCategory] = useState(null);
+  const [formCategory, setFormCategory] = useState('');
+
+  // Form state: lưu { value, unit } cho cả return và exchange
+  const emptyDuration = { value: '', unit: 'days' };
+  const [formReturn, setFormReturn] = useState({ ...emptyDuration });
+  const [formExchange, setFormExchange] = useState({ ...emptyDuration });
+
+  const getCategoryName = (cat) => {
+    if (typeof cat === 'string') return cat;
+    return cat?.name || '';
+  };
+
+  const getCategoryProductCount = (cat) => {
+    if (typeof cat === 'string') return null;
+    return cat?.productCount ?? null;
+  };
+
+  // Các nhóm hàng đã được thiết lập (có ít nhất 1 trong 2 policy)
+  const configuredEntries = Object.entries(policies).filter(
+    ([_, vals]) => vals.returnDays || vals.exchangeDays
+  );
+
+  // Các nhóm hàng chưa thiết lập policy nào
+  const availableCategories = categories.filter((cat) => {
+    const name = getCategoryName(cat);
+    const policy = policies[name];
+    return !policy || (!policy.returnDays && !policy.exchangeDays);
+  });
+
+  const handleOpenAdd = () => {
+    setEditCategory(null);
+    const firstAvail = availableCategories[0];
+    setFormCategory(firstAvail ? getCategoryName(firstAvail) : '');
+    setFormReturn({ ...emptyDuration });
+    setFormExchange({ ...emptyDuration });
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (catName) => {
+    setEditCategory(catName);
+    const policy = policies[catName] || {};
+    setFormCategory(catName);
+    setFormReturn(fromTotalDays(policy.returnDays));
+    setFormExchange(fromTotalDays(policy.exchangeDays));
+    setShowModal(true);
+  };
+
+  const handleModalSave = () => {
+    const catName = editCategory || formCategory;
+    if (!catName) return;
+    const returnDays = toTotalDays(formReturn.value, formReturn.unit);
+    const exchangeDays = toTotalDays(formExchange.value, formExchange.unit);
+    updatePolicy(catName, 'returnDays', String(returnDays));
+    updatePolicy(catName, 'exchangeDays', String(exchangeDays));
+    // Sync ngay xuống localStorage để ReturnForm dùng được
+    syncToLocal(catName, String(returnDays), String(exchangeDays));
+    setShowModal(false);
+    setEditCategory(null);
+  };
+
+  const handleDelete = (catName) => {
+    if (!window.confirm(`Xóa toàn bộ chính sách đổi/trả cho nhóm hàng "${catName}"?`)) return;
+    updatePolicy(catName, 'returnDays', '');
+    updatePolicy(catName, 'exchangeDays', '');
+    syncToLocal(catName, '', '');
+  };
+
+  // Sync policies xuống localStorage ngay lập tức (ko cần đợi bấm Lưu cài đặt)
+  const syncToLocal = (catName, returnDays, exchangeDays) => {
+    try {
+      const raw = localStorage.getItem('pos_category_return_policies');
+      const stored = raw ? JSON.parse(raw) : {};
+      if (returnDays || exchangeDays) {
+        stored[catName] = { returnDays, exchangeDays };
+      } else {
+        delete stored[catName];
+      }
+      localStorage.setItem('pos_category_return_policies', JSON.stringify(stored));
+    } catch {}
+  };
+
+  if (loading) {
+    return (
+      <Card
+        header={
+          <div className="flex items-center gap-2">
+            <Icon name="category" size={18} className="text-[#004785]" />
+            <span>Chính sách đổi/trả theo nhóm hàng</span>
+          </div>
+        }
+      >
+        <div className="flex items-center justify-center py-8">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#004785] border-t-transparent" />
+          <span className="ml-2 text-sm text-slate-500">Đang tải...</span>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      header={
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon name="category" size={18} className="text-[#004785]" />
+            <span>Chính sách đổi/trả theo nhóm hàng</span>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleOpenAdd}
+            disabled={availableCategories.length === 0}
+            className="flex items-center gap-1.5"
+          >
+            <Icon name="add" size={16} />
+            Thêm nhóm
+          </Button>
+        </div>
+      }
+    >
+      {message && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+          <Icon name="check_circle" size={16} />
+          <span>{message}</span>
+          <button
+            type="button"
+            onClick={clearMessage}
+            className="ml-auto text-green-500 hover:text-green-700"
+          >
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          <Icon name="error" size={16} />
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={clearError}
+            className="ml-auto text-red-500 hover:text-red-700"
+          >
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      )}
+
+      {configuredEntries.length === 0 ? (
+        <div className="py-8 text-center text-sm text-slate-400">
+          <Icon name="info" size={32} className="mx-auto mb-3 text-slate-300" />
+          <p className="font-medium">Chưa có thiết lập nào</p>
+          <p className="mt-1">
+            Nhấn "Thêm nhóm" để thiết lập chính sách đổi/trả cho từng nhóm hàng.
+          </p>
+          <p className="mt-1 text-xs">
+            Sản phẩm không thuộc nhóm được thiết lập sẽ không được phép đổi/trả.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                <th className="pb-3 pr-4">Nhóm hàng</th>
+                <th className="pb-3 pr-4">SL SP</th>
+                <th className="pb-3 pr-4">Trả hàng</th>
+                <th className="pb-3 pr-4">Đổi hàng</th>
+                <th className="w-24 pb-3">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {configuredEntries.map(([catName, vals]) => {
+                const cat = categories.find((c) => getCategoryName(c) === catName);
+                const productCount = cat ? getCategoryProductCount(cat) : null;
+                return (
+                  <tr
+                    key={catName}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                  >
+                    <td className="py-3 pr-4 font-medium text-slate-900">{catName}</td>
+                    <td className="py-3 pr-4 text-slate-500">
+                      {productCount !== null ? `${productCount}` : '-'}
+                    </td>
+                    <td className="py-3 pr-4">
+                      {vals.returnDays ? (
+                        <span className="font-semibold text-green-700">
+                          {formatDuration(vals.returnDays)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4">
+                      {vals.exchangeDays ? (
+                        <span className="font-semibold text-blue-700">
+                          {formatDuration(vals.exchangeDays)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleOpenEdit(catName)}
+                          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                          title="Sửa"
+                        >
+                          <Icon name="edit" size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(catName)}
+                          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          title="Xóa"
+                        >
+                          <Icon name="delete" size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+        <p className="text-xs text-slate-400">
+          Chỉ sản phẩm thuộc nhóm hàng được thiết lập mới được phép đổi/trả. Để trống = không cho
+          phép.
+        </p>
+        <Button
+          variant="primary"
+          onClick={savePolicies}
+          disabled={saving}
+          className="flex items-center gap-2"
+        >
+          {saving ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span>Đang lưu...</span>
+            </>
+          ) : (
+            <>
+              <Icon name="save" size={16} />
+              <span>Lưu cài đặt</span>
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Modal thêm/sửa */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editCategory ? 'Sửa chính sách nhóm hàng' : 'Thêm chính sách nhóm hàng'}
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleModalSave}
+              disabled={editCategory ? false : !formCategory}
+            >
+              {editCategory ? 'Cập nhật' : 'Thêm'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          {!editCategory ? (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Nhóm hàng <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+              >
+                {availableCategories.map((cat) => (
+                  <option key={getCategoryName(cat)} value={getCategoryName(cat)}>
+                    {getCategoryName(cat)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Nhóm hàng</label>
+              <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-900">
+                {editCategory}
+              </p>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <DurationInput
+              label="Trả hàng (hoàn tiền)"
+              value={formReturn}
+              onChange={setFormReturn}
+              placeholder="không cho phép"
+              hint="Thời hạn được phép trả hàng hoàn tiền. Để trống = không cho trả."
+            />
+            <DurationInput
+              label="Đổi hàng"
+              value={formExchange}
+              onChange={setFormExchange}
+              placeholder="không cho phép"
+              hint="Thời hạn được phép đổi hàng. Để trống = không cho đổi."
+            />
+          </div>
+        </div>
+      </Modal>
+    </Card>
+  );
+};
+
+export default CategoryReturnPolicy;

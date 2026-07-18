@@ -66,6 +66,8 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
         setCreateName('');
         loadData();
         onSuccess?.();
+      } else {
+        alert(res?.message || res?.data?.message || 'Tạo mới thất bại, vui lòng thử lại');
       }
     } catch (err) {
       alert(extractErrorMessage(err, 'Lỗi tạo mới'));
@@ -88,6 +90,8 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
         setEditingName('');
         loadData();
         onSuccess?.();
+      } else {
+        alert(res?.message || res?.data?.message || 'Đổi tên thất bại');
       }
     } catch (err) {
       alert(extractErrorMessage(err, 'Lỗi đổi tên'));
@@ -97,19 +101,19 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
   const handleDelete = async (item) => {
     const isCat = activeTab === 'categories';
     const label = isCat ? 'nhóm hàng' : 'thương hiệu';
-    if (
-      !window.confirm(
-        `Thao tác này sẽ gỡ ${label} "${item.name}" khỏi ${item.productCount} sản phẩm.\nBạn có chắc chắn muốn tiếp tục?`
-      )
-    ) {
-      return;
-    }
+    const hasProducts = (item.productCount || 0) > 0;
+    const msg = hasProducts
+      ? `Nhóm này có ${item.productCount} sản phẩm. Xóa sẽ gỡ nhóm khỏi các sản phẩm này.\nBạn có chắc chắn muốn xóa ${label} "${item.name}"?`
+      : `Bạn có chắc chắn muốn xóa ${label} "${item.name}"?`;
+    if (!window.confirm(msg)) return;
     try {
       const res = isCat ? await deleteCategory(item.name) : await deleteBrand(item.name);
       if (res?.success) {
         alert(res?.message || 'Xóa thành công');
         loadData();
         onSuccess?.();
+      } else {
+        alert(res?.message || res?.data?.message || 'Xóa thất bại');
       }
     } catch (err) {
       alert(extractErrorMessage(err, 'Lỗi khi xóa'));
@@ -186,8 +190,17 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={() => handleDelete(item)}
-              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-              title="Xóa"
+              disabled={(item.productCount || 0) > 0}
+              className={`rounded-md p-1.5 transition-colors ${
+                (item.productCount || 0) > 0
+                  ? 'cursor-not-allowed text-slate-200'
+                  : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+              }`}
+              title={
+                (item.productCount || 0) > 0
+                  ? `Không thể xóa do còn ${item.productCount} sản phẩm`
+                  : 'Xóa'
+              }
             >
               <Icon name="delete" size={18} />
             </button>
@@ -240,7 +253,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
           onChange={(e) => setCreateName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
         />
-        <Button variant="primary" onClick={handleCreate}>
+        <Button variant="primary" onClick={handleCreate} type="button">
           Thêm mới
         </Button>
       </div>

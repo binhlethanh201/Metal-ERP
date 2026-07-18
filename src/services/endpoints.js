@@ -33,6 +33,13 @@ export const ENDPOINTS = {
     // Discount Tiers (Chiết khấu theo giá trị đơn hàng)
     ORDER_DISCOUNT_TIERS: '/api/order-discount-tiers',
     ORDER_DISCOUNT_TIER_DETAIL: (id) => `/api/order-discount-tiers/${id}`,
+
+    // Branch Settings (Chính sách đổi/trả hàng)
+    BRANCH_SETTINGS: (id) => `/api/owner/branches/${id}/settings`,
+
+    // Category Return Policies (Chính sách đổi/trả theo nhóm hàng)
+    CATEGORY_RETURN_POLICIES: (branchId) =>
+      `/api/owner/branches/${branchId}/return-policies/categories`,
   },
 
   // ============ INVENTORY (Tổng kho) ============

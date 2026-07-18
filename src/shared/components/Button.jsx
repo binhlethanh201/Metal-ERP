@@ -34,6 +34,7 @@ export const Button = ({
 
   return (
     <button
+      type="button"
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${className}`}
       disabled={disabled || loading}
       {...props}

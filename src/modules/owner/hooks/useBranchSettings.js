@@ -15,9 +15,10 @@ export const useBranchSettings = (branchId) => {
   useEffect(() => {
     if (!branchId) return;
     fetchSettings();
-  }, [branchId]);
+  }, [branchId, fetchSettings]);
 
   const fetchSettings = useCallback(async () => {
+    if (!branchId) return;
     setLoading(true);
     setError(null);
     try {
@@ -31,34 +32,49 @@ export const useBranchSettings = (branchId) => {
       }
     } catch (err) {
       console.error('Error fetching branch settings:', err);
-      setError(err.response?.data?.message || err.message || 'Không thể tải cài đặt.');
+      if (err.status === 404) {
+        setError(
+          'API chưa được cài đặt. Vui lòng kiểm tra backend endpoint /api/owner/branches/{id}/settings.'
+        );
+      } else {
+        setError(err.response?.data?.message || err.message || 'Không thể tải cài đặt.');
+      }
     } finally {
       setLoading(false);
     }
   }, [branchId]);
 
-  const saveSettings = useCallback(async (data) => {
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      const response = await branchSettingsService.updateSettings(branchId, data);
-      if (response?.data) {
-        setSettings({
-          returnDaysAllowed: response.data.returnDaysAllowed,
-          exchangeDaysAllowed: response.data.exchangeDaysAllowed,
-        });
-        setMessage('Cập nhật cài đặt thành công!');
+  const saveSettings = useCallback(
+    async (data) => {
+      setSaving(true);
+      setError(null);
+      setMessage(null);
+      try {
+        const response = await branchSettingsService.updateSettings(branchId, data);
+        if (response?.data) {
+          setSettings({
+            returnDaysAllowed: response.data.returnDaysAllowed,
+            exchangeDaysAllowed: response.data.exchangeDaysAllowed,
+          });
+          setMessage('Cập nhật cài đặt thành công!');
+        }
+        return true;
+      } catch (err) {
+        console.error('Error saving branch settings:', err);
+        if (err.status === 404) {
+          setError(
+            'API chưa được cài đặt. Vui lòng kiểm tra backend endpoint PUT /api/owner/branches/{id}/settings.'
+          );
+        } else {
+          setError(err.response?.data?.message || err.message || 'Không thể lưu cài đặt.');
+        }
+        return false;
+      } finally {
+        setSaving(false);
       }
-      return true;
-    } catch (err) {
-      console.error('Error saving branch settings:', err);
-      setError(err.response?.data?.message || err.message || 'Không thể lưu cài đặt.');
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [branchId]);
+    },
+    [branchId]
+  );
 
   const clearMessage = useCallback(() => setMessage(null), []);
   const clearError = useCallback(() => setError(null), []);
