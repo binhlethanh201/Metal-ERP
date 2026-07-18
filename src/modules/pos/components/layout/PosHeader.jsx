@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import Logo from '../../../../shared/components/Logo';
+import ShiftBadge from '../../../../shared/components/ShiftBadge';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
@@ -56,6 +57,8 @@ const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
           <Icon name="history" className="text-base" />
           <span>Lịch sử</span>
         </button>
+
+        <ShiftBadge />
 
         {/* Avatar / Dropdown */}
         <div className="relative" ref={dropdownRef}>

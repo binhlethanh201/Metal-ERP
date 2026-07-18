@@ -179,14 +179,17 @@ const POSScreen = () => {
   );
 
   // UOM: Mở modal chọn đơn vị
-  const handleOpenUnitSelector = useCallback((product) => {
-    if (!hasSaleCreate) {
-      showNotice('Bạn không có quyền thực hiện chức năng này.', 'error');
-      return;
-    }
-    setSelectedProductForUnit(product);
-    setShowUnitSelector(true);
-  }, [hasSaleCreate, showNotice]);
+  const handleOpenUnitSelector = useCallback(
+    (product) => {
+      if (!hasSaleCreate) {
+        showNotice('Bạn không có quyền thực hiện chức năng này.', 'error');
+        return;
+      }
+      setSelectedProductForUnit(product);
+      setShowUnitSelector(true);
+    },
+    [hasSaleCreate, showNotice]
+  );
 
   // UOM: Xử lý khi chọn đơn vị xong
   const handleUnitSelected = useCallback(
@@ -261,7 +264,7 @@ const POSScreen = () => {
     setPaying(true);
     try {
       // 1. Tạo hóa đơn — kèm shiftId nếu có ca đang mở
-      const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+      const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
       const invoice = await createInvoice({
         customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
         customerName: selectedCustomer?.name || null,
@@ -380,12 +383,12 @@ const POSScreen = () => {
 
       // Cập nhật realtime cho ca đang mở (cộng dồn vào sessionStorage)
       try {
-        const shiftData = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const shiftData = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         if (shiftData) {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
           shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
           shiftData.totalRevenue = shiftData.totalSales;
-          sessionStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
+          localStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
       } catch (_) {}
 
@@ -456,11 +459,18 @@ const POSScreen = () => {
       return;
     }
 
+    // Kiểm tra ca bán hàng đã mở chưa
+    const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+    if (!activeShift) {
+      showNotice('Vui lòng mở ca bán hàng trước khi thanh toán.', 'error');
+      return;
+    }
+
     // Nếu là Chuyển khoản → Hiển QR luôn (không cần modal)
     if (cart.paymentMethod === 'Chuyển khoản' || cart.paymentMethod === 'Transfer') {
       setPaying(true);
       try {
-        const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         const invoice = await createInvoice({
           customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
           customerName: selectedCustomer?.name || null,
@@ -551,6 +561,15 @@ const POSScreen = () => {
 
   const handleProcessPayment = async () => {
     if (!isPaymentValid) return;
+
+    // Kiểm tra ca bán hàng đã mở chưa
+    const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+    if (!activeShift) {
+      showNotice('Vui lòng mở ca bán hàng trước khi thanh toán.', 'error');
+      setShowPayModal(false);
+      return;
+    }
+
     const lines = payLines.filter((l) => l.amount > 0);
     const hasTransfer = lines.some((l) => l.method === 'Transfer');
     const hasCash = lines.some((l) => l.method === 'Cash');
@@ -560,7 +579,7 @@ const POSScreen = () => {
       // Combined: Tiền mặt + Chuyển khoản
       setPaying(true);
       try {
-        const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         const invoice = await createInvoice({
           customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
           customerName: selectedCustomer?.name || null,
@@ -658,7 +677,7 @@ const POSScreen = () => {
       // Chỉ có Transfer (không có Cash)
       setPaying(true);
       try {
-        const activeShift = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         const invoice = await createInvoice({
           customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
           customerName: selectedCustomer?.name || null,
@@ -747,12 +766,12 @@ const POSScreen = () => {
       await finalizeInvoice(pendingInvoice.invoiceId);
       // 3. Cập nhật realtime ca
       try {
-        const shiftData = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+        const shiftData = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         if (shiftData) {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
           shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
           shiftData.totalRevenue = shiftData.totalSales;
-          sessionStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
+          localStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
       } catch (_) {}
       // 4. Hiển thị thành công
@@ -873,7 +892,11 @@ const POSScreen = () => {
       setConfirmLoading(true);
       await cancelPayment(qrData.paymentId);
       // Gọi lại tạo mới sau khi huỷ thành công
-      await handleOpenQRPayment(pendingInvoice.invoiceId, qrData.amount, pendingInvoice.invoiceCode);
+      await handleOpenQRPayment(
+        pendingInvoice.invoiceId,
+        qrData.amount,
+        pendingInvoice.invoiceCode
+      );
     } catch (err) {
       console.error('[POS] Refresh QR error:', err);
       showNotice('Lỗi làm mới QR: ' + (err.message || 'Không thể tạo mã mới'));
@@ -905,7 +928,9 @@ const POSScreen = () => {
                   return;
                 }
                 if (drafts.length >= 20) {
-                  showNotice('Số lượng đơn hàng nháp đã đạt giới hạn tối đa. Vui lòng xử lý đơn cũ trước khi lưu thêm.');
+                  showNotice(
+                    'Số lượng đơn hàng nháp đã đạt giới hạn tối đa. Vui lòng xử lý đơn cũ trước khi lưu thêm.'
+                  );
                   return;
                 }
                 const draft = {
@@ -958,20 +983,20 @@ const POSScreen = () => {
                 className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
               />
               {productsLoading && posProducts.length > 0 && (
-                <div className="ml-2 animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-blue-600"></div>
+                <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
               )}
             </div>
           </div>
-          <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-2 relative">
+          <div className="custom-scrollbar relative flex-1 overflow-y-auto px-2 py-2">
             {productsLoading && posProducts.length === 0 ? (
-              <div className="p-4 space-y-4">
+              <div className="space-y-4 p-4">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="flex gap-4 animate-pulse">
-                    <div className="h-16 w-16 bg-slate-200 rounded-lg shrink-0"></div>
+                  <div key={i} className="flex animate-pulse gap-4">
+                    <div className="h-16 w-16 shrink-0 rounded-lg bg-slate-200"></div>
                     <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                      <div className="h-3 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                      <div className="h-4 w-3/4 rounded bg-slate-200"></div>
+                      <div className="h-3 w-1/4 rounded bg-slate-200"></div>
+                      <div className="h-4 w-1/2 rounded bg-slate-200"></div>
                     </div>
                   </div>
                 ))}

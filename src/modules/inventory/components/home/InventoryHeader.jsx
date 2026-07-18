@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import Logo from '../../../../shared/components/Logo';
+import ShiftBadge from '../../../../shared/components/ShiftBadge';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import InventoryNotificationDropdown from './InventoryNotificationDropdown';
 
@@ -82,6 +83,9 @@ const InventoryHeader = () => {
 
           {/* THÔNG BÁO DROPDOWN */}
           <InventoryNotificationDropdown />
+
+          <ShiftBadge />
+
           {/* USER PROFILE DROPDOWN */}
           <div className="relative" ref={dropdownRef}>
             <button
