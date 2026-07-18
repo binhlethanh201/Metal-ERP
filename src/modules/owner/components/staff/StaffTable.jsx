@@ -55,7 +55,6 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
       key: 'actions',
       header: <div className="text-right">Thao tác</div>,
       render: (_, staff) => {
-        const isSelf = currentUserId && staff.userId === currentUserId;
         return (
           <div className="flex items-center justify-end gap-2">
             <IconButton
@@ -64,14 +63,6 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
               space="admin"
               onClick={() => onViewDetail(staff)}
               title="Xem chi tiết & Cập nhật"
-            />
-            <IconButton
-              icon={(props) => <Icon name="delete" {...props} />}
-              variant="danger"
-              space="admin"
-              disabled={isSelf}
-              onClick={() => !isSelf && onDelete(staff.userId)}
-              title={isSelf ? 'Không thể tự xóa' : 'Xóa nhân viên'}
             />
           </div>
         );
