@@ -6,6 +6,7 @@ import IconButton from '../../../shared/components/IconButton';
 import { useStaffManager } from '../hooks/useStaffManager';
 import StaffTable from '../components/staff/StaffTable';
 import StaffModal from '../components/staff/StaffModal';
+import DeletedStaffsModal from '../components/staff/DeletedStaffsModal';
 
 const StaffManagement = () => {
   const {
@@ -26,10 +27,12 @@ const StaffManagement = () => {
     handleToggleStatus,
     handleDeleteStaff,
     currentUserId,
+    refetch,
   } = useStaffManager();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'deleted'
 
   const openCreateModal = () => {
     setEditingStaff(null);
@@ -116,52 +119,69 @@ const StaffManagement = () => {
           { key: 'active', label: 'Đang hoạt động' },
           { key: 'all', label: 'Tất cả' },
           { key: 'deleted', label: 'Đã ẩn' },
+          { key: 'softDeleted', label: 'Đã xóa' },
         ].map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => {
-              setStatusFilter(tab.key);
-              setPage(1);
+              if (tab.key === 'softDeleted') {
+                setViewMode('deleted');
+              } else {
+                setViewMode('list');
+                setStatusFilter(tab.key);
+                setPage(1);
+              }
             }}
-            className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
-              statusFilter === tab.key
+            className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+              (tab.key === 'softDeleted' ? viewMode === 'deleted' : statusFilter === tab.key)
                 ? 'bg-white text-blue-700 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
+            {tab.key === 'softDeleted' && <Icon name="delete" size={14} />}
             {tab.label}
           </button>
         ))}
       </div>
 
-      <StaffTable
-        staffs={staffs}
-        loading={loading}
-        currentUserId={currentUserId}
-        onViewDetail={handleViewDetailClick}
-        onToggleStatus={handleToggleStatus}
-        onDelete={handleDeleteStaff}
-      />
+      {viewMode === 'list' ? (
+        <>
+          <StaffTable
+            staffs={staffs}
+            loading={loading}
+            currentUserId={currentUserId}
+            onViewDetail={handleViewDetailClick}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteStaff}
+          />
 
-      {paginationMeta.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-end gap-3">
-          <IconButton
-            icon={(props) => <Icon name="chevron_left" {...props} />}
-            variant="outline"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          />
-          <span className="text-sm font-semibold">
-            Trang {page} / {paginationMeta.totalPages}
-          </span>
-          <IconButton
-            icon={(props) => <Icon name="chevron_right" {...props} />}
-            variant="outline"
-            disabled={page >= paginationMeta.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          />
-        </div>
+          {paginationMeta.totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <IconButton
+                icon={(props) => <Icon name="chevron_left" {...props} />}
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              />
+              <span className="text-sm font-semibold">
+                Trang {page} / {paginationMeta.totalPages}
+              </span>
+              <IconButton
+                icon={(props) => <Icon name="chevron_right" {...props} />}
+                variant="outline"
+                disabled={page >= paginationMeta.totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <DeletedStaffsModal
+          onAction={() => {
+            refetch();
+          }}
+        />
       )}
 
       <StaffModal
