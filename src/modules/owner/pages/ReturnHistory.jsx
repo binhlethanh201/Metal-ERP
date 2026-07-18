@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import Icon from '../../../shared/components/Icon';
 import { useReturnHistory } from '../hooks/useReturnHistory';
+import { useBranchManager } from '../hooks/useBranchManager';
 import ReturnTable from '../components/return/ReturnTable';
 import ReturnDetailModal from '../components/return/ReturnDetailModal';
+import BranchSettingsForm from '../components/settings/BranchSettingsForm';
 
 // Shared Components & Icons theo phong cách ShiftHistory
 import Button from '../../../shared/components/Button';
@@ -34,6 +36,10 @@ const ReturnHistory = () => {
     clearReturnDetail,
     handleCancelReturn,
   } = useReturnHistory();
+
+  // Lấy branches để truyền vào BranchSettingsForm
+  const { branches } = useBranchManager();
+  const selectedBranchId = branches.length > 0 ? branches[0].branchId : '';
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -70,6 +76,9 @@ const ReturnHistory = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Lịch sử Đổi/Trả hàng</h1>
       </div>
+
+      {/* ==================== POLICY SETTINGS ==================== */}
+      {selectedBranchId && <BranchSettingsForm branchId={selectedBranchId} />}
 
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
       {error && (
@@ -192,7 +201,6 @@ const ReturnHistory = () => {
         returns={returns}
         loading={loading}
         onViewDetail={handleViewDetail}
-        // Đã bỏ onCancel ở đây vì action hủy được chuyển vào Modal chi tiết
       />
 
       {/* ==================== PHÂN TRANG ==================== */}
