@@ -984,7 +984,7 @@ const POSScreen = () => {
                 <h3 className="mb-2 text-lg font-semibold text-slate-800">Lỗi kết nối</h3>
                 <p className="mb-4 text-sm text-slate-500">{productsError}</p>
                 <button
-                  onClick={refetchProducts}
+                  onClick={() => refetchProducts(search)}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800"
                 >
                   Thử lại
