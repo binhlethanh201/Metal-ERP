@@ -35,7 +35,7 @@ const DeletedStaffsModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const response = await restoreStaff(userId);
       if (response?.data?.success) {
-        setDeletedStaffs(prev => prev.filter(s => s.userId !== userId));
+        setDeletedStaffs((prev) => prev.filter((s) => s.userId !== userId));
         onSuccess?.('restore');
       }
     } catch (error) {
@@ -50,7 +50,7 @@ const DeletedStaffsModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const response = await permanentDeleteStaff(userId);
       if (response?.data?.success) {
-        setDeletedStaffs(prev => prev.filter(s => s.userId !== userId));
+        setDeletedStaffs((prev) => prev.filter((s) => s.userId !== userId));
         setConfirmDelete(null);
         onSuccess?.('permanentDelete');
       }
@@ -72,12 +72,7 @@ const DeletedStaffsModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Nhân viên đã xóa"
-      size="xl"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Nhân viên đã xóa" size="xl">
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Icon name="sync" className="animate-spin text-2xl text-blue-600" />
@@ -111,13 +106,15 @@ const DeletedStaffsModal = ({ isOpen, onClose, onSuccess }) => {
                   <td className="px-4 py-3 text-slate-600">{staff.email}</td>
                   <td className="px-4 py-3 text-slate-600">{formatDate(staff.deletedAt)}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      staff.daysUntilPermanentDelete <= 3
-                        ? 'bg-red-100 text-red-700'
-                        : staff.daysUntilPermanentDelete <= 7
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-slate-100 text-slate-700'
-                    }`}>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                        staff.daysUntilPermanentDelete <= 3
+                          ? 'bg-red-100 text-red-700'
+                          : staff.daysUntilPermanentDelete <= 7
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
                       {staff.daysUntilPermanentDelete} ngày
                     </span>
                   </td>

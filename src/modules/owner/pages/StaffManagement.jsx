@@ -113,39 +113,34 @@ const StaffManagement = () => {
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex items-center gap-2">
-        <div className="flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1">
-          {[
-            { key: 'active', label: 'Đang hoạt động' },
-            { key: 'all', label: 'Tất cả' },
-            { key: 'deleted', label: 'Đã ẩn' },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => {
+      <div className="flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1">
+        {[
+          { key: 'active', label: 'Đang hoạt động' },
+          { key: 'all', label: 'Tất cả' },
+          { key: 'deleted', label: 'Đã ẩn' },
+          { key: 'softDeleted', label: 'Đã xóa', isModal: true },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => {
+              if (tab.isModal) {
+                setIsDeletedModalOpen(true);
+              } else {
                 setStatusFilter(tab.key);
                 setPage(1);
-              }}
-              className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
-                statusFilter === tab.key
-                  ? 'bg-white text-blue-700 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsDeletedModalOpen(true)}
-          className="flex items-center gap-1.5 border-slate-300 text-slate-600 hover:bg-slate-50"
-        >
-          <Icon name="delete" size={16} />
-          Đã xóa
-        </Button>
+              }
+            }}
+            className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+              !tab.isModal && statusFilter === tab.key
+                ? 'bg-white text-blue-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab.isModal && <Icon name="delete" size={14} />}
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <StaffTable
