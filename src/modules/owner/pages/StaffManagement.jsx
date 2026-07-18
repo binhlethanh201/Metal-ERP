@@ -31,7 +31,7 @@ const StaffManagement = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
-  const [isDeletedModalOpen, setIsDeletedModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'deleted'
 
   const openCreateModal = () => {
     setEditingStaff(null);
@@ -118,58 +118,69 @@ const StaffManagement = () => {
           { key: 'active', label: 'Đang hoạt động' },
           { key: 'all', label: 'Tất cả' },
           { key: 'deleted', label: 'Đã ẩn' },
-          { key: 'softDeleted', label: 'Đã xóa', isModal: true },
+          { key: 'softDeleted', label: 'Đã xóa' },
         ].map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => {
-              if (tab.isModal) {
-                setIsDeletedModalOpen(true);
+              if (tab.key === 'softDeleted') {
+                setViewMode('deleted');
               } else {
+                setViewMode('list');
                 setStatusFilter(tab.key);
                 setPage(1);
               }
             }}
             className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
-              !tab.isModal && statusFilter === tab.key
+              (tab.key === 'softDeleted' ? viewMode === 'deleted' : statusFilter === tab.key)
                 ? 'bg-white text-blue-700 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            {tab.isModal && <Icon name="delete" size={14} />}
+            {tab.key === 'softDeleted' && <Icon name="delete" size={14} />}
             {tab.label}
           </button>
         ))}
       </div>
 
-      <StaffTable
-        staffs={staffs}
-        loading={loading}
-        currentUserId={currentUserId}
-        onViewDetail={handleViewDetailClick}
-        onToggleStatus={handleToggleStatus}
-        onDelete={handleDeleteStaff}
-      />
+      {viewMode === 'list' ? (
+        <>
+          <StaffTable
+            staffs={staffs}
+            loading={loading}
+            currentUserId={currentUserId}
+            onViewDetail={handleViewDetailClick}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteStaff}
+          />
 
-      {paginationMeta.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-end gap-3">
-          <IconButton
-            icon={(props) => <Icon name="chevron_left" {...props} />}
-            variant="outline"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          />
-          <span className="text-sm font-semibold">
-            Trang {page} / {paginationMeta.totalPages}
-          </span>
-          <IconButton
-            icon={(props) => <Icon name="chevron_right" {...props} />}
-            variant="outline"
-            disabled={page >= paginationMeta.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          />
-        </div>
+          {paginationMeta.totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <IconButton
+                icon={(props) => <Icon name="chevron_left" {...props} />}
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              />
+              <span className="text-sm font-semibold">
+                Trang {page} / {paginationMeta.totalPages}
+              </span>
+              <IconButton
+                icon={(props) => <Icon name="chevron_right" {...props} />}
+                variant="outline"
+                disabled={page >= paginationMeta.totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <DeletedStaffsModal
+          onAction={() => {
+            // Stay on deleted view; user can switch back manually
+          }}
+        />
       )}
 
       <StaffModal
@@ -178,15 +189,6 @@ const StaffManagement = () => {
         staff={editingStaff}
         permissions={permissions}
         onSave={onSave}
-      />
-
-      <DeletedStaffsModal
-        isOpen={isDeletedModalOpen}
-        onClose={() => setIsDeletedModalOpen(false)}
-        onSuccess={() => {
-          // Refresh the current staff list after restore/delete
-          setStatusFilter(statusFilter);
-        }}
       />
     </div>
   );
