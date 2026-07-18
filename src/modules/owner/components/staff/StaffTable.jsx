@@ -70,7 +70,7 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
                 icon={(props) => <Icon name="delete" {...props} />}
                 variant="outline"
                 space="admin"
-                onClick={() => onDelete(staff)}
+                onClick={() => onDelete(staff.userId)}
                 title="Xóa nhân viên"
                 className="border-red-200 text-red-600 hover:bg-red-50"
               />
