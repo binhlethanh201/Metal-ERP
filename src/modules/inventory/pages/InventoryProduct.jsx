@@ -108,18 +108,43 @@ export const ProductManagement = () => {
         </div>
         <div
           className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${
-            apiStatus.isMock
-              ? 'border-amber-200 bg-amber-50 text-amber-700'
-              : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            apiStatus.error
+              ? 'border-red-200 bg-red-50 text-red-700'
+              : apiStatus.loading
+                ? 'border-slate-200 bg-slate-50 text-slate-600'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700'
           }`}
         >
           {apiStatus.loading
             ? 'Đang tải danh sách hàng hóa...'
-            : apiStatus.isMock
-              ? '⚠ Đang hiển thị dữ liệu mẫu (Chưa kết nối API)'
+            : apiStatus.error
+              ? '⚠ ' + apiStatus.error
               : '✔ Đã đồng bộ dữ liệu'}
         </div>
       </div>
+
+      {/* Error banner */}
+      {apiStatus.error && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+          <svg
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div className="flex-1">
+            <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
+            <p className="mt-1 text-sm text-red-700">{apiStatus.error}</p>
+          </div>
+        </div>
+      )}
 
       {/* Không còn sidebar cố định — bảng full-width, filter mở qua Drawer */}
       <div className="flex w-full flex-col gap-4 pb-6 pt-2">

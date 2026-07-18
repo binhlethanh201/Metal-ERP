@@ -639,7 +639,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
             </Badge>
 
             {detailData.notes && (
-              <div className="flex-1 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm text-slate-700">
+              <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700">
                 <strong>Ghi chú:</strong> {detailData.notes}
               </div>
             )}
@@ -647,13 +647,15 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
 
           {/* Cảnh báo đếm lại */}
           {detailData.recountNumber > 0 && (
-            <div className="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900 shadow-sm">
+            <div className="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4 shadow-sm">
               <Icon name="warning" className="mt-0.5 shrink-0 text-orange-500" size={20} />
               <div>
-                <strong className="mb-1 block text-orange-800">
+                <strong className="mb-1 block text-sm font-bold text-orange-800">
                   Phiếu này đã bị yêu cầu đếm lại!
                 </strong>
-                <span className="italic">Lý do từ quản lý: "{detailData.recountReason}"</span>
+                <span className="text-sm italic text-orange-700">
+                  Lý do: "{detailData.recountReason}"
+                </span>
               </div>
             </div>
           )}
@@ -687,7 +689,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
 
           {/* Form phụ: lý do đếm lại */}
           {isRejecting && (
-            <div className="mt-2 rounded-lg border border-orange-200 bg-orange-50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
               <Textarea
                 label="Lý do yêu cầu đếm lại"
                 required
@@ -695,14 +697,13 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 rows={2}
-                className="border-orange-300 focus:border-orange-500 focus:ring-orange-500"
               />
             </div>
           )}
 
           {/* Form phụ: lý do hủy phiếu */}
           {isCancelling && (
-            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
               <Textarea
                 label={
                   <>

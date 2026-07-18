@@ -55,7 +55,14 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
       let data = [];
       if (activeTab === 'locations') {
         const res = await getProductLocations();
-        data = res?.success && Array.isArray(res?.data) ? res.data.map((name) => ({ name })) : [];
+        data =
+          res?.success && Array.isArray(res?.data)
+            ? res.data.map((loc) => ({
+                id: loc.locationId,
+                name: loc.locationName,
+                code: loc.locationCode,
+              }))
+            : [];
       } else if (activeTab === 'attributeTypes') {
         const res = await getAttributeTypes();
         data = res?.success && Array.isArray(res?.data) ? res.data : [];
@@ -124,7 +131,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
         return;
       }
       try {
-        const res = await renameProductLocation(item.name, trimmed);
+        const res = await renameProductLocation(item.id, trimmed);
         if (res?.success) {
           alert(res?.message || 'Đổi tên thành công');
           setEditingName('');
@@ -152,7 +159,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
     try {
       let res;
       if (activeTab === 'locations') {
-        res = await deleteProductLocation(item.name);
+        res = await deleteProductLocation(item.id);
       } else {
         res = await deleteAttributeType(item.typeId);
       }
@@ -273,7 +280,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
       ];
     }
 
-    // Locations: name + actions
+    // Locations: name + code + actions
     return [
       {
         key: 'name',
@@ -313,6 +320,15 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
             </div>
           );
         },
+      },
+      {
+        key: 'code',
+        header: 'Mã vị trí',
+        render: (_, item) => (
+          <span className={item.code ? 'text-sm text-slate-600' : 'text-sm text-slate-400'}>
+            {item.code || '---'}
+          </span>
+        ),
       },
       actionsCol,
     ];

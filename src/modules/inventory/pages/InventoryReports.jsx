@@ -120,6 +120,7 @@ export const InventoryReports = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [includeZeroStock, setIncludeZeroStock] = useState(false);
+  const [dismissedError, setDismissedError] = useState(false);
 
   // ============ HOOKS ============
   const {
@@ -235,6 +236,7 @@ export const InventoryReports = () => {
 
   useEffect(() => {
     loadReport();
+    setDismissedError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedReport]);
 
@@ -393,9 +395,43 @@ export const InventoryReports = () => {
       </Card>
 
       {/* Error State */}
-      {selectedError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 shadow-sm">
-          🚨 {selectedError}
+      {selectedError && !dismissedError && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+          <svg
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div className="flex-1">
+            <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
+            <p className="mt-1 text-sm text-red-700">{selectedError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setDismissedError(true)}
+            className="shrink-0 rounded p-1 text-red-400 hover:bg-red-100 hover:text-red-600"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
       )}
 

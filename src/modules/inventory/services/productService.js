@@ -58,16 +58,12 @@ export const renameBrand = (oldName, newName) =>
 export const deleteBrand = (name) => apiDelete(`${BASE}/brands/${encodeURIComponent(name)}`);
 
 // Locations APIs
-export const getProductLocations = () => apiGet('/api/products/locations');
-export const createProductLocation = (name) =>
-  apiPost('/api/products/locations', { name: (name || '').trim() });
-export const renameProductLocation = (oldName, newName) =>
-  apiPut('/api/products/locations', {
-    oldName: (oldName || '').trim(),
-    newName: (newName || '').trim(),
-  });
-export const deleteProductLocation = (name) =>
-  apiDelete(`/api/products/locations/${encodeURIComponent(name)}`);
+export const getProductLocations = () => apiGet('/api/locations');
+export const createProductLocation = (locationName, extra = {}) =>
+  apiPost('/api/locations', { locationName: (locationName || '').trim(), ...extra });
+export const renameProductLocation = (id, locationName, extra = {}) =>
+  apiPut(`/api/locations/${id}`, { locationName: (locationName || '').trim(), ...extra });
+export const deleteProductLocation = (id) => apiDelete(`/api/locations/${id}`);
 
 // Attribute Types APIs
 export const getAttributeTypes = () => apiGet('/api/products/attribute-types');

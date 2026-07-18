@@ -215,7 +215,7 @@ export const useEditProductForm = ({
     getProductLocations()
       .then((res) => {
         if (res?.success && Array.isArray(res?.data)) {
-          setLocations(res.data);
+          setLocations(res.data.map((loc) => loc.locationName));
         }
       })
       .catch(() => {});
@@ -235,7 +235,7 @@ export const useEditProductForm = ({
       // Refresh danh sách từ API
       const res = await getProductLocations();
       if (res?.success && Array.isArray(res?.data)) {
-        setLocations(res.data);
+        setLocations(res.data.map((loc) => loc.locationName));
       }
       addLocation(n);
     } catch (err) {

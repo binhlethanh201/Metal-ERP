@@ -1,236 +1,183 @@
 import React from 'react';
 import Icon from '../../../shared/components/Icon';
-import KPICard from '../components/home/KPICard';
-import FinanceMetric from '../components/home/FinanceMetric';
-import { getInventoryDashboard } from '../services/inventoryService';
-import {
-  dashboardKpis as fallbackKpis,
-  financeKpis as fallbackFinance,
-  inventoryTrend as fallbackTrend,
-  recentTransactions as fallbackTxs,
-  cashSummary as fallbackCash,
-} from '../data/inventoryMockData';
-import { transactionToneClass } from '../data/inventoryPageData';
 
-const mapDashboard = (data) => {
-  if (!data) return {};
-  return {
-    kpis: data.dashboardKpis || data.kpis || fallbackKpis,
-    finance: data.financeKpis || data.finance || fallbackFinance,
-    trend: data.inventoryTrend || data.trend || fallbackTrend,
-    transactions: data.recentTransactions || data.transactions || fallbackTxs,
-    cash: data.cashSummary || data.cash || fallbackCash,
-  };
-};
+const QUICK_ACTIONS = [
+  {
+    label: 'Hàng hóa',
+    description: 'Quản lý danh sách hàng hóa, thêm mới, chỉnh sửa',
+    icon: 'inventory_2',
+    href: '/inventory/products',
+    color: 'bg-blue-50 text-blue-700 hover:bg-blue-100',
+    iconColor: 'text-blue-600',
+  },
+  {
+    label: 'Nhập kho',
+    description: 'Tạo phiếu nhập kho, theo dõi lịch sử nhập',
+    icon: 'move_to_inbox',
+    href: '/inventory/import',
+    color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+    iconColor: 'text-emerald-600',
+  },
+  {
+    label: 'Xuất kho',
+    description: 'Tạo phiếu xuất kho, quản lý đơn xuất',
+    icon: 'outbox',
+    href: '/inventory/export',
+    color: 'bg-orange-50 text-orange-700 hover:bg-orange-100',
+    iconColor: 'text-orange-600',
+  },
+  {
+    label: 'Kiểm kê kho',
+    description: 'Tạo phiếu kiểm kê, đối soát tồn kho thực tế',
+    icon: 'assignment',
+    href: '/inventory/inventory-check',
+    color: 'bg-purple-50 text-purple-700 hover:bg-purple-100',
+    iconColor: 'text-purple-600',
+  },
+  {
+    label: 'Nhà cung cấp',
+    description: 'Quản lý nhà cung cấp và công nợ',
+    icon: 'local_shipping',
+    href: '/inventory/suppliers',
+    color: 'bg-rose-50 text-rose-700 hover:bg-rose-100',
+    iconColor: 'text-rose-600',
+  },
+  {
+    label: 'Báo cáo',
+    description: 'Xem báo cáo kho và tổng hợp số liệu',
+    icon: 'assessment',
+    href: '/inventory/reports',
+    color: 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100',
+    iconColor: 'text-cyan-600',
+  },
+];
 
 const InventoryDashboard = () => {
-  const [dashboard, setDashboard] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    const fetchDashboard = async () => {
-      setLoading(true);
-      try {
-        const res = await getInventoryDashboard();
-        const data = res?.data || res;
-        if (!cancelled) setDashboard(mapDashboard(data));
-      } catch (err) {
-        if (!cancelled) {
-          // API chưa có → im lặng dùng mock data
-          setDashboard(mapDashboard(null));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetchDashboard();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const {
-    kpis = fallbackKpis,
-    finance = fallbackFinance,
-    trend = fallbackTrend,
-    transactions = fallbackTxs,
-    cash = fallbackCash,
-  } = dashboard || {};
-
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-b-2 border-[#004785]" />
-          <p className="text-sm text-slate-500">Đang tải dữ liệu tổng quan...</p>
-        </div>
-      </div>
-    );
-  }
+  const [greeting] = React.useState(() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Chào buổi sáng';
+    if (h < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
+  });
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6 pb-8">
-      {/* 1. Khu vực KPI và Chỉ số tài chính */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((kpi) => (
-          <KPICard key={kpi.id} {...kpi} />
-        ))}
-        {finance.map((metric) => (
-          <FinanceMetric key={metric.id} {...metric} />
-        ))}
-      </section>
-
-      {/* 2. Biểu đồ xu hướng */}
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 grid grid-cols-1 gap-6 lg:col-span-12 lg:grid-cols-2">
-          {/* Xu hướng tồn kho */}
-          <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <h4 className="mb-4 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
-              XU HƯỚNG TỒN KHO (7 NGÀY)
-            </h4>
-            <div className="flex h-48 items-end gap-2 px-2">
-              {trend.map((item) => (
-                <div
-                  key={item.day}
-                  className="h-full w-full rounded-t-md bg-blue-100 transition-colors hover:bg-[#004785]"
-                  style={{ height: `${item.height}%` }}
-                  title={`${item.day}: ${item.value}`}
-                />
-              ))}
+    <div className="mx-auto max-w-[1400px] space-y-8 pb-8">
+      {/* Header greeting */}
+      <div className="rounded-2xl bg-gradient-to-br from-[#004785] to-blue-700 p-8 text-white shadow-lg">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{greeting}</h1>
+            <p className="mt-2 text-blue-100">
+              Chào mừng bạn đến với hệ thống quản lý kho. Chọn một tác vụ để bắt đầu làm việc.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl bg-white/10 px-5 py-3 backdrop-blur-sm">
+            <Icon name="inventory_2" size={28} className="text-blue-200" />
+            <div>
+              <p className="text-sm font-semibold text-blue-100">Kho hàng</p>
+              <p className="text-lg font-bold">MEP SYSTEM</p>
             </div>
-            <div className="mt-3 flex justify-between px-2 text-[10px] font-bold uppercase text-slate-400">
-              {trend.map((item) => (
-                <span key={item.day}>{item.day}</span>
-              ))}
-            </div>
-          </article>
-
-          {/* Nhập / Xuất kho */}
-          <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <h4 className="mb-4 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
-              NHẬP / XUẤT KHO
-            </h4>
-            <div className="relative h-48 overflow-hidden">
-              <svg className="h-full w-full" viewBox="0 0 400 150" aria-hidden="true">
-                <path
-                  d="M0,120 Q50,80 100,100 T200,60 T300,90 T400,30"
-                  fill="none"
-                  stroke="#22C55E"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M0,100 Q50,130 100,70 T200,110 T300,50 T400,80"
-                  fill="none"
-                  stroke="#F59E0B"
-                  strokeWidth="2"
-                />
-              </svg>
-              <div className="absolute bottom-2 right-2 flex gap-3">
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-green-500" />
-                  <span className="text-[10px] font-bold uppercase text-slate-500">Nhập</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-orange-500" />
-                  <span className="text-[10px] font-bold uppercase text-slate-500">Xuất</span>
-                </div>
-              </div>
-            </div>
-          </article>
+          </div>
         </div>
       </div>
 
-      {/* 3. Nhật ký Giao dịch và Dòng tiền mặt */}
-      <div className="grid grid-cols-12 gap-6">
-        {/* Giao dịch gần đây */}
-        <article className="col-span-12 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:col-span-8">
-          <div className="flex items-center justify-between border-b border-slate-100 p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-blue-50 p-2 text-primary">
-                <Icon name="history" />
-              </div>
-              <h4 className="text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
-                GIAO DỊCH GẦN ĐÂY
-              </h4>
-            </div>
-            <button
-              type="button"
-              className="rounded-lg border border-blue-100 px-4 py-2 text-xs font-bold text-primary hover:bg-blue-50"
+      {/* Quick actions grid */}
+      <div>
+        <h2 className="mb-5 text-lg font-bold text-slate-800">Tác vụ nhanh</h2>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {QUICK_ACTIONS.map((action) => (
+            <a
+              key={action.label}
+              href={action.href}
+              className={`group flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all ${action.color.replace(/hover:.*$/, '').trim()} hover:-translate-y-0.5 hover:shadow-md`}
             >
-              Xem báo cáo
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="border-b border-slate-100 bg-slate-50">
-                <tr>
-                  {['Loại', 'Đối tác / Mã đơn', 'Thời gian', 'Giá trị (VND)'].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 ${h === 'Giá trị (VND)' ? 'text-right' : ''}`}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {transactions.map((tx) => (
-                  <tr key={tx.id} className="transition-colors hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full ${transactionToneClass[tx.type] || transactionToneClass.transfer}`}
-                      >
-                        <Icon
-                          name={
-                            tx.type === 'import'
-                              ? 'check'
-                              : tx.type === 'transfer'
-                                ? 'swap_horiz'
-                                : 'north_east'
-                          }
-                          className="text-sm"
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-slate-900">{tx.partner}</p>
-                      <p className="text-[10px] text-slate-500">{tx.location}</p>
-                    </td>
-                    <td className="px-6 py-4 text-xs font-medium text-slate-500">{tx.time}</td>
-                    <td className="px-6 py-4 text-right text-sm font-black text-slate-900">
-                      {tx.amount}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
+              <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ${action.iconColor}`}
+              >
+                <Icon name={action.icon} size={24} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-bold text-slate-900 group-hover:text-inherit">
+                  {action.label}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500 group-hover:text-inherit">
+                  {action.description}
+                </p>
+              </div>
+              <Icon
+                name="chevron_right"
+                size={20}
+                className="mt-2 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5"
+              />
+            </a>
+          ))}
+        </div>
+      </div>
 
-        {/* Quỹ tiền mặt */}
-        <article className="col-span-12 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:col-span-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h4 className="text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
-              TỔNG QUỸ TIỀN MẶT
-            </h4>
-            <Icon name="account_balance_wallet" className="text-slate-400" />
+      {/* Info cards */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+            <Icon name="lightbulb" size={20} className="text-blue-600" />
           </div>
-          <h2 className="mb-6 text-2xl font-extrabold text-blue-900">
-            {cash.total} <span className="text-sm font-medium">VND</span>
-          </h2>
-          <div className="flex items-end justify-between border-t border-slate-50 pt-4">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase text-slate-400">THU (THÁNG)</p>
-              <p className="text-sm font-black text-green-600">{cash.income}</p>
-            </div>
-            <div className="space-y-1 text-right">
-              <p className="text-[10px] font-bold uppercase text-slate-400">CHI (THÁNG)</p>
-              <p className="text-sm font-black text-red-600">{cash.expense}</p>
-            </div>
+          <h3 className="font-bold text-slate-800">Mẹo sử dụng</h3>
+          <ul className="mt-3 space-y-2 text-sm text-slate-600">
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+              Sử dụng bộ lọc để tìm kiếm hàng hóa nhanh chóng
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+              Tạo phiếu nhập kho khi hàng về đến kho
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+              Kiểm kê định kỳ để đảm bảo số liệu tồn kho chính xác
+            </li>
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+            <Icon name="verified_user" size={20} className="text-emerald-600" />
           </div>
-        </article>
+          <h3 className="font-bold text-slate-800">Quy trình chuẩn</h3>
+          <ul className="mt-3 space-y-2 text-sm text-slate-600">
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+              Nhập kho → Cập nhật tồn kho tự động
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+              Xuất kho → Trừ tồn kho real-time
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+              Kiểm kê → Đối chiếu chênh lệch
+            </li>
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50">
+            <Icon name="forum" size={20} className="text-amber-600" />
+          </div>
+          <h3 className="font-bold text-slate-800">Hỗ trợ</h3>
+          <ul className="mt-3 space-y-2 text-sm text-slate-600">
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+              Gặp vấn đề? Liên hệ quản lý để được hỗ trợ
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+              Xem hướng dẫn sử dụng chi tiết tại menu Trợ giúp
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+              Phản hồi góp ý để cải thiện hệ thống
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   );

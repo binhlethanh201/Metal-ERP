@@ -50,10 +50,10 @@ export const ENDPOINTS = {
     TOGGLE_PRODUCT_STATUS_BULK: '/api/Products/toggle-status-bulk',
 
     // ================= Locations =================
-    GET_PRODUCT_LOCATIONS: '/api/products/locations',
-    CREATE_PRODUCT_LOCATION: '/api/products/locations',
-    RENAME_PRODUCT_LOCATION: '/api/products/locations',
-    DELETE_PRODUCT_LOCATION: (name) => `/api/products/locations/${encodeURIComponent(name)}`,
+    GET_PRODUCT_LOCATIONS: '/api/locations',
+    CREATE_PRODUCT_LOCATION: '/api/locations',
+    RENAME_PRODUCT_LOCATION: (id) => `/api/locations/${id}`,
+    DELETE_PRODUCT_LOCATION: (id) => `/api/locations/${id}`,
 
     // ================= Attribute Types =================
     GET_ATTRIBUTE_TYPES: '/api/products/attribute-types',
