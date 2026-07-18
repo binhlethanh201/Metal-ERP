@@ -27,6 +27,7 @@ const StaffManagement = () => {
     handleToggleStatus,
     handleDeleteStaff,
     currentUserId,
+    refetch,
   } = useStaffManager();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -178,7 +179,7 @@ const StaffManagement = () => {
       ) : (
         <DeletedStaffsModal
           onAction={() => {
-            // Stay on deleted view; user can switch back manually
+            refetch();
           }}
         />
       )}

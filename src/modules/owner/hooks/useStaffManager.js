@@ -59,10 +59,23 @@ export const useStaffManager = () => {
     setError('');
     try {
       let isActiveParam = undefined;
-      if (statusFilter === 'active') isActiveParam = true;
-      else if (statusFilter === 'deleted') isActiveParam = false;
+      let isDeletedParam = undefined;
+      
+      if (statusFilter === 'active') {
+        isActiveParam = true;
+      } else if (statusFilter === 'inactive') {
+        isActiveParam = false;
+      } else if (statusFilter === 'deleted') {
+        isDeletedParam = true;
+      }
 
-      const response = await getStaffs({ page, pageSize, search, isActive: isActiveParam });
+      const response = await getStaffs({ 
+        page, 
+        pageSize, 
+        search, 
+        isActive: isActiveParam,
+        isDeleted: isDeletedParam 
+      });
       if (response?.success && response?.data) {
         setStaffs(response.data.items || []);
         setPaginationMeta({
@@ -216,5 +229,6 @@ export const useStaffManager = () => {
     handleUpdateStaff,
     handleToggleStatus,
     handleDeleteStaff,
+    refetch: fetchStaffs,
   };
 };

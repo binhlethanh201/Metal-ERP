@@ -16,8 +16,8 @@ const DeletedStaffsModal = ({ onAction }) => {
     setLoading(true);
     try {
       const response = await getDeletedStaffs();
-      if (response?.data?.success && response?.data?.data) {
-        setDeletedStaffs(response.data.data);
+      if (response?.success && response?.data) {
+        setDeletedStaffs(response.data);
       }
     } catch (error) {
       console.error('Error fetching deleted staffs:', error);
@@ -30,7 +30,7 @@ const DeletedStaffsModal = ({ onAction }) => {
     setActionLoading(userId);
     try {
       const response = await restoreStaff(userId);
-      if (response?.data?.success) {
+      if (response?.success) {
         setDeletedStaffs((prev) => prev.filter((s) => s.userId !== userId));
         onAction?.('restore');
       }
@@ -45,7 +45,7 @@ const DeletedStaffsModal = ({ onAction }) => {
     setActionLoading(userId);
     try {
       const response = await permanentDeleteStaff(userId);
-      if (response?.data?.success) {
+      if (response?.success) {
         setDeletedStaffs((prev) => prev.filter((s) => s.userId !== userId));
         setConfirmDelete(null);
         onAction?.('permanentDelete');
@@ -81,7 +81,9 @@ const DeletedStaffsModal = ({ onAction }) => {
       <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-12 text-slate-500">
         <Icon name="folder_open" className="text-5xl text-slate-300" />
         <p className="mt-4 font-medium">Không có nhân viên nào đã xóa</p>
-        <p className="text-sm">Nhân viên bị xóa sẽ hiện ở đây trong 15 ngày trước khi bị xóa vĩnh viễn</p>
+        <p className="text-sm">
+          Nhân viên bị xóa sẽ hiện ở đây trong 15 ngày trước khi bị xóa vĩnh viễn
+        </p>
       </div>
     );
   }
