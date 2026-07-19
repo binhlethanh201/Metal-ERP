@@ -2,10 +2,14 @@
  * useEditProductForm - Quản lý state + handlers của modal thêm/sửa sản phẩm.
  */
 import { useEffect, useState, useRef } from 'react';
-import { useLocalStorage } from './useLocalStorage';
 import { useConversionUnits } from './useConversionUnits';
 import { useProductAttributes } from './useProductAttributes';
-import { getCategories, getBrands } from '../services/productService';
+import {
+  getCategories,
+  getBrands,
+  getProductLocations,
+  createProductLocation,
+} from '../services/productService';
 
 const formatMoney = (value) => {
   const n = Number(value);
@@ -204,7 +208,18 @@ export const useEditProductForm = ({
     };
   }, [productList]);
 
-  const [locations, persistLocations] = useLocalStorage('productLocations', ['Kệ A1', 'Kệ B2']);
+  const [locations, setLocations] = useState([]);
+
+  // Load danh sách vị trí từ API
+  useEffect(() => {
+    getProductLocations()
+      .then((res) => {
+        if (res?.success && Array.isArray(res?.data)) {
+          setLocations(res.data.map((loc) => loc.locationName));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const attr = useProductAttributes(form, setForm);
   const conv = useConversionUnits(form, setForm);
@@ -212,12 +227,20 @@ export const useEditProductForm = ({
   const [createLocationModalOpen, setCreateLocationModalOpen] = useState(false);
   const [newLocationName, setNewLocationName] = useState('');
 
-  const saveNewLocation = (name) => {
+  const saveNewLocation = async (name) => {
     const n = (name || '').trim();
-    if (!n) return false;
-    persistLocations((prev) => (prev.includes(n) ? prev : [...prev, n]));
-    addLocation(n);
-    return true;
+    if (!n) return;
+    try {
+      await createProductLocation(n);
+      // Refresh danh sách từ API
+      const res = await getProductLocations();
+      if (res?.success && Array.isArray(res?.data)) {
+        setLocations(res.data.map((loc) => loc.locationName));
+      }
+      addLocation(n);
+    } catch (err) {
+      console.error('Lỗi tạo vị trí:', err);
+    }
   };
 
   const addLocation = (loc) => {
@@ -372,8 +395,7 @@ export const useEditProductForm = ({
     groups,
     brands,
     locations,
-    setLocations: persistLocations,
-    persistLocations,
+    setLocations,
     newLocationName,
     setNewLocationName,
     addLocation,

@@ -13,30 +13,6 @@ import {
   createProductPayload,
   updateProductPayload,
 } from '../utils/productUtils';
-import { mockProducts, mockPagination } from '../data/productMockData';
-
-const filterMockProducts = (params) => {
-  if (!params) return mockProducts;
-  let filtered = [...mockProducts];
-
-  if (params.searchTerm) {
-    const kw = params.searchTerm.toLowerCase();
-    filtered = filtered.filter(
-      (p) =>
-        (p.productCode || '').toLowerCase().includes(kw) ||
-        (p.productName || '').toLowerCase().includes(kw)
-    );
-  }
-  if (params.categoryName) {
-    const cat = params.categoryName.toLowerCase();
-    filtered = filtered.filter((p) => (p.categoryName || '').toLowerCase().includes(cat));
-  }
-  if (params.status === 'active')
-    filtered = filtered.filter((p) => p.isActive !== false && p.productStatus !== 'inactive');
-  if (params.status === 'inactive')
-    filtered = filtered.filter((p) => p.isActive === false || p.productStatus === 'inactive');
-  return filtered;
-};
 
 const fileToDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -85,31 +61,35 @@ export const useProductList = (queryParams) => {
           setPaginationMeta({ totalCount, pageNumber, pageSize, totalPages, hasNextPage });
           setApiStatus({ loading: false, error: '', isMock: false });
         } else {
-          const filtered = filterMockProducts(queryParams);
-          setProducts(filtered.map(normalizeProduct));
+          setProducts([]);
           setPaginationMeta({
-            ...mockPagination,
-            totalCount: filtered.length,
-            totalPages: Math.ceil(filtered.length / (queryParams?.pageSize || 20)),
+            totalCount: 0,
+            pageNumber: 1,
+            pageSize: 20,
+            totalPages: 1,
+            hasNextPage: false,
           });
-          setApiStatus({ loading: false, error: '', isMock: true });
+          setApiStatus({
+            loading: false,
+            error: response?.message || response?.title || 'Không thể tải danh sách hàng hóa.',
+            isMock: false,
+          });
         }
       } catch (error) {
         if (!active) return;
-        // 401: JWT hết hạn/không hợp lệ -> không nên âm thầm hiện mock data.
-        if (error?.status === 401 || error?.response?.status === 401) {
-          setApiStatus({ loading: false, error: 'Phiên đăng nhập đã hết hạn.', isMock: false });
-          setProducts([]);
-          return;
-        }
-        const filtered = filterMockProducts(queryParams);
-        setProducts(filtered.map(normalizeProduct));
+        const msg =
+          error?.status === 401
+            ? 'Phiên đăng nhập đã hết hạn.'
+            : error?.data?.message || error?.message || 'Không thể tải danh sách hàng hóa.';
+        setProducts([]);
         setPaginationMeta({
-          ...mockPagination,
-          totalCount: filtered.length,
-          totalPages: Math.ceil(filtered.length / (queryParams?.pageSize || 20)),
+          totalCount: 0,
+          pageNumber: 1,
+          pageSize: 20,
+          totalPages: 1,
+          hasNextPage: false,
         });
-        setApiStatus({ loading: false, error: '', isMock: true });
+        setApiStatus({ loading: false, error: msg, isMock: false });
       }
     };
 
@@ -281,6 +261,7 @@ export const useProductList = (queryParams) => {
     setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
     try {
       await deleteProduct(id);
+      refetch(); // Tải lại dữ liệu từ API sau khi xóa
     } catch (error) {
       console.error('Delete failed:', error);
       alert('Không thể xóa sản phẩm. Vui lòng thử lại.');

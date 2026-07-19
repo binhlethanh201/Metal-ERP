@@ -71,6 +71,7 @@ const ReturnHistory = () => {
         <h1 className="text-3xl font-bold text-gray-900">Lịch sử Đổi/Trả hàng</h1>
       </div>
 
+      {/* ==================== POLICY SETTINGS ==================== */}
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
       {error && (
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
@@ -188,12 +189,7 @@ const ReturnHistory = () => {
       </div>
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
-      <ReturnTable
-        returns={returns}
-        loading={loading}
-        onViewDetail={handleViewDetail}
-        // Đã bỏ onCancel ở đây vì action hủy được chuyển vào Modal chi tiết
-      />
+      <ReturnTable returns={returns} loading={loading} onViewDetail={handleViewDetail} />
 
       {/* ==================== PHÂN TRANG ==================== */}
       {!loading && totalPages > 0 && (

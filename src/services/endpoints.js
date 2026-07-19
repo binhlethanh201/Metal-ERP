@@ -28,10 +28,18 @@ export const ENDPOINTS = {
     STAFF_UNASSIGN_BRANCH: (id, branchId) => `/api/owner/staffs/${id}/unassign-branch/${branchId}`,
     STAFF_TOGGLE_STATUS: (id) => `/api/owner/staffs/${id}/toggle-status`,
     STAFF_AVAILABLE_PERMISSIONS: '/api/owner/staffs/available-permissions',
+    STAFF_CHECK_RELATIONS: (id) => `/api/owner/staffs/${id}/check-relations`,
 
     // Discount Tiers (Chiết khấu theo giá trị đơn hàng)
     ORDER_DISCOUNT_TIERS: '/api/order-discount-tiers',
     ORDER_DISCOUNT_TIER_DETAIL: (id) => `/api/order-discount-tiers/${id}`,
+
+    // Branch Settings (Chính sách đổi/trả hàng)
+    BRANCH_SETTINGS: (id) => `/api/owner/branches/${id}/settings`,
+
+    // Category Return Policies (Chính sách đổi/trả theo nhóm hàng)
+    CATEGORY_RETURN_POLICIES: (branchId) =>
+      `/api/owner/branches/${branchId}/return-policies/categories`,
   },
 
   // ============ INVENTORY (Tổng kho) ============
@@ -47,6 +55,18 @@ export const ENDPOINTS = {
     DELETE_PRODUCT: (id) => `/api/Products/${id}`,
     TOGGLE_PRODUCT_STATUS: (id) => `/api/Products/${id}/toggle-status`,
     TOGGLE_PRODUCT_STATUS_BULK: '/api/Products/toggle-status-bulk',
+
+    // ================= Locations =================
+    GET_PRODUCT_LOCATIONS: '/api/locations',
+    CREATE_PRODUCT_LOCATION: '/api/locations',
+    RENAME_PRODUCT_LOCATION: (id) => `/api/locations/${id}`,
+    DELETE_PRODUCT_LOCATION: (id) => `/api/locations/${id}`,
+
+    // ================= Attribute Types =================
+    GET_ATTRIBUTE_TYPES: '/api/products/attribute-types',
+    CREATE_ATTRIBUTE_TYPE: '/api/products/attribute-types',
+    UPDATE_ATTRIBUTE_TYPE: (id) => `/api/products/attribute-types/${id}`,
+    DELETE_ATTRIBUTE_TYPE: (id) => `/api/products/attribute-types/${id}`,
 
     // ================= Suppliers =================
     GET_SUPPLIERS: '/api/suppliers',
@@ -153,6 +173,7 @@ export const ENDPOINTS = {
     CREATE_PAYMENT: (invoiceId) => `/pos/invoices/${invoiceId}/payments`,
     GET_PAYMENT_QR: (paymentId) => `/pos/payments/${paymentId}/qr`,
     CONFIRM_TRANSFER: (paymentId) => `/pos/payments/${paymentId}/confirm-transfer`,
+    CANCEL_PAYMENT: (paymentId) => `/pos/payments/${paymentId}/cancel`,
 
     // --- Shift Management ---
     START_SHIFT: '/pos/shifts/start',

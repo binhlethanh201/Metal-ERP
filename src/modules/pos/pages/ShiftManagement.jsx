@@ -136,14 +136,30 @@ export const ShiftManagement = () => {
         const open = mapped.find((s) => s.status === 'open');
         console.log('[ShiftManagement] open shift found:', open ? open.id : 'none');
         if (open) {
-          sessionStorage.setItem('pos_active_shift', JSON.stringify(open));
+          // Merge với localStorage để giữ orderCount/totalSales đã tích lũy (tránh mất khi F5)
+          const existing = (() => {
+            try {
+              return JSON.parse(localStorage.getItem('pos_active_shift'));
+            } catch {
+              return null;
+            }
+          })();
+          const merged = {
+            ...open,
+            orderCount: Math.max(open.orderCount || 0, existing?.orderCount || 0),
+            totalSales: Math.max(open.totalSales || 0, existing?.totalSales || 0),
+            totalRevenue: Math.max(open.totalRevenue || 0, existing?.totalRevenue || 0),
+            cashSales: Math.max(open.cashSales || 0, existing?.cashSales || 0),
+            transferSales: Math.max(open.transferSales || 0, existing?.transferSales || 0),
+          };
+          localStorage.setItem('pos_active_shift', JSON.stringify(merged));
         } else {
-          sessionStorage.removeItem('pos_active_shift');
+          localStorage.removeItem('pos_active_shift');
         }
       } else {
         console.log('[ShiftManagement] API trả về rỗng');
         setShifts([]);
-        sessionStorage.removeItem('pos_active_shift');
+        localStorage.removeItem('pos_active_shift');
       }
     } catch (err) {
       console.error('Lỗi load shifts:', err);
@@ -458,7 +474,7 @@ export const ShiftManagement = () => {
       // Poll mỗi 10s để cập nhật realtime
       const interval = setInterval(() => {
         try {
-          const ss = JSON.parse(sessionStorage.getItem('pos_active_shift') || 'null');
+          const ss = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
           if (ss && (ss.orderCount > 0 || ss.totalSales > 0)) {
             setShiftSummary((prev) =>
               prev ? { ...prev, orderCount: ss.orderCount, totalSales: ss.totalSales } : prev
@@ -498,8 +514,8 @@ export const ShiftManagement = () => {
 
       // Lưu tên thu ngân cho shift này
       saveCashier(newShift.id, staffName);
-      // Lưu shift đang hoạt động vào sessionStorage để POSScreen dùng
-      sessionStorage.setItem('pos_active_shift', JSON.stringify(newShift));
+      // Lưu shift đang hoạt động vào localStorage để POSScreen dùng
+      localStorage.setItem('pos_active_shift', JSON.stringify(newShift));
 
       setShifts((prev) => [newShift, ...prev]);
       setShiftSummary(newShift);
@@ -558,8 +574,8 @@ export const ShiftManagement = () => {
       // Cập nhật tên thu ngân trong localStorage
       saveCashier(openShift.id, openShift.cashier);
 
-      // Xóa shift khỏi sessionStorage
-      sessionStorage.removeItem('pos_active_shift');
+      // Xóa shift khỏi localStorage
+      localStorage.removeItem('pos_active_shift');
     } catch (err) {
       console.error('[ShiftManagement] Error ending shift:', err);
       alert('Lỗi chốt ca: ' + (err.message || 'Không xác định'));

@@ -14,7 +14,6 @@ import {
   RefreshCw,
   AlertCircle,
   X,
-  Eye,
   CheckCircle2,
   Clock,
   FileEdit,
@@ -107,7 +106,7 @@ const InventoryCheckList = () => {
       case 'Completed':
         return (
           <Badge variant="success" size="sm" className="inline-flex items-center gap-1">
-            <CheckCircle2 size={12} /> Hoàn thành
+            <CheckCircle2 size={12} /> Hoàn tất
           </Badge>
         );
       case 'Cancelled':
@@ -238,7 +237,7 @@ const InventoryCheckList = () => {
       key: 'createdAt',
       header: 'Ngày tạo',
       render: (_, row) => (
-        <span className="text-xs text-slate-500">
+        <span className="text-sm text-slate-600">
           {row.createdAt ? formatDateTime(row.createdAt) : '---'}
         </span>
       ),
@@ -247,51 +246,35 @@ const InventoryCheckList = () => {
       key: 'createdByUserName',
       header: 'Người tạo',
       render: (_, row) => (
-        <span className="text-slate-700">{formatUserName(row.createdByUserName) || '---'}</span>
+        <span className="text-sm text-slate-700">
+          {formatUserName(row.createdByUserName) || '---'}
+        </span>
       ),
     },
     {
       key: 'assigneeUserName',
       header: 'Người phụ trách',
       render: (_, row) => (
-        <span className={!row.assigneeUserName ? 'italic text-slate-400' : 'text-slate-700'}>
+        <span
+          className={`text-sm ${!row.assigneeUserName ? 'italic text-slate-400' : 'text-slate-700'}`}
+        >
           {formatUserName(row.assigneeUserName) || 'Chưa gán'}
         </span>
       ),
     },
     {
       key: 'detailCount',
-      header: 'Sản phẩm',
+      header: 'Số lượng',
       render: (_, row) => (
-        <div className="text-center font-semibold text-slate-700">{row.detailCount ?? '---'}</div>
+        <span className="text-sm font-semibold text-slate-700">{row.detailCount ?? '---'}</span>
       ),
     },
     {
       key: 'status',
       header: 'Trạng thái',
       render: (_, row) => (
-        <div className="flex justify-center">{renderStatusBadge(row.status)}</div>
+        <span className="inline-flex items-center">{renderStatusBadge(row.status)}</span>
       ),
-    },
-    {
-      key: 'actions',
-      header: 'Thao tác',
-      render: (_, row) => {
-        const checkId = row.ticketId || row.id || row.inventoryCheckId;
-        return (
-          <div className="flex justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSelectedCheckId(checkId)}
-              className="flex items-center gap-1 !border-none !bg-blue-50 text-blue-600 hover:!bg-blue-100"
-              title="Xem chi tiết"
-            >
-              <Eye size={14} /> Xem
-            </Button>
-          </div>
-        );
-      },
     },
   ];
 
@@ -299,49 +282,34 @@ const InventoryCheckList = () => {
   return (
     <div className="animate-fade-in w-full space-y-4 text-slate-800">
       {/* ==================== PAGE HEADER ==================== */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý Kiểm kê kho</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Kiểm kê kho</h1>
           <p className="mt-1 text-gray-600">
             Theo dõi, tạo mới và xử lý các phiếu kiểm đếm tồn kho
           </p>
         </div>
-        <Button
-          variant="primary"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Icon name="add" size={20} />
-          Tạo phiếu kiểm kê mới
-        </Button>
-      </div>
-
-      {/* ==================== STATS CARDS ==================== */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card>
-          <div className="py-3 text-center">
-            <div className="text-2xl font-bold text-[#004785]">{summary.totalCount}</div>
-            <p className="mt-0.5 text-xs text-gray-600">Tổng phiếu</p>
+        <div className="flex items-center gap-3">
+          <div
+            className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold shadow-sm ${
+              loading
+                ? 'border-slate-200 bg-slate-50 text-slate-600'
+                : globalError
+                  ? 'border-red-200 bg-red-50 text-red-700'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            }`}
+          >
+            {loading ? 'Đang tải dữ liệu...' : globalError ? '⚠ Đã xảy ra lỗi' : 'Sẵn sàng'}
           </div>
-        </Card>
-        <Card>
-          <div className="py-3 text-center">
-            <div className="text-2xl font-bold text-slate-600">{summary.totalItems}</div>
-            <p className="mt-0.5 text-xs text-gray-600">Sản phẩm kiểm</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="py-3 text-center">
-            <div className="text-2xl font-bold text-amber-500">{summary.drafts}</div>
-            <p className="mt-0.5 text-xs text-gray-600">Phiếu nháp</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="py-3 text-center">
-            <div className="text-2xl font-bold text-orange-500">{summary.waiting}</div>
-            <p className="mt-0.5 text-xs text-gray-600">Chờ duyệt</p>
-          </div>
-        </Card>
+          <Button
+            variant="primary"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Icon name="add" size={20} />
+            Tạo phiếu kiểm kê
+          </Button>
+        </div>
       </div>
 
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
@@ -355,6 +323,34 @@ const InventoryCheckList = () => {
           <IconButton icon={X} variant="ghost" size="sm" onClick={() => setGlobalError('')} />
         </div>
       )}
+
+      {/* ==================== STATS CARDS ==================== */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-[#004785]">{summary.totalCount}</div>
+            <p className="mt-1 text-sm text-gray-600">Tổng phiếu</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-slate-600">{summary.totalItems}</div>
+            <p className="mt-1 text-sm text-gray-600">Sản phẩm kiểm</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-amber-500">{summary.drafts}</div>
+            <p className="mt-1 text-sm text-gray-600">Phiếu nháp</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-orange-500">{summary.waiting}</div>
+            <p className="mt-1 text-sm text-gray-600">Chờ duyệt</p>
+          </div>
+        </Card>
+      </div>
 
       {/* ==================== FILTERS (Tích hợp Shared Button & Drawer) ==================== */}
       <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">

@@ -4,7 +4,7 @@
  * Auth: Bearer {token}. Test: sale.bac01@mep.vn / MEP@2026
  * Flow chính: Invoice-based (create invoice → add items → hold|resume → payments → finalize)
  */
-import { apiPosGet, apiPosPost, apiPosPatch, apiPosPut } from '../../../services/apiClient';
+import { apiPosGet, apiPosPost, apiPosPatch, apiPosPut, apiGet } from '../../../services/apiClient';
 import ENDPOINTS from '../../../services/endpoints';
 
 // ============ Products ============
@@ -91,6 +91,10 @@ export const confirmTransfer = (paymentId) => {
   return apiPosPost(ENDPOINTS.POS.CONFIRM_TRANSFER(paymentId), {});
 };
 
+export const cancelPayment = (paymentId) => {
+  return apiPosPost(ENDPOINTS.POS.CANCEL_PAYMENT(paymentId), {});
+};
+
 // ============ Shift Management ============
 // POST /pos/shifts/start → ShiftDto (status = OPEN)
 // GET  /pos/shifts/:id/summary → ShiftDto
@@ -161,6 +165,22 @@ export const getReturns = (params = {}) => {
 
 export const getReturn = (returnId) => {
   return apiPosGet(ENDPOINTS.POS.GET_RETURN(returnId));
+};
+
+// Lấy danh sách category policies để kiểm tra quyền đổi/trả
+export const getCategoryReturnPolicies = (branchId) => {
+  return apiGet(ENDPOINTS.OWNER.CATEGORY_RETURN_POLICIES(branchId));
+};
+
+// Lấy thông tin sản phẩm (bao gồm category) để kiểm tra policy
+export const getProductCategory = async (productId) => {
+  try {
+    const res = await apiGet(`/api/products/${productId}`);
+    const product = res?.data || res;
+    return product?.categoryName || product?.CategoryName || '';
+  } catch {
+    return '';
+  }
 };
 
 export const createReturn = (data) => {

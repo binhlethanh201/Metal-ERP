@@ -6,6 +6,7 @@ import { useBranchManager } from '../hooks/useBranchManager';
 import { useDiscountTiers } from '../hooks/useDiscountTiers';
 import DiscountTierTable from '../components/settings/DiscountTierTable';
 import DiscountTierModal from '../components/settings/DiscountTierModal';
+import CategoryReturnPolicy from '../components/settings/CategoryReturnPolicy';
 
 /**
  * Trang Cài đặt cửa hàng - Quản lý chiết khấu theo giá trị đơn hàng
@@ -76,9 +77,14 @@ const StoreSettings = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Cài đặt cửa hàng</h1>
-          <p className="mt-1 text-gray-600">Quản lý chiết khấu theo giá trị đơn hàng</p>
+          <p className="mt-1 text-gray-600">
+            Quản lý chiết khấu và chính sách đổi trả hàng theo nhóm
+          </p>
         </div>
       </div>
+
+      {/* Chính sách đổi/trả theo nhóm hàng */}
+      {selectedBranchId && <CategoryReturnPolicy branchId={selectedBranchId} />}
 
       {/* Nội dung chiết khấu */}
       {selectedBranchId ? (

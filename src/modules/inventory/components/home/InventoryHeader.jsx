@@ -82,6 +82,7 @@ const InventoryHeader = () => {
 
           {/* THÔNG BÁO DROPDOWN */}
           <InventoryNotificationDropdown />
+
           {/* USER PROFILE DROPDOWN */}
           <div className="relative" ref={dropdownRef}>
             <button

@@ -93,7 +93,9 @@ export const StockExport = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // eslint-disable-next-line
   const [statusMessage, setStatusMessage] = useState('');
+  const [globalError, setGlobalError] = useState('');
 
   // Thông tin chứng từ
   const [ticketCode, setTicketCode] = useState('');
@@ -127,7 +129,7 @@ export const StockExport = () => {
   const loadData = async (filterParams = {}) => {
     setIsLoading(true);
     try {
-      const queryParams = { pageNumber: 1, pageSize: 50, ...filterParams };
+      const queryParams = { pageNumber: 1, pageSize: 100, ...filterParams };
 
       // Load sản phẩm - độc lập với lịch sử phiếu
       try {
@@ -136,6 +138,7 @@ export const StockExport = () => {
         setProducts(productItems);
       } catch {
         setProducts([]);
+        setGlobalError('Không thể tải danh sách sản phẩm.');
       }
 
       // Load lịch sử phiếu xuất
@@ -143,10 +146,9 @@ export const StockExport = () => {
         const exportsResponse = await getOutwardInventories(queryParams);
         const exportItems = extractList(exportsResponse).map(normalizeExportRow).filter(Boolean);
         setExports(exportItems);
-        setStatusMessage('Đã đồng bộ dữ liệu xuất kho từ API');
       } catch {
         setExports([]);
-        setStatusMessage('Đang dùng dữ liệu cục bộ');
+        setGlobalError((prev) => prev || 'Không thể tải lịch sử phiếu xuất kho.');
       }
     } finally {
       setIsLoading(false);
@@ -425,29 +427,63 @@ export const StockExport = () => {
     }
   };
 
-  const statusClass = (statusMessage || '').includes('Lỗi:')
-    ? 'border-rose-200 bg-rose-50 text-rose-700'
-    : 'border-emerald-200 bg-emerald-50 text-emerald-700';
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Xuất kho</h1>
           <p className="mt-1 text-gray-600">Ghi nhận và quản lý các phiếu xuất từ kho</p>
         </div>
-        <Button variant="primary" onClick={openModal}>
-          + Xuất hàng
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
+            {isLoading ? 'Đang tải dữ liệu xuất kho...' : 'Sẵn sàng tạo phiếu'}
+          </div>
+          <Button variant="primary" onClick={openModal}>
+            Xuất hàng
+          </Button>
+        </div>
       </div>
 
-      <div
-        className={`w-fit rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${statusClass}`}
-      >
-        {isLoading
-          ? 'Đang tải dữ liệu xuất kho...'
-          : statusMessage || 'Sẵn sàng tạo phiếu xuất mới'}
-      </div>
+      {/* Error banner */}
+      {globalError && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+          <svg
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div className="flex-1">
+            <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
+            <p className="mt-1 text-sm text-red-700">{globalError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGlobalError('')}
+            className="shrink-0 rounded p-1 text-red-400 hover:bg-red-100 hover:text-red-600"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>

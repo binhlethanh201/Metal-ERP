@@ -61,19 +61,23 @@ const UnitConversionSection = ({ p }) => (
           {p.conversionUnits.map((unit) => (
             <div
               key={unit.id}
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+              className="flex min-w-0 items-center gap-2 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-3"
             >
-              <span className="text-sm font-medium text-slate-700">1</span>
-              <span className="text-sm font-semibold text-slate-700">{unit.name}</span>
-              <span className="text-sm font-semibold text-slate-600">=</span>
-              <span className="text-sm font-medium text-slate-700">
-                {p.formatMoney(unit.convertValue)}
-              </span>
-              <span className="text-sm font-semibold text-slate-700">
-                {unit.convertFrom || p.baseUnit.name}
-              </span>
-              <div className="min-w-[20px] flex-1" />
-              <div className="min-w-[100px] text-right">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-sm font-medium text-slate-700">1</span>
+                <span className="max-w-[32ch] truncate text-sm font-semibold text-slate-700">
+                  {unit.name}
+                </span>
+                <span className="text-sm font-semibold text-slate-600">=</span>
+                <span className="text-sm font-medium text-slate-700">
+                  {p.formatMoney(unit.convertValue)}
+                </span>
+                <span className="text-sm font-semibold text-slate-700">
+                  {unit.convertFrom || p.baseUnit.name}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1" />
+              <div className="min-w-[100px] flex-shrink-0 text-right">
                 <span className="text-sm text-slate-600">
                   {(() => {
                     const base = Number(p.baseUnit.price) || 0;
@@ -97,7 +101,7 @@ const UnitConversionSection = ({ p }) => (
                   })()}
                 </span>
               </div>
-              <label className="flex items-center gap-1.5 text-sm text-slate-600">
+              <label className="flex flex-shrink-0 items-center gap-1.5 text-sm text-slate-600">
                 <input
                   type="checkbox"
                   className="h-3.5 w-3.5 rounded border-slate-300 text-primary"
@@ -109,7 +113,7 @@ const UnitConversionSection = ({ p }) => (
               <button
                 type="button"
                 onClick={() => p.removeConversionUnit(unit.id)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
               >
                 <Icon name="delete" size={16} />
               </button>
