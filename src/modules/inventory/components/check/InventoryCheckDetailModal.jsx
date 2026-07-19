@@ -293,24 +293,31 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
       header: 'Tên sản phẩm',
     },
     {
-      key: 'systemQuantity',
+      key: 'currentActualStock',
       header: (
-        <div className="text-center" title="Tồn kho được chốt từ DB tại thời điểm Fill.">
+        <div className="text-center" title="Tồn kho thực tế hiện tại trong hệ thống.">
           Tồn Hệ Thống{' '}
           <Icon name="info" size={14} className="inline align-text-bottom text-slate-400" />
         </div>
       ),
-      render: (_, item) => (
-        <div className="text-center font-bold text-slate-500">
-          {isDraft ? (
-            <span className="italic text-slate-400" title="Sẽ được chốt khi bấm Gửi duyệt">
-              Chốt lúc fill
-            </span>
-          ) : (
-            item.systemQuantity
-          )}
-        </div>
-      ),
+      render: (_, item) => {
+        // Ưu tiên hiển thị CurrentActualStock nếu có (tồn kho thực tế hiện tại)
+        // Fallback về systemQuantity nếu không có currentActualStock
+        const displayValue = isDraft
+          ? (item.currentActualStock ?? item.systemQuantity)
+          : item.systemQuantity;
+
+        return (
+          <div className="text-center font-bold text-slate-700">
+            {displayValue ?? '-'}
+            {isDraft && item.currentActualStock !== item.systemQuantity && (
+              <div className="text-[10px] font-normal text-slate-400">
+                (Lúc tạo: {item.systemQuantity})
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'actualQuantity',
@@ -358,9 +365,12 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
         const hasValue =
           currentActualRaw !== '' && currentActualRaw !== undefined && currentActualRaw !== null;
         const currentActual = hasValue ? Number(currentActualRaw) : 0;
-        const displayDiscrepancy = isDraft
-          ? currentActual - (item.systemQuantity || 0)
-          : item.discrepancy;
+        // Khi Draft: tính chênh lệch với tồn kho thực tế hiện tại (CurrentActualStock)
+        // Khi đã duyệt/kết thúc: hiển thị chênh lệch đã được lưu
+        const systemStock = isDraft
+          ? (item.currentActualStock ?? item.systemQuantity)
+          : item.systemQuantity;
+        const displayDiscrepancy = isDraft ? currentActual - (systemStock || 0) : item.discrepancy;
 
         return (
           <div
@@ -668,8 +678,8 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
             />
             {isDraft && (
               <div className="border-t border-blue-100 bg-blue-50 p-3 text-center text-xs italic text-blue-600">
-                * Cột "Tồn Hệ Thống" và "Chênh Lệch" sẽ được hệ thống chốt chính xác từ DB tại thời
-                điểm bấm "Gửi duyệt".
+                * Cột "Tồn Hệ Thống" hiển thị tồn kho thực tế hiện tại. "Chênh Lệch" được tính với
+                tồn kho này và sẽ được chốt tại thời điểm bấm "Gửi duyệt".
               </div>
             )}
           </div>
