@@ -27,6 +27,7 @@ const mapApiDetail = (r) => {
   const items = (r.returnItems || r.items || []).map((item) => ({
     returnItemId: item.returnItemId || item.id,
     productId: item.productId || item.id,
+    _key: item.invoiceItemId || item.invoiceItem_id || item.lineItemId || item.id || item.productId,
     productName: item.productName || 'Sản phẩm',
     productCode: item.productCode || '',
     quantity: parseFloat(item.quantity || 1),
@@ -141,6 +142,28 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
     setFinalizing(true);
     try {
       await cancelReturn(returnId);
+      // Xóa tracking trong localStorage để số lượng tồn được tính lại đúng
+      try {
+        const invCode = detail.invoiceCode;
+        if (invCode && detail.returnItems?.length > 0) {
+          const storageKey = 'pos_return_items_' + invCode;
+          const existing = JSON.parse(localStorage.getItem(storageKey) || '{}');
+          let changed = false;
+          detail.returnItems.forEach((item) => {
+            const key = item._key || item.productId;
+            if (key && existing[key]) {
+              existing[key].qty = Math.max(0, (existing[key].qty || 0) - item.quantity);
+              if (existing[key].qty <= 0) {
+                delete existing[key];
+              }
+              changed = true;
+            }
+          });
+          if (changed) {
+            localStorage.setItem(storageKey, JSON.stringify(existing));
+          }
+        }
+      } catch (_) {}
       setDetail((prev) => (prev ? { ...prev, status: 'CANCELLED' } : prev));
       onUpdated?.();
     } catch (err) {
@@ -240,6 +263,7 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
               <div key={item.returnItemId || i} className="flex items-center justify-between py-3">
                 <div>
                   <p className="font-medium text-slate-900">{item.productName}</p>
+                  <p className="text-xs text-slate-400">Số lượng: {item.quantity}</p>
                 </div>
                 <p className="font-semibold text-green-600">
                   {formatCurrency(item.refundAmount || item.quantity * item.sellPrice)}

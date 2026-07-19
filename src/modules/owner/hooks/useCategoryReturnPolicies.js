@@ -46,22 +46,32 @@ export const useCategoryReturnPolicies = (branchId) => {
           }
         });
         setPolicies(policyMap);
-        // Lưu xuống localStorage để POS ReturnForm có thể dùng
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(policyMap));
-        } catch {}
-      } else if (policyRes.status === 'rejected' && policyRes.reason?.status !== 404) {
-        console.warn('Không thể tải category policies:', policyRes.reason);
-        // Fallback: đọc từ localStorage
-        try {
-          const cached = localStorage.getItem(STORAGE_KEY);
-          if (cached) setPolicies(JSON.parse(cached));
-        } catch {}
-      } else if (policyRes.status === 'rejected') {
-        // 404 hoặc lỗi khác → fallback localStorage
+        // Chỉ ghi đè localStorage nếu API trả về dữ liệu không rỗng
+        // Tránh mất dữ liệu khi F5 (API chưa có endpoint hoặc trả về rỗng)
+        if (Object.keys(policyMap).length > 0) {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(policyMap));
+          } catch {}
+        }
+      } else {
+        // API lỗi hoặc không có dữ liệu → fallback localStorage
         try {
           const cached = localStorage.getItem(STORAGE_KEY);
-          if (cached) setPolicies(JSON.parse(cached));
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setPolicies(parsed);
+            // Đồng thời push lên API nếu có dữ liệu trong localStorage (đồng bộ 1 chiều)
+            if (Object.keys(parsed).length > 0) {
+              const policiesArray = Object.entries(parsed)
+                .filter(([_, vals]) => vals.returnDays || vals.exchangeDays)
+                .map(([categoryName, vals]) => ({
+                  categoryName,
+                  returnDays: vals.returnDays ? parseInt(vals.returnDays, 10) : null,
+                  exchangeDays: vals.exchangeDays ? parseInt(vals.exchangeDays, 10) : null,
+                }));
+              branchSettingsService.updateCategoryPolicies(branchId, policiesArray).catch(() => {});
+            }
+          }
         } catch {}
       }
     } catch (err) {
@@ -89,12 +99,13 @@ export const useCategoryReturnPolicies = (branchId) => {
     });
   }, []);
 
-  const savePolicies = useCallback(async () => {
+  const savePolicies = useCallback(async (forcedPolicies) => {
     setSaving(true);
     setError(null);
     setMessage(null);
     try {
-      const policiesArray = Object.entries(policies)
+      const data = forcedPolicies || policies;
+      const policiesArray = Object.entries(data)
         .filter(([_, vals]) => vals.returnDays || vals.exchangeDays)
         .map(([categoryName, vals]) => ({
           categoryName,
@@ -105,7 +116,7 @@ export const useCategoryReturnPolicies = (branchId) => {
       const response = await branchSettingsService.updateCategoryPolicies(branchId, policiesArray);
       // Lưu xuống localStorage để POS ReturnForm có thể dùng
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(policies));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch {}
       if (response?.success) {
         setMessage('Lưu chính sách đổi trả theo nhóm hàng thành công!');

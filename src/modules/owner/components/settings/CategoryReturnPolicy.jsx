@@ -90,7 +90,6 @@ const CategoryReturnPolicy = ({ branchId }) => {
     categories,
     policies,
     loading,
-    saving,
     error,
     message,
     updatePolicy,
@@ -148,24 +147,35 @@ const CategoryReturnPolicy = ({ branchId }) => {
     setShowModal(true);
   };
 
-  const handleModalSave = () => {
+  const handleModalSave = async () => {
     const catName = editCategory || formCategory;
     if (!catName) return;
     const returnDays = toTotalDays(formReturn.value, formReturn.unit);
     const exchangeDays = toTotalDays(formExchange.value, formExchange.unit);
+
     updatePolicy(catName, 'returnDays', String(returnDays));
     updatePolicy(catName, 'exchangeDays', String(exchangeDays));
     // Sync ngay xuống localStorage để ReturnForm dùng được
     syncToLocal(catName, String(returnDays), String(exchangeDays));
+
+    // Lưu lên backend ngay (không cần bấm "Lưu cài đặt")
+    const updated = { ...policies, [catName]: { returnDays: String(returnDays), exchangeDays: String(exchangeDays) } };
+    if (!returnDays && !exchangeDays) delete updated[catName];
+    await savePolicies(updated);
+
     setShowModal(false);
     setEditCategory(null);
   };
 
-  const handleDelete = (catName) => {
+  const handleDelete = async (catName) => {
     if (!window.confirm(`Xóa toàn bộ chính sách đổi/trả cho nhóm hàng "${catName}"?`)) return;
     updatePolicy(catName, 'returnDays', '');
     updatePolicy(catName, 'exchangeDays', '');
     syncToLocal(catName, '', '');
+    // Lưu lên backend ngay
+    const updated = { ...policies };
+    delete updated[catName];
+    await savePolicies(updated);
   };
 
   // Sync policies xuống localStorage ngay lập tức (ko cần đợi bấm Lưu cài đặt)
@@ -302,7 +312,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
                         <span className="text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="py-3">
+                    <td className="w-24 py-3">
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleOpenEdit(catName)}
@@ -328,29 +338,11 @@ const CategoryReturnPolicy = ({ branchId }) => {
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+      <div className="mt-4 border-t border-slate-100 pt-4">
         <p className="text-xs text-slate-400">
           Chỉ sản phẩm thuộc nhóm hàng được thiết lập mới được phép đổi/trả. Để trống = không cho
           phép.
         </p>
-        <Button
-          variant="primary"
-          onClick={savePolicies}
-          disabled={saving}
-          className="flex items-center gap-2"
-        >
-          {saving ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              <span>Đang lưu...</span>
-            </>
-          ) : (
-            <>
-              <Icon name="save" size={16} />
-              <span>Lưu cài đặt</span>
-            </>
-          )}
-        </Button>
       </div>
 
       {/* Modal thêm/sửa */}

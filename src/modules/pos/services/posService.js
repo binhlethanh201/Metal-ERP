@@ -173,14 +173,78 @@ export const getCategoryReturnPolicies = (branchId) => {
 };
 
 // Lấy thông tin sản phẩm (bao gồm category) để kiểm tra policy
-export const getProductCategory = async (productId) => {
-  try {
-    const res = await apiGet(`/api/products/${productId}`);
-    const product = res?.data || res;
-    return product?.categoryName || product?.CategoryName || '';
-  } catch {
-    return '';
+// Dùng nhiều API và cấu trúc response khác nhau để tìm category
+export const getProductCategory = async (productId, productCode, productName) => {
+  const extractCat = (obj) =>
+    obj?.categoryName ||
+    obj?.CategoryName ||
+    obj?.category?.name ||
+    obj?.category?.categoryName ||
+    obj?.group ||
+    '';
+
+  console.log('[getProductCategory] Input:', { productId, productCode, productName });
+
+  // 1. Search inventory theo productCode (trả về categoryName, ko bị lỗi mapper)
+  if (productCode) {
+    try {
+      console.log('[getProductCategory] Searching Inventory with productCode:', productCode);
+      const res = await apiGet(`/api/products?productCode=${encodeURIComponent(productCode)}`);
+      const invData = res?.data || res;
+      const invItems = Array.isArray(invData)
+        ? invData
+        : (invData?.items ?? invData?.data ?? []);
+      console.log('[getProductCategory] Inventory search results:', invItems?.length);
+      if (Array.isArray(invItems) && invItems.length > 0) {
+        // Ưu tiên item có productId khớp chính xác
+        const matched = productId
+          ? invItems.find(i => i.productId === productId || i.id === productId || i.branchProductId === productId)
+          : null;
+        const invProduct = matched || invItems[0];
+        console.log('[getProductCategory] Inventory product keys:', Object.keys(invProduct));
+        const cat = extractCat(invProduct) || '';
+        if (cat) {
+          console.log('[getProductCategory] Found via Inventory search:', cat);
+          return cat;
+        }
+      }
+    } catch (e) {
+      console.warn('[getProductCategory] Inventory search failed:', e?.message);
+    }
   }
+
+  // 2. Fallback: search POS products
+  const searchTerms = [
+    productCode,
+    productName,
+    productId,
+  ].filter(Boolean);
+
+  for (const term of searchTerms) {
+    try {
+      console.log('[getProductCategory] Searching POS with term:', term);
+      const response = await getPosProducts({ search: term });
+      console.log('[getProductCategory] POS search raw response:', response);
+      const raw = Array.isArray(response)
+        ? response
+        : (response?.Items ?? response?.items ?? response?.data?.items ?? response?.data?.data ?? []);
+      const items = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
+      console.log('[getProductCategory] POS search items count:', items?.length, 'isArray:', Array.isArray(items));
+      if (items.length > 0) {
+        const p = items[0];
+        const cat = p.CategoryName ?? p.categoryName ?? p.category ?? p.ProductCategory ?? p.productCategory ?? '';
+        if (cat) {
+          console.log('[getProductCategory] Found via POS search:', cat);
+          return cat;
+        }
+      }
+    } catch (e) {
+      console.warn('[getProductCategory] POS search failed for term "' + term + '":', e?.message);
+    }
+  }
+
+  console.log('[getProductCategory] All lookups failed for:', { productId, productCode, productName });
+  return '';
 };
 
 export const createReturn = (data) => {

@@ -2,7 +2,7 @@
  * ReturnForm - Tạo đơn đổi trả
  * Flow: nhập mã hóa đơn → tìm hóa đơn → chọn sản phẩm → chọn loại + lý do → tạo
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
@@ -37,24 +37,17 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [policies, setPolicies] = useState({});
-
-  // Load category return policies từ localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(POLICIES_STORAGE_KEY);
-      if (raw) setPolicies(JSON.parse(raw));
-    } catch {}
-  }, []);
 
   const isExchange = returnType === 'EXCHANGE';
 
   // Kiểm tra sản phẩm có được phép đổi/trả theo policy không
   const isItemAllowed = (item, type) => {
     const policy = item._policy;
-    if (!policy) return Object.keys(policies).length === 0; // Không có policy → cho phép nếu chưa có policy nào
-    if (type === 'REFUND') return !!policy.returnDays;
-    if (type === 'EXCHANGE') return !!policy.exchangeDays;
+    // Không có policy → không cho phép (sản phẩm không thuộc nhóm được thiết lập)
+    if (!policy) return false;
+    // Parse sang number để tránh lỗi string "0" bị !! coi là truthy
+    if (type === 'REFUND') return parseInt(policy.returnDays, 10) > 0;
+    if (type === 'EXCHANGE') return parseInt(policy.exchangeDays, 10) > 0;
     return true;
   };
   const subtotal = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
@@ -98,7 +91,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         return {};
       }
     })();
-    if (Object.keys(localPolicies).length > 0) setPolicies(localPolicies);
+    // Luôn đồng bộ policies từ localStorage (kể cả khi rỗng)
 
     setInvoiceLoading(true);
     setInvoiceError('');
@@ -204,20 +197,57 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         const invoiceItems = fullInvoice.items || fullInvoice.invoiceItems || [];
 
         // Xác định category cho từng item & kiểm tra policy
-        const itemsWithCategory = await Promise.all(
-          invoiceItems.map(async (item) => {
+        const norm = (s) => (s || '').trim().normalize('NFC').toLowerCase();
+        const itemsWithCategory = invoiceItems.map((item) => {
             let catName =
-              item.categoryName || item.CategoryName || item.product?.categoryName || '';
-            if (!catName && item.productId) {
-              try {
-                const pCat = await getProductCategory(item.productId);
-                if (pCat) catName = pCat;
-              } catch {}
+              item.categoryName || item.CategoryName ||
+              item.product?.categoryName || item.product?.CategoryName ||
+              item.product?.category?.name || item.product?.group ||
+              item.category?.name || '';
+            // Fallback: nếu item ko có categoryName, lấy từ product.group
+            if (!catName && item.product?.group) {
+              catName = item.product.group;
             }
-            const policy = localPolicies[catName];
+            // Tìm policy với normalize (trim + lower + Unicode NFC)
+            const rawCat = norm(catName);
+            let policy = localPolicies[catName] || null;
+            if (!policy && rawCat && Object.keys(localPolicies).length > 0) {
+              const normalKey = Object.keys(localPolicies).find(
+                (k) => norm(k) === rawCat
+              );
+              if (normalKey) policy = localPolicies[normalKey];
+              else {
+                console.warn(
+                  `[ReturnForm] Không tìm thấy policy cho category "${catName}". Các policy hiện có:`,
+                  Object.keys(localPolicies)
+                );
+              }
+            }
             return { ...item, _categoryName: catName, _policy: policy || null };
-          })
-        );
+          });
+
+        // Tra cứu category từ kho cho các sản phẩm chưa xác định được nhóm hàng
+        // (hóa đơn cũ không lưu thông tin nhóm hàng)
+        for (const item of itemsWithCategory) {
+          if (!item._categoryName) {
+            const cat = await getProductCategory(
+              item.productId || item.id,
+              item.productCode || item.code || item.barcode,
+              item.productName
+            );
+            if (cat) {
+              item._categoryName = cat;
+              // Gán policy nếu nhóm hàng này có trong danh sách chính sách
+              const rawCat = norm(cat);
+              let policy = localPolicies[cat] || null;
+              if (!policy && rawCat && Object.keys(localPolicies).length > 0) {
+                const normalKey = Object.keys(localPolicies).find((k) => norm(k) === rawCat);
+                if (normalKey) policy = localPolicies[normalKey];
+              }
+              item._policy = policy || null;
+            }
+          }
+        }
 
         const enrichedItems = itemsWithCategory.map((item) => {
           const lineKey = item.invoiceItemId || item.id || item.productId;
@@ -257,12 +287,28 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           };
         });
 
-        const availableItems = enrichedItems.filter((item) => item._remainingQty > 0);
+        const hasAnyPolicy = (item) => {
+          const p = item._policy;
+          return p && (parseInt(p.returnDays, 10) > 0 || parseInt(p.exchangeDays, 10) > 0);
+        };
+
+        const availableItems = enrichedItems.filter(
+          (item) => item._remainingQty > 0 && hasAnyPolicy(item)
+        );
 
         if (availableItems.length === 0) {
-          setInvoiceError(
-            'Tất cả sản phẩm trong hóa đơn này đã được đổi trả hết. Không thể tạo thêm phiếu.'
+          const blockedByPolicy = enrichedItems.some(
+            (item) => item._remainingQty > 0 && !hasAnyPolicy(item)
           );
+          if (blockedByPolicy) {
+            setInvoiceError(
+              'Sản phẩm trong hóa đơn này không thuộc nhóm hàng được đổi trả hoặc chưa được thiết lập chính sách đổi/trả. Vui lòng kiểm tra lại "Chính sách đổi/trả theo nhóm hàng" trong phần Cài đặt.'
+            );
+          } else {
+            setInvoiceError(
+              'Tất cả sản phẩm trong hóa đơn này đã được đổi trả hết. Không thể tạo thêm phiếu.'
+            );
+          }
           setInvoiceLoading(false);
           return;
         }
@@ -323,19 +369,21 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    // Kiểm tra policy cho tất cả sản phẩm đã chọn
-    if (Object.keys(policies).length > 0) {
-      const blocked = selectedProducts.filter((sp) => {
-        const item = invoice.items?.find((i) => i._key === sp._key);
-        return !isItemAllowed(item, returnType);
-      });
-      if (blocked.length > 0) {
-        setSubmitError(
-          `Sản phẩm "${blocked[0].productName}" không được phép ${isExchange ? 'đổi' : 'trả'} theo chính sách nhóm hàng.`
-        );
-        setSubmitting(false);
-        return;
-      }
+    // Kiểm tra policy cho tất cả sản phẩm đã chọn (đọc trực tiếp từ localStorage để tránh stale state)
+    // Luôn kiểm tra bất kể có policy hay không — nếu không có policy, mọi SP đều bị chặn
+    const blocked = selectedProducts.filter((sp) => {
+      const item = invoice.items?.find((i) => i._key === sp._key);
+      if (!item || !item._policy) return true; // Không có policy → không được phép
+      if (returnType === 'REFUND') return parseInt(item._policy.returnDays, 10) <= 0;
+      if (returnType === 'EXCHANGE') return parseInt(item._policy.exchangeDays, 10) <= 0;
+      return false;
+    });
+    if (blocked.length > 0) {
+      setSubmitError(
+        `Sản phẩm "${blocked[0].productName}" không được phép ${isExchange ? 'đổi' : 'trả'} theo chính sách nhóm hàng.`
+      );
+      setSubmitting(false);
+      return;
     }
 
     setSubmitting(true);
@@ -523,7 +571,10 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setReturnType('REFUND')}
+                onClick={() => {
+                  setReturnType('REFUND');
+                  setSelectedProducts([]); // Clear khi đổi loại để tránh giữ lại SP không hợp lệ
+                }}
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                   returnType === 'REFUND'
                     ? 'border-[#004785] bg-blue-50'
@@ -553,7 +604,10 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               </button>
               <button
                 type="button"
-                onClick={() => setReturnType('EXCHANGE')}
+                onClick={() => {
+                  setReturnType('EXCHANGE');
+                  setSelectedProducts([]); // Clear khi đổi loại để tránh giữ lại SP không hợp lệ
+                }}
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                   returnType === 'EXCHANGE'
                     ? 'border-[#004785] bg-blue-50'
@@ -596,7 +650,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 const remainingQty = item._remainingQty ?? parseFloat(item.quantity || 0);
                 const returnedQty = item._returnedQty || 0;
                 const allowed = isItemAllowed(item, returnType);
-                const policyBlocked = !allowed && Object.keys(policies).length > 0;
+                const policyBlocked = !allowed;
 
                 // Ẩn sản phẩm đã đổi trả hết
                 if (remainingQty <= 0 && !selected) return null;
@@ -604,7 +658,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 return (
                   <div
                     key={itemKey}
-                    className={`flex items-center gap-3 p-3 transition-colors ${selected ? 'bg-blue-50' : remainingQty <= 0 || policyBlocked ? 'bg-slate-50 opacity-50' : 'hover:bg-slate-50'}`}
+                    className={`flex items-center gap-2 px-3 py-2 transition-colors ${selected ? 'bg-blue-50' : remainingQty <= 0 || policyBlocked ? 'bg-slate-50 opacity-50' : 'hover:bg-slate-50'}`}
                   >
                     <input
                       type="checkbox"
@@ -613,56 +667,56 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                       onChange={() =>
                         toggleProduct({ ...item, quantity: remainingQty, _key: itemKey })
                       }
-                      className="h-4 w-4 rounded border-slate-300 text-[#004785]"
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-[#004785] shrink-0"
                     />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{item.productName || item.productId}</p>
-                      <p className="text-xs text-slate-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-slate-900">{item.productName || item.productId}</p>
+                      <p className="truncate text-[10px] text-slate-400">
                         {item.productCode || '-'}
                         {isExchange ? '' : ` · Đơn giá: ${formatCurrency(item.unitPrice || 0)}`} ·
                         Đã mua: {item.quantity}
+                        {selected ? ` · Đổi: ${selected.quantity}` : ''}
                         {item._displayUnit ? ` (${item._displayUnit})` : ''}
-                        {item._categoryName ? ` · [${item._categoryName}]` : ''}
                       </p>
                       {returnedQty > 0 && (
-                        <p className="text-xs text-amber-600">
+                        <p className="truncate text-[10px] text-amber-500">
                           Đã đổi trả: {returnedQty} · Còn lại:{' '}
                           <span className="font-semibold">{remainingQty}</span>
                         </p>
                       )}
                       {policyBlocked && (
-                        <p className="text-xs font-medium text-red-500">
-                          {isExchange
-                            ? 'Nhóm hàng này không được phép đổi'
-                            : 'Nhóm hàng này không được phép trả'}
+                        <p className="truncate text-[10px] font-medium text-red-400">
+                          {item._policy
+                            ? (isExchange
+                              ? `Nhóm hàng "${item._categoryName}" không được phép đổi`
+                              : `Nhóm hàng "${item._categoryName}" không được phép trả`)
+                            : item._categoryName
+                              ? (isExchange
+                                ? `Nhóm hàng "${item._categoryName}" chưa được thiết lập chính sách đổi`
+                                : `Nhóm hàng "${item._categoryName}" chưa được thiết lập chính sách trả`)
+                              : `Không xác định được nhóm hàng (mã: ${item.productCode || item.productId || '?'})`}
                         </p>
                       )}
                     </div>
                     {selected && remainingQty > 0 && (
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-[10px] font-semibold uppercase text-slate-400">
-                            {isExchange ? 'Số lượng đổi' : 'Số lượng trả'}
-                          </p>
-                          <p className="text-lg font-black text-[#004785]">{selected.quantity}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => updateQty(itemKey, (selected.quantity || 1) - 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-sm font-bold hover:bg-slate-100"
-                          >
-                            -
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-sm font-bold hover:bg-slate-100"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <span className="text-xs text-slate-400">/ {remainingQty}</span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateQty(itemKey, (selected.quantity || 1) - 1)}
+                          className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold hover:bg-slate-100"
+                        >
+                          -
+                        </button>
+                        <span className="min-w-[32px] text-center text-sm font-black text-[#004785] leading-tight">
+                          {selected.quantity}/{remainingQty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
+                          className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold hover:bg-slate-100"
+                        >
+                          +
+                        </button>
                       </div>
                     )}
                     {remainingQty <= 0 && (

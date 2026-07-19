@@ -702,6 +702,7 @@ const ReturnOrderPage = () => {
                       <p className="truncate text-sm font-medium text-slate-900">
                         {item.productName}
                       </p>
+                      <p className="text-xs text-slate-400">Số lượng: {item.quantity}</p>
                     </div>
                     {detail.returnType !== 'EXCHANGE' && (
                       <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
