@@ -174,18 +174,25 @@ export const getCategoryReturnPolicies = (branchId) => {
 
 // Lấy thông tin sản phẩm (bao gồm category) để kiểm tra policy
 // Dùng nhiều API và cấu trúc response khác nhau để tìm category
+// Return: { id, name } hoặc '' nếu không tìm thấy
 export const getProductCategory = async (productId, productCode, productName) => {
-  const extractCat = (obj) =>
+  const extractId = (obj) =>
+    obj?.categoryId ||
+    obj?.CategoryId ||
+    obj?.category?.id ||
+    obj?.category?.categoryId ||
+    '';
+
+  const extractName = (obj) =>
     obj?.categoryName ||
     obj?.CategoryName ||
     obj?.category?.name ||
     obj?.category?.categoryName ||
-    obj?.group ||
     '';
 
   console.log('[getProductCategory] Input:', { productId, productCode, productName });
 
-  // 1. Search inventory theo productCode (trả về categoryName, ko bị lỗi mapper)
+  // 1. Search inventory theo productCode (chi tiết đầy đủ nhất)
   if (productCode) {
     try {
       console.log('[getProductCategory] Searching Inventory with productCode:', productCode);
@@ -202,10 +209,11 @@ export const getProductCategory = async (productId, productCode, productName) =>
           : null;
         const invProduct = matched || invItems[0];
         console.log('[getProductCategory] Inventory product keys:', Object.keys(invProduct));
-        const cat = extractCat(invProduct) || '';
-        if (cat) {
-          console.log('[getProductCategory] Found via Inventory search:', cat);
-          return cat;
+        const id = extractId(invProduct) || '';
+        const name = extractName(invProduct) || '';
+        if (id || name) {
+          console.log('[getProductCategory] Found via Inventory search:', { id, name });
+          return { id, name };
         }
       }
     } catch (e) {
@@ -232,10 +240,11 @@ export const getProductCategory = async (productId, productCode, productName) =>
       console.log('[getProductCategory] POS search items count:', items?.length, 'isArray:', Array.isArray(items));
       if (items.length > 0) {
         const p = items[0];
-        const cat = p.CategoryName ?? p.categoryName ?? p.category ?? p.ProductCategory ?? p.productCategory ?? '';
-        if (cat) {
-          console.log('[getProductCategory] Found via POS search:', cat);
-          return cat;
+        const id = p.CategoryId ?? p.categoryId ?? p.category?.id ?? '';
+        const name = p.CategoryName ?? p.categoryName ?? p.category ?? p.ProductCategory ?? p.productCategory ?? '';
+        if (id || name) {
+          console.log('[getProductCategory] Found via POS search:', { id, name });
+          return { id, name };
         }
       }
     } catch (e) {
