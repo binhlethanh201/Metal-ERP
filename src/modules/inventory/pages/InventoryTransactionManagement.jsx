@@ -34,6 +34,18 @@ const formatDate = (dateString) => {
   }).format(date);
 };
 
+const calculateTotalAmount = (item) => {
+  if (Number(item?.totalAmount) > 0) return Number(item.totalAmount);
+  if (Array.isArray(item?.items)) {
+    return item.items.reduce((sum, i) => {
+      const price = Number(i.costPrice || i.unitPrice || i.UnitPrice || 0);
+      const qty = Number(i.quantity || 0);
+      return sum + price * qty;
+    }, 0);
+  }
+  return 0;
+};
+
 // Map backend status to UI status
 const mapStatus = (status) => {
   if (!status) return 'DRAFT';
@@ -65,12 +77,7 @@ const normalizeInwardInventory = (item) => ({
   partyId: item?.supplierId || null,
   itemCount: item?.items?.length || 0,
   totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
-  totalAmount:
-    item?.items?.reduce((sum, i) => {
-      const qty = Number(i.quantity || 0);
-      const price = Number(i.costPrice || i.unitPrice || i.UnitPrice || 0);
-      return sum + qty * price;
-    }, 0) || 0,
+  totalAmount: calculateTotalAmount(item),
   createdByName: item?.userName || item?.createdByName || '-',
   status: mapStatus(item?.status),
   branchName: item?.branchName || '-',
@@ -104,12 +111,7 @@ const normalizeOutwardInventory = (item) => ({
   partyId: item?.customerId || null,
   itemCount: item?.items?.length || 0,
   totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
-  totalAmount:
-    item?.items?.reduce((sum, i) => {
-      const qty = Number(i.quantity || 0);
-      const price = Number(i.costPrice || i.unitPrice || i.UnitPrice || 0);
-      return sum + qty * price;
-    }, 0) || 0,
+  totalAmount: calculateTotalAmount(item),
   createdByName: item?.userName || item?.createdByName || '-',
   status: mapStatus(item?.status),
   branchName: item?.branchName || '-',
@@ -205,7 +207,6 @@ export const InventoryTransactionManagement = () => {
   const [inwardData, setInwardData] = useState([]);
   const [outwardData, setOutwardData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
 
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -229,42 +230,6 @@ export const InventoryTransactionManagement = () => {
     }),
     [pagination.currentPage, pagination.pageSize, statusFilter, dateFrom, dateTo]
   );
-
-  // Fetch stats
-  const fetchStats = useCallback(async () => {
-    try {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const [inwardRes, outwardRes, pendingIn, pendingOut] = await Promise.all([
-        getInwardInventories({ pageSize: 1, pageNumber: 1 }),
-        getOutwardInventories({ pageSize: 1, pageNumber: 1 }),
-        getInwardInventories({ pageSize: 1, status: 'PENDING' }),
-        getOutwardInventories({ pageSize: 1, status: 'PENDING' }),
-      ]);
-
-      setStats({
-        totalInward: inwardRes?.data?.totalCount || 0,
-        totalOutward: outwardRes?.data?.totalCount || 0,
-        todayInwardValue: 0,
-        todayOutwardValue: 0,
-        pendingCount: (pendingIn?.data?.totalCount || 0) + (pendingOut?.data?.totalCount || 0),
-      });
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-      setStats({
-        totalInward: 0,
-        totalOutward: 0,
-        todayInwardValue: 0,
-        todayOutwardValue: 0,
-        pendingCount: 0,
-      });
-    }
-  }, []);
-
-  // Fetch stats on mount
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
 
   // Fetch data
   const fetchData = useCallback(
@@ -344,32 +309,6 @@ export const InventoryTransactionManagement = () => {
     fetchData();
   }, [fetchData]);
 
-  // Cập nhật giá trị hôm nay khi dữ liệu thay đổi
-  useEffect(() => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-    const isToday = (d) => {
-      const date = new Date(d);
-      return date >= todayStart && date <= todayEnd;
-    };
-    const calcValue = (items) =>
-      items
-        .filter((t) => t.status === 'COMPLETED' && isToday(t.createdAt))
-        .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
-
-    setStats((prev) =>
-      prev
-        ? {
-            ...prev,
-            todayInwardValue: calcValue(inwardData),
-            todayOutwardValue: calcValue(outwardData),
-          }
-        : prev
-    );
-  }, [inwardData, outwardData]);
-
   // Filter data based on tab and search
   const filteredData = useMemo(() => {
     let result =
@@ -396,6 +335,28 @@ export const InventoryTransactionManagement = () => {
 
     return result;
   }, [inwardData, outwardData, activeTab, searchTerm]);
+
+  // Computed stats từ filteredData - phản ánh đúng khoảng ngày đang lọc
+  const computedStats = useMemo(() => {
+    const completedInward = filteredData.filter(
+      (t) => t.type === 'INWARD' && (t.status === 'COMPLETED' || t.status === 'APPROVED')
+    );
+    const completedOutward = filteredData.filter(
+      (t) => t.type === 'OUTWARD' && (t.status === 'COMPLETED' || t.status === 'APPROVED')
+    );
+
+    const inwardValue = completedInward.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+    const outwardValue = completedOutward.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+    const pendingCount = filteredData.filter((t) => t.status === 'PENDING').length;
+
+    return {
+      totalInwardCount: completedInward.length,
+      totalOutwardCount: completedOutward.length,
+      inwardValue,
+      outwardValue,
+      pendingCount,
+    };
+  }, [filteredData]);
 
   // Count by type
   const counts = useMemo(
@@ -517,31 +478,31 @@ export const InventoryTransactionManagement = () => {
       <section className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
         <StatsCard
           title="Tổng phiếu nhập"
-          value={loading ? '...' : (stats?.totalInward || 0).toLocaleString()}
+          value={loading ? '...' : (computedStats?.totalInwardCount || 0).toLocaleString()}
           icon={Plus}
           iconBg="bg-emerald-100 text-emerald-600"
         />
         <StatsCard
           title="Tổng phiếu xuất"
-          value={loading ? '...' : (stats?.totalOutward || 0).toLocaleString()}
+          value={loading ? '...' : (computedStats?.totalOutwardCount || 0).toLocaleString()}
           icon={Minus}
           iconBg="bg-rose-100 text-rose-600"
         />
         <StatsCard
-          title="Giá trị nhập hôm nay"
-          value={loading ? '...' : formatCurrency(stats?.todayInwardValue || 0)}
+          title={dateFrom || dateTo ? 'Giá trị nhập (đã lọc)' : 'Giá trị nhập hôm nay'}
+          value={loading ? '...' : formatCurrency(computedStats?.inwardValue || 0)}
           icon={Plus}
           iconBg="bg-emerald-50 text-emerald-600"
         />
         <StatsCard
-          title="Giá trị xuất hôm nay"
-          value={loading ? '...' : formatCurrency(stats?.todayOutwardValue || 0)}
+          title={dateFrom || dateTo ? 'Giá trị xuất (đã lọc)' : 'Giá trị xuất hôm nay'}
+          value={loading ? '...' : formatCurrency(computedStats?.outwardValue || 0)}
           icon={Minus}
           iconBg="bg-rose-50 text-rose-600"
         />
         <StatsCard
           title="Hàng chờ duyệt"
-          value={loading ? '...' : (stats?.pendingCount || 0).toLocaleString()}
+          value={loading ? '...' : (computedStats?.pendingCount || 0).toLocaleString()}
           icon={RefreshCw}
           iconBg="bg-amber-100 text-amber-600"
           subtitle="Cần xử lý"
