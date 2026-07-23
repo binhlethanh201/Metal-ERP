@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Minus, RefreshCw, Package } from 'lucide-react';
+import { RefreshCw, RotateCcw, Package } from 'lucide-react';
+import Icon from '../../../shared/components/Icon';
+import { Card } from '../../../shared/components/Card';
 import { StatusBadge } from '../components/transactions/StatusBadge';
 import { TransactionTypeBadge } from '../components/transactions/TransactionTypeBadge';
 import { TransactionDetailDrawer } from '../components/transactions/TransactionDetailDrawer';
@@ -132,66 +134,6 @@ const normalizeItem = (item) => ({
   costPrice: Number(item?.costPrice || item?.unitPrice || item?.UnitPrice || 0),
   imageUrl: item?.imageUrl || null,
 });
-
-// Stats card component
-const StatsCard = ({ title, value, icon: Icon, iconBg, subtitle }) => (
-  <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
-        <p className="mt-1 text-xl font-bold text-slate-900">{value}</p>
-        {subtitle && <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p>}
-      </div>
-      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
-        <Icon className="h-5 w-5 text-current" />
-      </div>
-    </div>
-  </div>
-);
-
-// Filter dropdown component
-const FilterDropdown = ({ label, options, value, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const selected = options.find((opt) => opt.value === value);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ${
-          value !== 'ALL'
-            ? 'border-blue-300 bg-blue-50 text-blue-700'
-            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-        }`}
-      >
-        {label}: <span className="font-semibold">{selected?.label || 'Tất cả'}</span>
-      </button>
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 ${
-                  value === opt.value ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-700'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 
 // Main component
 export const InventoryTransactionManagement = () => {
@@ -455,6 +397,10 @@ export const InventoryTransactionManagement = () => {
     setPagination((prev) => ({ ...prev, currentPage: page }));
   };
 
+  const handlePageSizeChange = (size) => {
+    setPagination((prev) => ({ ...prev, pageSize: size, currentPage: 1 }));
+  };
+
   // Handle filter changes
   const handleStatusFilterChange = (value) => {
     setStatusFilter(value);
@@ -473,197 +419,193 @@ export const InventoryTransactionManagement = () => {
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] pb-8">
-      {/* Header with Stats */}
-      <section className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <StatsCard
-          title="Tổng phiếu nhập"
-          value={loading ? '...' : (computedStats?.totalInwardCount || 0).toLocaleString()}
-          icon={Plus}
-          iconBg="bg-emerald-100 text-emerald-600"
-        />
-        <StatsCard
-          title="Tổng phiếu xuất"
-          value={loading ? '...' : (computedStats?.totalOutwardCount || 0).toLocaleString()}
-          icon={Minus}
-          iconBg="bg-rose-100 text-rose-600"
-        />
-        <StatsCard
-          title={dateFrom || dateTo ? 'Giá trị nhập (đã lọc)' : 'Giá trị nhập hôm nay'}
-          value={loading ? '...' : formatCurrency(computedStats?.inwardValue || 0)}
-          icon={Plus}
-          iconBg="bg-emerald-50 text-emerald-600"
-        />
-        <StatsCard
-          title={dateFrom || dateTo ? 'Giá trị xuất (đã lọc)' : 'Giá trị xuất hôm nay'}
-          value={loading ? '...' : formatCurrency(computedStats?.outwardValue || 0)}
-          icon={Minus}
-          iconBg="bg-rose-50 text-rose-600"
-        />
-        <StatsCard
-          title="Hàng chờ duyệt"
-          value={loading ? '...' : (computedStats?.pendingCount || 0).toLocaleString()}
-          icon={RefreshCw}
-          iconBg="bg-amber-100 text-amber-600"
-          subtitle="Cần xử lý"
-        />
-      </section>
+    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+      {/* ==================== PAGE HEADER ==================== */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Lịch sử Xuất/Nhập</h1>
+          <p className="mt-1 text-gray-600">Theo dõi toàn bộ giao dịch nhập kho và xuất kho</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/inventory/import')}
+            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+          >
+            <Icon name="add" size={18} />
+            Tạo phiếu nhập
+          </button>
+          <button
+            onClick={() => navigate('/inventory/export')}
+            className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-rose-700"
+          >
+            <Icon name="remove" size={18} />
+            Tạo phiếu xuất
+          </button>
+        </div>
+      </div>
 
-      {/* Action Buttons */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Type Filter */}
-          {/* Status Filter */}
-          <FilterDropdown
-            label="Trạng thái"
-            options={[
+      {/* ==================== STATS CARDS ==================== */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-emerald-600">{loading ? '...' : (computedStats?.totalInwardCount || 0).toLocaleString()}</div>
+            <p className="mt-1 text-sm text-gray-600">Tổng phiếu nhập</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-rose-600">{loading ? '...' : (computedStats?.totalOutwardCount || 0).toLocaleString()}</div>
+            <p className="mt-1 text-sm text-gray-600">Tổng phiếu xuất</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-emerald-600">{loading ? '...' : formatCurrency(computedStats?.inwardValue || 0)}</div>
+            <p className="mt-1 text-sm text-gray-600">{dateFrom || dateTo ? 'Giá trị nhập (đã lọc)' : 'Giá trị nhập hôm nay'}</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-rose-600">{loading ? '...' : formatCurrency(computedStats?.outwardValue || 0)}</div>
+            <p className="mt-1 text-sm text-gray-600">{dateFrom || dateTo ? 'Giá trị xuất (đã lọc)' : 'Giá trị xuất hôm nay'}</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-amber-500">{loading ? '...' : (computedStats?.pendingCount || 0).toLocaleString()}</div>
+            <p className="mt-1 text-sm text-gray-600">Hàng chờ duyệt</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* ==================== FILTERS + SEARCH ==================== */}
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+              Trạng thái:
+            </span>
+            {[
               { value: 'ALL', label: 'Tất cả' },
               { value: 'DRAFT', label: 'Nháp' },
               { value: 'PENDING', label: 'Đang xử lý' },
               { value: 'APPROVED', label: 'Đã duyệt' },
               { value: 'COMPLETED', label: 'Đã hoàn thành' },
               { value: 'CANCELLED', label: 'Đã hủy' },
-            ]}
-            value={statusFilter}
-            onChange={handleStatusFilterChange}
-          />
+            ].map((item) => {
+              const isActive = statusFilter === item.value;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => handleStatusFilterChange(item.value)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-[#004785] text-white shadow-sm'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Date Range */}
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
+            </button>
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+            >
+              <RotateCcw size={13} /> Đặt lại
+            </button>
+          </div>
+        </div>
+
+        {/* Search + Date + Tabs row */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1">
+            <Icon name="search" className="mr-2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Tìm mã phiếu, đối tượng, người tạo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
+            />
+          </div>
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
             <input
               type="date"
               value={dateFrom}
-              onChange={(e) => {
-                setDateFrom(e.target.value);
-                setPagination((p) => ({ ...p, currentPage: 1 }));
-              }}
+              onChange={(e) => { setDateFrom(e.target.value); setPagination((p) => ({ ...p, currentPage: 1 })); }}
               className="h-7 text-xs outline-none"
-              placeholder="Từ ngày"
             />
             <span className="text-slate-400">-</span>
             <input
               type="date"
               value={dateTo}
-              onChange={(e) => {
-                setDateTo(e.target.value);
-                setPagination((p) => ({ ...p, currentPage: 1 }));
-              }}
+              onChange={(e) => { setDateTo(e.target.value); setPagination((p) => ({ ...p, currentPage: 1 })); }}
               className="h-7 text-xs outline-none"
-              placeholder="Đến ngày"
             />
           </div>
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
+            {[
+              { key: 'ALL', label: 'Tất cả', count: counts.all },
+              { key: 'INWARD', label: 'Nhập kho', count: counts.inward },
+              { key: 'OUTWARD', label: 'Xuất kho', count: counts.outward },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => { setActiveTab(tab.key); setPagination((p) => ({ ...p, currentPage: 1 })); }}
+                className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+                  activeTab === tab.key
+                    ? 'bg-[#004785] text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {tab.label}
+                <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs ${
+                  activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleReset}
-            className="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Đặt lại
-          </button>
-          <button
-            onClick={() => navigate('/inventory/import')}
-            className="flex h-9 items-center gap-2 rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"
-          >
-            <Plus className="h-4 w-4" />
-            Tạo phiếu nhập
-          </button>
-          <button
-            onClick={() => navigate('/inventory/export')}
-            className="flex h-9 items-center gap-2 rounded-lg bg-rose-600 px-3 text-sm font-semibold text-white hover:bg-rose-700"
-          >
-            <Minus className="h-4 w-4" />
-            Tạo phiếu xuất
-          </button>
-        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo mã phiếu, nhà cung cấp, khách hàng, người tạo, ghi chú..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-4 flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
-        {[
-          { key: 'ALL', label: 'Tất cả', count: counts.all },
-          { key: 'INWARD', label: 'Nhập kho', count: counts.inward },
-          { key: 'OUTWARD', label: 'Xuất kho', count: counts.outward },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => {
-              setActiveTab(tab.key);
-              setPagination((p) => ({ ...p, currentPage: 1 }));
-            }}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            {tab.label}
-            <span
-              className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs ${
-                activeTab === tab.key ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      {/* ==================== BẢNG DANH SÁCH ==================== */}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Loại
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Mã phiếu
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Ngày tạo
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Đối tượng
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Số mặt hàng
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Tổng SL
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Tổng tiền / Hao hụt
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Người tạo
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Trạng thái
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Loại</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Mã phiếu</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Ngày tạo</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Đối tượng</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Số mặt hàng</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Tổng SL</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Tổng tiền</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Người tạo</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Trạng thái</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
-                  <tr key={idx} className="border-b border-slate-100">
+                  <tr key={idx}>
                     {Array.from({ length: 9 }).map((_, i) => (
-                      <td key={i} className="px-4 py-4">
-                        <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
-                      </td>
+                      <td key={i} className="px-4 py-4"><div className="h-4 w-20 animate-pulse rounded bg-slate-200" /></td>
                     ))}
                   </tr>
                 ))
@@ -673,9 +615,7 @@ export const InventoryTransactionManagement = () => {
                     <div className="flex flex-col items-center gap-2">
                       <Package className="h-10 w-10 text-slate-300" />
                       <p className="font-medium text-slate-500">Không có dữ liệu</p>
-                      <p className="text-sm text-slate-400">
-                        Thử thay đổi bộ lọc hoặc tạo phiếu mới
-                      </p>
+                      <p className="text-sm text-slate-400">Thử thay đổi bộ lọc hoặc tạo phiếu mới</p>
                     </div>
                   </td>
                 </tr>
@@ -683,34 +623,22 @@ export const InventoryTransactionManagement = () => {
                 filteredData.map((row) => (
                   <tr
                     key={row.id}
-                    className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50"
+                    className="cursor-pointer transition-colors hover:bg-slate-50"
                     onClick={() => handleViewDetail(row)}
                   >
-                    <td className="px-4 py-3">
-                      <TransactionTypeBadge type={row.type} size="sm" />
-                    </td>
-                    <td className="px-4 py-3 font-mono font-medium text-slate-900">
-                      {row.ticketCode}
-                    </td>
+                    <td className="px-4 py-3"><TransactionTypeBadge type={row.type} size="sm" /></td>
+                    <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.ticketCode}</td>
                     <td className="px-4 py-3 text-slate-600">{formatDate(row.createdAt)}</td>
                     <td className="px-4 py-3 font-medium text-slate-900">{row.partyName}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{row.itemCount}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">
-                      {(row.totalQuantity || 0).toLocaleString('vi-VN')}
-                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-900">{(row.totalQuantity || 0).toLocaleString('vi-VN')}</td>
                     <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900">
-                      {row.type === 'OUTWARD' && row.totalAmount === 0 ? (
-                        <span className="text-xs italic text-slate-400">
-                          {row.reason || row.ticketType || '-'}
-                        </span>
-                      ) : (
-                        formatCurrency(row.totalAmount)
-                      )}
+                      {row.type === 'OUTWARD' && row.totalAmount === 0
+                        ? <span className="text-xs italic text-slate-400">{row.reason || row.ticketType || '-'}</span>
+                        : formatCurrency(row.totalAmount)}
                     </td>
                     <td className="px-4 py-3 text-slate-600">{row.createdByName}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={row.status} size="sm" />
-                    </td>
+                    <td className="px-4 py-3"><StatusBadge status={row.status} size="sm" /></td>
                   </tr>
                 ))
               )}
@@ -720,30 +648,45 @@ export const InventoryTransactionManagement = () => {
 
         {/* Pagination */}
         {!loading && filteredData.length > 0 && (
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-            <p className="text-sm text-slate-600">
-              Hiển thị <span className="font-medium">{filteredData.length}</span> phiếu
-              {pagination.totalItems > 0 && (
-                <span className="text-slate-400"> / {pagination.totalItems} tổng</span>
-              )}
-            </p>
-            <div className="flex items-center gap-1">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3">
+            <div className="flex items-center gap-4 text-sm text-slate-600">
+              <div className="flex items-center gap-2">
+                <span>Hiển thị</span>
+                <select
+                  value={pagination.pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                >
+                  <option value={20}>20 dòng</option>
+                  <option value={50}>50 dòng</option>
+                  <option value={100}>100 dòng</option>
+                </select>
+              </div>
+              <span>
+                {(pagination.currentPage - 1) * pagination.pageSize + 1} -{' '}
+                {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)} trong tổng số{' '}
+                {pagination.totalItems} phiếu
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage <= 1}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
               >
-                &laquo;
+                <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              <span className="px-3 text-sm text-slate-600">
+              <div className="px-3 text-sm text-slate-700">
                 Trang {pagination.currentPage} / {pagination.totalPages}
-              </span>
+              </div>
               <button
+                type="button"
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage >= pagination.totalPages}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
               >
-                &raquo;
+                <Icon name="chevron_right" className="text-[18px]" />
               </button>
             </div>
           </div>

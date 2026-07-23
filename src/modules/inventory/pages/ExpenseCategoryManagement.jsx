@@ -20,6 +20,16 @@ const ExpenseCategoryManagement = () => {
   const [editingName, setEditingName] = useState('');
   const [actionError, setActionError] = useState('');
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const totalPages = Math.ceil(categories.length / pageSize) || 1;
+  const paginatedCategories = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return categories.slice(start, start + pageSize);
+  }, [categories, currentPage, pageSize]);
+
   const onCreate = async (e) => {
     e.preventDefault();
     if (!newName.trim()) return;
@@ -116,7 +126,7 @@ const ExpenseCategoryManagement = () => {
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
       <ExpenseCategoryTable
-        categories={categories}
+        categories={paginatedCategories}
         loading={loading}
         refetch={refetch}
         editingId={editingId}
@@ -127,6 +137,52 @@ const ExpenseCategoryManagement = () => {
         startEdit={startEdit}
         onDeleteClick={onDeleteClick}
       />
+
+      {/* Pagination */}
+      {!loading && categories.length > 0 && (
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+              >
+                <option value={20}>20 dòng</option>
+                <option value={50}>50 dòng</option>
+                <option value={100}>100 dòng</option>
+              </select>
+            </div>
+            <span>
+              {categories.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+              {Math.min(currentPage * pageSize, categories.length)} trong tổng số{' '}
+              {categories.length} nhóm
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_left" className="text-[18px]" />
+            </button>
+            <div className="px-3 text-sm text-slate-700">
+              Trang {currentPage} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_right" className="text-[18px]" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ==================== MODAL TẠO NHÓM CHI PHÍ ==================== */}
       <CreateExpenseCategoryModal

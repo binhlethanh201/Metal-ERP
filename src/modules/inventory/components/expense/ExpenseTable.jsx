@@ -1,9 +1,9 @@
 import React from 'react';
+import Icon from '../../../../shared/components/Icon';
 import { Table } from '../../../../shared/components/Table';
 import { Badge } from '../../../../shared/components/Badge';
 import { Button } from '../../../../shared/components/Button';
-import IconButton from '../../../../shared/components/IconButton';
-import { Eye, CheckCircle2, Clock, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', {
@@ -118,46 +118,50 @@ const ExpenseTable = ({
         emptyMessage="Không tìm thấy phiếu chi tiền nào"
       />
 
-      {!loading && paginationMeta?.totalPages > 1 && (
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      {!loading && paginationMeta?.totalCount > 0 && (
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
           <div className="flex items-center gap-4 text-sm text-slate-600">
-            <span>Hiển thị</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPageNumber(1);
-              }}
-              className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785]"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPageNumber(1);
+                }}
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785]"
+              >
+                <option value={20}>20 dòng</option>
+                <option value={50}>50 dòng</option>
+                <option value={100}>100 dòng</option>
+              </select>
+            </div>
             <span>
               {(pageNumber - 1) * pageSize + 1} -{' '}
-              {Math.min(pageNumber * pageSize, paginationMeta.totalCount)} /{' '}
+              {Math.min(pageNumber * pageSize, paginationMeta.totalCount)} trong tổng số{' '}
               {paginationMeta.totalCount} phiếu
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <IconButton
-              icon={ChevronLeft}
-              size="sm"
-              variant="outline"
+            <button
+              type="button"
               onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
               disabled={pageNumber <= 1}
-            />
-            <span className="px-3 text-sm font-semibold">
-              Trang {pageNumber} / {paginationMeta.totalPages}
-            </span>
-            <IconButton
-              icon={ChevronRight}
-              size="sm"
-              variant="outline"
-              onClick={() => setPageNumber((p) => p + 1)}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_left" className="text-[18px]" />
+            </button>
+            <div className="px-3 text-sm text-slate-700">
+              Trang {pageNumber} / {paginationMeta.totalPages || 1}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPageNumber((p) => Math.min(paginationMeta.totalPages || 1, p + 1))}
               disabled={pageNumber >= paginationMeta.totalPages}
-            />
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_right" className="text-[18px]" />
+            </button>
           </div>
         </div>
       )}

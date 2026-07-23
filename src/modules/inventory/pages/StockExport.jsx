@@ -93,9 +93,9 @@ export const StockExport = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // eslint-disable-next-line
   const [statusMessage, setStatusMessage] = useState('');
   const [globalError, setGlobalError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // Thông tin chứng từ
   const [ticketCode, setTicketCode] = useState('');
@@ -186,6 +186,7 @@ export const StockExport = () => {
     setSelectedQuantity('');
     setProductSearch('');
     setStatusMessage('');
+    setFieldErrors({});
     setIsModalOpen(true);
   };
 
@@ -302,10 +303,16 @@ export const StockExport = () => {
     return { totalExports: exports.length, totalQuantity: qty, monthlyCount: exports.length };
   }, [exports]);
 
-  // Validate form, return first error message or null if valid
+  // Validate form, return array of error messages
   const validateForm = () => {
+    const errors = [];
+    const fields = {};
+
     // 1. Ngày xuất
-    if (!exportDate.trim()) return 'Vui lòng chọn ngày xuất kho';
+    if (!exportDate.trim()) {
+      errors.push('Chưa chọn ngày xuất kho');
+      fields.exportDate = true;
+    }
 
     // 2. Đối tượng xuất
     if (!targetName.trim()) {
@@ -317,36 +324,45 @@ export const StockExport = () => {
             : targetType === 'Nội bộ'
               ? 'tên đơn vị / bộ phận'
               : 'tên đối tượng xuất';
-      return `Vui lòng nhập ${label}`;
+      errors.push(`Chưa nhập ${label}`);
+      fields.targetName = true;
     }
 
     // 3. Lý do xuất
     if (reasonType === '__other__' && !reasonOther.trim()) {
-      return 'Vui lòng nhập lý do xuất kho';
+      errors.push('Chưa nhập lý do xuất kho');
+      fields.reasonOther = true;
     }
 
     // 4. Danh sách sản phẩm
-    if (!items.length) return 'Vui lòng thêm ít nhất 1 sản phẩm';
+    if (!items.length) {
+      errors.push('Chưa thêm sản phẩm nào vào phiếu xuất');
+      fields.items = true;
+    }
 
     // 5. Kiểm tra số lượng từng dòng
-    const invalidItem = items.find((i) => !i.quantity || Number(i.quantity) <= 0);
-    if (invalidItem) {
-      return `Sản phẩm "${invalidItem.productName}" có số lượng không hợp lệ (phải > 0)`;
-    }
+    items.forEach((item) => {
+      if (!item.quantity || Number(item.quantity) <= 0) {
+        errors.push(`Sản phẩm "${item.productName}" chưa nhập số lượng hoặc số lượng không hợp lệ`);
+        fields[`qty_${getItemKey(item)}`] = true;
+      }
+    });
 
     // 6. Kiểm tra đơn giá khi xuất bán
     if (reasonType === 'Xuất bán hàng') {
-      const noPrice = items.find((i) => !i.unitPrice || Number(i.unitPrice) <= 0);
-      if (noPrice) {
-        return `Sản phẩm "${noPrice.productName}" chưa có đơn giá hoặc đơn giá không hợp lệ`;
-      }
-      const lowPrice = items.find((i) => Number(i.unitPrice) < 1000);
-      if (lowPrice) {
-        return `Sản phẩm "${lowPrice.productName}" có đơn giá tối thiểu là 1.000đ`;
-      }
+      items.forEach((item) => {
+        if (!item.unitPrice || Number(item.unitPrice) <= 0) {
+          errors.push(`Sản phẩm "${item.productName}" chưa nhập đơn giá`);
+          fields[`price_${getItemKey(item)}`] = true;
+        } else if (Number(item.unitPrice) < 1000) {
+          errors.push(`Sản phẩm "${item.productName}" có đơn giá tối thiểu là 1.000đ`);
+          fields[`price_${getItemKey(item)}`] = true;
+        }
+      });
     }
 
-    return null;
+    setFieldErrors(fields);
+    return errors;
   };
 
   const handleSubmit = async (event, isDraft = false) => {
@@ -354,9 +370,9 @@ export const StockExport = () => {
       event.preventDefault();
     }
 
-    const validationError = validateForm();
-    if (validationError) {
-      setStatusMessage(`Lỗi: ${validationError}`);
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setStatusMessage(errors.join('; '));
       return;
     }
 
@@ -518,6 +534,37 @@ export const StockExport = () => {
       {/* ==================== MODAL TẠO PHIẾU XUẤT ==================== */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Tạo phiếu xuất kho" size="5xl">
         <form className="space-y-5" onSubmit={handleSubmit}>
+          {/* Error / Status Banner */}
+          {statusMessage && (
+            (() => {
+              const msg = statusMessage.toLowerCase();
+              const isError = msg.includes('lỗi') || msg.includes('chưa') || msg.includes('tối thiểu') || msg.includes('không hợp lệ') || msg.includes('vượt');
+              return (
+            <div
+              className={`flex items-start gap-3 rounded-lg border p-4 ${
+                isError
+                  ? 'border-red-300 bg-red-100 text-red-800'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              }`}
+            >
+              <Icon
+                name={isError ? 'error' : 'check_circle'}
+                size={20}
+                className="mt-0.5 shrink-0"
+              />
+              <div className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800' : 'text-emerald-800'}`}>{statusMessage}</div>
+              <button
+                type="button"
+                onClick={() => { setStatusMessage(''); setFieldErrors({}); }}
+                className="shrink-0 rounded p-1 opacity-60 hover:opacity-100"
+              >
+                <Icon name="close" size={16} />
+              </button>
+            </div>
+              );
+            })()
+          )}
+
           {/* --- THÔNG TIN CHỨNG TỪ --- */}
           <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
             <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-600">
@@ -547,9 +594,14 @@ export const StockExport = () => {
                 <input
                   type="date"
                   required
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
+                    fieldErrors.exportDate ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                  }`}
                   value={exportDate}
-                  onChange={(e) => setExportDate(e.target.value)}
+                  onChange={(e) => {
+                    setExportDate(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, exportDate: false }));
+                  }}
                 />
               </div>
 
@@ -614,9 +666,14 @@ export const StockExport = () => {
                         ? 'VD: Công ty Hòa Phát'
                         : 'VD: Xưởng sản xuất số 1'
                   }
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
+                    fieldErrors.targetName ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                  }`}
                   value={targetName}
-                  onChange={(e) => setTargetName(e.target.value)}
+                  onChange={(e) => {
+                    setTargetName(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, targetName: false }));
+                  }}
                 />
               </div>
             )}
@@ -630,9 +687,14 @@ export const StockExport = () => {
                 <input
                   type="text"
                   placeholder="VD: Đối tác vận chuyển, Bảo hành..."
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
+                    fieldErrors.targetName ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                  }`}
                   value={targetName}
-                  onChange={(e) => setTargetName(e.target.value)}
+                  onChange={(e) => {
+                    setTargetName(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, targetName: false }));
+                  }}
                 />
               </div>
             )}
@@ -673,9 +735,14 @@ export const StockExport = () => {
                 <input
                   type="text"
                   placeholder="Nhập lý do khác..."
-                  className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                  className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
+                    fieldErrors.reasonOther ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                  }`}
                   value={reasonOther}
-                  onChange={(e) => setReasonOther(e.target.value)}
+                  onChange={(e) => {
+                    setReasonOther(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, reasonOther: false }));
+                  }}
                 />
               )}
             </div>
@@ -697,6 +764,11 @@ export const StockExport = () => {
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-slate-700">
                 Danh sách sản phẩm xuất <span className="text-red-500">*</span>
+                {fieldErrors.items && (
+                  <span className="ml-2 text-xs font-normal text-red-500">
+                    — Vui lòng thêm ít nhất 1 sản phẩm
+                  </span>
+                )}
               </label>
               <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
                 {items.length} mặt hàng
@@ -1063,7 +1135,9 @@ export const StockExport = () => {
                 </table>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 py-10 text-slate-400">
+              <div className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
+                fieldErrors.items ? 'border-red-300 bg-red-50/30 text-red-400' : 'border-slate-200 text-slate-400'
+              }`}>
                 <Icon name="inventory_2" size={32} className="mb-2 opacity-40" />
                 <p className="text-sm font-medium">Chưa có sản phẩm nào</p>
                 <p className="mt-1 text-xs">Thêm sản phẩm ở trên để tạo phiếu xuất</p>
