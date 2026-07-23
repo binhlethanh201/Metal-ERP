@@ -508,7 +508,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                 disabled={actionLoading}
                 className="flex items-center gap-2"
               >
-                <Icon name="edit_note" size={18} /> Nhập giải trình
+                <Icon name="edit" size={18} /> Nhập giải trình
               </Button>
             )}
 
@@ -535,7 +535,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                   disabled={actionLoading}
                   className="flex items-center gap-2"
                 >
-                  <Icon name="replay" size={18} /> Yêu cầu đếm lại
+                  <Icon name="history" size={18} /> Yêu cầu đếm lại
                 </Button>
                 <Button
                   variant="success"
