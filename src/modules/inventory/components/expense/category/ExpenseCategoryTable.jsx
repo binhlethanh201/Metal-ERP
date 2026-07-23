@@ -1,5 +1,7 @@
 import React from 'react';
+import { RefreshCw } from 'lucide-react';
 import Icon from '../../../../../shared/components/Icon';
+import { Button } from '../../../../../shared/components/Button';
 import { Badge } from '../../../../../shared/components/Badge';
 import { Table } from '../../../../../shared/components/Table';
 import { Input } from '../../../../../shared/components/Input';
@@ -120,14 +122,15 @@ const ExpenseCategoryTable = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-slate-600">Danh sách nhóm chi phí</span>
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={refetch}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-50"
+          className="flex items-center gap-1.5"
         >
-          <Icon name="sync" size={16} className={loading ? 'animate-spin' : ''} /> Làm mới
-        </button>
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
+        </Button>
       </div>
       <Table
         columns={tableColumns}

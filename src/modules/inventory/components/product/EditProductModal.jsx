@@ -301,11 +301,14 @@ const AttributeEditor = ({ f }) => (
             value={attr.value || ''}
             onChange={(e) => f.updateAttr(attr.id, 'value', e.target.value)}
           />
-          <IconButton
-            icon={({ size }) => <Icon name="delete" size={size} />}
-            variant="danger"
+          <button
+            type="button"
             onClick={() => f.removeAttr(attr.id)}
-          />
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+            title="Xóa thuộc tính"
+          >
+            <Icon name="delete" size={18} />
+          </button>
         </div>
       ))}
       <div>
