@@ -321,15 +321,6 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
           );
         },
       },
-      {
-        key: 'code',
-        header: 'Mã vị trí',
-        render: (_, item) => (
-          <span className={item.code ? 'text-sm text-slate-600' : 'text-sm text-slate-400'}>
-            {item.code || '---'}
-          </span>
-        ),
-      },
       actionsCol,
     ];
   };
