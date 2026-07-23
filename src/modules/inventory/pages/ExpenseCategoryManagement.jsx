@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useExpenseCategory } from '../hooks/useExpenseCategory';
-import { AlertCircle, Plus } from 'lucide-react';
-import { Button } from '../../../shared/components/Button';
+import Icon from '../../../shared/components/Icon';
 
 // Import Các Components đã tách
 import ExpenseCategoryStats from '../components/expense/category/ExpenseCategoryStats';
@@ -89,16 +88,16 @@ const ExpenseCategoryManagement = () => {
             Quản lý danh mục nhóm chi phí dùng để phân loại phiếu chi tiền.
           </p>
         </div>
-        <Button
-          variant="primary"
+        <button
           onClick={() => {
-            setActionError(''); // Xoá lỗi cũ nếu có trước khi mở modal
+            setActionError('');
             setShowCreateModal(true);
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg bg-[#004785] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-black"
         >
-          <Plus size={20} /> Tạo nhóm mới
-        </Button>
+          <Icon name="add" size={20} />
+          <span>Tạo nhóm mới</span>
+        </button>
       </div>
 
       {/* ==================== STATS CARDS ==================== */}
@@ -107,7 +106,7 @@ const ExpenseCategoryManagement = () => {
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
       {(error || (actionError && !showCreateModal)) && (
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
-          <AlertCircle className="mt-0.5 flex-shrink-0 text-red-500" size={20} />
+          <Icon name="error" className="mt-0.5 flex-shrink-0 text-red-500" size={20} />
           <div className="flex-1">
             <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
             <p className="mt-1 text-sm text-red-700">{error || actionError}</p>

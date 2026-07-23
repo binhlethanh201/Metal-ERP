@@ -2,7 +2,6 @@ import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 import Table from '../../../../shared/components/Table';
 import Toggle from '../../../../shared/components/Toggle';
-import IconButton from '../../../../shared/components/IconButton';
 
 const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStatus, onDelete }) => {
   const columns = [
@@ -57,23 +56,24 @@ const StaffTable = ({ staffs, loading, currentUserId, onViewDetail, onToggleStat
       render: (_, staff) => {
         const isSelf = currentUserId && staff.userId === currentUserId;
         return (
-          <div className="flex items-center justify-end gap-2">
-            <IconButton
-              icon={(props) => <Icon name="visibility" {...props} />}
-              variant="outline"
-              space="admin"
+          <div className="flex items-center justify-end gap-1">
+            <button
+              type="button"
               onClick={() => onViewDetail(staff)}
+              className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
               title="Xem chi tiết & Cập nhật"
-            />
+            >
+              <Icon name="edit" size={20} />
+            </button>
             {!isSelf && (
-              <IconButton
-                icon={(props) => <Icon name="delete" {...props} />}
-                variant="outline"
-                space="admin"
+              <button
+                type="button"
                 onClick={() => onDelete(staff.userId)}
+                className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50"
                 title="Xóa nhân viên"
-                className="border-red-200 text-red-600 hover:bg-red-50"
-              />
+              >
+                <Icon name="delete" size={20} />
+              </button>
             )}
           </div>
         );

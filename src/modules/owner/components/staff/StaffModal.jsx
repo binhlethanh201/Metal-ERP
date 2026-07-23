@@ -284,7 +284,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
             <div>
               <label className="text-base font-bold text-slate-800">
                 <Icon
-                  name="Key_Icon"
+                  name="shield"
                   size={20}
                   className="mr-2 inline align-text-bottom text-blue-600"
                 />
