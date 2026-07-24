@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Ban, CheckCircle2, Clock, XCircle, RefreshCw, CheckCheck } from 'lucide-react';
+import Icon from '../../../../shared/components/Icon';
 import { CancelTicketModal } from './CancelTicketModal';
 import {
   cancelInwardInventory,
@@ -106,15 +107,20 @@ export const InventoryHistoryCard = ({
 
   // Client-side pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
   const totalItems = filteredTickets.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
   const handleChangeFilter = (key, value) => {
@@ -395,50 +401,44 @@ export const InventoryHistoryCard = ({
         />
 
         {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-            <div className="text-sm text-slate-500">
-              Trang {currentPage} / {totalPages} ({totalItems} phiếu)
+        {totalItems > 0 && (
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3">
+            <div className="flex items-center gap-4 text-sm text-slate-600">
+              <div className="flex items-center gap-2">
+                <span>Hiển thị</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                >
+                  <option value={20}>20 dòng</option>
+                  <option value={50}>50 dòng</option>
+                  <option value={100}>100 dòng</option>
+                </select>
+              </div>
+              <span>
+                {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+                {Math.min(currentPage * pageSize, totalItems)} trong tổng số{' '}
+                {totalItems} phiếu
+              </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="rounded border border-slate-200 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
               >
-                Trước
+                <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    className={`rounded border px-3 py-1 text-sm ${
-                      currentPage === pageNum
-                        ? 'border-[#004785] bg-[#004785] text-white'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
+              <div className="px-3 text-sm text-slate-700">
+                Trang {currentPage} / {totalPages}
+              </div>
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="rounded border border-slate-200 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
               >
-                Sau
+                <Icon name="chevron_right" className="text-[18px]" />
               </button>
             </div>
           </div>

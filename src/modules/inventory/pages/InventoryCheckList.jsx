@@ -13,10 +13,8 @@ import {
   Filter,
   RefreshCw,
   AlertCircle,
-  X,
   CheckCircle2,
   Clock,
-  FileEdit,
   XCircle,
   Layers,
   RotateCcw,
@@ -26,9 +24,7 @@ import {
 import Button from '../../../shared/components/Button';
 import Input from '../../../shared/components/Input';
 import Table from '../../../shared/components/Table';
-import Badge from '../../../shared/components/Badge';
 import Drawer from '../../../shared/components/Drawer';
-import IconButton from '../../../shared/components/IconButton';
 
 // ==================== FORMAT DATE ====================
 const formatDateTime = (dateString) => {
@@ -53,6 +49,24 @@ const formatUserName = (name) => {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(' ');
 };
+
+export const getStatusLabel = (item) => {
+  if (!item) return '';
+  const status = item.status || item.Status;
+  const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
+
+  if (status === 'Draft') {
+    return recountNumber > 0 ? 'Yêu cầu đếm lại' : 'Nháp';
+  }
+
+  switch (status) {
+    case 'WaitingForApproval': return 'Chờ duyệt';
+    case 'Completed': return 'Đã hoàn thành';
+    case 'Cancelled': return 'Đã hủy';
+    default: return status;
+  }
+};
+
 const InventoryCheckList = () => {
   // ---- Trạng thái danh sách ----
   const [checks, setChecks] = useState([]);
@@ -88,40 +102,58 @@ const InventoryCheckList = () => {
   // ---- Modal sửa phiếu ----
   const [editTicketData, setEditTicketData] = useState(null);
 
-  // ==================== LỌC STATUS BADGE BẰNG SHARED COMPONENT ====================
-  const renderStatusBadge = (status) => {
-    switch (status) {
-      case 'Draft':
-        return (
-          <Badge variant="secondary" size="sm" className="inline-flex items-center gap-1">
-            <FileEdit size={12} /> Nháp
-          </Badge>
-        );
-      case 'WaitingForApproval':
-        return (
-          <Badge variant="warning" size="sm" className="inline-flex items-center gap-1">
-            <Clock size={12} className="animate-pulse" /> Chờ duyệt
-          </Badge>
-        );
-      case 'Completed':
-        return (
-          <Badge variant="success" size="sm" className="inline-flex items-center gap-1">
-            <CheckCircle2 size={12} /> Hoàn tất
-          </Badge>
-        );
-      case 'Cancelled':
-        return (
-          <Badge variant="danger" size="sm" className="inline-flex items-center gap-1">
-            <XCircle size={12} /> Đã hủy
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary" size="sm" className="inline-flex items-center gap-1">
-            {status}
-          </Badge>
-        );
+  // ==================== LỌC STATUS BADGE ====================
+  const renderStatusBadge = (item) => {
+    if (!item) return null;
+
+    const status = item.status || item.Status;
+    const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
+
+    if (status === 'Draft' && recountNumber > 0) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+          <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+          Yêu cầu đếm lại {recountNumber > 1 ? `(Lần ${recountNumber})` : ''}
+        </span>
+      );
     }
+
+    if (status === 'Draft') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+          Yêu Cầu Đếm
+        </span>
+      );
+    }
+
+    if (status === 'WaitingForApproval') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">
+          <Clock className="w-3.5 h-3.5 text-orange-500" />
+          Chờ duyệt
+        </span>
+      );
+    }
+
+    if (status === 'Completed') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+          Hoàn tất
+        </span>
+      );
+    }
+
+    if (status === 'Cancelled') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
+          <XCircle className="w-3.5 h-3.5 text-rose-600" />
+          Đã hủy
+        </span>
+      );
+    }
+
+    return <span className="text-xs text-gray-500">{status}</span>;
   };
 
   // ==================== FETCH LIST ====================
@@ -192,7 +224,7 @@ const InventoryCheckList = () => {
 
   // ==================== SUMMARY STATS ====================
   const summary = useMemo(() => {
-    const totalItems = checks.reduce((sum, c) => sum + Number(c.detailCount || 0), 0);
+    const totalItems = checks.reduce((sum, c) => sum + Number(c.totalProducts ?? 0), 0);
     const drafts = checks.filter((c) => c.status === 'Draft').length;
     const waiting = checks.filter((c) => c.status === 'WaitingForApproval').length;
     return {
@@ -227,7 +259,7 @@ const InventoryCheckList = () => {
           </button>
           {row.recountNumber > 0 && (
             <span className="w-fit rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
-              Đếm lại (Lần {row.recountNumber})
+              Đếm lại (Lần {row.recountNumber ?? row.RecountNumber})
             </span>
           )}
         </div>
@@ -263,17 +295,17 @@ const InventoryCheckList = () => {
       ),
     },
     {
-      key: 'detailCount',
+      key: 'totalProducts',
       header: 'Số lượng',
       render: (_, row) => (
-        <span className="text-sm font-semibold text-slate-700">{row.detailCount ?? '---'}</span>
+        <span className="text-sm font-semibold text-slate-700">{row.totalProducts ?? '---'}</span>
       ),
     },
     {
       key: 'status',
       header: 'Trạng thái',
       render: (_, row) => (
-        <span className="inline-flex items-center">{renderStatusBadge(row.status)}</span>
+        <span className="inline-flex items-center">{renderStatusBadge(row)}</span>
       ),
     },
   ];
@@ -320,7 +352,13 @@ const InventoryCheckList = () => {
             <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
             <p className="mt-1 text-sm text-red-700">{globalError}</p>
           </div>
-          <IconButton icon={X} variant="ghost" size="sm" onClick={() => setGlobalError('')} />
+          <button
+            type="button"
+            onClick={() => setGlobalError('')}
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          >
+            <Icon name="close" size={18} />
+          </button>
         </div>
       )}
 
@@ -362,7 +400,7 @@ const InventoryCheckList = () => {
             </span>
             {[
               { value: '', label: 'Tất cả' },
-              { value: 'Draft', label: 'Nháp' },
+              { value: 'Draft', label: 'yêu cầu đếm' },
               { value: 'WaitingForApproval', label: 'Chờ duyệt' },
               { value: 'Completed', label: 'Hoàn thành' },
               { value: 'Cancelled', label: 'Đã hủy' },
@@ -486,8 +524,8 @@ const InventoryCheckList = () => {
       />
 
       {/* ==================== PHÂN TRANG ==================== */}
-      {!loading && paginationMeta.totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
+      {!loading && paginationMeta.totalCount > 0 && (
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
           <div className="flex items-center gap-4 text-sm text-slate-600">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
@@ -517,7 +555,7 @@ const InventoryCheckList = () => {
               <Icon name="chevron_left" className="text-[18px]" />
             </button>
             <div className="px-3 text-sm text-slate-700">
-              Trang {pageNumber} / {paginationMeta.totalPages}
+              Trang {pageNumber} / {paginationMeta.totalPages || 1}
             </div>
             <button
               type="button"

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useExpenseCategory } from '../hooks/useExpenseCategory';
-import { AlertCircle, Plus } from 'lucide-react';
-import { Button } from '../../../shared/components/Button';
+import Icon from '../../../shared/components/Icon';
 
 // Import Các Components đã tách
 import ExpenseCategoryStats from '../components/expense/category/ExpenseCategoryStats';
@@ -20,6 +19,16 @@ const ExpenseCategoryManagement = () => {
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [actionError, setActionError] = useState('');
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const totalPages = Math.ceil(categories.length / pageSize) || 1;
+  const paginatedCategories = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return categories.slice(start, start + pageSize);
+  }, [categories, currentPage, pageSize]);
 
   const onCreate = async (e) => {
     e.preventDefault();
@@ -89,16 +98,16 @@ const ExpenseCategoryManagement = () => {
             Quản lý danh mục nhóm chi phí dùng để phân loại phiếu chi tiền.
           </p>
         </div>
-        <Button
-          variant="primary"
+        <button
           onClick={() => {
-            setActionError(''); // Xoá lỗi cũ nếu có trước khi mở modal
+            setActionError('');
             setShowCreateModal(true);
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg bg-[#004785] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-black"
         >
-          <Plus size={20} /> Tạo nhóm mới
-        </Button>
+          <Icon name="add" size={20} />
+          <span>Tạo nhóm mới</span>
+        </button>
       </div>
 
       {/* ==================== STATS CARDS ==================== */}
@@ -107,7 +116,7 @@ const ExpenseCategoryManagement = () => {
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
       {(error || (actionError && !showCreateModal)) && (
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
-          <AlertCircle className="mt-0.5 flex-shrink-0 text-red-500" size={20} />
+          <Icon name="error" className="mt-0.5 flex-shrink-0 text-red-500" size={20} />
           <div className="flex-1">
             <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
             <p className="mt-1 text-sm text-red-700">{error || actionError}</p>
@@ -117,7 +126,7 @@ const ExpenseCategoryManagement = () => {
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
       <ExpenseCategoryTable
-        categories={categories}
+        categories={paginatedCategories}
         loading={loading}
         refetch={refetch}
         editingId={editingId}
@@ -128,6 +137,52 @@ const ExpenseCategoryManagement = () => {
         startEdit={startEdit}
         onDeleteClick={onDeleteClick}
       />
+
+      {/* Pagination */}
+      {!loading && categories.length > 0 && (
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+              >
+                <option value={20}>20 dòng</option>
+                <option value={50}>50 dòng</option>
+                <option value={100}>100 dòng</option>
+              </select>
+            </div>
+            <span>
+              {categories.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+              {Math.min(currentPage * pageSize, categories.length)} trong tổng số{' '}
+              {categories.length} nhóm
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_left" className="text-[18px]" />
+            </button>
+            <div className="px-3 text-sm text-slate-700">
+              Trang {currentPage} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Icon name="chevron_right" className="text-[18px]" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ==================== MODAL TẠO NHÓM CHI PHÍ ==================== */}
       <CreateExpenseCategoryModal

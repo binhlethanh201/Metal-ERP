@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import Icon from '../../../shared/components/Icon';
-import Button from '../../../shared/components/Button';
 import Input from '../../../shared/components/Input';
-import IconButton from '../../../shared/components/IconButton';
 import { useStaffManager } from '../hooks/useStaffManager';
 import StaffTable from '../components/staff/StaffTable';
 import StaffModal from '../components/staff/StaffModal';
@@ -95,10 +93,13 @@ const StaffManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Nhân sự</h1>
           <p className="mt-1 text-gray-600">Tạo tài khoản và phân quyền cho nhân viên</p>
         </div>
-        <Button variant="primary" onClick={openCreateModal} className="flex items-center gap-2">
+        <button
+          onClick={openCreateModal}
+          className="flex items-center gap-2 rounded-lg bg-[#004785] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-black"
+        >
           <Icon name="add" size={20} />
           <span>Thêm nhân viên</span>
-        </Button>
+        </button>
       </div>
 
       <div className="w-1/3">
@@ -158,21 +159,25 @@ const StaffManagement = () => {
 
           {paginationMeta.totalPages > 1 && (
             <div className="mt-4 flex items-center justify-end gap-3">
-              <IconButton
-                icon={(props) => <Icon name="chevron_left" {...props} />}
-                variant="outline"
+              <button
+                type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
-              />
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Icon name="chevron_left" size={20} />
+              </button>
               <span className="text-sm font-semibold">
                 Trang {page} / {paginationMeta.totalPages}
               </span>
-              <IconButton
-                icon={(props) => <Icon name="chevron_right" {...props} />}
-                variant="outline"
+              <button
+                type="button"
                 disabled={page >= paginationMeta.totalPages}
                 onClick={() => setPage((p) => p + 1)}
-              />
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Icon name="chevron_right" size={20} />
+              </button>
             </div>
           )}
         </>

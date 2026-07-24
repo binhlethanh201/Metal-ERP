@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // BỔ SUNG IMPORT NÀY
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
+import Icon from '../../../shared/components/Icon';
 import { useSupplierManager } from '../hooks/useSupplierManager';
 import SupplierTable from '../components/supplier/SupplierTable';
 import SupplierModal from '../components/supplier/SupplierModal';
-import Icon from '../../../shared/components/Icon'; // Dùng thêm icon cho đẹp
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', {
@@ -41,6 +41,17 @@ const SupplierManagement = () => {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const paginatedSuppliers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return suppliers.slice(start, start + pageSize);
+  }, [suppliers, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(suppliers.length / pageSize) || 1;
 
   const openModal = async (mode, supplier = null) => {
     setModalMode(mode);
@@ -147,7 +158,7 @@ const SupplierManagement = () => {
             <div className="relative w-full md:max-w-sm">
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 placeholder="Tìm theo tên, nhóm, số điện thoại..."
                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
               />
@@ -155,7 +166,7 @@ const SupplierManagement = () => {
             <div className="flex flex-col gap-3 sm:flex-row">
               <select
                 value={groupFilter}
-                onChange={(e) => setGroupFilter(e.target.value)}
+                onChange={(e) => { setGroupFilter(e.target.value); setCurrentPage(1); }}
                 className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
               >
                 <option value="all">Tất cả nhóm</option>
@@ -167,7 +178,7 @@ const SupplierManagement = () => {
               </select>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
                 className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
               >
                 <option value="all">Tất cả trạng thái</option>
@@ -178,13 +189,59 @@ const SupplierManagement = () => {
           </div>
 
           <SupplierTable
-            suppliers={suppliers}
+            suppliers={paginatedSuppliers}
             loading={loading}
             deletingId={deletingId}
             onDetail={(s) => openModal('detail', s)}
             onEdit={(s) => openModal('edit', s)}
             onDelete={onDeleteConfirm}
           />
+
+          {/* Pagination */}
+          {!loading && suppliers.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+              <div className="flex items-center gap-4 text-sm text-slate-600">
+                <div className="flex items-center gap-2">
+                  <span>Hiển thị</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                  >
+                    <option value={20}>20 dòng</option>
+                    <option value={50}>50 dòng</option>
+                    <option value={100}>100 dòng</option>
+                  </select>
+                </div>
+                <span>
+                  {suppliers.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+                  {Math.min(currentPage * pageSize, suppliers.length)} trong tổng số{' '}
+                  {suppliers.length} nhà cung cấp
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <Icon name="chevron_left" className="text-[18px]" />
+                </button>
+                <div className="px-3 text-sm text-slate-700">
+                  Trang {currentPage} / {totalPages}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <Icon name="chevron_right" className="text-[18px]" />
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
 
         <div className="space-y-6">

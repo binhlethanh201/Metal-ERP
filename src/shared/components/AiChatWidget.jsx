@@ -1,13 +1,37 @@
 /**
  * Widget Trợ lý AI dùng chung toàn hệ thống
  */
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import Icon from './Icon';
 import useAiChat from '../hooks/useAiChat';
 
-// Các component override để bảng/list/heading markdown khớp style Tailwind của hệ thống
+// ==================== HELPERS ====================
+const parseMessageWithTables = (text) => {
+  if (!text) return [];
+  const tableRegex = /((?:\|[^\n]+\|\r?\n){2,})/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = tableRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', content: text.substring(lastIndex, match.index) });
+    }
+    parts.push({ type: 'table', content: match[0] });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', content: text.substring(lastIndex) });
+  }
+
+  return parts;
+};
+
+// ==================== CUSTOM MARKDOWN RENDERERS (inline chat) ====================
 const markdownComponents = {
   h1: ({ children }) => (
     <h1 className="mb-2 mt-3 text-base font-bold text-slate-800">{children}</h1>
@@ -18,33 +42,51 @@ const markdownComponents = {
   h3: ({ children }) => (
     <h3 className="mb-1.5 mt-2.5 text-sm font-bold text-slate-800">{children}</h3>
   ),
-  p: ({ children }) => <p className="mb-2 leading-relaxed last:mb-0">{children}</p>,
+  p: ({ children }) => <p className="mb-1.5 leading-relaxed last:mb-0">{children}</p>,
   strong: ({ children }) => <strong className="font-bold text-slate-900">{children}</strong>,
-  ul: ({ children }) => <ul className="mb-2 ml-4 list-disc space-y-1">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-2 ml-4 list-decimal space-y-1">{children}</ol>,
+  ul: ({ children }) => <ul className="mb-1.5 ml-4 list-disc space-y-0.5">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-1.5 ml-4 list-decimal space-y-0.5">{children}</ol>,
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   a: ({ children, href }) => (
     <a href={href} target="_blank" rel="noreferrer" className="text-primary underline">
       {children}
     </a>
   ),
+  code: ({ children }) => (
+    <code className="rounded bg-slate-100 px-1 py-0.5 text-[12px] text-slate-800">{children}</code>
+  ),
+};
+
+// ==================== CUSTOM MARKDOWN RENDERERS (table modal) ====================
+const modalMarkdownComponents = {
   table: ({ children }) => (
-    <div className="mb-2 overflow-x-auto rounded-lg border border-slate-200">
-      <table className="w-full min-w-[420px] border-collapse text-xs">{children}</table>
+    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+      <table className="w-full border-collapse bg-white text-sm">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-slate-100">{children}</thead>,
+  thead: ({ children }) => (
+    <thead className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200">
+      {children}
+    </thead>
+  ),
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => (
+    <tr className="hover:bg-blue-50/50 transition-colors odd:bg-white even:bg-slate-50/30">
+      {children}
+    </tr>
+  ),
   th: ({ children }) => (
-    <th className="border-b border-slate-200 px-2 py-1.5 text-left font-bold text-slate-700">
+    <th className="px-4 py-3 text-left border-r last:border-r-0 border-slate-200 font-semibold">
       {children}
     </th>
   ),
   td: ({ children }) => (
-    <td className="border-b border-slate-100 px-2 py-1.5 text-slate-700">{children}</td>
+    <td className="px-4 py-3 border-b border-r last:border-r-0 border-slate-100 text-slate-700">
+      {children}
+    </td>
   ),
-  code: ({ children }) => (
-    <code className="rounded bg-slate-100 px-1 py-0.5 text-[12px] text-slate-800">{children}</code>
-  ),
+  p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+  strong: ({ children }) => <strong className="font-bold text-slate-900">{children}</strong>,
 };
 
 const AiChatWidget = () => {
@@ -61,10 +103,62 @@ const AiChatWidget = () => {
     clearChat,
   } = useAiChat();
 
+  const [activeTableModal, setActiveTableModal] = useState(null);
+
   const handleClear = () => {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử trò chuyện?')) {
       clearChat();
     }
+  };
+
+  const renderBotMessage = (text) => {
+    const parts = parseMessageWithTables(text);
+    if (parts.length === 0) return null;
+
+    return (
+      <div className="space-y-2">
+        {parts.map((part, idx) => {
+          if (part.type === 'text') {
+            return (
+              <ReactMarkdown
+                key={idx}
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                components={markdownComponents}
+              >
+                {part.content}
+              </ReactMarkdown>
+            );
+          }
+          // Table part → render as clickable card
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setActiveTableModal(part.content)}
+              className="w-full rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md active:scale-[0.98]"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                  <Icon name="table" className="text-xl" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">
+                    Báo cáo / Bảng dữ liệu chi tiết
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Nhấp vào đây để xem bảng đầy đủ cột
+                  </p>
+                  <span className="mt-2 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110">
+                    Xem chi tiết
+                    <Icon name="arrow_forward" className="text-sm" />
+                  </span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -129,19 +223,14 @@ const AiChatWidget = () => {
               className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm ${
                   msg.role === 'user'
                     ? 'rounded-tr-sm bg-primary text-white'
                     : 'rounded-tl-sm border border-slate-200 bg-white text-slate-700 shadow-sm'
                 }`}
               >
                 {msg.role === 'bot' ? (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                    components={markdownComponents}
-                  >
-                    {msg.text}
-                  </ReactMarkdown>
+                  renderBotMessage(msg.text)
                 ) : (
                   <span className="whitespace-pre-wrap">{msg.text}</span>
                 )}
@@ -192,6 +281,44 @@ const AiChatWidget = () => {
           </button>
         </div>
       </div>
+
+      {/* ==================== TABLE MODAL ==================== */}
+      {activeTableModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={() => setActiveTableModal(null)}
+          />
+
+          {/* Modal Card */}
+          <div className="relative bg-white rounded-2xl max-w-4xl w-[92vw] max-h-[85vh] shadow-2xl flex flex-col border border-slate-100 overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <h2 className="text-lg font-bold text-slate-800">
+                Chi tiết bảng dữ liệu
+              </h2>
+              <button
+                type="button"
+                onClick={() => setActiveTableModal(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              >
+                <Icon name="close" className="text-xl" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-auto flex-1 bg-slate-50/50">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={modalMarkdownComponents}
+              >
+                {activeTableModal}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Nút mở chat */}
       <button

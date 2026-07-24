@@ -1,9 +1,10 @@
 import React from 'react';
+import { RefreshCw } from 'lucide-react';
+import Icon from '../../../../../shared/components/Icon';
 import { Button } from '../../../../../shared/components/Button';
 import { Badge } from '../../../../../shared/components/Badge';
 import { Table } from '../../../../../shared/components/Table';
 import { Input } from '../../../../../shared/components/Input';
-import { Check, X, Edit, Trash2, RefreshCw } from 'lucide-react';
 
 const ExpenseCategoryTable = ({
   categories,
@@ -74,47 +75,43 @@ const ExpenseCategoryTable = ({
       render: (_, c) => (
         <div className="flex justify-center gap-2">
           {editingId === c.categoryId ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex justify-center gap-1">
+              <button
+                type="button"
                 onClick={() => onSaveEdit(c.categoryId)}
-                className="flex items-center gap-1 !border-none !bg-emerald-50 text-emerald-600 hover:!bg-emerald-100"
+                className="rounded-lg p-2 text-emerald-600 transition-colors hover:bg-emerald-50"
                 title="Lưu"
               >
-                <Check size={14} /> Lưu
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                <Icon name="check" size={18} />
+              </button>
+              <button
+                type="button"
                 onClick={() => setEditingId(null)}
-                className="flex items-center gap-1 !border-none !bg-slate-100 text-slate-600 hover:!bg-slate-200"
+                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100"
                 title="Hủy sửa"
               >
-                <X size={14} /> Hủy
-              </Button>
-            </>
+                <Icon name="close" size={18} />
+              </button>
+            </div>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex justify-center gap-1">
+              <button
+                type="button"
                 onClick={() => startEdit(c)}
-                className="flex items-center gap-1 !border-none !bg-blue-50 text-blue-600 hover:!bg-blue-100"
+                className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
                 title="Sửa tên"
               >
-                <Edit size={14} /> Sửa
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                <Icon name="edit" size={18} />
+              </button>
+              <button
+                type="button"
                 onClick={() => onDeleteClick(c)}
-                className="flex items-center gap-1 !border-none !bg-red-50 text-red-600 hover:!bg-red-100"
+                className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50"
                 title="Xóa nhóm chi phí"
               >
-                <Trash2 size={14} /> Xóa
-              </Button>
-            </>
+                <Icon name="delete" size={18} />
+              </button>
+            </div>
           )}
         </div>
       ),
