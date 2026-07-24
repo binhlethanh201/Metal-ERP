@@ -20,6 +20,7 @@ const PosCartPanel = ({
   onOpenPriceCheck,
   onOpenStockCheck,
   embedded,
+  disabled = false,
 }) => {
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
@@ -166,9 +167,14 @@ const PosCartPanel = ({
         <div className="flex flex-col gap-y-2">
           <button
             onClick={onPay}
-            className="w-full rounded-lg bg-[#004785] py-4 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-blue-900/20 transition-all hover:opacity-90 active:scale-95"
+            disabled={disabled}
+            className={`w-full rounded-lg py-4 text-sm font-black uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all active:scale-95 ${
+              disabled
+                ? 'cursor-not-allowed bg-slate-400 text-slate-200'
+                : 'bg-[#004785] text-white hover:opacity-90'
+            }`}
           >
-            THANH TOÁN (F9)
+            {disabled ? 'ĐANG XỬ LÝ...' : 'THANH TOÁN (F9)'}
           </button>
           <button
             onClick={onSaveDraft}

@@ -261,6 +261,8 @@ const POSScreen = () => {
   const isPaymentValid = Math.abs(totalPaid - finalTotal) <= 1 && totalPaid > 0;
 
   const processOrder = async (lines, totalPaidAmount) => {
+    // Guard: prevent double-click
+    if (paying) return;
     setPaying(true);
     try {
       // 1. Tạo hóa đơn — kèm shiftId nếu có ca đang mở
@@ -454,6 +456,9 @@ const POSScreen = () => {
   };
 
   const handleOpenPay = async () => {
+    // Guard: prevent double-click
+    if (paying) return;
+
     if (cart.cart.length === 0) {
       showNotice('Giỏ hàng đang trống');
       return;
@@ -922,6 +927,7 @@ const POSScreen = () => {
               discountInfo={discountInfo}
               onClearCart={handleClearCart}
               onPay={handleOpenPay}
+              disabled={paying}
               onSaveDraft={() => {
                 if (cart.cart.length === 0) {
                   showNotice('Giỏ hàng trống, không có gì để lưu');
