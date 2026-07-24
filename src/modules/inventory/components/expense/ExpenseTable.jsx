@@ -2,8 +2,7 @@ import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { Table } from '../../../../shared/components/Table';
 import { Badge } from '../../../../shared/components/Badge';
-import { Button } from '../../../../shared/components/Button';
-import { Eye, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', {
@@ -90,23 +89,6 @@ const ExpenseTable = ({
       header: <div className="text-center">Trạng thái</div>,
       render: (val) => <div className="flex justify-center">{renderStatusBadge(val)}</div>,
     },
-    {
-      key: 'actions',
-      header: <div className="text-center">Thao tác</div>,
-      render: (_, v) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onViewDetail(v)}
-            className="flex items-center gap-1 !border-none !bg-blue-50 text-blue-600 hover:!bg-blue-100"
-            title="Xem chi tiết"
-          >
-            <Eye size={14} /> Xem
-          </Button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -116,6 +98,7 @@ const ExpenseTable = ({
         data={vouchers}
         loading={loading}
         emptyMessage="Không tìm thấy phiếu chi tiền nào"
+        onClickRow={(row) => onViewDetail(row)}
       />
 
       {!loading && paginationMeta?.totalCount > 0 && (

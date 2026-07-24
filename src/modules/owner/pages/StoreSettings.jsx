@@ -119,8 +119,7 @@ const StoreSettings = () => {
             <DiscountTierTable
               tiers={tiers}
               loading={loading}
-              onEdit={handleOpenModal}
-              onDelete={handleDelete}
+              onClickRow={(row) => handleOpenModal(row)}
             />
           </Card>
 
@@ -165,6 +164,7 @@ const StoreSettings = () => {
         tier={editingTier}
         onSave={handleSave}
         loading={saving}
+        onDelete={handleDelete}
       />
     </div>
   );

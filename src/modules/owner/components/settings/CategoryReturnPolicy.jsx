@@ -311,7 +311,6 @@ const CategoryReturnPolicy = ({ branchId }) => {
                 <th className="pb-3 pr-4">SL SP</th>
                 <th className="pb-3 pr-4">Trả hàng</th>
                 <th className="pb-3 pr-4">Đổi hàng</th>
-                <th className="w-24 pb-3">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -322,7 +321,8 @@ const CategoryReturnPolicy = ({ branchId }) => {
                 return (
                   <tr
                     key={vals.categoryId || catName}
-                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                    className="cursor-pointer border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/70"
+                    onClick={() => handleOpenEdit(catName)}
                   >
                     <td className="py-3 pr-4 font-medium text-slate-900">{catName || vals.categoryId}</td>
                     <td className="py-3 pr-4 text-slate-500">
@@ -346,24 +346,6 @@ const CategoryReturnPolicy = ({ branchId }) => {
                         <span className="text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="w-24 py-3">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleOpenEdit(catName)}
-                          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
-                          title="Sửa"
-                        >
-                          <Icon name="edit" size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(catName)}
-                          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                          title="Xóa"
-                        >
-                          <Icon name="delete" size={15} />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 );
               })}
@@ -386,18 +368,31 @@ const CategoryReturnPolicy = ({ branchId }) => {
         title={editCategory ? 'Sửa chính sách nhóm hàng' : 'Thêm chính sách nhóm hàng'}
         size="md"
         footer={
-          <>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
-              Hủy
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleModalSave}
-              disabled={editCategory ? false : !formCategory}
-            >
-              {editCategory ? 'Cập nhật' : 'Thêm'}
-            </Button>
-          </>
+          <div className="flex w-full items-center justify-between gap-3">
+            <div>
+              {editCategory && (
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50"
+                  onClick={() => { handleDelete(editCategory); setShowModal(false); }}
+                >
+                  Xóa
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Hủy
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleModalSave}
+                disabled={editCategory ? false : !formCategory}
+              >
+                {editCategory ? 'Cập nhật' : 'Thêm'}
+              </Button>
+            </div>
+          </div>
         }
       >
         <div className="space-y-5">

@@ -1,5 +1,4 @@
 import React from 'react';
-import Icon from '../../../../shared/components/Icon';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', {
@@ -27,7 +26,7 @@ const getStatusClass = (status) => {
   return 'bg-emerald-50 text-emerald-700';
 };
 
-const SupplierTable = ({ suppliers, loading, deletingId, onDetail, onEdit, onDelete }) => {
+const SupplierTable = ({ suppliers, loading, onDetail }) => {
   if (loading)
     return <div className="py-10 text-center text-sm text-slate-500">Đang tải dữ liệu...</div>;
   if (suppliers.length === 0)
@@ -46,7 +45,6 @@ const SupplierTable = ({ suppliers, loading, deletingId, onDetail, onEdit, onDel
             <th className="px-3 py-2 font-medium">Liên hệ</th>
             <th className="px-3 py-2 font-medium">Công nợ</th>
             <th className="px-3 py-2 font-medium">Trạng thái</th>
-            <th className="px-3 py-2 font-medium">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +70,7 @@ const SupplierTable = ({ suppliers, loading, deletingId, onDetail, onEdit, onDel
                   Đã mua: {formatCurrency(supplier.totalPurchased || 0)}
                 </div>
               </td>
-              <td className="px-3 py-3">
+              <td className="rounded-r-xl px-3 py-3">
                 <div
                   className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClass(supplier.status)}`}
                 >
@@ -80,25 +78,6 @@ const SupplierTable = ({ suppliers, loading, deletingId, onDetail, onEdit, onDel
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
                   Tạo: {formatDate(supplier.createdAt)}
-                </div>
-              </td>
-              <td className="rounded-r-xl px-3 py-3">
-                <div className="flex flex-wrap gap-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onEdit(supplier); }}
-                    className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
-                    title="Chỉnh sửa"
-                  >
-                    <Icon name="edit" size={18} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(supplier); }}
-                    disabled={deletingId === supplier.id}
-                    className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
-                    title="Xóa nhà cung cấp"
-                  >
-                    <Icon name="delete" size={18} />
-                  </button>
                 </div>
               </td>
             </tr>

@@ -40,6 +40,7 @@ const SupplierManagement = () => {
   const [modalMode, setModalMode] = useState('create');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+  // eslint-disable-next-line
   const [deletingId, setDeletingId] = useState(null);
 
   // Pagination
@@ -191,10 +192,7 @@ const SupplierManagement = () => {
           <SupplierTable
             suppliers={paginatedSuppliers}
             loading={loading}
-            deletingId={deletingId}
-            onDetail={(s) => openModal('detail', s)}
-            onEdit={(s) => openModal('edit', s)}
-            onDelete={onDeleteConfirm}
+            onDetail={(s) => openModal('edit', s)}
           />
 
           {/* Pagination */}
@@ -292,6 +290,7 @@ const SupplierManagement = () => {
         loading={modalLoading}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveModal}
+        onDelete={onDeleteConfirm}
       />
     </div>
   );

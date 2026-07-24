@@ -156,7 +156,12 @@ const ShiftHistory = () => {
       </div>
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
-      <ShiftTable shifts={shifts} loading={loading} onViewSummary={handleViewSummary} />
+      <ShiftTable
+        shifts={shifts}
+        loading={loading}
+        onViewSummary={handleViewSummary}
+        onClickRow={(row) => handleViewSummary(row.shiftId)}
+      />
 
       {/* ==================== PHÂN TRANG ==================== */}
       {!loading && totalPages > 0 && (

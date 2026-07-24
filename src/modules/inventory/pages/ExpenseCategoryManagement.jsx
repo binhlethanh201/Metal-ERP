@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useExpenseCategory } from '../hooks/useExpenseCategory';
 import Icon from '../../../shared/components/Icon';
+import { Filter, RefreshCw, RotateCcw } from 'lucide-react';
+import { Button } from '../../../shared/components/Button';
 
 // Import Các Components đã tách
 import ExpenseCategoryStats from '../components/expense/category/ExpenseCategoryStats';
 import CreateExpenseCategoryModal from '../components/expense/category/CreateExpenseCategoryModal';
 import ExpenseCategoryTable from '../components/expense/category/ExpenseCategoryTable';
+import ExpenseCategoryDetailModal from '../components/expense/category/ExpenseCategoryDetailModal';
 
 const ExpenseCategoryManagement = () => {
   const { categories, loading, error, handleCreate, handleUpdate, handleDelete, refetch } =
@@ -16,19 +19,29 @@ const ExpenseCategoryManagement = () => {
 
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [editingName, setEditingName] = useState('');
   const [actionError, setActionError] = useState('');
+
+  // Detail modal
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // Filter
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const filteredCategories = useMemo(() => {
+    if (statusFilter === 'ALL') return categories;
+    const isActive = statusFilter === 'ACTIVE';
+    return categories.filter((c) => Number(c.isActive) === (isActive ? 1 : 0));
+  }, [categories, statusFilter]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const totalPages = Math.ceil(categories.length / pageSize) || 1;
+  const totalPages = Math.ceil(filteredCategories.length / pageSize) || 1;
   const paginatedCategories = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return categories.slice(start, start + pageSize);
-  }, [categories, currentPage, pageSize]);
+    return filteredCategories.slice(start, start + pageSize);
+  }, [filteredCategories, currentPage, pageSize]);
 
   const onCreate = async (e) => {
     e.preventDefault();
@@ -46,36 +59,22 @@ const ExpenseCategoryManagement = () => {
     }
   };
 
-  const startEdit = (category) => {
-    setEditingId(category.categoryId);
-    setEditingName(category.categoryName);
-    setActionError('');
-  };
-
-  const onSaveEdit = async (id) => {
-    if (!editingName.trim()) return;
+  const onSaveEdit = async (id, name) => {
     try {
-      await handleUpdate(id, editingName.trim());
-      setEditingId(null);
+      await handleUpdate(id, name);
     } catch (err) {
-      setActionError(err?.data?.message || err?.message || 'Cập nhật nhóm chi phí thất bại.');
+      const msg = err?.data?.message || err?.message || 'Cập nhật nhóm chi phí thất bại.';
+      throw new Error(msg);
     }
   };
 
-  const onDeleteClick = async (category) => {
-    if (
-      !window.confirm(
-        `Bạn có chắc muốn xóa nhóm chi phí "${category.categoryName}"? (Chỉ xóa được khi không còn phiếu PENDING nào dùng nhóm này)`
-      )
-    ) {
-      return;
-    }
+  const onDelete = async (id) => {
     try {
-      await handleDelete(category.categoryId);
+      await handleDelete(id);
     } catch (err) {
       const msg = err?.data?.message || err?.message || 'Xóa nhóm chi phí thất bại.';
       const extra = Array.isArray(err?.data?.errors) ? err.data.errors.join(' ') : '';
-      alert(`${msg} ${extra}`.trim());
+      throw new Error(`${msg} ${extra}`.trim());
     }
   };
 
@@ -114,32 +113,77 @@ const ExpenseCategoryManagement = () => {
       <ExpenseCategoryStats summary={summary} />
 
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
-      {(error || (actionError && !showCreateModal)) && (
+      {error && (
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
           <Icon name="error" className="mt-0.5 flex-shrink-0 text-red-500" size={20} />
           <div className="flex-1">
             <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
-            <p className="mt-1 text-sm text-red-700">{error || actionError}</p>
+            <p className="mt-1 text-sm text-red-700">{error}</p>
           </div>
         </div>
       )}
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <Filter size={14} /> Trạng thái:
+            </span>
+            {[
+              { value: 'ALL', label: 'Tất cả' },
+              { value: 'ACTIVE', label: 'Hoạt động' },
+              { value: 'INACTIVE', label: 'Đã ẩn' },
+            ].map((item) => {
+              const isActive = statusFilter === item.value;
+              return (
+                <Button
+                  key={item.value}
+                  variant={isActive ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => { setStatusFilter(item.value); setCurrentPage(1); }}
+                >
+                  {item.label}
+                </Button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading}
+              className="flex items-center gap-1.5"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
+            </Button>
+
+            {statusFilter !== 'ALL' && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => { setStatusFilter('ALL'); setCurrentPage(1); }}
+                className="flex items-center gap-1"
+                title="Xóa bộ lọc"
+              >
+                <RotateCcw size={13} /> Đặt lại
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <ExpenseCategoryTable
         categories={paginatedCategories}
         loading={loading}
         refetch={refetch}
-        editingId={editingId}
-        editingName={editingName}
-        setEditingName={setEditingName}
-        setEditingId={setEditingId}
-        onSaveEdit={onSaveEdit}
-        startEdit={startEdit}
-        onDeleteClick={onDeleteClick}
+        onClickRow={(cat) => setSelectedCategory(cat)}
       />
 
       {/* Pagination */}
-      {!loading && categories.length > 0 && (
+      {!loading && filteredCategories.length > 0 && (
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
           <div className="flex items-center gap-4 text-sm text-slate-600">
             <div className="flex items-center gap-2">
@@ -155,9 +199,9 @@ const ExpenseCategoryManagement = () => {
               </select>
             </div>
             <span>
-              {categories.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
-              {Math.min(currentPage * pageSize, categories.length)} trong tổng số{' '}
-              {categories.length} nhóm
+              {filteredCategories.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+              {Math.min(currentPage * pageSize, filteredCategories.length)} trong tổng số{' '}
+              {filteredCategories.length} nhóm
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -193,6 +237,15 @@ const ExpenseCategoryManagement = () => {
         onCreate={onCreate}
         creating={creating}
         actionError={actionError}
+      />
+
+      {/* ==================== MODAL CHI TIẾT NHÓM CHI PHÍ ==================== */}
+      <ExpenseCategoryDetailModal
+        isOpen={!!selectedCategory}
+        onClose={() => setSelectedCategory(null)}
+        category={selectedCategory}
+        onSaveEdit={onSaveEdit}
+        onDelete={onDelete}
       />
     </div>
   );

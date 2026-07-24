@@ -454,8 +454,9 @@ export const StockExport = () => {
           <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
             {isLoading ? 'Đang tải dữ liệu xuất kho...' : 'Sẵn sàng tạo phiếu'}
           </div>
-          <Button variant="primary" onClick={openModal}>
-            Xuất hàng
+          <Button variant="primary" onClick={openModal} className="flex items-center gap-2">
+            <Icon name="add" size={20} />
+             Xuất hàng
           </Button>
         </div>
       </div>

@@ -214,14 +214,9 @@ export const InventoryHistoryCard = ({
       header: 'Mã phiếu',
       width: '140px',
       render: (_, row) => (
-        <button
-          type="button"
-          onClick={() => setViewingId(row.stockTicketId || row.id)}
-          className="font-bold text-[#004785] hover:underline"
-          title="Click để xem chi tiết & biến động kho"
-        >
+        <span className="font-bold text-[#004785]">
           {row.ticketCode || row.id}
-        </button>
+        </span>
       ),
     },
     {
@@ -290,7 +285,7 @@ export const InventoryHistoryCard = ({
                 variant="primary"
                 size="sm"
                 disabled={isConfirming}
-                onClick={() => handleConfirmTicket(row)}
+                onClick={(e) => { e.stopPropagation(); handleConfirmTicket(row); }}
                 title="Xác nhận duyệt để cộng/trừ kho thực tế"
                 className="flex items-center gap-1 whitespace-nowrap !px-2.5 !py-1 !text-[11px]"
               >
@@ -303,7 +298,7 @@ export const InventoryHistoryCard = ({
               space="customer"
               size="sm"
               disabled={isCancelled || isConfirming}
-              onClick={() => setCancellingTicket(row)}
+              onClick={(e) => { e.stopPropagation(); setCancellingTicket(row); }}
               title={isCancelled ? 'Phiếu đã bị hủy' : 'Hủy phiếu này'}
             />
           </div>
@@ -374,7 +369,7 @@ export const InventoryHistoryCard = ({
               className="flex items-center gap-1.5"
             >
               <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-              Đặt lại
+              Làm mới
             </Button>
           )}
         </div>
@@ -398,6 +393,7 @@ export const InventoryHistoryCard = ({
           data={paginatedTickets}
           loading={isLoading}
           emptyMessage="Chưa có phiếu nào trong hệ thống"
+          onClickRow={(row) => setViewingId(row.stockTicketId || row.id)}
         />
 
         {/* Pagination Controls */}

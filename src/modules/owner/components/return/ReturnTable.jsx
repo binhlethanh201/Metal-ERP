@@ -1,8 +1,7 @@
 import React from 'react';
 import Table from '../../../../shared/components/Table';
-import Button from '../../../../shared/components/Button';
 import Badge from '../../../../shared/components/Badge';
-import { Eye, Clock, CheckCircle, XCircle } from 'lucide-react';
+import {Clock, CheckCircle, XCircle } from 'lucide-react';
 import formatCurrency from '../../../../shared/utils/formatCurrency';
 import { formatDateTime } from '../../../../shared/utils/formatDate';
 
@@ -61,10 +60,7 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
       header: 'Phiếu đổi/trả',
       render: (_, r) => (
         <div>
-          <div
-            className="cursor-pointer font-bold text-[#004785] transition-colors hover:underline"
-            onClick={() => onViewDetail(r.returnOrderId)}
-          >
+          <div className="font-bold text-[#004785]">
             {r.returnCode}
           </div>
           <div className="text-xs font-medium text-slate-500">HĐ gốc: {r.invoiceCode || '—'}</div>
@@ -84,7 +80,7 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
           <div className="font-medium text-slate-700">
             {TYPE_LABEL[r.returnType] || r.returnType}
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-800">
             {METHOD_LABEL[r.refundMethod] || r.refundMethod}
           </div>
         </div>
@@ -110,28 +106,12 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
       key: 'createdAt',
       header: 'Ngày tạo',
       render: (_, r) => (
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-slate-800">
           {r.createdAt ? formatDateTime(r.createdAt) : '—'}
         </span>
       ),
     },
-    {
-      key: 'actions',
-      header: <div className="text-center">Thao tác</div>,
-      render: (_, r) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onViewDetail(r.returnOrderId)}
-            className="flex items-center gap-1 !border-none !bg-blue-50 text-blue-600 hover:!bg-blue-100"
-            title="Xem chi tiết"
-          >
-            <Eye size={14} /> Xem
-          </Button>
-        </div>
-      ),
-    },
+   
   ];
 
   return (
@@ -141,6 +121,7 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
       loading={loading}
       emptyMessage="Không tìm thấy phiếu đổi/trả nào."
       className="bg-white shadow-sm"
+      onClickRow={(row) => onViewDetail(row.returnOrderId)}
     />
   );
 };

@@ -10,6 +10,7 @@ export const Table = ({
   loading = false,
   emptyMessage = 'Không có dữ liệu',
   className = '',
+  onClickRow,
   ...props
 }) => {
   return (
@@ -74,7 +75,15 @@ export const Table = ({
             data.map((row, rowIdx) => (
               <tr
                 key={rowIdx}
-                className="transition-colors even:bg-slate-50/50 hover:bg-blue-50/40"
+                onClick={onClickRow ? () => onClickRow(row) : undefined}
+                className={`
+                  transition-all duration-150
+                  even:bg-slate-50/50
+                  ${onClickRow
+                    ? 'cursor-pointer hover:bg-blue-100/70 hover:shadow-[inset_3px_0_0_0_#2563eb]'
+                    : 'hover:bg-blue-50/40'
+                  }
+                `}
               >
                 {columns.map((col) => {
                   const alignClass =
