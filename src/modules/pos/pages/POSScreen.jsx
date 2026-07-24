@@ -147,6 +147,13 @@ const POSScreen = () => {
 
   const cart = usePosCart([]);
 
+  // Tự động revalidate giá/tồn kho của các sản phẩm đang nằm trong giỏ hàng hiện tại khi danh sách posProducts thay đổi
+  useEffect(() => {
+    if (cart.cart.length > 0 && posProducts.length > 0) {
+      cart.revalidateActiveCart(posProducts);
+    }
+  }, [posProducts]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
   const hasSaleCreate = user?.permissions?.includes('SALE_CREATE') || isOwner;
@@ -211,16 +218,83 @@ const POSScreen = () => {
   useEffect(() => {
     if (draftData && draftData.id !== loadedDraft.current) {
       loadedDraft.current = draftData.id;
-      // Load trực tiếp items vào cart, giữ nguyên id và quantity gốc từ draft
-      cart.loadDraft(draftData.items);
-      setSelectedCustomer(draftData.customer);
-      // Xoa draft khoi danh sach
-      setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
 
-      // Xóa state trong history để tránh bị nạp lại nếu người dùng ấn F5
+      const loadDraftWithRevalidation = async () => {
+        // 1. Fetch fresh products from API
+        const latestRawProducts = await refetchProducts(search);
+        const mappedLatestProducts = (
+          Array.isArray(latestRawProducts) && latestRawProducts.length > 0
+            ? latestRawProducts
+            : posApiProducts
+        ).map(mapToPosProduct);
+
+        const priceChanges = [];
+        const stockWarnings = [];
+
+        // 2. Revalidate price & stock for each item in draft
+        const updatedItems = (draftData.items || []).map((draftItem) => {
+          const draftItemId = draftItem.productId || draftItem.id;
+          const currentProduct = mappedLatestProducts.find(
+            (p) =>
+              String(p.id) === String(draftItemId) ||
+              String(p.productId) === String(draftItemId) ||
+              String(p.sku) === String(draftItem.sku || draftItem.productCode)
+          );
+
+          if (currentProduct) {
+            const oldPrice = Number(draftItem.price || 0);
+            const newPrice = Number(currentProduct.price || 0);
+            const stock = Number(currentProduct.stock || 0);
+            const qty = Number(draftItem.quantity || 1);
+
+            if (oldPrice !== newPrice) {
+              priceChanges.push(
+                `${draftItem.name || currentProduct.name}: ${oldPrice.toLocaleString('vi-VN')}đ ➔ ${newPrice.toLocaleString('vi-VN')}đ`
+              );
+            }
+            if (stock < qty) {
+              stockWarnings.push(
+                `${draftItem.name || currentProduct.name}: tồn kho (${stock}) không đủ SL yêu cầu (${qty})`
+              );
+            }
+
+            return {
+              ...draftItem,
+              price: newPrice,
+              stock: stock,
+              availableStock: stock,
+              baseStock: stock,
+              maxQty: Math.floor(Math.max(0, stock) / (draftItem.convertValue || 1)),
+            };
+          }
+          return draftItem;
+        });
+
+        // 3. Load revalidated items into POS cart
+        cart.loadDraft(updatedItems);
+
+        // 4. Notify user if price or stock changes occurred
+        if (priceChanges.length > 0 || stockWarnings.length > 0) {
+          const alerts = [];
+          if (priceChanges.length > 0) {
+            alerts.push(`Giá sản phẩm đã thay đổi: ${priceChanges.join('; ')}`);
+          }
+          if (stockWarnings.length > 0) {
+            alerts.push(`Tồn kho không đủ: ${stockWarnings.join('; ')}`);
+          }
+          showNotice(alerts.join(' | '));
+        } else {
+          showNotice('Đã khôi phục đơn nháp thành công');
+        }
+      };
+
+      loadDraftWithRevalidation();
+
+      setSelectedCustomer(draftData.customer);
+      setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
       window.history.replaceState({}, '');
     }
-  }, [draftData, cart, setDrafts]);
+  }, [draftData, cart, setDrafts, posApiProducts, refetchProducts, search, showNotice]);
 
   // ---- Chon khach hang tu trang Khach hang ----
   useEffect(() => {

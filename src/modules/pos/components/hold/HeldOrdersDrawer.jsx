@@ -10,16 +10,26 @@ import Icon from '../../../../shared/components/Icon';
 import { Badge } from '../../../../shared/components/Badge';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
+import { resumeInvoice } from '../../services/posService';
+
 const HeldOrdersDrawer = ({ isOpen, onClose, onResume, heldOrders = [] }) => {
-  // heldOrders: truyền từ POSScreen (local state)
-  // TODO (FE): thay bằng API call khi kết nối BE
   const [resuming, setResuming] = useState(null);
 
-  const handleResume = (invoice) => {
-    // TODO (FE): gọi API POST /pos/invoices/{id}/resume trước khi resume
-    setResuming(invoice.id || invoice.invoiceId);
+  const handleResume = async (invoice) => {
+    const invoiceId = invoice.invoiceId || invoice.id;
+    setResuming(invoiceId);
     try {
+      if (
+        invoiceId &&
+        typeof invoiceId === 'string' &&
+        invoiceId.includes('-') &&
+        !invoiceId.startsWith('draft-')
+      ) {
+        await resumeInvoice(invoiceId);
+      }
       onResume && onResume(invoice);
+    } catch (err) {
+      alert(err.message || 'Hóa đơn treo đã quá 24 giờ và tự động hủy.');
     } finally {
       setResuming(null);
     }

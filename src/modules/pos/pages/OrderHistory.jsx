@@ -11,7 +11,7 @@ import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatDate } from '../../../shared/utils/formatDate';
-import { getOrders, getInvoice, getReturns } from '../services/posService';
+import { getOrders, getInvoice, getReturns, getPosProducts } from '../services/posService';
 import Icon from '../../../shared/components/Icon';
 
 const VN_TZ = 'Asia/Ho_Chi_Minh';
@@ -379,14 +379,17 @@ const OrderHistory = () => {
     setCurrentPage(1);
   }, [search, timeFilter]);
 
+  const [latestProductsMap, setLatestProductsMap] = useState({});
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     try {
-      // Fetch orders và returns song song
-      const [data, returnsRaw] = await Promise.all([
+      // Fetch orders, returns, và posProducts song song
+      const [data, returnsRaw, posProductsRaw] = await Promise.all([
         getOrders({ status: 'Completed', pageSize: 1000 }),
         getReturns({}).catch(() => []),
+        getPosProducts({}).catch(() => []),
       ]);
       console.log('[OrderHistory] API response:', data);
       // Backend trả về PageResultDto với Items (capital I) hoặc mảng trực tiếp
@@ -404,6 +407,18 @@ const OrderHistory = () => {
         ? returnsRaw
         : (returnsRaw?.items ?? returnsRaw?.data ?? []);
       setReturnsData(allReturns);
+
+      // Build product price map for real-time draft total calculation
+      const pItems = Array.isArray(posProductsRaw)
+        ? posProductsRaw
+        : (posProductsRaw?.Items ?? posProductsRaw?.items ?? posProductsRaw?.data ?? []);
+      const pMap = {};
+      pItems.forEach((p) => {
+        const id = String(p.ProductId || p.productId || p.id || p.ProductCode || p.productCode || '');
+        const price = parseFloat(p.RetailPrice ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0);
+        if (id) pMap[id] = price;
+      });
+      setLatestProductsMap(pMap);
     } catch (err) {
       console.error('Lỗi khi lấy danh sách đơn hàng:', err);
       setFetchError(err.message || 'Không thể tải danh sách đơn hàng');
@@ -906,50 +921,57 @@ const OrderHistory = () => {
         {drafts.length > 0 && (
           <Card header={`Đơn nháp (${drafts.length})`} padding="p-0">
             <div className="divide-y divide-slate-100">
-              {drafts.map((d) => (
-                <div key={d.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="warning">Nháp</Badge>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {d.customer ? d.customer.name : 'Khách lẻ'}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {d.items.reduce((sum, item) => sum + (item.quantity || 1), 0)} món -{' '}
-                        {formatCurrency(d.total)}
-                      </p>
+              {drafts.map((d) => {
+                const currentTotal = (d.items || []).reduce((sum, item) => {
+                  const itemId = String(item.productId || item.id || item.sku || item.productCode || '');
+                  const latestPrice = latestProductsMap[itemId] ?? item.price;
+                  return sum + Number(latestPrice || 0) * Number(item.quantity || 1);
+                }, 0);
+                return (
+                  <div key={d.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="warning">Nháp</Badge>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {d.customer ? d.customer.name : 'Khách lẻ'}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {d.items.reduce((sum, item) => sum + (item.quantity || 1), 0)} món -{' '}
+                          {formatCurrency(currentTotal > 0 ? currentTotal : d.total)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate('/pos', { state: { draft: d } })}
+                      >
+                        Tiếp tục
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setDrafts((prev) => prev.filter((x) => x.id !== d.id))}
+                        className="rounded p-1 text-slate-400 hover:text-red-500"
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => navigate('/pos', { state: { draft: d } })}
-                    >
-                      Tiếp tục
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => setDrafts((prev) => prev.filter((x) => x.id !== d.id))}
-                      className="rounded p-1 text-slate-400 hover:text-red-500"
-                    >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         )}
