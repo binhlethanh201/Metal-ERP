@@ -5,6 +5,7 @@ const staticIconMap = {
   // --- Icon hệ thống cốt lõi ---
   dashboard: 'LayoutDashboard',
   tune: 'SlidersHorizontal',
+  category: 'Tags',
   filter_list: 'Filter',
   chevron_left: 'ChevronLeft',
   chevron_right: 'ChevronRight',

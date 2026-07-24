@@ -1,8 +1,7 @@
 import React from 'react';
 import Table from '../../../../shared/components/Table';
-import Button from '../../../../shared/components/Button';
 import Badge from '../../../../shared/components/Badge';
-import { Eye, Unlock, Lock } from 'lucide-react';
+import {Unlock, Lock } from 'lucide-react';
 import formatCurrency from '../../../../shared/utils/formatCurrency';
 import { formatDateTime } from '../../../../shared/utils/formatDate';
 
@@ -57,17 +56,14 @@ const VarianceCell = ({ variance }) => {
   );
 };
 
-const ShiftTable = ({ shifts, loading, onViewSummary }) => {
+const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
   const columns = [
     {
       key: 'shift',
       header: 'Ca bán',
       render: (_, s) => (
         <div>
-          <div
-            className="cursor-pointer font-bold text-[#004785] transition-colors hover:underline"
-            onClick={() => onViewSummary(s.shiftId)}
-          >
+          <div className="font-bold text-[#004785]">
             {s.shiftCode}
           </div>
           <div className="text-xs font-medium text-slate-500">NV: {s.userName}</div>
@@ -110,23 +106,6 @@ const ShiftTable = ({ shifts, loading, onViewSummary }) => {
         </div>
       ),
     },
-    {
-      key: 'actions',
-      header: <div className="text-center">Thao tác</div>,
-      render: (_, s) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onViewSummary(s.shiftId)}
-            className="flex items-center gap-1 !border-none !bg-blue-50 text-blue-600 hover:!bg-blue-100"
-            title="Xem chi tiết ca bán"
-          >
-            <Eye size={14} /> Xem
-          </Button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -136,6 +115,7 @@ const ShiftTable = ({ shifts, loading, onViewSummary }) => {
       loading={loading}
       emptyMessage="Không tìm thấy ca bán nào."
       className="bg-white shadow-sm"
+      onClickRow={onClickRow ? (row) => onClickRow(row) : undefined}
     />
   );
 };

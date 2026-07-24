@@ -249,14 +249,9 @@ const InventoryCheckList = () => {
       header: 'Mã phiếu',
       render: (_, row) => (
         <div className="flex flex-col items-start gap-1">
-          <button
-            type="button"
-            onClick={() => setSelectedCheckId(row.ticketId || row.id || row.inventoryCheckId)}
-            className="text-left font-bold text-[#004785] transition-colors hover:underline"
-            title="Click để xem chi tiết"
-          >
+          <span className="font-bold text-[#004785]">
             {row.ticketCode}
-          </button>
+          </span>
           {row.recountNumber > 0 && (
             <span className="w-fit rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
               Đếm lại (Lần {row.recountNumber ?? row.RecountNumber})
@@ -521,6 +516,7 @@ const InventoryCheckList = () => {
         data={checks}
         loading={loading}
         emptyMessage="Không tìm thấy phiếu kiểm kê nào."
+        onClickRow={(row) => setSelectedCheckId(row.ticketId || row.id || row.inventoryCheckId)}
       />
 
       {/* ==================== PHÂN TRANG ==================== */}

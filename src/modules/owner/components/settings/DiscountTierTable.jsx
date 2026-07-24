@@ -1,6 +1,5 @@
 import React from 'react';
 import Table from '../../../../shared/components/Table';
-import Icon from '../../../../shared/components/Icon';
 import Badge from '../../../../shared/components/Badge';
 
 /**
@@ -24,7 +23,7 @@ const formatPercent = (value) => {
   return `${parseFloat(value).toFixed(1)}%`;
 };
 
-const DiscountTierTable = ({ tiers, loading, onEdit, onDelete }) => {
+const DiscountTierTable = ({ tiers, loading, onClickRow }) => {
   const columns = [
     {
       key: 'minOrderValue',
@@ -52,30 +51,6 @@ const DiscountTierTable = ({ tiers, loading, onEdit, onDelete }) => {
         </Badge>
       ),
     },
-    {
-      key: 'actions',
-      header: 'Thao tác',
-      width: '25%',
-      align: 'center',
-      render: (_, row) => (
-        <div className="flex items-center justify-center gap-2">
-          <button
-            onClick={() => onEdit(row)}
-            className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50"
-            title="Sửa"
-          >
-            <Icon name="edit" size={18} />
-          </button>
-          <button
-            onClick={() => onDelete(row)}
-            className="rounded-lg p-1.5 text-red-600 transition-colors hover:bg-red-50"
-            title="Xóa"
-          >
-            <Icon name="delete" size={18} />
-          </button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -84,6 +59,7 @@ const DiscountTierTable = ({ tiers, loading, onEdit, onDelete }) => {
       data={tiers}
       loading={loading}
       emptyMessage="Chưa có mức chiết khấu nào. Nhấn 'Thêm mức chiết khấu' để tạo mới."
+      onClickRow={onClickRow ? (row) => onClickRow(row) : undefined}
     />
   );
 };

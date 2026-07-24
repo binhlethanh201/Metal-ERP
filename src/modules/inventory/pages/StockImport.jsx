@@ -15,6 +15,7 @@ import { createProduct } from '../services/productService';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Modal } from '../../../shared/components/Modal';
+import Icon from '../../../shared/components/Icon';
 
 const fallbackProducts = [
   {
@@ -287,8 +288,8 @@ export const StockImport = () => {
           <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
             {isLoadingData ? 'Đang tải dữ liệu...' : 'Sẵn sàng tạo phiếu'}
           </div>
-          <Button variant="primary" onClick={openModal}>
-            Nhập hàng
+          <Button variant="primary" onClick={openModal} className="flex items-center gap-2">
+            <Icon name="add" size={20} /> Nhập hàng
           </Button>
         </div>
       </div>

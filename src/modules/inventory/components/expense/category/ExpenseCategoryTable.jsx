@@ -1,38 +1,20 @@
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
-import Icon from '../../../../../shared/components/Icon';
-import { Button } from '../../../../../shared/components/Button';
 import { Badge } from '../../../../../shared/components/Badge';
 import { Table } from '../../../../../shared/components/Table';
-import { Input } from '../../../../../shared/components/Input';
 
 const ExpenseCategoryTable = ({
   categories,
   loading,
   refetch,
-  editingId,
-  editingName,
-  setEditingName,
-  setEditingId,
-  onSaveEdit,
-  startEdit,
-  onDeleteClick,
+  onClickRow,
 }) => {
   const tableColumns = [
     {
       key: 'categoryName',
       header: 'Tên nhóm chi phí',
-      render: (_, c) =>
-        editingId === c.categoryId ? (
-          <Input
-            value={editingName}
-            onChange={(e) => setEditingName(e.target.value)}
-            className="w-full"
-            autoFocus
-          />
-        ) : (
-          <span className="font-semibold text-slate-800">{c.categoryName}</span>
-        ),
+      render: (_, c) => (
+        <span className="font-semibold text-slate-800">{c.categoryName}</span>
+      ),
     },
     {
       key: 'voucherCount',
@@ -69,74 +51,16 @@ const ExpenseCategoryTable = ({
         </div>
       ),
     },
-    {
-      key: 'actions',
-      header: <div className="text-center">Thao tác</div>,
-      render: (_, c) => (
-        <div className="flex justify-center gap-2">
-          {editingId === c.categoryId ? (
-            <div className="flex justify-center gap-1">
-              <button
-                type="button"
-                onClick={() => onSaveEdit(c.categoryId)}
-                className="rounded-lg p-2 text-emerald-600 transition-colors hover:bg-emerald-50"
-                title="Lưu"
-              >
-                <Icon name="check" size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingId(null)}
-                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100"
-                title="Hủy sửa"
-              >
-                <Icon name="close" size={18} />
-              </button>
-            </div>
-          ) : (
-            <div className="flex justify-center gap-1">
-              <button
-                type="button"
-                onClick={() => startEdit(c)}
-                className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
-                title="Sửa tên"
-              >
-                <Icon name="edit" size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onDeleteClick(c)}
-                className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50"
-                title="Xóa nhóm chi phí"
-              >
-                <Icon name="delete" size={18} />
-              </button>
-            </div>
-          )}
-        </div>
-      ),
-    },
   ];
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-slate-600">Danh sách nhóm chi phí</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={refetch}
-          disabled={loading}
-          className="flex items-center gap-1.5"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
-        </Button>
-      </div>
       <Table
         columns={tableColumns}
         data={categories}
         loading={loading}
         emptyMessage="Chưa có nhóm chi phí nào"
+        onClickRow={onClickRow ? (row) => onClickRow(row) : undefined}
       />
     </div>
   );
