@@ -9,6 +9,7 @@ import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
+import { Modal } from '../../../shared/components/Modal';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatDate } from '../../../shared/utils/formatDate';
 import { getOrders, getInvoice, getReturns, getPosProducts } from '../services/posService';
@@ -367,6 +368,7 @@ const OrderHistory = () => {
   const { drafts, setDrafts, showNotice } = useOutletContext();
   const [orders, setOrders] = useState([]);
   const [returnsData, setReturnsData] = useState([]); // danh sách hoàn trả để tính net revenue
+  const [draftToDelete, setDraftToDelete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
@@ -951,8 +953,9 @@ const OrderHistory = () => {
                       </Button>
                       <button
                         type="button"
-                        onClick={() => setDrafts((prev) => prev.filter((x) => x.id !== d.id))}
-                        className="rounded p-1 text-slate-400 hover:text-red-500"
+                        onClick={() => setDraftToDelete(d)}
+                        title="Hủy đơn nháp"
+                        className="rounded p-1 text-slate-400 hover:text-red-500 transition-colors"
                       >
                         <svg
                           className="h-4 w-4"
@@ -1256,6 +1259,51 @@ const OrderHistory = () => {
             <p className="text-xs text-slate-300">để xem chi tiết</p>
           </div>
         </div>
+      )}
+
+      {/* Modal xác nhận hủy đơn nháp */}
+      {draftToDelete && (
+        <Modal
+          isOpen={!!draftToDelete}
+          onClose={() => setDraftToDelete(null)}
+          title="Xác nhận hủy đơn nháp"
+          size="sm"
+          footer={
+            <div className="flex justify-end gap-2 w-full">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setDraftToDelete(null)}
+              >
+                Không, giữ lại
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => {
+                  setDrafts((prev) => prev.filter((x) => x.id !== draftToDelete.id));
+                  showNotice?.('Đã hủy đơn nháp thành công.');
+                  setDraftToDelete(null);
+                }}
+              >
+                Xác nhận hủy
+              </Button>
+            </div>
+          }
+        >
+          <div className="py-2 space-y-2">
+            <p className="text-sm text-slate-700">
+              Bạn có chắc chắn muốn hủy đơn nháp của khách hàng{' '}
+              <strong className="text-slate-900">
+                {draftToDelete.customer ? draftToDelete.customer.name : 'Khách lẻ'}
+              </strong>{' '}
+              ({draftToDelete.items?.length || 0} sản phẩm) không?
+            </p>
+            <p className="text-xs text-red-500 italic">
+              * Đơn nháp sau khi hủy sẽ bị xóa hoàn toàn và không thể khôi phục.
+            </p>
+          </div>
+        </Modal>
       )}
     </div>
   );
