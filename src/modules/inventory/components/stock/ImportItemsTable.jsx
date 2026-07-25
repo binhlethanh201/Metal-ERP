@@ -1,8 +1,10 @@
-import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react';
+import { Plus, FileSpreadsheet, Download, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { ProductSearchInput } from './ProductSearchInput';
 import { Button } from '../../../../shared/components/Button';
 import IconButton from '../../../../shared/components/IconButton';
 import { Table } from '../../../../shared/components/Table';
+import { downloadExcelTemplate, parseImportExcelFile } from '../../utils/excelTemplate';
 
 export const ImportItemsTable = ({
   items = [],
@@ -11,8 +13,65 @@ export const ImportItemsTable = ({
   onUpdateItem,
   onRemoveItem,
   onAddNewProduct,
+  onImportRows,
   formatCurrency,
 }) => {
+  const fileInputRef = useRef(null);
+  const [importError, setImportError] = useState('');
+  const [importWarning, setImportWarning] = useState('');
+  const [importSuccess, setImportSuccess] = useState('');
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportError('');
+    setImportWarning('');
+    setImportSuccess('');
+
+    const result = await parseImportExcelFile(file);
+
+    if (!result.success) {
+      setImportError(result.error);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const importRows = [];
+    const notFoundList = [];
+
+    for (const row of result.data) {
+      const matchedProduct = products.find(
+        (p) =>
+          p.productCode?.toLowerCase() === row.productCode.toLowerCase()
+      );
+
+      importRows.push({
+        productCode: row.productCode,
+        productName: row.productName,
+        unitName: row.unitName || row.unit,
+        quantity: row.quantity,
+        costPrice: row.costPrice,
+        matchedProduct: matchedProduct || null,
+      });
+
+      if (!matchedProduct) {
+        notFoundList.push(row.productCode || row.productName);
+      }
+    }
+
+    onImportRows?.(importRows);
+
+    setImportSuccess(`Đã import ${importRows.length} dòng từ file Excel.`);
+
+    if (notFoundList.length > 0) {
+      setImportWarning(
+        `${notFoundList.length} mã chưa có trong hệ thống: ${notFoundList.join(', ')}. Đã thêm từ file Excel.`
+      );
+    }
+
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
   const columns = [
     {
       key: 'index',
@@ -198,29 +257,20 @@ export const ImportItemsTable = ({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <ProductSearchInput
           products={products}
           onSelectProduct={onAddProduct}
           formatCurrency={formatCurrency}
         />
-        <div className="relative">
+        <div className="flex shrink-0 items-center gap-2">
           <input
             type="file"
+            ref={fileInputRef}
             accept=".xlsx, .xls, .csv"
             className="hidden"
             id="excel-upload"
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) {
-                setTimeout(() => {
-                  alert(
-                    `Đã đọc file ${e.target.files[0].name} thành công. Tạm thời mở form thêm mới để bạn tự nhập liệu.`
-                  );
-                  onAddNewProduct();
-                }, 500);
-                e.target.value = null;
-              }
-            }}
+            onChange={handleFileChange}
           />
           <label
             htmlFor="excel-upload"
@@ -229,8 +279,61 @@ export const ImportItemsTable = ({
             <FileSpreadsheet size={16} />
             Import Excel
           </label>
+          <button
+            type="button"
+            onClick={downloadExcelTemplate}
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+          >
+            <Download size={16} />
+            Tải file Excel mẫu
+          </button>
         </div>
-      </div>
+        </div>
+
+        {importError && (
+          <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-red-500 text-sm font-bold">!</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">Lỗi import</p>
+              <p className="text-sm text-red-700">{importError}</p>
+            </div>
+            <button
+              onClick={() => setImportError('')}
+              className="shrink-0 text-red-400 hover:text-red-600 text-sm"
+            >
+              x
+            </button>
+          </div>
+        )}
+        {importWarning && (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-amber-500 text-sm font-bold">!</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-800">Cảnh báo</p>
+              <p className="text-sm text-amber-700">{importWarning}</p>
+            </div>
+            <button
+              onClick={() => setImportWarning('')}
+              className="shrink-0 text-amber-400 hover:text-amber-600 text-sm"
+            >
+              x
+            </button>
+          </div>
+        )}
+        {importSuccess && (
+          <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-emerald-500 text-sm">!</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-emerald-800">{importSuccess}</p>
+            </div>
+            <button
+              onClick={() => setImportSuccess('')}
+              className="shrink-0 text-emerald-400 hover:text-emerald-600 text-sm"
+            >
+              x
+            </button>
+          </div>
+        )}
 
       <Table
         columns={columns}

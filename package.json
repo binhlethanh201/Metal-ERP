@@ -20,7 +20,8 @@
     "recharts": "^3.9.2",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",

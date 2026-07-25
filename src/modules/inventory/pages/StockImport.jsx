@@ -146,7 +146,73 @@ export const StockImport = () => {
     loadInitData();
   }, [loadInwardHistory]);
 
-  const getItemKey = (item) => item?.branchProductId || item?.productId || item?.id || '';
+  const getItemKey = (item) =>
+    item?.branchProductId || item?.productId || item?.productCode || item?.id || '';
+
+  const handleImportRows = useCallback((rows) => {
+    if (!rows || rows.length === 0) return;
+
+    let importedCount = 0;
+    let newCount = 0;
+
+    setItems((current) => {
+      const updated = [...current];
+
+      for (const row of rows) {
+        if (!row) continue;
+
+        const matched = row.matchedProduct;
+        let key;
+        let importItem;
+
+        if (matched) {
+          key = getItemKey(matched);
+          importItem = {
+            ...matched,
+            id: key,
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
+        } else {
+          key = row.productCode || `new-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+          importItem = {
+            id: key,
+            productCode: row.productCode || '',
+            productName: row.productName || '',
+            unitName: row.unitName || row.unit || '',
+            unit: row.unitName || row.unit || '',
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
+          newCount++;
+        }
+
+        const existingIdx = updated.findIndex((i) =>
+          key ? getItemKey(i) === key : false
+        );
+
+        if (existingIdx >= 0) {
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
+        } else {
+          updated.push(importItem);
+        }
+
+        importedCount++;
+      }
+
+      return updated;
+    });
+
+    const msg =
+      newCount > 0
+        ? `Đã import ${importedCount} dòng (${newCount} mã mới từ file Excel).`
+        : `Đã import ${importedCount} dòng từ file Excel.`;
+    setStatus({ type: 'success', message: msg });
+  }, []);
 
   const addProductToTicket = useCallback((product) => {
     setItems((current) => {
@@ -213,12 +279,21 @@ export const StockImport = () => {
       supplierId: parseId(selectedSupplier?.id),
       reason: note || 'Nhập kho',
       note,
-      items: items.map((i) => ({
-        id: parseId(i.branchProductId || i.productId || i.id),
-        quantity: Number(i.quantity || 0),
-        costPrice: Number(i.costPrice || 0),
-        note: '',
-      })),
+      items: items.map((i) => {
+        const systemId = parseId(i.branchProductId || i.productId);
+        const item = {
+          quantity: Number(i.quantity || 0),
+          costPrice: Number(i.costPrice || 0),
+          note: '',
+        };
+        if (systemId) {
+          item.id = systemId;
+        } else {
+          item.productCode = i.productCode || i.id || '';
+          item.productName = i.productName || '';
+        }
+        return item;
+      }),
     };
 
     setIsSubmitting(true);
@@ -381,6 +456,7 @@ export const StockImport = () => {
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
               onAddNewProduct={() => setIsProductModalOpen(true)}
+              onImportRows={handleImportRows}
               formatCurrency={formatCurrency}
             />
           </div>
