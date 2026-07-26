@@ -53,7 +53,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-[#FAFAFA]">
+    <div className="relative h-screen w-screen overflow-hidden bg-[#FAFAFA] dark:bg-[#0f0f0f]">
       <div
         className="flex h-full w-[200vw] transition-transform ease-[cubic-bezier(0.16,1,0.3,1)]"
         style={{
@@ -94,7 +94,7 @@ const LandingPage = () => {
           <section className="relative shrink-0 overflow-hidden border-b border-slate-200 bg-white px-6 py-16 md:px-12 lg:py-24 dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-12">
               <div className="space-y-6 text-left lg:col-span-6">
-                <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#004785] shadow-sm">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#004785] shadow-sm dark:border-blue-800 dark:bg-blue-950/30">
                   <Sparkles size={14} className="fill-amber-500 text-amber-500" />
                   Phiên bản nền tảng quản trị thông minh 2026
                 </div>
@@ -143,17 +143,17 @@ const LandingPage = () => {
                   <div className="absolute bottom-10 left-10 h-64 w-64 rounded-full bg-[#004785]/5 blur-3xl" />
 
                   <div className="relative z-10 flex h-full w-full flex-col justify-between rounded-lg border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-[#333333] dark:bg-[#0f0f0f]/80">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                      <span className="h-2.5 w-2.5 rounded-full bg-slate-200" />
-                      <span className="h-2 w-16 rounded bg-slate-200" />
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-[#333]">
+                      <span className="h-2.5 w-2.5 rounded-full bg-slate-200 dark:bg-[#444]" />
+                      <span className="h-2 w-16 rounded bg-slate-200 dark:bg-[#444]" />
                     </div>
                     <div className="flex flex-1 items-end gap-3 px-4 py-6">
-                      <div className="h-[40%] w-full rounded bg-slate-100 transition-all duration-300 group-hover:h-[55%] group-hover:bg-[#004785]/20" />
+                      <div className="h-[40%] w-full rounded bg-slate-100 transition-all duration-300 group-hover:h-[55%] group-hover:bg-[#004785]/20 dark:bg-[#333]" />
                       <div className="h-[75%] w-full rounded bg-[#004785]/10 transition-all duration-300 group-hover:h-[85%] group-hover:bg-[#004785]/30" />
                       <div className="h-[50%] w-full rounded bg-[#004785] transition-all duration-300 group-hover:h-[65%]" />
-                      <div className="h-[90%] w-full rounded bg-slate-100 transition-all duration-300 group-hover:h-[95%] group-hover:bg-[#004785]/20" />
+                      <div className="h-[90%] w-full rounded bg-slate-100 transition-all duration-300 group-hover:h-[95%] group-hover:bg-[#004785]/20 dark:bg-[#333]" />
                     </div>
-                    <div className="mt-2 h-4 w-1/3 rounded bg-slate-100" />
+                    <div className="mt-2 h-4 w-1/3 rounded bg-slate-100 dark:bg-[#333]" />
                   </div>
                 </div>
               </div>
@@ -219,7 +219,7 @@ const LandingPage = () => {
           </section>
 
           {/* GIẢI PHÁP NGHIỆP VỤ */}
-          <section className="shrink-0 bg-[#FAFAFA] px-6 py-16 md:px-12">
+          <section className="shrink-0 bg-[#FAFAFA] px-6 py-16 md:px-12 dark:bg-[#0f0f0f]">
             <div className="mx-auto max-w-7xl">
               <div className="mb-10 text-left md:text-center">
                 <h2 className="text-xl font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
