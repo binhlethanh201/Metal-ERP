@@ -21,7 +21,7 @@ const KPICard = ({ icon, label, value, unit, change, tone = 'navy' }) => {
   const colors = toneMap[tone] || toneMap.navy;
 
   return (
-    <div className="group rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-[#004785]">
+    <div className="group rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-[#004785] dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="mb-4 flex items-start justify-between">
         <div
           className={`rounded-lg p-2 transition-colors group-hover:text-white ${colors.iconBox}`}
@@ -34,11 +34,11 @@ const KPICard = ({ icon, label, value, unit, change, tone = 'navy' }) => {
           </span>
         )}
       </div>
-      <p className="mb-1 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500">
+      <p className="mb-1 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500 dark:text-[#999999]">
         {label}
       </p>
       <h2 className={`text-2xl font-extrabold leading-tight ${colors.value}`}>{value}</h2>
-      <p className="mt-2 text-xs leading-[1.4] text-slate-400">{unit}</p>
+      <p className="mt-2 text-xs leading-[1.4] text-slate-400 dark:text-[#808080]">{unit}</p>
     </div>
   );
 };

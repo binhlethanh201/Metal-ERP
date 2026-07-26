@@ -744,8 +744,8 @@ export const ShiftManagement = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Quản lý ca bán hàng</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Quản lý ca bán hàng</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             Mở ca, theo dõi đơn hàng và chốt ca cuối ngày
           </p>
         </div>
@@ -764,7 +764,7 @@ export const ShiftManagement = () => {
 
       {/* Panel ca đang mở */}
       {isShiftActive && displayShift && (
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-green-500 dark:border-l-green-600">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -772,8 +772,8 @@ export const ShiftManagement = () => {
                   <div className="h-3 w-3 animate-pulse rounded-full bg-green-500" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Ca đang mở</h2>
-                  <p className="text-sm text-slate-500">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Ca đang mở</h2>
+                  <p className="text-sm text-slate-500 dark:text-[#999999]">
                     {displayShift.cashier} - Bắt đầu lúc {displayShift.startTime}
                   </p>
                 </div>
@@ -783,19 +783,19 @@ export const ShiftManagement = () => {
               </Badge>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="overflow-hidden rounded-lg bg-blue-50 p-4">
+              <div className="overflow-hidden rounded-lg bg-blue-50 p-4 dark:bg-blue-900/30">
                 <p className="truncate text-xs font-bold uppercase text-blue-600">Số dư đầu ca</p>
                 <p className="mt-1 truncate text-lg font-extrabold text-blue-900">
                   {formatCurrency(displayShift.openingBalance)}
                 </p>
               </div>
-              <div className="overflow-hidden rounded-lg bg-slate-50 p-4">
+              <div className="overflow-hidden rounded-lg bg-slate-50 p-4 dark:bg-[#1a1a1a]/50">
                 <p className="truncate text-xs font-bold uppercase text-slate-500">Đơn đã bán</p>
                 <p className="mt-1 truncate text-lg font-extrabold text-[#004785]">
                   {displayShift.orderCount}
                 </p>
               </div>
-              <div className="overflow-hidden rounded-lg bg-green-50 p-4">
+              <div className="overflow-hidden rounded-lg bg-green-50 p-4 dark:bg-green-900/30">
                 <p className="truncate text-xs font-bold uppercase text-green-600">
                   Doanh số tạm tính
                 </p>
@@ -808,7 +808,7 @@ export const ShiftManagement = () => {
                   </p>
                 )}
               </div>
-              <div className="overflow-hidden rounded-lg bg-amber-50 p-4">
+              <div className="overflow-hidden rounded-lg bg-amber-50 p-4 dark:bg-amber-900/30">
                 <p className="truncate text-xs font-bold uppercase text-amber-600">
                   Số dư cuối dự kiến
                 </p>
@@ -822,12 +822,12 @@ export const ShiftManagement = () => {
 
             {/* Danh sách hoạt động trong ca */}
             {shiftOrders.length > 0 && (
-              <div className="border-t border-slate-100 pt-4">
+              <div className="border-t border-slate-100 pt-4 dark:border-[#333333]">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                     Hoạt động trong ca
                   </h3>
-                  <span className="text-xs font-semibold text-slate-400">
+                  <span className="text-xs font-semibold text-slate-400 dark:text-[#808080]">
                     {(() => {
                       // Gộp đơn bán + hoàn trả (không hủy)
                       const refundsInShift = shiftReturns.filter((r) => {
@@ -885,7 +885,7 @@ export const ShiftManagement = () => {
                           return (
                             <div
                               key={'sale-' + act.id}
-                              className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
+                              className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:border-[#404040] dark:hover:bg-[#272727]"
                             >
                               <div className="flex min-w-0 items-center gap-3">
                                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100">
@@ -913,13 +913,13 @@ export const ShiftManagement = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <span className="shrink-0 text-xs text-slate-400">
+                                <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">
                                   {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
                                     hour: '2-digit',
                                     minute: '2-digit',
                                   })}
                                 </span>
-                                <span className="truncate text-xs text-slate-600">
+                                <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                   {act.customerName}
                                 </span>
                               </div>
@@ -927,7 +927,7 @@ export const ShiftManagement = () => {
                                 <span className="text-xs font-bold text-green-600">
                                   +{formatCurrency(act.amount)}
                                 </span>
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
                                   {act.paymentMethod === 'CASH' ||
                                   act.paymentMethod === 'Cash' ||
                                   act.paymentMethod === 'Tiền mặt'
@@ -954,7 +954,7 @@ export const ShiftManagement = () => {
                         return (
                           <div
                             key={'ret-' + act.id}
-                            className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
+                            className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:border-[#404040] dark:hover:bg-[#272727]"
                           >
                             <div className="flex min-w-0 items-center gap-3">
                               <div
@@ -1005,13 +1005,13 @@ export const ShiftManagement = () => {
                                   {act.invoiceCode}
                                 </span>
                               </div>
-                              <span className="shrink-0 text-xs text-slate-400">
+                              <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">
                                 {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })}
                               </span>
-                              <span className="truncate text-xs text-slate-600">
+                              <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                 {act.customerName}
                               </span>
                             </div>
@@ -1044,7 +1044,7 @@ export const ShiftManagement = () => {
               </div>
             )}
             {ordersLoading && (
-              <div className="py-3 text-center text-xs text-slate-400">Đang tải đơn hàng...</div>
+              <div className="py-3 text-center text-xs text-slate-400 dark:text-[#808080]">Đang tải đơn hàng...</div>
             )}
           </div>
         </Card>
@@ -1055,7 +1055,7 @@ export const ShiftManagement = () => {
         <Card padding="p-5">
           <div className="text-center">
             <div className="text-2xl font-extrabold text-[#004785]">{totalShifts}</div>
-            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Tổng ca đã chốt
             </p>
           </div>
@@ -1065,7 +1065,7 @@ export const ShiftManagement = () => {
             <div className="text-2xl font-extrabold text-green-600">
               {formatCurrency(totalRevenue)}
             </div>
-            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Tổng doanh thu
             </p>
           </div>
@@ -1075,7 +1075,7 @@ export const ShiftManagement = () => {
             <div className="text-2xl font-extrabold text-purple-600">
               {formatCurrency(avgPerShift)}
             </div>
-            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Bình quân/ca
             </p>
           </div>
@@ -1083,7 +1083,7 @@ export const ShiftManagement = () => {
         <Card padding="p-5">
           <div className="text-center">
             <div className="text-2xl font-extrabold text-orange-600">{filteredShifts.length}</div>
-            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Tổng số ca
             </p>
           </div>
@@ -1094,7 +1094,7 @@ export const ShiftManagement = () => {
       <Card
         header={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-bold text-slate-900">Lịch sử ca làm việc</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Lịch sử ca làm việc</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -1102,7 +1102,7 @@ export const ShiftManagement = () => {
                 className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${
                   dateFilter === toLocalDateStr(new Date())
                     ? 'border-[#004785] bg-[#004785] text-white'
-                    : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                    : 'border-slate-200 text-slate-500 hover:border-slate-300 dark:border-[#333333] dark:text-[#999999] dark:hover:border-[#404040]'
                 }`}
               >
                 Hôm nay
@@ -1127,7 +1127,7 @@ export const ShiftManagement = () => {
           emptyMessage={error ? `Lỗi: ${error}` : 'Chưa có ca làm việc nào'}
         />
         {filteredShifts.length > 0 && (
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="flex items-center gap-4 text-sm text-slate-600">
               <div className="flex items-center gap-2">
                 <span>Hiển thị</span>
@@ -1152,18 +1152,18 @@ export const ShiftManagement = () => {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
               >
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              <div className="px-3 text-sm text-slate-700">
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
                 Trang {currentPage} / {totalPages || 1}
               </div>
               <button
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
                 disabled={currentPage >= totalPages}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
               >
                 <Icon name="chevron_right" className="text-[18px]" />
               </button>
@@ -1206,10 +1206,10 @@ export const ShiftManagement = () => {
                 const raw = e.target.value.replace(/\./g, '');
                 setStartForm((f) => ({ ...f, openingBalance: raw }));
               }}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-lg font-bold focus:border-[#004785] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-lg font-bold focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
           </div>
-          <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
+          <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
             Bắt đầu lúc{' '}
             <span className="font-semibold">{new Date().toLocaleTimeString('vi-VN')}</span> -{' '}
             {new Date().toLocaleDateString('vi-VN')}
@@ -1269,17 +1269,17 @@ export const ShiftManagement = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-[#e5e5e5]">
               Chốt ca làm việc
             </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-[#999999]">
               Kiểm tra số liệu và xác nhận kết thúc ca
             </p>
           </div>
 
           {/* Thông tin ca */}
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-4">
-            <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-4 dark:border-[#333333] dark:from-[#1a1a1a]/50 dark:to-[#0f0f0f]">
+            <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-[#808080]">
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -1289,7 +1289,7 @@ export const ShiftManagement = () => {
                 />
               </svg>
               THÔNG TIN CA
-              <span className="ml-1.5 h-px flex-1 bg-slate-200" />
+              <span className="ml-1.5 h-px flex-1 bg-slate-200 dark:bg-[#272727]" />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1309,13 +1309,13 @@ export const ShiftManagement = () => {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-900">{displayShift?.cashier || '-'}</p>
-                  <p className="text-xs text-slate-400">Thu ngân</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{displayShift?.cashier || '-'}</p>
+                  <p className="text-xs text-slate-400 dark:text-[#808080]">Thu ngân</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-slate-900">{displayShift?.startTime || '-'}</p>
-                <p className="text-xs text-slate-400">Giờ mở ca</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{displayShift?.startTime || '-'}</p>
+                <p className="text-xs text-slate-400 dark:text-[#808080]">Giờ mở ca</p>
               </div>
             </div>
           </div>
@@ -1332,22 +1332,22 @@ export const ShiftManagement = () => {
                 />
               </svg>
               TỔNG KẾT
-              <span className="ml-1.5 h-px flex-1 bg-slate-200" />
+              <span className="ml-1.5 h-px flex-1 bg-slate-200 dark:bg-[#272727]" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm">
-                <p className="truncate text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+                <p className="truncate text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-[#808080]">
                   Số dư đầu ca
                 </p>
                 <div className="mt-1.5 flex items-baseline gap-1">
-                  <span className="truncate text-xl font-extrabold text-slate-900">
+                  <span className="truncate text-xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">
                     {formatCurrency(displayShift?.openingBalance || 0)}
                   </span>
-                  <span className="shrink-0 text-xs text-slate-400">VNĐ</span>
+                  <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">VNĐ</span>
                 </div>
               </div>
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm">
-                <p className="truncate text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+                <p className="truncate text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-[#808080]">
                   Số đơn đã bán
                 </p>
                 <div className="mt-1.5 flex items-baseline gap-1">
@@ -1398,7 +1398,7 @@ export const ShiftManagement = () => {
           </div>
 
           {/* Nhập liệu */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -1409,15 +1409,15 @@ export const ShiftManagement = () => {
                 />
               </svg>
               KIỂM ĐẾM THỰC TẾ
-              <span className="ml-1.5 h-px flex-1 bg-slate-200" />
+              <span className="ml-1.5 h-px flex-1 bg-slate-200 dark:bg-[#272727]" />
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                   Tiền mặt thực tế
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-300">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-300 dark:text-[#808080]">
                     ₫
                   </span>
                   <input
@@ -1439,7 +1439,7 @@ export const ShiftManagement = () => {
                       }
                       setEndForm((f) => ({ ...f, actualCashCount: raw }));
                     }}
-                    className="w-full rounded-xl border-2 border-slate-200 py-3.5 pl-10 pr-4 text-base font-bold transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-full rounded-xl border-2 border-slate-200 py-3.5 pl-10 pr-4 text-base font-bold transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] [&::-webkit-inner-spin-button]:appearance-none"
                     maxLength={14}
                   />
                 </div>
@@ -1523,7 +1523,7 @@ export const ShiftManagement = () => {
                     const expectedCash =
                       (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0);
                     const actualCash = Number(endForm.actualCashCount) || 0;
-                    return actualCash !== expectedCash ? 'text-red-600' : 'text-slate-700';
+                    return actualCash !== expectedCash ? 'text-red-600' : 'text-slate-700 dark:text-[#b3b3b3]';
                   })()}`}
                 >
                   Ghi chú{' '}
@@ -1581,17 +1581,17 @@ export const ShiftManagement = () => {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Thu ngân</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Thu ngân</p>
                 <p className="mt-1 font-semibold">{selectedShift.cashier}</p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Giờ làm</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Giờ làm</p>
                 <p className="mt-1 font-semibold">
                   {selectedShift.startTime} - {selectedShift.endTime}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Trạng thái
                 </p>
                 <p className="mt-1">
@@ -1606,13 +1606,13 @@ export const ShiftManagement = () => {
                 Số liệu ca
               </h3>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-lg bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Số dư đầu</p>
+                <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#1a1a1a]/50">
+                  <p className="text-xs text-slate-500 dark:text-[#999999]">Số dư đầu</p>
                   <p className="mt-0.5 text-lg font-bold">
                     {formatCurrency(selectedShift.openingBalance)}
                   </p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3">
+                <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#1a1a1a]/50">
                   <p className="text-xs text-slate-500">Số dư cuối</p>
                   <p className="mt-0.5 text-lg font-bold">
                     {formatCurrency(selectedShift.closingBalance)}
@@ -1637,7 +1637,7 @@ export const ShiftManagement = () => {
                 <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">
                   Ghi chú
                 </h3>
-                <p className="text-sm text-slate-700">{selectedShift.note}</p>
+                <p className="text-sm text-slate-700 dark:text-[#b3b3b3]">{selectedShift.note}</p>
               </div>
             )}
 
@@ -1657,7 +1657,7 @@ export const ShiftManagement = () => {
                 })()}
               </h3>
               {detailOrdersLoading ? (
-                <div className="py-4 text-center text-xs text-slate-400">Đang tải...</div>
+                <div className="py-4 text-center text-xs text-slate-400 dark:text-[#808080]">Đang tải...</div>
               ) : selectedShiftOrders.length > 0 || selectedShiftReturns.length > 0 ? (
                 <div className="max-h-60 space-y-2 overflow-y-auto">
                   {(() => {
@@ -1716,13 +1716,13 @@ export const ShiftManagement = () => {
                                 <span className="rounded bg-green-100 px-1 py-0.5 text-[9px] font-semibold text-green-700">
                                   Bán
                                 </span>
-                                <span className="shrink-0 text-xs text-slate-400">
+                                <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">
                                   {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
                                     hour: '2-digit',
                                     minute: '2-digit',
                                   })}
                                 </span>
-                                <span className="truncate text-xs text-slate-600">
+                                <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                   {act.customerName}
                                 </span>
                               </div>
@@ -1801,13 +1801,13 @@ export const ShiftManagement = () => {
                               >
                                 {isRefund ? 'Trả' : 'Đổi'}
                               </span>
-                              <span className="shrink-0 text-xs text-slate-400">
+                              <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">
                                 {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })}
                               </span>
-                              <span className="truncate text-xs text-slate-600">
+                              <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                 {act.customerName}
                               </span>
                             </div>
@@ -1824,7 +1824,7 @@ export const ShiftManagement = () => {
                   })()}
                 </div>
               ) : (
-                <p className="py-4 text-center text-sm text-slate-400">
+                <p className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">
                   Không có hoạt động nào trong ca
                 </p>
               )}

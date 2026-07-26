@@ -88,27 +88,27 @@ const CheckPriceTool = ({ isOpen, onClose }) => {
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
+          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/30">
             <Icon name="error" size={16} className="flex-shrink-0 text-red-600" />
-            <span className="text-sm text-red-700">{error}</span>
+            <span className="text-sm text-red-700 dark:text-red-400">{error}</span>
           </div>
         )}
 
         {products.length > 0 && !selected && (
           <div className="space-y-2">
-            <p className="text-sm text-gray-500">{products.length} sản phẩm được tìm thấy</p>
+            <p className="text-sm text-gray-500 dark:text-[#999999]">{products.length} sản phẩm được tìm thấy</p>
             <div className="max-h-60 space-y-2 overflow-y-auto rounded-lg border p-2">
               {products.map((p) => (
                 <div
                   key={p.productId || p.id}
-                  className="flex cursor-pointer items-center justify-between rounded-lg border p-2 hover:bg-gray-50"
+                  className="flex cursor-pointer items-center justify-between rounded-lg border p-2 hover:bg-gray-50 dark:hover:bg-[#272727]"
                   onClick={() => handleSelectProduct(p)}
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{p.productName || p.name}</p>
-                    <p className="text-xs text-gray-500">{p.productCode || p.sku}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-[#e5e5e5]">{p.productName || p.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-[#999999]">{p.productCode || p.sku}</p>
                   </div>
-                  <Icon name="chevron_right" size={16} className="text-gray-400" />
+                  <Icon name="chevron_right" size={16} className="text-gray-400 dark:text-[#808080]" />
                 </div>
               ))}
             </div>
@@ -122,31 +122,31 @@ const CheckPriceTool = ({ isOpen, onClose }) => {
                 <Icon name="local_offer" size={24} className="text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">
+                <p className="font-semibold text-gray-900 dark:text-[#e5e5e5]">
                   {selected.productName || selected.name}
                 </p>
-                <p className="text-xs text-gray-500">{selected.productCode || selected.sku}</p>
+                <p className="text-xs text-gray-500 dark:text-[#999999]">{selected.productCode || selected.sku}</p>
                 {selected.barcode && (
-                  <p className="text-xs text-gray-400">Barcode: {selected.barcode}</p>
+                  <p className="text-xs text-gray-400 dark:text-[#808080]">Barcode: {selected.barcode}</p>
                 )}
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Giá bán lẻ:</span>
+                    <span className="text-sm text-gray-600 dark:text-[#999999]">Giá bán lẻ:</span>
                     <span className="text-lg font-bold text-blue-700">
                       {formatCurrency(selected.retailPrice ?? selected.salePrice ?? 0)}
                     </span>
                   </div>
                   {selected.floorPrice != null && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Giá sàn (tối thiểu):</span>
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm text-gray-600 dark:text-[#999999]">Giá sàn (tối thiểu):</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-[#b3b3b3]">
                         {formatCurrency(selected.floorPrice)}
                       </span>
                     </div>
                   )}
                   {selected.unit && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Đơn vị:</span>
+                      <span className="text-sm text-gray-600 dark:text-[#999999]">Đơn vị:</span>
                       <Badge variant="info">{selected.unit}</Badge>
                     </div>
                   )}
@@ -164,7 +164,7 @@ const CheckPriceTool = ({ isOpen, onClose }) => {
         )}
 
         {!loading && !selected && products.length === 0 && !error && (
-          <div className="py-8 text-center text-gray-400">
+          <div className="py-8 text-center text-gray-400 dark:text-[#808080]">
             <Icon name="search" size={32} className="mx-auto mb-2 opacity-40" />
             <p className="text-sm">Nhập tên sản phẩm và nhấn Tìm kiếm</p>
           </div>

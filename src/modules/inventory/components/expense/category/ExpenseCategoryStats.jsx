@@ -7,25 +7,25 @@ const ExpenseCategoryStats = ({ summary }) => {
       <Card>
         <div className="py-3 text-center">
           <div className="text-2xl font-bold text-[#004785]">{summary.total}</div>
-          <p className="mt-0.5 text-xs text-gray-600">Tổng nhóm chi phí</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Tổng nhóm chi phí</p>
         </div>
       </Card>
       <Card>
         <div className="py-3 text-center">
           <div className="text-2xl font-bold text-emerald-600">{summary.active}</div>
-          <p className="mt-0.5 text-xs text-gray-600">Đang hoạt động</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Đang hoạt động</p>
         </div>
       </Card>
       <Card>
         <div className="py-3 text-center">
           <div className="text-2xl font-bold text-slate-600">{summary.vouchers}</div>
-          <p className="mt-0.5 text-xs text-gray-600">Tổng phiếu chi</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Tổng phiếu chi</p>
         </div>
       </Card>
       <Card>
         <div className="py-3 text-center">
           <div className="text-2xl font-bold text-amber-500">{summary.pending}</div>
-          <p className="mt-0.5 text-xs text-gray-600">Phiếu đang chờ</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Phiếu đang chờ</p>
         </div>
       </Card>
     </div>

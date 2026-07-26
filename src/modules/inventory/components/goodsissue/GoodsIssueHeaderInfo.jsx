@@ -10,15 +10,15 @@ const GoodsIssueHeaderInfo = ({
   onQuickAddCustomer,
 }) => {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Loại xuất kho */}
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
             Loại xuất kho
           </label>
           <select
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             value={header.issueType}
             onChange={(e) => onChange('issueType', e.target.value)}
           >
@@ -32,12 +32,12 @@ const GoodsIssueHeaderInfo = ({
 
         {/* Đối tượng + nút thêm nhanh */}
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
             Đối tượng <span className="text-red-400">*</span>
           </label>
           <div className="flex gap-2">
             <select
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               value={header.customerId}
               onChange={(e) => {
                 const cust = customerList.find((c) => c.id === e.target.value);
@@ -54,7 +54,7 @@ const GoodsIssueHeaderInfo = ({
             </select>
             <button
               type="button"
-              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-blue-600 transition-colors hover:bg-blue-50"
+              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-blue-400 dark:hover:bg-[#333333]"
               onClick={onQuickAddCustomer}
               title="Thêm nhanh đối tượng"
             >
@@ -65,12 +65,12 @@ const GoodsIssueHeaderInfo = ({
 
         {/* Diễn giải */}
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
             Diễn giải
           </label>
           <input
             type="text"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             placeholder="Lý do xuất kho..."
             value={header.description}
             onChange={(e) => onChange('description', e.target.value)}
@@ -79,12 +79,12 @@ const GoodsIssueHeaderInfo = ({
 
         {/* Tham chiếu */}
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
             Tham chiếu
           </label>
           <input
             type="text"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             placeholder="Mã chứng từ liên quan..."
             value={header.reference}
             onChange={(e) => onChange('reference', e.target.value)}
@@ -93,12 +93,12 @@ const GoodsIssueHeaderInfo = ({
 
         {/* Số phiếu */}
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
             Số phiếu <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-600 outline-none"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-600 outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]"
             value={header.issueNumber}
             readOnly
           />
@@ -106,12 +106,12 @@ const GoodsIssueHeaderInfo = ({
 
         {/* Thời gian */}
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
             Thời gian <span className="text-red-400">*</span>
           </label>
           <input
             type="datetime-local"
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             value={header.date}
             onChange={(e) => onChange('date', e.target.value)}
           />
@@ -119,12 +119,12 @@ const GoodsIssueHeaderInfo = ({
 
         {/* Người lập phiếu */}
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
             Người lập phiếu
           </label>
           <input
             type="text"
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]"
             value={header.createdBy}
             readOnly
           />

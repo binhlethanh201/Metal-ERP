@@ -190,7 +190,7 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
         >
           <option value="ALL">Tất cả trạng thái</option>
           <option value="PENDING">Chờ duyệt</option>
@@ -204,7 +204,7 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
 
       {/* Error banner */}
       {fetchError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
           {fetchError}
           <button
             type="button"
@@ -225,8 +225,8 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
       />
 
       {filtered.length > 0 && (
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
               <select
@@ -254,7 +254,7 @@ const ReturnList = ({ onSelect, refreshKey = 0 }) => {
             >
               <Icon name="chevron_left" className="text-[18px]" />
             </button>
-            <div className="px-3 text-sm text-slate-700">
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
               Trang {currentPage} / {totalPages || 1}
             </div>
             <button

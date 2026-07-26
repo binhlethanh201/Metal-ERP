@@ -194,7 +194,7 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1 text-sm text-slate-500 hover:text-[#004785]"
+          className="flex items-center gap-1 text-sm text-slate-500 hover:text-[#004785] dark:text-[#999999]"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -206,7 +206,7 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
           </svg>
           Quay lại danh sách
         </button>
-        {apiLoading && <span className="text-xs text-slate-400">Đang tải chi tiết...</span>}
+        {apiLoading && <span className="text-xs text-slate-400 dark:text-[#808080]">Đang tải chi tiết...</span>}
         {apiError && (
           <span className="text-xs text-amber-500">Không đồng bộ được dữ liệu mới nhất</span>
         )}
@@ -229,27 +229,27 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
 
           <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Khách hàng</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Khách hàng</p>
               <p className="mt-1 font-semibold">{detail.customerName}</p>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">
                 Hóa đơn gốc
               </p>
               <p className="mt-1 font-mono text-sm font-semibold">{detail.invoiceCode || '-'}</p>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Người tạo</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Người tạo</p>
               <p className="mt-1 font-semibold">{detail.userName}</p>
             </div>
           </div>
 
           {detail.reason && (
-            <div className="rounded-lg bg-amber-50 p-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-amber-600">
+            <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/30">
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-500">
                 Lý do đổi trả
               </p>
-              <p className="mt-1 text-sm text-amber-800">{detail.reason}</p>
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">{detail.reason}</p>
             </div>
           )}
         </div>
@@ -258,12 +258,12 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
       {/* Items card */}
       <Card header="Sản phẩm đổi trả">
         {hasItems ? (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-[#333333]">
             {detail.returnItems.map((item, i) => (
               <div key={item.returnItemId || i} className="flex items-center justify-between py-3">
                 <div>
-                  <p className="font-medium text-slate-900">{item.productName}</p>
-                  <p className="text-xs text-slate-400">Số lượng: {item.quantity}</p>
+                  <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{item.productName}</p>
+                  <p className="text-xs text-slate-400 dark:text-[#808080]">Số lượng: {item.quantity}</p>
                 </div>
                 <p className="font-semibold text-green-600">
                   {formatCurrency(item.refundAmount || item.quantity * item.sellPrice)}
@@ -272,24 +272,24 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
             ))}
           </div>
         ) : (
-          <p className="py-4 text-center text-sm text-slate-400">
+          <p className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">
             {apiLoading ? 'Đang tải danh sách sản phẩm...' : 'Không có sản phẩm'}
           </p>
         )}
 
-        <div className="mt-4 border-t border-slate-200 pt-3">
+        <div className="mt-4 border-t border-slate-200 pt-3 dark:border-[#333333]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">
                   Tổng tiền hoàn
                 </p>
-                <p className="text-2xl font-extrabold text-green-600">
+                <p className="text-2xl font-extrabold text-green-600 dark:text-green-400">
                   {formatCurrency(detail.totalRefund)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">
                   Phương thức
                 </p>
                 <p className="mt-1 font-semibold">
@@ -307,7 +307,7 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
           <Button variant="success" onClick={handleFinalize} loading={finalizing}>
             Hoàn tiền
           </Button>
-          <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={handleCancel}>
+          <Button variant="outline" className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30" onClick={handleCancel}>
             Hủy phiếu
           </Button>
         </div>

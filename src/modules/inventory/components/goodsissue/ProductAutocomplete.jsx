@@ -39,7 +39,7 @@ const ProductAutocomplete = ({
       <input
         ref={inputEl}
         type="text"
-        className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+        className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
         placeholder="Nhập mã hoặc tên..."
         value={searchText}
         onChange={(e) => onSearchChange(e.target.value)}
@@ -50,10 +50,10 @@ const ProductAutocomplete = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 z-[150] mt-1 w-[520px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl"
+          className="absolute left-0 z-[150] mt-1 w-[520px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl dark:border-[#333333] dark:bg-[#1a1a1a]"
         >
           {/* Grid Header */}
-          <div className="flex border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold uppercase text-slate-500">
+          <div className="flex border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold uppercase text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
             <span className="w-[120px] shrink-0">Mã HH</span>
             <span className="flex-1">Tên HH</span>
             <span className="w-[100px] shrink-0 text-right">Tồn kho</span>
@@ -62,7 +62,7 @@ const ProductAutocomplete = ({
           {/* Results */}
           <div className="max-h-[280px] overflow-y-auto">
             {results.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-slate-400">
+              <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-[#808080]">
                 Khong tim thay hang hoa
               </div>
             ) : (
@@ -72,19 +72,19 @@ const ProductAutocomplete = ({
                   type="button"
                   className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors ${
                     idx === activeIndex
-                      ? 'bg-blue-50 text-blue-900'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  } ${idx < results.length - 1 ? 'border-b border-slate-100' : ''}`}
+                      ? 'bg-blue-50 text-blue-900 dark:bg-[#272727] dark:text-blue-300'
+                      : 'text-slate-700 hover:bg-slate-50 dark:text-[#b3b3b3] dark:hover:bg-[#333333]'
+                  } ${idx < results.length - 1 ? 'border-b border-slate-100 dark:border-[#333333]' : ''}`}
                   onClick={() => handleSelect(product)}
                   onMouseEnter={() => {
                     // viSửal hover sync; actual index managed by parent via onKeyDown
                   }}
                 >
-                  <span className="w-[120px] shrink-0 font-mono font-semibold text-slate-800">
+                  <span className="w-[120px] shrink-0 font-mono font-semibold text-slate-800 dark:text-[#e5e5e5]">
                     {product.code}
                   </span>
-                  <span className="flex-1">{product.name}</span>
-                  <span className="w-[100px] shrink-0 text-right tabular-nums">
+                  <span className="flex-1 dark:text-[#d4d4d4]">{product.name}</span>
+                  <span className="w-[100px] shrink-0 text-right tabular-nums dark:text-[#b3b3b3]">
                     {product.stock != null ? product.stock.toLocaleString('vi-VN') : '-'}
                   </span>
                 </button>
@@ -93,10 +93,10 @@ const ProductAutocomplete = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-[#333333]"
               onClick={onQuickAdd}
             >
               <span className="text-base leading-none">+</span>
@@ -104,7 +104,7 @@ const ProductAutocomplete = ({
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               onClick={onAdvancedSearch}
             >
               <span className="text-base leading-none">Q</span>

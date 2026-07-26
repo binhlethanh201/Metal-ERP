@@ -28,7 +28,7 @@ export const Table = ({
               return (
                 <th
                   key={col.key}
-                  className={`border-b-2 border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 ${alignClass}`}
+                  className={`border-b-2 border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a]/80 dark:text-[#999999] ${alignClass}`}
                   style={{ width: col.width }}
                 >
                   {col.header}
@@ -37,11 +37,11 @@ export const Table = ({
             })}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
           {loading ? (
             <tr>
               <td colSpan={columns.length} className="px-5 py-12 text-center">
-                <div className="flex items-center justify-center gap-2.5 text-slate-400">
+                <div className="flex items-center justify-center gap-2.5 text-slate-400 dark:text-[#808080]">
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#004785] border-t-transparent" />
                   <span className="text-sm font-medium">Đang tải...</span>
                 </div>
@@ -51,11 +51,11 @@ export const Table = ({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-5 py-12 text-center text-sm text-slate-400"
+                className="px-5 py-12 text-center text-sm text-slate-400 dark:text-[#808080]"
               >
                 <div className="mx-auto flex max-w-xs flex-col items-center gap-1">
                   <svg
-                    className="h-10 w-10 text-slate-300"
+                    className="h-10 w-10 text-slate-300 dark:text-[#666666]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -78,10 +78,10 @@ export const Table = ({
                 onClick={onClickRow ? () => onClickRow(row) : undefined}
                 className={`
                   transition-all duration-150
-                  even:bg-slate-50/50
+                  even:bg-slate-50/50 dark:even:bg-[#1a1a1a]/50
                   ${onClickRow
-                    ? 'cursor-pointer hover:bg-blue-100/70 hover:shadow-[inset_3px_0_0_0_#2563eb]'
-                    : 'hover:bg-blue-50/40'
+                    ? 'cursor-pointer hover:bg-blue-100/70 hover:shadow-[inset_3px_0_0_0_#2563eb] dark:hover:bg-blue-900/30'
+                    : 'hover:bg-blue-50/40 dark:hover:bg-blue-900/20'
                   }
                 `}
               >
@@ -95,7 +95,7 @@ export const Table = ({
                   return (
                     <td
                       key={`${rowIdx}-${col.key}`}
-                      className={`px-4 py-2.5 text-sm text-slate-600 ${alignClass}`}
+                      className={`px-4 py-2.5 text-sm text-slate-600 dark:text-[#b3b3b3] ${alignClass}`}
                     >
                       {col.render ? col.render(row[col.key], row) : row[col.key]}
                     </td>

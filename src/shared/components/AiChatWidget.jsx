@@ -34,16 +34,16 @@ const parseMessageWithTables = (text) => {
 // ==================== CUSTOM MARKDOWN RENDERERS (inline chat) ====================
 const markdownComponents = {
   h1: ({ children }) => (
-    <h1 className="mb-2 mt-3 text-base font-bold text-slate-800">{children}</h1>
+    <h1 className="mb-2 mt-3 text-base font-bold text-slate-800 dark:text-[#e5e5e5]">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mb-2 mt-3 text-[15px] font-bold text-slate-800">{children}</h2>
+    <h2 className="mb-2 mt-3 text-[15px] font-bold text-slate-800 dark:text-[#e5e5e5]">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mb-1.5 mt-2.5 text-sm font-bold text-slate-800">{children}</h3>
+    <h3 className="mb-1.5 mt-2.5 text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">{children}</h3>
   ),
   p: ({ children }) => <p className="mb-1.5 leading-relaxed last:mb-0">{children}</p>,
-  strong: ({ children }) => <strong className="font-bold text-slate-900">{children}</strong>,
+  strong: ({ children }) => <strong className="font-bold text-slate-900 dark:text-[#e5e5e5]">{children}</strong>,
   ul: ({ children }) => <ul className="mb-1.5 ml-4 list-disc space-y-0.5">{children}</ul>,
   ol: ({ children }) => <ol className="mb-1.5 ml-4 list-decimal space-y-0.5">{children}</ol>,
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
@@ -53,40 +53,40 @@ const markdownComponents = {
     </a>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-slate-100 px-1 py-0.5 text-[12px] text-slate-800">{children}</code>
+    <code className="rounded bg-slate-100 px-1 py-0.5 text-[12px] text-slate-800 dark:bg-[#272727] dark:text-[#d4d4d4]">{children}</code>
   ),
 };
 
 // ==================== CUSTOM MARKDOWN RENDERERS (table modal) ====================
 const modalMarkdownComponents = {
   table: ({ children }) => (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-      <table className="w-full border-collapse bg-white text-sm">{children}</table>
+    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm dark:border-[#333333]">
+      <table className="w-full border-collapse bg-white text-sm dark:bg-[#0f0f0f]">{children}</table>
     </div>
   ),
   thead: ({ children }) => (
-    <thead className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200">
+    <thead className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200 dark:bg-[#1a1a1a]/80 dark:text-[#b3b3b3] dark:border-[#333333]">
       {children}
     </thead>
   ),
   tbody: ({ children }) => <tbody>{children}</tbody>,
   tr: ({ children }) => (
-    <tr className="hover:bg-blue-50/50 transition-colors odd:bg-white even:bg-slate-50/30">
+    <tr className="hover:bg-blue-50/50 transition-colors odd:bg-white even:bg-slate-50/30 dark:odd:bg-[#0f0f0f] dark:even:bg-[#1a1a1a]/50 dark:hover:bg-blue-900/30">
       {children}
     </tr>
   ),
   th: ({ children }) => (
-    <th className="px-4 py-3 text-left border-r last:border-r-0 border-slate-200 font-semibold">
+    <th className="px-4 py-3 text-left border-r last:border-r-0 border-slate-200 font-semibold dark:border-[#333333] dark:text-[#d4d4d4]">
       {children}
     </th>
   ),
   td: ({ children }) => (
-    <td className="px-4 py-3 border-b border-r last:border-r-0 border-slate-100 text-slate-700">
+    <td className="px-4 py-3 border-b border-r last:border-r-0 border-slate-100 text-slate-700 dark:border-[#333333] dark:text-[#b3b3b3]">
       {children}
     </td>
   ),
   p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
-  strong: ({ children }) => <strong className="font-bold text-slate-900">{children}</strong>,
+  strong: ({ children }) => <strong className="font-bold text-slate-900 dark:text-[#e5e5e5]">{children}</strong>,
 };
 
 const AiChatWidget = () => {
@@ -135,17 +135,17 @@ const AiChatWidget = () => {
               key={idx}
               type="button"
               onClick={() => setActiveTableModal(part.content)}
-              className="w-full rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md active:scale-[0.98]"
+              className="w-full rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md active:scale-[0.98] dark:border-blue-800 dark:from-blue-950 dark:to-[#0f0f0f] dark:hover:border-blue-700"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
                   <Icon name="table" className="text-xl" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
                     Báo cáo / Bảng dữ liệu chi tiết
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-[#999999]">
                     Nhấp vào đây để xem bảng đầy đủ cột
                   </p>
                   <span className="mt-2 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110">
@@ -164,7 +164,7 @@ const AiChatWidget = () => {
   return (
     <>
       <div
-        className={`fixed z-[100] flex origin-bottom-right flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 ${
+        className={`fixed z-[100] flex origin-bottom-right flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 dark:border-[#333333] dark:bg-[#0f0f0f] ${
           isOpen
             ? 'visible scale-100 opacity-100'
             : 'pointer-events-none invisible scale-95 opacity-0'
@@ -216,7 +216,7 @@ const AiChatWidget = () => {
         </div>
 
         {/* Body */}
-        <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/60 px-4 py-3">
+        <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/60 px-4 py-3 dark:bg-[#1a1a1a]/60">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -226,7 +226,7 @@ const AiChatWidget = () => {
                 className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm ${
                   msg.role === 'user'
                     ? 'rounded-tr-sm bg-primary text-white'
-                    : 'rounded-tl-sm border border-slate-200 bg-white text-slate-700 shadow-sm'
+                    : 'rounded-tl-sm border border-slate-200 bg-white text-slate-700 shadow-sm dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3]'
                 }`}
               >
                 {msg.role === 'bot' ? (
@@ -240,7 +240,7 @@ const AiChatWidget = () => {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-[#404040] dark:bg-[#1a1a1a]">
                 <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" />
                 <span
                   className="h-2 w-2 animate-bounce rounded-full bg-slate-400"
@@ -256,7 +256,7 @@ const AiChatWidget = () => {
         </div>
 
         {/* Input */}
-        <div className="flex items-center gap-2 border-t border-slate-100 p-3">
+        <div className="flex items-center gap-2 border-t border-slate-100 p-3 dark:border-[#333333]">
           <input
             type="text"
             value={input}
@@ -269,7 +269,7 @@ const AiChatWidget = () => {
             }}
             disabled={loading}
             placeholder="Nhập câu hỏi cho trợ lý..."
-            className="h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-primary disabled:opacity-60"
+            className="h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-primary disabled:opacity-60 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] dark:placeholder:text-[#808080]"
           />
           <button
             type="button"
@@ -292,23 +292,23 @@ const AiChatWidget = () => {
           />
 
           {/* Modal Card */}
-          <div className="relative bg-white rounded-2xl max-w-4xl w-[92vw] max-h-[85vh] shadow-2xl flex flex-col border border-slate-100 overflow-hidden">
+          <div className="relative bg-white rounded-2xl max-w-4xl w-[92vw] max-h-[85vh] shadow-2xl flex flex-col border border-slate-100 overflow-hidden dark:bg-[#0f0f0f] dark:border-[#333333]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-[#333333]">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
                 Chi tiết bảng dữ liệu
               </h2>
               <button
                 type="button"
                 onClick={() => setActiveTableModal(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#272727] dark:hover:text-[#b3b3b3]"
               >
                 <Icon name="close" className="text-xl" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-auto flex-1 bg-slate-50/50">
+            <div className="p-6 overflow-auto flex-1 bg-slate-50/50 dark:bg-[#1a1a1a]/50">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={modalMarkdownComponents}

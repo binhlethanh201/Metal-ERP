@@ -86,14 +86,14 @@ const PromoModal = ({
       <div className="space-y-4">
         {/* Current promo */}
         {appliedPromo && (
-          <Card padding="p-3" className="border-green-500 bg-green-50">
+          <Card padding="p-3" className="border-green-500 bg-green-50 dark:border-green-600 dark:bg-green-900/30">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <Badge variant="success">Đã áp dụng</Badge>
-                  <span className="font-semibold text-slate-900">{appliedPromo.promoCode}</span>
+                  <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{appliedPromo.promoCode}</span>
                 </div>
-                <p className="mt-1 text-sm text-slate-600">{appliedPromo.description}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-[#999999]">{appliedPromo.description}</p>
               </div>
               <div className="text-right">
                 <p className="font-bold text-green-600">
@@ -137,9 +137,9 @@ const PromoModal = ({
           </div>
         )}
 
-        {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+        {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30">{error}</div>}
 
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-400 dark:text-[#808080]">
           <p>Nhập mã → Enter để áp dụng</p>
         </div>
       </div>

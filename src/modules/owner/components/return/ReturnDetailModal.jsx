@@ -17,9 +17,9 @@ const REASON_LABEL = {
 
 // Component helper hiển thị thông tin dạng list row
 const InfoRow = ({ label, value, valueClassName = '' }) => (
-  <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-2 text-sm last:border-0">
-    <span className="shrink-0 text-slate-500">{label}</span>
-    <span className={`text-right font-semibold text-slate-800 ${valueClassName}`}>{value}</span>
+  <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-2 text-sm last:border-0 dark:border-[#333333]">
+    <span className="shrink-0 text-slate-500 dark:text-[#999999]">{label}</span>
+    <span className={`text-right font-semibold text-slate-800 dark:text-[#e5e5e5] ${valueClassName}`}>{value}</span>
   </div>
 );
 
@@ -27,13 +27,13 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
   // ==================== CẤU HÌNH HEADER TITLE ====================
   const modalTitle = (
     <div className="flex flex-col gap-1 pr-10">
-      <div className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-800">
+      <div className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
         Chi tiết đổi/trả: <span className="text-[#004785]">{detail?.returnCode || '...'}</span>
         {detail && renderReturnStatusBadge(detail.status)}
       </div>
       {detail?.staffName && (
-        <div className="text-sm font-normal text-slate-500">
-          Nhân viên xử lý: <strong className="text-slate-700">{detail.staffName}</strong>
+        <div className="text-sm font-normal text-slate-500 dark:text-[#999999]">
+          Nhân viên xử lý: <strong className="text-slate-700 dark:text-[#b3b3b3]">{detail.staffName}</strong>
         </div>
       )}
     </div>
@@ -60,16 +60,16 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
       }
     >
       {loading ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-12 text-slate-500">
+        <div className="flex flex-col items-center justify-center gap-3 py-12 text-slate-500 dark:text-[#999999]">
           <Loader2 className="animate-spin text-[#004785]" size={32} />
           <p>Đang tải chi tiết phiếu đổi/trả...</p>
         </div>
       ) : !detail ? (
-        <p className="py-10 text-center text-sm italic text-slate-400">Không có dữ liệu.</p>
+        <p className="py-10 text-center text-sm italic text-slate-400 dark:text-[#808080]">Không có dữ liệu.</p>
       ) : (
         <div className="space-y-6">
           {/* ==================== THÔNG TIN CHUNG ==================== */}
-          <div className="grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
             <div className="flex flex-col">
               <InfoRow
                 label="Hóa đơn gốc"
@@ -98,11 +98,11 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
             </div>
 
             {detail.note && (
-              <div className="col-span-1 mt-2 border-t border-slate-200 pt-2 md:col-span-2">
-                <span className="flex items-center gap-1 text-sm font-semibold text-slate-500">
+              <div className="col-span-1 mt-2 border-t border-slate-200 pt-2 md:col-span-2 dark:border-[#333333]">
+                <span className="flex items-center gap-1 text-sm font-semibold text-slate-500 dark:text-[#999999]">
                   <FileText size={14} /> Ghi chú
                 </span>
-                <p className="mt-1 rounded border border-slate-100 bg-white p-3 text-sm text-slate-700">
+                <p className="mt-1 rounded border border-slate-100 bg-white p-3 text-sm text-slate-700 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3]">
                   {detail.note}
                 </p>
               </div>
@@ -111,12 +111,12 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
 
           {/* ==================== SẢN PHẨM ĐỔI/TRẢ ==================== */}
           <div>
-            <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               <Package size={16} /> Chi tiết Sản phẩm
             </h4>
-            <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
+            <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm dark:border-[#333333]">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500">
+                <thead className="bg-slate-50 text-slate-500 dark:bg-[#1a1a1a] dark:text-[#999999]">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">Sản phẩm</th>
                     <th className="px-4 py-3 text-center font-semibold">Lý do</th>
@@ -124,28 +124,28 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
                     <th className="px-4 py-3 text-right font-semibold">Tiền hoàn</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-slate-100 bg-white dark:divide-[#333333] dark:bg-[#0f0f0f]">
                   {(detail.items || []).map((item) => (
-                    <tr key={item.returnItemId} className="transition-colors hover:bg-slate-50/50">
+                    <tr key={item.returnItemId} className="transition-colors hover:bg-slate-50/50 dark:hover:bg-[#272727]/50">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-slate-700">{item.productName}</div>
-                        <div className="text-xs text-slate-400">{item.productCode}</div>
+                        <div className="font-medium text-slate-700 dark:text-[#b3b3b3]">{item.productName}</div>
+                        <div className="text-xs text-slate-400 dark:text-[#808080]">{item.productCode}</div>
                       </td>
-                      <td className="px-4 py-3 text-center text-slate-600">
+                      <td className="px-4 py-3 text-center text-slate-600 dark:text-[#999999]">
                         {REASON_LABEL[item.reason] || item.reason || '—'}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-600">
+                      <td className="px-4 py-3 text-right font-medium text-slate-600 dark:text-[#999999]">
                         {item.quantity}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-slate-800">
+                      <td className="px-4 py-3 text-right font-semibold text-slate-800 dark:text-[#e5e5e5]">
                         {formatCurrency(item.refundAmount)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-slate-200 bg-slate-50">
-                    <td colSpan={3} className="px-4 py-3 text-right font-bold text-slate-700">
+                  <tr className="border-t border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                    <td colSpan={3} className="px-4 py-3 text-right font-bold text-slate-700 dark:text-[#b3b3b3]">
                       Tổng cộng
                     </td>
                     <td className="px-4 py-3 text-right text-base font-bold text-blue-700">

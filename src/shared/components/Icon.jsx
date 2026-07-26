@@ -125,6 +125,8 @@ const staticIconMap = {
   receipt_long: 'FileText',
   access_time: 'Clock',
   note: 'FileText',
+  light_mode: 'Sun',
+  dark_mode: 'Moon',
 };
 
 const toPascalCase = (str) => {

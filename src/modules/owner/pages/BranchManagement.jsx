@@ -40,12 +40,12 @@ const BranchManagement = () => {
   };
 
   return (
-    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+    <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý Chi nhánh</h1>
-          <p className="mt-1 text-gray-600">Quản lý danh sách cơ sở, kho hàng và cửa hàng</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Quản lý Chi nhánh</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">Quản lý danh sách cơ sở, kho hàng và cửa hàng</p>
         </div>
         <button
           onClick={() => handleOpenModal()}

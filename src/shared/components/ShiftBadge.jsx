@@ -35,7 +35,7 @@ const ShiftBadge = () => {
 
   if (shiftInfo) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5 shadow-sm">
+      <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5 shadow-sm dark:border-green-800 dark:from-green-950 dark:to-emerald-950">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
@@ -44,7 +44,7 @@ const ShiftBadge = () => {
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <svg
-                className="h-3.5 w-3.5 text-green-600"
+                className="h-3.5 w-3.5 text-green-600 dark:text-green-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -56,19 +56,19 @@ const ShiftBadge = () => {
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="text-sm font-bold text-green-800">
+              <span className="text-sm font-bold text-green-800 dark:text-green-300">
                 Ca: {shiftInfo.startTime || '---'}
               </span>
             </div>
-            <span className="text-[10px] font-semibold tracking-wide text-green-600">
+            <span className="text-[10px] font-semibold tracking-wide text-green-600 dark:text-green-400">
               {shiftInfo.cashier || 'Thu ngân'} · {shiftInfo.orderCount ?? 0} đơn
             </span>
           </div>
         </div>
-        <div className="h-7 w-px bg-green-200" />
+        <div className="h-7 w-px bg-green-200 dark:bg-green-800" />
         <button
           onClick={() => navigate('/pos/shift')}
-          className="flex items-center gap-1 rounded-lg border border-green-300 bg-white px-2 py-1 text-[11px] font-bold text-green-700 shadow-sm transition-all hover:bg-green-50 hover:shadow active:scale-95"
+          className="flex items-center gap-1 rounded-lg border border-green-300 bg-white px-2 py-1 text-[11px] font-bold text-green-700 shadow-sm transition-all hover:bg-green-50 hover:shadow active:scale-95 dark:border-green-700 dark:bg-[#1a1a1a] dark:text-green-300 dark:hover:bg-[#333333]"
         >
           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -93,7 +93,7 @@ const ShiftBadge = () => {
   return (
     <button
       onClick={() => navigate('/pos/shift')}
-      className="flex items-center gap-2 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-3.5 py-2 text-sm font-bold text-amber-700 shadow-sm transition-all hover:from-amber-100 hover:to-orange-100 hover:shadow active:scale-[0.98]"
+      className="flex items-center gap-2 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-3.5 py-2 text-sm font-bold text-amber-700 shadow-sm transition-all hover:from-amber-100 hover:to-orange-100 hover:shadow active:scale-[0.98] dark:border-amber-800 dark:from-amber-950 dark:to-orange-950 dark:text-amber-300 dark:hover:from-amber-900 dark:hover:to-orange-900"
     >
       <span className="relative flex h-2.5 w-2.5">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />

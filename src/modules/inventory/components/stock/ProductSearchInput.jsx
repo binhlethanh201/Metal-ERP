@@ -74,7 +74,7 @@ export const ProductSearchInput = ({ products = [], onSelectProduct, formatCurre
 
   return (
     <div className="relative flex-1">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-[#808080]" />
       <input
         ref={searchInputRef}
         value={searchText}
@@ -85,13 +85,13 @@ export const ProductSearchInput = ({ products = [], onSelectProduct, formatCurre
         }}
         onFocus={() => setIsOpen(true)}
         placeholder="Tìm theo mã hoặc tên sản phẩm (F3 để focus nhanh)"
-        className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none ring-0 focus:border-sky-500 focus:bg-white"
+        className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none ring-0 focus:border-sky-500 focus:bg-white dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] dark:focus:bg-[#1a1a1a]"
       />
 
       {isOpen && filteredProducts.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-xl"
+          className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f]"
         >
           {filteredProducts.map((product, idx) => (
             <button
@@ -99,11 +99,11 @@ export const ProductSearchInput = ({ products = [], onSelectProduct, formatCurre
               type="button"
               onClick={() => handleSelect(product)}
               onMouseEnter={() => setSelectedIndex(idx)}
-              className={`flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 ${
-                selectedIndex === idx ? 'bg-sky-50' : 'hover:bg-slate-50'
+              className={`flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 dark:border-b-[#333333] ${
+                selectedIndex === idx ? 'bg-sky-50 dark:bg-sky-900/50' : 'hover:bg-slate-50 dark:hover:bg-[#272727]'
               }`}
             >
-              <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+              <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-[#1a1a1a] dark:text-[#999999]">
                 {product.image ? (
                   <img
                     src={product.image}
@@ -115,11 +115,11 @@ export const ProductSearchInput = ({ products = [], onSelectProduct, formatCurre
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-slate-900">
+                <div className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
                   {product.productName} ({product.unitName || product.unit || ''})
                 </div>
-                <div className="mt-0.5 flex items-center gap-4 text-xs text-slate-600">
-                  <span className="font-medium text-slate-700">Mã: {product.productCode}</span>
+                <div className="mt-0.5 flex items-center gap-4 text-xs text-slate-600 dark:text-[#999999]">
+                  <span className="font-medium text-slate-700 dark:text-[#b3b3b3]">Mã: {product.productCode}</span>
                   <span>Giá nhập cũ: {formatCurrency(product.costPrice)}</span>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export const ProductSearchInput = ({ products = [], onSelectProduct, formatCurre
       )}
 
       {isOpen && searchText && filteredProducts.length === 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-4 text-center text-sm text-slate-500 shadow-xl">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-4 text-center text-sm text-slate-500 shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]">
           Không tìm thấy sản phẩm nào khớp từ khóa
         </div>
       )}

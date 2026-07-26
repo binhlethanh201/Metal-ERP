@@ -109,7 +109,7 @@ const ScanModal = ({ isOpen, onClose, onItemAdded, products = [] }) => {
           </Button>
         </div>
 
-        {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+        {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30">{error}</div>}
 
         {foundProduct && (
           <Card padding="p-3">
@@ -122,20 +122,20 @@ const ScanModal = ({ isOpen, onClose, onItemAdded, products = [] }) => {
                 />
               )}
               <div className="flex-1">
-                <p className="font-semibold text-slate-900">{foundProduct.productName}</p>
-                <p className="text-sm text-slate-500">{foundProduct.sku}</p>
+                <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{foundProduct.productName}</p>
+                <p className="text-sm text-slate-500 dark:text-[#999999]">{foundProduct.sku}</p>
               </div>
               <div className="text-right">
                 <p className="font-bold text-[#004785]">
                   {formatCurrency(foundProduct.unitPrice || 0)}
                 </p>
-                <p className="text-xs text-slate-500">x{foundProduct.quantity}</p>
+                <p className="text-xs text-slate-500 dark:text-[#999999]">x{foundProduct.quantity}</p>
               </div>
             </div>
           </Card>
         )}
 
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-400 dark:text-[#808080]">
           <p>Nhập barcode → Enter để thêm</p>
           <p>Hoặc dùng máy quét barcode</p>
         </div>

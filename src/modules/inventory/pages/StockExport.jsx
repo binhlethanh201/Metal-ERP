@@ -61,12 +61,10 @@ const REASON_OPTIONS = [
   { value: '__other__', label: 'Khác...' },
 ];
 
-// Map reason → outwardType enum:
-// 1 = ReturnToSupplier, 2 = DamagedHaoHut (WRITE_OFF), 3 = InternalUse (TRANSFER)
 const getOutwardType = (reason) => {
   if (reason === 'Trả hàng nhà cung cấp') return 1;
   if (reason === 'Xuất hủy / Hao hụt') return 2;
-  return 3; // Mặc định InternalUse cho Xuất bán hàng, Nội bộ, NVL, Khác
+  return 3;
 };
 
 const TARGET_OPTIONS = [
@@ -97,7 +95,6 @@ export const StockExport = () => {
   const [globalError, setGlobalError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Thông tin chứng từ
   const [ticketCode, setTicketCode] = useState('');
   const [exportDate, setExportDate] = useState(today.date);
   const [exportTime, setExportTime] = useState(today.time);
@@ -107,14 +104,12 @@ export const StockExport = () => {
   const [reasonOther, setReasonOther] = useState('');
   const [note, setNote] = useState('');
 
-  // Danh sách sản phẩm
   const [items, setItems] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedQuantity, setSelectedQuantity] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Sản phẩm đã lọc theo search, loại trừ sp đã thêm
   const filteredProducts = useMemo(() => {
     const kw = productSearch.toLowerCase().trim();
     return products.filter((p) => {
@@ -131,7 +126,6 @@ export const StockExport = () => {
     try {
       const queryParams = { pageNumber: 1, pageSize: 100, ...filterParams };
 
-      // Load sản phẩm - độc lập với lịch sử phiếu
       try {
         const productsResponse = await getProducts({ pageNumber: 1, pageSize: 100 });
         const productItems = extractList(productsResponse);
@@ -141,7 +135,6 @@ export const StockExport = () => {
         setGlobalError('Không thể tải danh sách sản phẩm.');
       }
 
-      // Load lịch sử phiếu xuất
       try {
         const exportsResponse = await getOutwardInventories(queryParams);
         const exportItems = extractList(exportsResponse).map(normalizeExportRow).filter(Boolean);
@@ -159,7 +152,6 @@ export const StockExport = () => {
     loadData();
   }, []);
 
-  // Bộ đếm tự sinh mã phiếu
   const ticketSeqRef = useRef(1);
 
   const generateTicketCode = () => {
@@ -196,14 +188,12 @@ export const StockExport = () => {
 
   const resolvedReason = reasonType === '__other__' ? reasonOther : reasonType;
 
-  // Lấy tồn kho khả dụng của sản phẩm
   const getProductStock = (product) => {
     const stock =
       product.actualStock ?? product.availableStock ?? product.stock ?? product.quantity ?? 0;
     return Number(stock);
   };
 
-  // Lấy đơn vị tính của sản phẩm
   const getUnit = (p) =>
     p.baseUnit?.name ||
     p.baseUnit?.Name ||
@@ -215,7 +205,6 @@ export const StockExport = () => {
     p.UnitName ||
     '';
 
-  // Thêm sản phẩm
   const addItem = useCallback(() => {
     const id = selectedProductId;
     const qty = Number(selectedQuantity);
@@ -303,18 +292,15 @@ export const StockExport = () => {
     return { totalExports: exports.length, totalQuantity: qty, monthlyCount: exports.length };
   }, [exports]);
 
-  // Validate form, return array of error messages
   const validateForm = () => {
     const errors = [];
     const fields = {};
 
-    // 1. Ngày xuất
     if (!exportDate.trim()) {
       errors.push('Chưa chọn ngày xuất kho');
       fields.exportDate = true;
     }
 
-    // 2. Đối tượng xuất
     if (!targetName.trim()) {
       const label =
         targetType === 'Khách hàng'
@@ -328,19 +314,16 @@ export const StockExport = () => {
       fields.targetName = true;
     }
 
-    // 3. Lý do xuất
     if (reasonType === '__other__' && !reasonOther.trim()) {
       errors.push('Chưa nhập lý do xuất kho');
       fields.reasonOther = true;
     }
 
-    // 4. Danh sách sản phẩm
     if (!items.length) {
       errors.push('Chưa thêm sản phẩm nào vào phiếu xuất');
       fields.items = true;
     }
 
-    // 5. Kiểm tra số lượng từng dòng
     items.forEach((item) => {
       if (!item.quantity || Number(item.quantity) <= 0) {
         errors.push(`Sản phẩm "${item.productName}" chưa nhập số lượng hoặc số lượng không hợp lệ`);
@@ -348,7 +331,6 @@ export const StockExport = () => {
       }
     });
 
-    // 6. Kiểm tra đơn giá khi xuất bán
     if (reasonType === 'Xuất bán hàng') {
       items.forEach((item) => {
         if (!item.unitPrice || Number(item.unitPrice) <= 0) {
@@ -398,7 +380,6 @@ export const StockExport = () => {
       const ticketId = createRes?.data?.ticketId || createRes?.data?.stockTicketId;
       const newTicketCode = createRes?.data?.ticketCode || ticketId;
 
-      // Lưu tên đối tượng xuất vào localStorage vì API không lưu thông tin này
       if (newTicketCode && targetName.trim()) {
         try {
           localStorage.setItem(`outward_party_${newTicketCode}`, targetName.trim());
@@ -447,11 +428,11 @@ export const StockExport = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Xuất kho</h1>
-          <p className="mt-1 text-gray-600">Ghi nhận và quản lý các phiếu xuất từ kho</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Xuất kho</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">Ghi nhận và quản lý các phiếu xuất từ kho</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
+          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
             {isLoading ? 'Đang tải dữ liệu xuất kho...' : 'Sẵn sàng tạo phiếu'}
           </div>
           <Button variant="primary" onClick={openModal} className="flex items-center gap-2">
@@ -463,7 +444,7 @@ export const StockExport = () => {
 
       {/* Error banner */}
       {globalError && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-950/30">
           <svg
             className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
             viewBox="0 0 24 24"
@@ -478,13 +459,13 @@ export const StockExport = () => {
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <div className="flex-1">
-            <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
-            <p className="mt-1 text-sm text-red-700">{globalError}</p>
+            <p className="font-semibold text-red-800 dark:text-red-300">Đã xảy ra lỗi</p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-400">{globalError}</p>
           </div>
           <button
             type="button"
             onClick={() => setGlobalError('')}
-            className="shrink-0 rounded p-1 text-red-400 hover:bg-red-100 hover:text-red-600"
+            className="shrink-0 rounded p-1 text-red-400 hover:bg-red-100 hover:text-red-600 dark:text-red-500 dark:hover:bg-red-900/30"
           >
             <svg
               className="h-4 w-4"
@@ -505,20 +486,20 @@ export const StockExport = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-blue-600">{summary.totalExports}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng phiếu xuất</p>
+            <div className="text-3xl font-bold text-blue-600">{(summary.totalExports)}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu xuất</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-green-600">{summary.totalQuantity}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng số lượng xuất</p>
+            <div className="text-3xl font-bold text-green-600">{(summary.totalQuantity)}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng số lượng xuất</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-yellow-600">{summary.monthlyCount}</div>
-            <p className="mt-1 text-sm text-gray-600">Trong tháng</p>
+            <div className="text-3xl font-bold text-yellow-600">{(summary.monthlyCount)}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Trong tháng</p>
           </div>
         </Card>
       </div>
@@ -544,8 +525,8 @@ export const StockExport = () => {
             <div
               className={`flex items-start gap-3 rounded-lg border p-4 ${
                 isError
-                  ? 'border-red-300 bg-red-100 text-red-800'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
               }`}
             >
               <Icon
@@ -553,7 +534,7 @@ export const StockExport = () => {
                 size={20}
                 className="mt-0.5 shrink-0"
               />
-              <div className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800' : 'text-emerald-800'}`}>{statusMessage}</div>
+              <div className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800 dark:text-red-300' : 'text-emerald-800 dark:text-emerald-400'}`}>{statusMessage}</div>
               <button
                 type="button"
                 onClick={() => { setStatusMessage(''); setFieldErrors({}); }}
@@ -567,21 +548,21 @@ export const StockExport = () => {
           )}
 
           {/* --- THÔNG TIN CHỨNG TỪ --- */}
-          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-600">
+          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
               Thông tin chứng từ
             </h3>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {/* Số phiếu xuất */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-600">
-                  Số phiếu xuất <span className="font-normal text-slate-400"></span>
+                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                  Số phiếu xuất <span className="font-normal text-slate-400 dark:text-[#808080]"></span>
                 </label>
                 <input
                   type="text"
                   placeholder="PX-20260704-001"
-                  className="w-full rounded-lg border border-slate-300 bg-blue-50/40 px-3 py-2 font-mono text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-slate-300 bg-blue-50/40 px-3 py-2 font-mono text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-blue-950/30 dark:text-[#b3b3b3]"
                   value={ticketCode}
                   onChange={(e) => setTicketCode(e.target.value)}
                 />
@@ -589,14 +570,14 @@ export const StockExport = () => {
 
               {/* Ngày xuất */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-600">
+                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
                   Ngày xuất <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   required
                   className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.exportDate ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                    fieldErrors.exportDate ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={exportDate}
                   onChange={(e) => {
@@ -608,10 +589,10 @@ export const StockExport = () => {
 
               {/* Giờ xuất */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-600">Giờ xuất</label>
+                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Giờ xuất</label>
                 <input
                   type="time"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   value={exportTime}
                   onChange={(e) => setExportTime(e.target.value)}
                 />
@@ -619,16 +600,15 @@ export const StockExport = () => {
 
               {/* Đối tượng xuất kho */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-600">
+                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
                   Đối tượng xuất <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   value={targetType}
                   onChange={(e) => {
                     setTargetType(e.target.value);
                     setTargetName('');
-                    // Đồng bộ lý do xuất kho theo đối tượng
                     const targetReasonMap = {
                       'Khách hàng': 'Xuất bán hàng',
                       'Nhà cung cấp': 'Trả hàng nhà cung cấp',
@@ -650,7 +630,7 @@ export const StockExport = () => {
             {/* Tên đối tượng */}
             {targetType !== '__other__' && (
               <div className="mt-3">
-                <label className="text-xs font-semibold text-slate-600">
+                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
                   {targetType === 'Khách hàng'
                     ? 'Tên khách hàng'
                     : targetType === 'Nhà cung cấp'
@@ -668,7 +648,7 @@ export const StockExport = () => {
                         : 'VD: Xưởng sản xuất số 1'
                   }
                   className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.targetName ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                    fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={targetName}
                   onChange={(e) => {
@@ -679,17 +659,16 @@ export const StockExport = () => {
               </div>
             )}
 
-            {/* Nếu chọn "Khác..." -> hiện input tự điền */}
             {targetType === '__other__' && (
               <div className="mt-3">
-                <label className="text-xs font-semibold text-slate-600">
+                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
                   Nhập đối tượng xuất <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="VD: Đối tác vận chuyển, Bảo hành..."
                   className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.targetName ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                    fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={targetName}
                   onChange={(e) => {
@@ -704,16 +683,15 @@ export const StockExport = () => {
           {/* --- LÝ DO XUẤT --- */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600">
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
                 Lý do xuất kho <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 value={reasonType}
                 onChange={(e) => {
                   setReasonType(e.target.value);
                   if (e.target.value !== '__other__') setReasonOther('');
-                  // Đồng bộ đối tượng xuất theo lý do
                   const reasonTargetMap = {
                     'Xuất bán hàng': 'Khách hàng',
                     'Trả hàng nhà cung cấp': 'Nhà cung cấp',
@@ -737,7 +715,7 @@ export const StockExport = () => {
                   type="text"
                   placeholder="Nhập lý do khác..."
                   className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.reasonOther ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                    fieldErrors.reasonOther ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={reasonOther}
                   onChange={(e) => {
@@ -749,11 +727,11 @@ export const StockExport = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600">Ghi chú thêm</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Ghi chú thêm</label>
               <input
                 type="text"
                 placeholder="Ghi chú chi tiết (không bắt buộc)"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
@@ -763,7 +741,7 @@ export const StockExport = () => {
           {/* --- DANH SÁCH SẢN PHẨM --- */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-slate-700">
+              <label className="text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">
                 Danh sách sản phẩm xuất <span className="text-red-500">*</span>
                 {fieldErrors.items && (
                   <span className="ml-2 text-xs font-normal text-red-500">
@@ -771,25 +749,24 @@ export const StockExport = () => {
                   </span>
                 )}
               </label>
-              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
                 {items.length} mặt hàng
               </span>
             </div>
 
             {/* Dòng thêm mới + combobox tìm kiếm */}
-            <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-r from-blue-50/60 to-white p-4">
-              {/* 3 cột thẳng hàng: combobox | số lượng | nút thêm */}
+            <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-r from-blue-50/60 to-white p-4 dark:border-blue-800 dark:from-blue-950/30 dark:to-[#1a1a1a]">
               <div className="flex items-end gap-3">
                 <div className="relative min-w-0 flex-1">
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                     Chọn sản phẩm
                   </label>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                     onClick={() => setDropdownOpen((o) => !o)}
                   >
-                    <span className={selectedProductId ? 'text-slate-800' : 'text-slate-400'}>
+                    <span className={selectedProductId ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}>
                       {selectedProductId
                         ? (() => {
                             const p = products.find((x) => getItemKey(x) === selectedProductId);
@@ -807,18 +784,18 @@ export const StockExport = () => {
                   </button>
 
                   {dropdownOpen && (
-                    <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-                      <div className="border-b border-slate-100 p-3">
+                    <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
+                      <div className="border-b border-slate-100 p-3 dark:border-[#333333]">
                         <div className="relative">
                           <Icon
                             name="search"
                             size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#808080]"
                           />
                           <input
                             type="text"
                             placeholder="Tìm theo tên hoặc mã sản phẩm..."
-                            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none"
+                            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5] dark:focus:bg-[#272727]"
                             value={productSearch}
                             onChange={(e) => setProductSearch(e.target.value)}
                             autoFocus
@@ -828,7 +805,7 @@ export const StockExport = () => {
                       </div>
                       <div className="max-h-52 overflow-y-auto">
                         {filteredProducts.length === 0 ? (
-                          <div className="px-4 py-8 text-center text-sm text-slate-400">
+                          <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-[#808080]">
                             {productSearch.trim()
                               ? 'Không tìm thấy sản phẩm phù hợp'
                               : 'Tất cả sản phẩm đã được thêm'}
@@ -842,10 +819,10 @@ export const StockExport = () => {
                               <button
                                 key={idValue}
                                 type="button"
-                                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 ${
+                                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-[#333333] ${
                                   isActive
-                                    ? 'bg-blue-50 font-semibold text-blue-700'
-                                    : 'text-slate-700'
+                                    ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-[#272727] dark:text-blue-300'
+                                    : 'text-slate-700 dark:text-[#b3b3b3]'
                                 }`}
                                 onClick={() => {
                                   setSelectedProductId(idValue);
@@ -853,10 +830,10 @@ export const StockExport = () => {
                                   setProductSearch('');
                                 }}
                               >
-                                <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500">
+                                <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
                                   {product.productCode || product.ProductCode || '-'}
                                 </span>
-                                <span className="flex-1 truncate">
+                                <span className="flex-1 truncate dark:text-[#d4d4d4]">
                                   {product.productName || product.ProductName}
                                 </span>
                                 <span
@@ -884,14 +861,14 @@ export const StockExport = () => {
                 </div>
 
                 <div className="w-36">
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                     Số lượng
                   </label>
                   <input
                     type="text"
                     inputMode="numeric"
                     placeholder="SL"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                     value={selectedQuantity}
                     onChange={(e) => {
                       const raw = e.target.value.replace(/[^0-9]/g, '');
@@ -938,7 +915,6 @@ export const StockExport = () => {
                 </button>
               </div>
 
-              {/* Dòng thông tin tồn kho nằm dưới, không đẩy layout */}
               {selectedProductId &&
                 (() => {
                   const prod = products.find((p) => getItemKey(p) === selectedProductId);
@@ -965,7 +941,7 @@ export const StockExport = () => {
                             ? 'font-semibold text-red-500'
                             : stock < 10
                               ? 'font-semibold text-amber-600'
-                              : 'text-slate-500'
+                              : 'text-slate-500 dark:text-[#999999]'
                         }
                       >
                         Tồn kho: {stock} {unit}
@@ -980,44 +956,44 @@ export const StockExport = () => {
 
             {/* Bảng sản phẩm đã thêm */}
             {items.length > 0 ? (
-              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm dark:border-[#333333]">
                 <table className="w-full table-fixed text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
-                      <th className="w-10 py-3 pl-5 pr-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <tr className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white dark:border-[#333333] dark:from-[#1a1a1a] dark:to-[#1a1a1a]">
+                      <th className="w-10 py-3 pl-5 pr-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                         #
                       </th>
-                      <th className="w-24 px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="w-24 px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                         Mã SP
                       </th>
-                      <th className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                         Tên sản phẩm
                       </th>
-                      <th className="w-16 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="w-16 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                         ĐVT
                       </th>
-                      <th className="w-20 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="w-20 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                         Tồn kho
                       </th>
-                      <th className="w-32 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="w-32 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                         Số lượng xuất
                       </th>
                       {isSale && (
                         <>
-                          <th className="w-28 px-2 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          <th className="w-28 px-2 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                             Đơn giá
                           </th>
-                          <th className="w-28 px-2 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          <th className="w-28 px-2 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                             Thành tiền
                           </th>
                         </>
                       )}
-                      <th className="w-10 py-3 pl-1 pr-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="w-10 py-3 pl-1 pr-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
                         Xóa
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
                     {items.map((item, idx) => {
                       const key = getItemKey(item);
                       const maxStock = item.maxStock ?? 999999;
@@ -1025,34 +1001,34 @@ export const StockExport = () => {
                       return (
                         <tr
                           key={key}
-                          className={`group transition-colors ${isOverStock ? 'bg-red-50/50 hover:bg-red-100/50' : 'hover:bg-blue-50/30'}`}
+                          className={`group transition-colors ${isOverStock ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/40' : 'hover:bg-blue-50/30 dark:hover:bg-[#333333]'}`}
                         >
                           <td className="py-3 pl-5 pr-2 text-center">
                             <span
-                              className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${isOverStock ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}
+                              className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${isOverStock ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#b3b3b3]'}`}
                             >
                               {idx + 1}
                             </span>
                           </td>
                           <td className="w-24 truncate px-3 py-3">
-                            <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-600">
+                            <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]">
                               {item.productCode || 'N/A'}
                             </span>
                           </td>
                           <td className="truncate px-3 py-3">
                             <div className="flex items-center gap-2.5">
                               <div
-                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isOverStock ? 'bg-red-100 text-red-500' : 'bg-slate-100 text-slate-400'}`}
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isOverStock ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-400 dark:bg-[#272727] dark:text-[#808080]'}`}
                               >
                                 <Icon name="inventory_2" size={16} />
                               </div>
-                              <span className="truncate text-[13px] font-semibold text-slate-800">
+                              <span className="truncate text-[13px] font-semibold text-slate-800 dark:text-[#e5e5e5]">
                                 {item.productName}
                               </span>
                             </div>
                           </td>
                           <td className="px-3 py-3 text-center">
-                            <span className="text-[12px] text-slate-500">{item.unit || '---'}</span>
+                            <span className="text-[12px] text-slate-500 dark:text-[#999999]">{item.unit || '---'}</span>
                           </td>
                           <td className="px-3 py-3 text-center">
                             <span
@@ -1063,28 +1039,28 @@ export const StockExport = () => {
                           </td>
                           <td className="px-3 py-3 text-center">
                             <div
-                              className={`inline-flex items-center rounded-lg border shadow-sm ${isOverStock ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-white'}`}
+                              className={`inline-flex items-center rounded-lg border shadow-sm ${isOverStock ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-200 bg-white dark:border-[#404040] dark:bg-[#272727]'}`}
                             >
                               <button
                                 type="button"
                                 onClick={() =>
                                   updateItemQty(key, Math.max(0, (item.quantity || 0) - 1))
                                 }
-                                className="flex h-7 w-7 items-center justify-center rounded-l-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                className="flex h-7 w-7 items-center justify-center rounded-l-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
                               >
                                 <Icon name="remove" size={14} />
                               </button>
                               <input
                                 type="number"
                                 min="0"
-                                className={`h-7 w-14 border-x border-slate-200 bg-transparent text-center text-[13px] font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isOverStock ? 'text-red-600' : 'text-slate-800'}`}
+                                className={`h-7 w-14 border-x border-slate-200 bg-transparent text-center text-[13px] font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isOverStock ? 'text-red-600' : 'text-slate-800 dark:text-[#e5e5e5]'} dark:border-[#404040]`}
                                 value={item.quantity}
                                 onChange={(e) => updateItemQty(key, e.target.value)}
                               />
                               <button
                                 type="button"
                                 onClick={() => updateItemQty(key, (item.quantity || 0) + 1)}
-                                className="flex h-7 w-7 items-center justify-center rounded-r-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                className="flex h-7 w-7 items-center justify-center rounded-r-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
                               >
                                 <Icon name="add" size={14} />
                               </button>
@@ -1102,7 +1078,7 @@ export const StockExport = () => {
                                   type="text"
                                   inputMode="numeric"
                                   placeholder="0"
-                                  className="h-8 w-24 rounded-lg border border-slate-200 bg-white px-2 text-right text-[13px] font-semibold text-slate-800 outline-none focus:border-blue-500"
+                                  className="h-8 w-24 rounded-lg border border-slate-200 bg-white px-2 text-right text-[13px] font-semibold text-slate-800 outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                                   value={
                                     item.unitPrice
                                       ? Number(item.unitPrice).toLocaleString('vi-VN')
@@ -1113,7 +1089,7 @@ export const StockExport = () => {
                                   }
                                 />
                               </td>
-                              <td className="max-w-[160px] truncate px-2 py-3 text-right font-semibold text-blue-700">
+                              <td className="max-w-[160px] truncate px-2 py-3 text-right font-semibold text-blue-700 dark:text-blue-400">
                                 {(
                                   Number(item.quantity || 0) * Number(item.unitPrice || 0)
                                 ).toLocaleString('vi-VN')}
@@ -1124,7 +1100,7 @@ export const StockExport = () => {
                             <button
                               type="button"
                               onClick={() => removeItem(key)}
-                              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-500"
+                              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-[#808080] dark:hover:bg-red-900/30 dark:hover:text-red-400"
                             >
                               <Icon name="delete" size={16} />
                             </button>
@@ -1137,7 +1113,7 @@ export const StockExport = () => {
               </div>
             ) : (
               <div className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
-                fieldErrors.items ? 'border-red-300 bg-red-50/30 text-red-400' : 'border-slate-200 text-slate-400'
+                fieldErrors.items ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20' : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
               }`}>
                 <Icon name="inventory_2" size={32} className="mb-2 opacity-40" />
                 <p className="text-sm font-medium">Chưa có sản phẩm nào</p>
@@ -1147,11 +1123,11 @@ export const StockExport = () => {
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4 dark:border-[#333333]">
             <button
               type="button"
               disabled={isSubmitting}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               onClick={closeModal}
             >
               Hủy
@@ -1159,7 +1135,7 @@ export const StockExport = () => {
             <button
               type="button"
               disabled={isSubmitting || items.length === 0}
-              className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+              className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-400 dark:hover:bg-sky-900/30"
               onClick={(e) => handleSubmit(e, true)}
             >
               Lưu chờ duyệt

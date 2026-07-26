@@ -45,8 +45,8 @@ const OrderList = () => {
     <div className={`space-y-4 ${filters.selectedOrder ? 'pb-[45vh]' : ''}`}>
       {/* Tiêu đề */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Đơn hàng</h1>
-        <p className="mt-1 text-gray-600">Quản lý và theo dõi tất cả đơn hàng trong hệ thống</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Đơn hàng</h1>
+        <p className="mt-1 text-gray-600 dark:text-[#999999]">Quản lý và theo dõi tất cả đơn hàng trong hệ thống</p>
       </div>
 
       {/* Card: toolbar + filter + table + pagination */}

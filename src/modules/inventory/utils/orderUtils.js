@@ -43,7 +43,7 @@ export const renderCellValue = (col, order) => {
             {lines.map((line, i) => (
               <div
                 key={i}
-                className={col.key === 'packageInfo' && i === 1 ? 'text-[10px] text-slate-400' : ''}
+                className={col.key === 'packageInfo' && i === 1 ? 'text-[10px] text-slate-400 dark:text-[#808080]' : ''}
               >
                 {line}
               </div>
@@ -56,7 +56,7 @@ export const renderCellValue = (col, order) => {
       return (val || []).map((t, i) => (
         <span
           key={i}
-          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${TAG_COLORS[t.color] || 'bg-slate-100 text-slate-600'}`}
+          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${TAG_COLORS[t.color] || 'bg-slate-100 text-slate-600 dark:bg-[#333] dark:text-[#b3b3b3]'}`}
         >
           {t.label}
         </span>
@@ -70,7 +70,7 @@ export const renderCellValue = (col, order) => {
             {val}
           </span>
         );
-      return val || <span className="text-slate-300">-</span>;
+      return val || <span className="text-slate-300 dark:text-[#666]">-</span>;
   }
 };
 

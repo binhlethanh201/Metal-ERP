@@ -212,29 +212,29 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
       {/* Drawer */}
       <div
         ref={drawerRef}
-        className={`fixed right-0 top-0 z-50 h-full w-full max-w-2xl bg-white shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-0 z-50 h-full w-full max-w-2xl bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-[#0f0f0f] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-b-[#333333] dark:bg-[#0f0f0f]">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Chi tiết phiếu</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">Chi tiết phiếu</h2>
             {transaction?.ticketCode && (
-              <p className="mt-0.5 font-mono text-sm text-slate-500">{transaction.ticketCode}</p>
+              <p className="mt-0.5 font-mono text-sm text-slate-500 dark:text-[#999999]">{transaction.ticketCode}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+              className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
               <Printer className="h-4 w-4" />
               In phiếu
             </button>
             <button
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999] dark:hover:bg-[#333333] dark:hover:text-[#d4d4d4]"
             >
               <X className="h-5 w-5" />
             </button>
@@ -245,64 +245,61 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
         <div className="h-[calc(100%-73px)] overflow-y-auto p-6">
           {loading ? (
             <div className="space-y-6">
-              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
-              <div className="h-64 animate-pulse rounded-xl bg-slate-200" />
+              <div className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-[#272727]" />
+              <div className="h-64 animate-pulse rounded-xl bg-slate-200 dark:bg-[#272727]" />
             </div>
           ) : transaction ? (
             <div className="space-y-6">
               {/* Info Cards */}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-slate-500">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                  <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-[#999999]">
                     <Package className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase tracking-wide">Loại phiếu</span>
                   </div>
                   <TransactionTypeBadge type={transaction.type} />
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-slate-500">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                  <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-[#999999]">
                     <FileText className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase tracking-wide">Trạng thái</span>
                   </div>
                   <StatusBadge status={transaction.status} />
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-slate-500">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                  <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-[#999999]">
                     <User className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase tracking-wide">Người tạo</span>
                   </div>
-                  <p className="font-medium text-slate-900">{transaction.createdByName || '-'}</p>
+                  <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{transaction.createdByName || '-'}</p>
                 </div>
               </div>
 
               {/* General Info */}
-              <div className="rounded-xl border border-slate-200 p-4">
-                <h3 className="mb-4 text-sm font-semibold text-slate-700">Thông tin chung</h3>
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-[#333333]">
+                <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Thông tin chung</h3>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-3">
                   <div>
-                    <p className="text-xs text-slate-500">Mã phiếu</p>
-                    <p className="font-mono font-medium text-slate-900">
+                    <p className="text-xs text-slate-500 dark:text-[#999999]">Mã phiếu</p>
+                    <p className="font-mono font-medium text-slate-900 dark:text-[#e5e5e5]">
                       {transaction.ticketCode || '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Ngày tạo</p>
-                    <p className="font-medium text-slate-900">
+                    <p className="text-xs text-slate-500 dark:text-[#999999]">Ngày tạo</p>
+                    <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">
                       {formatDate(transaction.createdAt)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Đối tượng</p>
-                    <p className="font-medium text-slate-900">{transaction.partyName || '-'}</p>
+                    <p className="text-xs text-slate-500 dark:text-[#999999]">Đối tượng</p>
+                    <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{transaction.partyName || '-'}</p>
                   </div>
-                  {/* <div>
-                    <p className="font-medium text-slate-900">{transaction.branchName || '-'}</p>
-                  </div> */}
                   <div className="col-span-2">
-                    <p className="text-xs text-slate-500">Lý do / Ghi chú</p>
-                    <p className="font-medium text-slate-900">
+                    <p className="text-xs text-slate-500 dark:text-[#999999]">Lý do / Ghi chú</p>
+                    <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">
                       {transaction.reason || transaction.note || '-'}
                     </p>
                   </div>
@@ -310,14 +307,14 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
               </div>
 
               {/* Items Table */}
-              <div className="rounded-xl border border-slate-200">
-                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                  <h3 className="text-sm font-semibold text-slate-700">Danh sách sản phẩm</h3>
+              <div className="rounded-xl border border-slate-200 dark:border-[#333333]">
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-b-[#333333] dark:bg-[#1a1a1a]">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Danh sách sản phẩm</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-white text-left text-xs text-slate-500">
+                      <tr className="border-b border-slate-200 bg-white text-left text-xs text-slate-500 dark:border-b-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]">
                         <th className="px-4 py-3 font-medium">STT</th>
                         <th className="px-4 py-3 font-medium">Ảnh</th>
                         <th className="px-4 py-3 font-medium">Mã SP</th>
@@ -330,8 +327,8 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                     </thead>
                     <tbody>
                       {transaction.items?.map((item, index) => (
-                        <tr key={item.id || index} className="border-b border-slate-100">
-                          <td className="px-4 py-3 text-slate-500">{index + 1}</td>
+                        <tr key={item.id || index} className="border-b border-slate-100 dark:border-b-[#333333]">
+                          <td className="px-4 py-3 text-slate-500 dark:text-[#999999]">{index + 1}</td>
                           <td className="px-4 py-3">
                             {item.imageUrl ? (
                               <img
@@ -344,27 +341,27 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                                 }}
                               />
                             ) : (
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-                                <Package className="h-5 w-5 text-slate-400" />
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-[#1a1a1a]">
+                                <Package className="h-5 w-5 text-slate-400 dark:text-[#808080]" />
                               </div>
                             )}
                           </td>
-                          <td className="px-4 py-3 font-mono text-slate-700">
+                          <td className="px-4 py-3 font-mono text-slate-700 dark:text-[#b3b3b3]">
                             {item.productCode || '-'}
                           </td>
-                          <td className="px-4 py-3 font-medium text-slate-900">
+                          <td className="px-4 py-3 font-medium text-slate-900 dark:text-[#e5e5e5]">
                             {item.productName || '-'}
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-600">
+                          <td className="px-4 py-3 text-right text-slate-600 dark:text-[#999999]">
                             {item.unit || item.Unit || item.unitName || item.UnitName || '-'}
                           </td>
-                          <td className="px-4 py-3 text-right font-medium text-slate-900">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
                             {Number(item.quantity || 0).toLocaleString('vi-VN')}
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-600">
+                          <td className="px-4 py-3 text-right text-slate-600 dark:text-[#999999]">
                             {formatCurrency(item.costPrice || item.unitPrice || 0)}
                           </td>
-                          <td className="px-4 py-3 text-right font-medium text-slate-900">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
                             {formatCurrency(
                               Number(item.quantity || 0) *
                                 Number(item.costPrice || item.unitPrice || 0)
@@ -377,24 +374,24 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                 </div>
 
                 {/* Summary */}
-                <div className="border-t border-slate-200 bg-slate-50 px-4 py-4">
+                <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 dark:border-t-[#333333] dark:bg-[#1a1a1a]">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-8">
                       <div>
-                        <p className="text-xs text-slate-500">Số mặt hàng</p>
-                        <p className="text-lg font-semibold text-slate-900">
+                        <p className="text-xs text-slate-500 dark:text-[#999999]">Số mặt hàng</p>
+                        <p className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">
                           {transaction.items?.length || 0}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Tổng số lượng</p>
-                        <p className="text-lg font-semibold text-slate-900">
+                        <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng số lượng</p>
+                        <p className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">
                           {totalQuantity.toLocaleString('vi-VN')}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-500">Tổng tiền</p>
+                      <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng tiền</p>
                       <p className="text-2xl font-bold text-emerald-600">
                         {formatCurrency(totalAmount)}
                       </p>
@@ -405,7 +402,7 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
             </div>
           ) : (
             <div className="flex h-64 items-center justify-center">
-              <p className="text-slate-500">Không có dữ liệu</p>
+              <p className="text-slate-500 dark:text-[#999999]">Không có dữ liệu</p>
             </div>
           )}
         </div>

@@ -423,8 +423,8 @@ export const InventoryTransactionManagement = () => {
       {/* ==================== PAGE HEADER ==================== */}
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lịch sử Xuất/Nhập</h1>
-          <p className="mt-1 text-gray-600">Theo dõi toàn bộ giao dịch nhập kho và xuất kho</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Lịch sử Xuất/Nhập</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">Theo dõi toàn bộ giao dịch nhập kho và xuất kho</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -449,40 +449,40 @@ export const InventoryTransactionManagement = () => {
         <Card>
           <div className="py-4 text-center">
             <div className="text-xl font-bold text-emerald-600">{loading ? '...' : (computedStats?.totalInwardCount || 0).toLocaleString()}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng phiếu nhập</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu nhập</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
             <div className="text-xl font-bold text-rose-600">{loading ? '...' : (computedStats?.totalOutwardCount || 0).toLocaleString()}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng phiếu xuất</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu xuất</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
             <div className="text-xl font-bold text-emerald-600">{loading ? '...' : formatCurrency(computedStats?.inwardValue || 0)}</div>
-            <p className="mt-1 text-sm text-gray-600">{dateFrom || dateTo ? 'Giá trị nhập (đã lọc)' : 'Giá trị nhập hôm nay'}</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">{dateFrom || dateTo ? 'Giá trị nhập (đã lọc)' : 'Giá trị nhập hôm nay'}</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
             <div className="text-xl font-bold text-rose-600">{loading ? '...' : formatCurrency(computedStats?.outwardValue || 0)}</div>
-            <p className="mt-1 text-sm text-gray-600">{dateFrom || dateTo ? 'Giá trị xuất (đã lọc)' : 'Giá trị xuất hôm nay'}</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">{dateFrom || dateTo ? 'Giá trị xuất (đã lọc)' : 'Giá trị xuất hôm nay'}</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
             <div className="text-xl font-bold text-amber-500">{loading ? '...' : (computedStats?.pendingCount || 0).toLocaleString()}</div>
-            <p className="mt-1 text-sm text-gray-600">Hàng chờ duyệt</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Hàng chờ duyệt</p>
           </div>
         </Card>
       </div>
 
       {/* ==================== FILTERS + SEARCH ==================== */}
-      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333] dark:bg-[#1a1a1a]/60">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
               Trạng thái:
             </span>
             {[
@@ -502,7 +502,7 @@ export const InventoryTransactionManagement = () => {
                   className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     isActive
                       ? 'bg-[#004785] text-white shadow-sm'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      : 'border border-slate-200 bg-white text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#272727] dark:border-[#333] dark:bg-[#0f0f0f] dark:hover:bg-[#272727]'
                   }`}
                 >
                   {item.label}
@@ -515,13 +515,13 @@ export const InventoryTransactionManagement = () => {
             <button
               onClick={fetchData}
               disabled={loading}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-[#b3b3b3] transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] disabled:opacity-50"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
             </button>
             <button
               onClick={handleReset}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-[#b3b3b3] transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]"
             >
               <RotateCcw size={13} /> Đặt lại
             </button>
@@ -530,32 +530,32 @@ export const InventoryTransactionManagement = () => {
 
         {/* Search + Date + Tabs row */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1">
-            <Icon name="search" className="mr-2 text-slate-400" size={18} />
+          <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1 dark:border-[#333] dark:bg-[#1a1a1a]">
+            <Icon name="search" className="mr-2 text-slate-400 dark:text-[#808080]" size={18} />
             <input
               type="text"
               placeholder="Tìm mã phiếu, đối tượng, người tạo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
+              className="w-full border-none bg-transparent text-sm outline-none focus:ring-0 dark:text-[#e5e5e5]"
             />
           </div>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 dark:border-[#333] dark:bg-[#1a1a1a]">
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => { setDateFrom(e.target.value); setPagination((p) => ({ ...p, currentPage: 1 })); }}
-              className="h-7 text-xs outline-none"
+              className="h-7 text-xs outline-none dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
-            <span className="text-slate-400">-</span>
+            <span className="text-slate-400 dark:text-[#808080]">-</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => { setDateTo(e.target.value); setPagination((p) => ({ ...p, currentPage: 1 })); }}
-              className="h-7 text-xs outline-none"
+              className="h-7 text-xs outline-none dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
           </div>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 dark:border-[#333] dark:bg-[#1a1a1a]">
             {[
               { key: 'ALL', label: 'Tất cả', count: counts.all },
               { key: 'INWARD', label: 'Nhập kho', count: counts.inward },
@@ -568,12 +568,12 @@ export const InventoryTransactionManagement = () => {
                 className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
                   activeTab === tab.key
                     ? 'bg-[#004785] text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    : 'text-slate-500 dark:text-[#999] hover:text-slate-700 dark:hover:text-[#e5e5e5]'
                 }`}
               >
                 {tab.label}
                 <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs ${
-                  activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-[#333] dark:text-[#b3b3b3]'
                 }`}>
                   {tab.count}
                 </span>
@@ -584,28 +584,28 @@ export const InventoryTransactionManagement = () => {
       </div>
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333] dark:bg-[#0f0f0f]">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Loại</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Mã phiếu</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Ngày tạo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Đối tượng</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Số mặt hàng</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Tổng SL</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Tổng tiền</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Người tạo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Trạng thái</th>
+              <tr className="border-b border-slate-200 bg-slate-50 dark:border-[#333] dark:bg-[#1a1a1a]">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Loại</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Mã phiếu</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Ngày tạo</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Đối tượng</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Số mặt hàng</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Tổng SL</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Tổng tiền</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Người tạo</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#333]">
               {loading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx}>
                     {Array.from({ length: 9 }).map((_, i) => (
-                      <td key={i} className="px-4 py-4"><div className="h-4 w-20 animate-pulse rounded bg-slate-200" /></td>
+                      <td key={i} className="px-4 py-4"><div className="h-4 w-20 animate-pulse rounded bg-slate-200 dark:bg-[#333]" /></td>
                     ))}
                   </tr>
                 ))
@@ -613,9 +613,9 @@ export const InventoryTransactionManagement = () => {
                 <tr>
                   <td colSpan={9} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <Package className="h-10 w-10 text-slate-300" />
-                      <p className="font-medium text-slate-500">Không có dữ liệu</p>
-                      <p className="text-sm text-slate-400">Thử thay đổi bộ lọc hoặc tạo phiếu mới</p>
+                      <Package className="h-10 w-10 text-slate-300 dark:text-[#666]" />
+                      <p className="font-medium text-slate-500 dark:text-[#999]">Không có dữ liệu</p>
+                      <p className="text-sm text-slate-400 dark:text-[#808080]">Thử thay đổi bộ lọc hoặc tạo phiếu mới</p>
                     </div>
                   </td>
                 </tr>
@@ -623,21 +623,21 @@ export const InventoryTransactionManagement = () => {
                 filteredData.map((row) => (
                   <tr
                     key={row.id}
-                    className="cursor-pointer transition-colors hover:bg-slate-50"
+                    className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]"
                     onClick={() => handleViewDetail(row)}
                   >
                     <td className="px-4 py-3"><TransactionTypeBadge type={row.type} size="sm" /></td>
-                    <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.ticketCode}</td>
-                    <td className="px-4 py-3 text-slate-600">{formatDate(row.createdAt)}</td>
+                    <td className="px-4 py-3 font-mono font-medium text-slate-900 dark:text-[#e5e5e5]">{row.ticketCode}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">{formatDate(row.createdAt)}</td>
                     <td className="px-4 py-3 font-medium text-slate-900">{row.partyName}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{row.itemCount}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">{(row.totalQuantity || 0).toLocaleString('vi-VN')}</td>
-                    <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900">
+                    <td className="px-4 py-3 text-right text-slate-600 dark:text-[#b3b3b3]">{row.itemCount}</td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">{(row.totalQuantity || 0).toLocaleString('vi-VN')}</td>
+                    <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
                       {row.type === 'OUTWARD' && row.totalAmount === 0
-                        ? <span className="text-xs italic text-slate-400">{row.reason || row.ticketType || '-'}</span>
+                        ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">{row.reason || row.ticketType || '-'}</span>
                         : formatCurrency(row.totalAmount)}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{row.createdByName}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">{row.createdByName}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.status} size="sm" /></td>
                   </tr>
                 ))
@@ -648,14 +648,14 @@ export const InventoryTransactionManagement = () => {
 
         {/* Pagination */}
         {!loading && filteredData.length > 0 && (
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3">
-            <div className="flex items-center gap-4 text-sm text-slate-600">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333] dark:bg-[#0f0f0f]">
+            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
               <div className="flex items-center gap-2">
                 <span>Hiển thị</span>
                 <select
                   value={pagination.pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                 >
                   <option value={20}>20 dòng</option>
                   <option value={50}>50 dòng</option>
@@ -673,18 +673,18 @@ export const InventoryTransactionManagement = () => {
                 type="button"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage <= 1}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#272727] disabled:opacity-50"
               >
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              <div className="px-3 text-sm text-slate-700">
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
                 Trang {pagination.currentPage} / {pagination.totalPages}
               </div>
               <button
                 type="button"
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage >= pagination.totalPages}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#272727] disabled:opacity-50"
               >
                 <Icon name="chevron_right" className="text-[18px]" />
               </button>

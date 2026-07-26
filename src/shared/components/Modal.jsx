@@ -61,16 +61,16 @@ export const Modal = ({
       {/* Modal */}
       <div className="flex min-h-screen items-start justify-center px-4 pb-8 pt-16">
         <div
-          className={`relative flex max-h-[88vh] flex-col rounded-lg bg-white shadow-xl ${sizes[size]} w-full`}
+          className={`relative flex max-h-[88vh] flex-col rounded-lg bg-white shadow-xl dark:bg-[#0f0f0f] ${sizes[size]} w-full`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - cố định */}
-          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
-            <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-[#333333]">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-[#e5e5e5]">{title}</h2>
             {closeButton && (
               <button
                 onClick={handleClose}
-                className="text-slate-400 hover:text-slate-500 focus:outline-none"
+                className="text-slate-400 hover:text-slate-500 focus:outline-none dark:text-[#808080] dark:hover:text-[#999999]"
               >
                 <svg
                   className="pointer-events-none h-6 w-6"
@@ -94,7 +94,7 @@ export const Modal = ({
 
           {/* Footer - cố định */}
           {footer && (
-            <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
+            <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-[#333333]">
               {footer}
             </div>
           )}

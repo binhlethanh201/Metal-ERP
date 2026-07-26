@@ -26,7 +26,7 @@ export const renderStatusBadge = (status) => {
         <Badge
           variant="secondary"
           size="sm"
-          className="inline-flex items-center gap-1 bg-slate-100 text-slate-700"
+          className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 dark:bg-[#272727] dark:text-[#b3b3b3]"
         >
           <Lock size={12} /> Đã đóng
         </Badge>
@@ -41,7 +41,7 @@ export const renderStatusBadge = (status) => {
 };
 
 const VarianceCell = ({ variance }) => {
-  if (variance === null || variance === undefined) return <span className="text-slate-400">—</span>;
+  if (variance === null || variance === undefined) return <span className="text-slate-400 dark:text-[#808080]">—</span>;
   const isNeg = variance < 0;
   const isZero = variance === 0;
   return (
@@ -66,7 +66,7 @@ const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
           <div className="font-bold text-[#004785]">
             {s.shiftCode}
           </div>
-          <div className="text-xs font-medium text-slate-500">NV: {s.userName}</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-[#999999]">NV: {s.userName}</div>
         </div>
       ),
     },
@@ -74,9 +74,9 @@ const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
       key: 'time',
       header: 'Thời gian',
       render: (_, s) => (
-        <div className="text-sm text-slate-700">
+        <div className="text-sm text-slate-700 dark:text-[#b3b3b3]">
           <div>Bắt đầu: {formatDateTime(s.startedAt)}</div>
-          <div className="text-slate-500">
+          <div className="text-slate-500 dark:text-[#999999]">
             Kết thúc: {s.endedAt ? formatDateTime(s.endedAt) : '—'}
           </div>
         </div>
@@ -92,8 +92,8 @@ const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
       header: <div className="text-right">Doanh thu</div>,
       render: (_, s) => (
         <div className="text-right">
-          <div className="font-semibold text-slate-800">{formatCurrency(s.totalRevenue)}</div>
-          <div className="text-xs text-slate-500">{s.totalOrders} đơn</div>
+          <div className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{formatCurrency(s.totalRevenue)}</div>
+          <div className="text-xs text-slate-500 dark:text-[#999999]">{s.totalOrders} đơn</div>
         </div>
       ),
     },
@@ -114,7 +114,7 @@ const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
       data={shifts}
       loading={loading}
       emptyMessage="Không tìm thấy ca bán nào."
-      className="bg-white shadow-sm"
+      className="bg-white shadow-sm dark:bg-[#0f0f0f]"
       onClickRow={onClickRow ? (row) => onClickRow(row) : undefined}
     />
   );

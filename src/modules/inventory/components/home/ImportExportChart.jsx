@@ -5,8 +5,8 @@ import React from 'react';
 
 const ImportExportChart = () => {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <h4 className="mb-4 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-[#333333] dark:bg-[#0f0f0f]">
+      <h4 className="mb-4 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500 dark:text-[#999999]">
         NHẬP / XUẤT KHO
       </h4>
       <div className="relative flex h-48 items-center justify-center overflow-hidden">
@@ -27,11 +27,11 @@ const ImportExportChart = () => {
         <div className="absolute bottom-2 right-2 flex gap-3">
           <div className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-green-500" />
-            <span className="text-[10px] font-bold text-slate-500">NHẬP</span>
+            <span className="text-[10px] font-bold text-slate-500 dark:text-[#999999]">NHẬP</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-orange-500" />
-            <span className="text-[10px] font-bold text-slate-500">XUẤT</span>
+            <span className="text-[10px] font-bold text-slate-500 dark:text-[#999999]">XUẤT</span>
           </div>
         </div>
       </div>

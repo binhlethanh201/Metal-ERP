@@ -9,7 +9,7 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const items = data?.tableData || [];
+  const items = useMemo(() => data?.tableData || [], [data?.tableData]);
   const totalPages = Math.ceil(items.length / pageSize) || 1;
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -22,7 +22,7 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
     {
       key: 'timeKey',
       header: 'Thời gian',
-      render: (v) => <span className="font-semibold text-slate-800">{v}</span>,
+      render: (v) => <span className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{v}</span>,
     },
     { key: 'revenue', header: 'Doanh thu', render: (v) => formatCurrency(v) },
     { key: 'orders', header: 'Số đơn' },
@@ -44,7 +44,7 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
     <>
       <div className="grid gap-4 sm:grid-cols-3">
         <Card padding="p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             Tổng doanh thu
           </p>
           <p className="mt-1 text-2xl font-extrabold text-[#004785]">
@@ -53,14 +53,14 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
         </Card>
 
         <Card padding="p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             Tổng số đơn
           </p>
-          <p className="mt-1 text-2xl font-extrabold text-slate-900">{data.totalOrders}</p>
+          <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">{data.totalOrders}</p>
         </Card>
 
         <Card padding="p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             Trung bình/Đơn
           </p>
           <p className="mt-1 text-2xl font-extrabold text-emerald-600">
@@ -69,7 +69,7 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
         </Card>
       </div>
 
-      <Card header={<h2 className="text-lg font-bold text-slate-800">Biểu đồ tăng trưởng</h2>}>
+      <Card header={<h2 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Biểu đồ tăng trưởng</h2>}>
         {data.chartData?.length ? (
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -108,7 +108,7 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex h-64 items-center justify-center text-slate-400">
+          <div className="flex h-64 items-center justify-center text-slate-400 dark:text-[#808080]">
             Không có dữ liệu biểu đồ
           </div>
         )}
@@ -122,11 +122,11 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
           emptyMessage="Chưa có dữ liệu"
         />
         {items.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-3">
-            <div className="flex items-center gap-4 text-sm text-slate-600">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
+            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
               <div className="flex items-center gap-2">
                 <span>Hiển thị</span>
-                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary">
+                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]">
                   <option value={20}>20 dòng</option>
                   <option value={50}>50 dòng</option>
                   <option value={100}>100 dòng</option>
@@ -135,11 +135,11 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
               <span>{(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, items.length)} trong tổng số {items.length} dòng</span>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+              <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]">
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              <div className="px-3 text-sm text-slate-700">Trang {currentPage} / {totalPages}</div>
-              <button type="button" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">Trang {currentPage} / {totalPages}</div>
+              <button type="button" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]">
                 <Icon name="chevron_right" className="text-[18px]" />
               </button>
             </div>

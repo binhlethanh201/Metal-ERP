@@ -92,13 +92,13 @@ const CreateExpenseModal = ({ isOpen, onClose, handleCreate, categories, supplie
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
             Nhóm chi phí <span className="text-red-500">*</span>
           </label>
           <select
             value={form.categoryId}
             onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785]"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             required
           >
             <option value="">-- Chọn nhóm chi phí --</option>
@@ -113,13 +113,13 @@ const CreateExpenseModal = ({ isOpen, onClose, handleCreate, categories, supplie
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
             Nhà cung cấp (nếu có)
           </label>
           <select
             value={form.supplierId}
             onChange={(e) => setForm((f) => ({ ...f, supplierId: e.target.value }))}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785]"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
           >
             <option value="">-- Không áp dụng --</option>
             {suppliers.map((s) => (

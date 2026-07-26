@@ -72,12 +72,12 @@ const StoreSettings = () => {
   };
 
   return (
-    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+    <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Cài đặt cửa hàng</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Cài đặt cửa hàng</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">
             Quản lý chiết khấu và chính sách đổi trả hàng theo nhóm
           </p>
         </div>
@@ -99,8 +99,8 @@ const StoreSettings = () => {
           {/* Actions */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-800">Mức chiết khấu</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-[#e5e5e5]">Mức chiết khấu</h2>
+              <p className="text-sm text-slate-500 dark:text-[#999999]">
                 Thiết lập phần trăm chiết khấu tự động theo tổng giá trị đơn hàng
               </p>
             </div>
@@ -124,12 +124,12 @@ const StoreSettings = () => {
           </Card>
 
           {/* Info box */}
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <h3 className="mb-2 flex items-center gap-2 font-semibold text-slate-700">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
+            <h3 className="mb-2 flex items-center gap-2 font-semibold text-slate-700 dark:text-[#b3b3b3]">
               <Icon name="info" size={18} />
               Cách hoạt động
             </h3>
-            <ul className="space-y-1 text-sm text-slate-600">
+            <ul className="space-y-1 text-sm text-slate-600 dark:text-[#999999]">
               <li>
                 • Khi khách hàng thanh toán, hệ thống sẽ tự động áp dụng chiết khấu cao nhất phù hợp
                 với tổng giá trị đơn hàng
@@ -144,13 +144,13 @@ const StoreSettings = () => {
       ) : (
         /* Empty state - chưa chọn chi nhánh */
         <Card className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 rounded-full bg-slate-100 p-4">
-            <Icon name="store" size={48} className="text-slate-400" />
+          <div className="mb-4 rounded-full bg-slate-100 p-4 dark:bg-[#1a1a1a]">
+            <Icon name="store" size={48} className="text-slate-400 dark:text-[#808080]" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-slate-700">
+          <h3 className="mb-2 text-lg font-semibold text-slate-700 dark:text-[#b3b3b3]">
             Chọn chi nhánh để quản lý chiết khấu
           </h3>
-          <p className="max-w-sm text-sm text-slate-500">
+          <p className="max-w-sm text-sm text-slate-500 dark:text-[#999999]">
             Vui lòng chọn chi nhánh từ danh sách bên trên để xem và thiết lập mức chiết khấu cho cửa
             hàng
           </p>

@@ -43,7 +43,7 @@ const OrderSplitTable = ({
 
   const renderHeaderRow = (cols, isFilterRow) => (
     <tr
-      className={`border-b ${isFilterRow ? 'border-slate-100 bg-slate-50/50' : 'border-slate-200 bg-slate-50'}`}
+      className={`border-b ${isFilterRow ? 'border-slate-100 bg-slate-50/50 dark:border-[#333333] dark:bg-[#1a1a1a]/50' : 'border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]'}`}
     >
       {cols.map((col) => (
         <th
@@ -51,7 +51,7 @@ const OrderSplitTable = ({
           className={
             isFilterRow
               ? 'px-1.5 py-0.5'
-              : 'whitespace-nowrap px-2.5 py-1.5 text-left text-[10px] font-bold uppercase tracking-wide text-slate-500'
+              : 'whitespace-nowrap px-2.5 py-1.5 text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]'
           }
           style={{ width: col.width, minWidth: col.width }}
         >
@@ -77,8 +77,8 @@ const OrderSplitTable = ({
       <tr
         key={order.id}
         onClick={() => onSelectOrder(order)}
-        className={`cursor-pointer border-b border-slate-50 hover:bg-blue-50/30 ${
-          selectedOrder?.id === order.id ? 'bg-blue-50/60' : ''
+        className={`cursor-pointer border-b border-slate-50 hover:bg-blue-50/30 dark:border-[#333333] dark:hover:bg-[#333333] ${
+          selectedOrder?.id === order.id ? 'bg-blue-50/60 dark:bg-[#272727]' : ''
         }`}
       >
         {cols.map((col) => (
@@ -103,13 +103,13 @@ const OrderSplitTable = ({
     ));
 
   const renderFooterRow = (cols, isFrozen) => (
-    <tr className="border-t-2 border-slate-300 bg-slate-100 font-bold">
+    <tr className="border-t-2 border-slate-300 bg-slate-100 font-bold dark:border-[#404040] dark:bg-[#1a1a1a]">
       {cols.map((col) => {
         if (isFrozen && col.key === 'checkbox')
           return (
             <td
               key={col.key}
-              className="whitespace-nowrap px-2.5 py-1 text-xs text-slate-600"
+              className="whitespace-nowrap px-2.5 py-1 text-xs text-slate-600 dark:text-[#b3b3b3]"
               style={{ width: col.width }}
             >
               Tổng cộng
@@ -152,7 +152,7 @@ const OrderSplitTable = ({
             return (
               <td
                 key={col.key}
-                className="whitespace-nowrap px-2.5 py-1 text-right text-xs text-slate-700"
+                className="whitespace-nowrap px-2.5 py-1 text-right text-xs text-slate-700 dark:text-[#b3b3b3]"
                 style={{ width: col.width }}
               >
                 {formatCurrency(footerTotals.shippingFeePartner)}
@@ -165,10 +165,10 @@ const OrderSplitTable = ({
   );
 
   return (
-    <div className="overflow-x-auto border-t border-slate-200">
+    <div className="overflow-x-auto border-t border-slate-200 dark:border-[#333333]">
       <div className="flex">
         {/* LEFT: Frozen columns */}
-        <div className="z-10 shrink-0 border-r border-slate-200 bg-white">
+        <div className="z-10 shrink-0 border-r border-slate-200 bg-white dark:border-[#333333] dark:bg-[#1a1a1a]">
           <table className="border-collapse" ref={frozenTableRef}>
             <thead>
               {renderHeaderRow(frozenCols, false)}
@@ -180,7 +180,7 @@ const OrderSplitTable = ({
         </div>
 
         {/* RIGHT: Scrollable columns */}
-        <div className="flex-1 overflow-x-auto bg-white">
+        <div className="flex-1 overflow-x-auto bg-white dark:bg-[#1a1a1a]">
           <table
             className="border-collapse"
             ref={scrollTableRef}

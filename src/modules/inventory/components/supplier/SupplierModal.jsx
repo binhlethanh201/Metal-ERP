@@ -80,10 +80,10 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50 p-6">
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1a1a1a]">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50 p-6 dark:border-[#333333] dark:bg-[#1a1a1a]">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-[#e5e5e5]">
               {mode === 'create'
                 ? 'Thêm nhà cung cấp'
                 : mode === 'edit'
@@ -93,7 +93,7 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
           >
             <Icon name="close" size={20} />
           </button>
@@ -101,17 +101,17 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
 
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500">Đang tải chi tiết...</div>
+            <div className="py-10 text-center text-sm text-slate-500 dark:text-[#999999]">Đang tải chi tiết...</div>
           ) : (
             <form id="supplierForm" onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-400">
                   {error}
                 </div>
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">
                     Tên nhà cung cấp <span className="text-red-500">*</span>
                   </span>
@@ -121,30 +121,30 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
                     onChange={handleChange}
                     disabled={isReadOnly}
                     required
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5] dark:disabled:bg-slate-700"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Người liên hệ</span>
                   <input
                     name="contactPerson"
                     value={formData.contactPerson}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Số điện thoại</span>
                   <input
                     name="contactPhone"
                     value={formData.contactPhone}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Email</span>
                   <input
                     name="contactEmail"
@@ -152,67 +152,67 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
                     value={formData.contactEmail}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Mã số thuế</span>
                   <input
                     name="taxCode"
                     value={formData.taxCode}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Nhóm NCC</span>
                   <input
                     name="groupName"
                     value={formData.groupName}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Số tài khoản</span>
                   <input
                     name="bankAccount"
                     value={formData.bankAccount}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Ngân hàng</span>
                   <input
                     name="bankName"
                     value={formData.bankName}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Website</span>
                   <input
                     name="website"
                     value={formData.website}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   />
                 </label>
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   <span className="mb-1 block">Trạng thái</span>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
                     disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   >
                     <option value={1}>Đang hợp tác</option>
                     <option value={0}>Ngừng hợp tác</option>
@@ -220,18 +220,18 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
                 </label>
               </div>
 
-              <label className="mt-4 block text-sm font-medium text-slate-700">
+              <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                 <span className="mb-1 block">Địa chỉ</span>
                 <input
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
                   disabled={isReadOnly}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 />
               </label>
 
-              <label className="mt-4 block text-sm font-medium text-slate-700">
+              <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                 <span className="mb-1 block">Ghi chú</span>
                 <textarea
                   name="notes"
@@ -239,20 +239,20 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
                   onChange={handleChange}
                   disabled={isReadOnly}
                   rows="3"
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 />
               </label>
             </form>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 p-6">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 p-6 dark:border-[#333333] dark:bg-[#1a1a1a]">
           <div>
             {supplier && (
               <button
                 type="button"
                 onClick={() => { onDelete?.(supplier); onClose(); }}
-                className="flex items-center gap-1 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                className="flex items-center gap-1 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
               >
                 <Icon name="delete" size={18} />
                 Xóa
@@ -263,7 +263,7 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             >
               {mode === 'detail' ? 'Đóng' : 'Hủy bỏ'}
             </button>

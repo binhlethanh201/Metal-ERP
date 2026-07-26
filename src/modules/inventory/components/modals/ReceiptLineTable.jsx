@@ -6,10 +6,10 @@ import Icon from '../../../../shared/components/Icon';
 const fmt = (v) => (v != null ? v.toLocaleString('vi-VN') : '0');
 
 const ReceiptLineTable = ({ p, onRequestNewProduct }) => (
-  <div className="rounded-lg border border-slate-200 bg-white">
-    <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+  <div className="rounded-lg border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#0f0f0f]">
+    <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-[#333333]">
       <div className="flex items-center gap-3">
-        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">CHI TIẾT</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-[#999999]">CHI TIẾT</h3>
         <button
           type="button"
           className="flex items-center gap-1 rounded border border-dashed border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-blue-100"
@@ -52,62 +52,62 @@ const ReceiptLineTable = ({ p, onRequestNewProduct }) => (
 
     <div className="overflow-x-auto">
       <table className="w-full min-w-[1580px] table-fixed">
-        <thead className="border-b border-slate-200 bg-slate-50">
+        <thead className="border-b border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
           <tr>
-            <th className="w-[44px] px-2 py-2.5 text-center text-[10px] font-bold text-slate-500">
+            <th className="w-[44px] px-2 py-2.5 text-center text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               #
             </th>
-            <th className="w-[110px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500">
+            <th className="w-[110px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               SKU <span className="text-red-400">*</span>
             </th>
-            <th className="w-[160px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500">
+            <th className="w-[160px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Tên hàng hóa
             </th>
-            <th className="w-[85px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500">
+            <th className="w-[85px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Số lô
             </th>
-            <th className="w-[90px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500">
+            <th className="w-[90px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Hạn sử dụng
             </th>
-            <th className="w-[120px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500">
+            <th className="w-[120px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Serial/IMEI
             </th>
-            <th className="w-[110px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500">
+            <th className="w-[110px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Kho
             </th>
-            <th className="w-[80px] px-2 py-2.5 text-center text-[10px] font-bold text-slate-500">
+            <th className="w-[80px] px-2 py-2.5 text-center text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Đơn vị tính
             </th>
-            <th className="w-[75px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500">
+            <th className="w-[75px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Tồn kho
             </th>
-            <th className="w-[85px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500">
+            <th className="w-[85px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Số lượng
             </th>
-            <th className="w-[110px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500">
+            <th className="w-[110px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Đơn giá
             </th>
-            <th className="w-[120px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500">
+            <th className="w-[120px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Thành tiền
             </th>
-            <th className="w-[120px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500">
+            <th className="w-[120px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Ghi chú
             </th>
             <th className="w-[44px] px-2 py-1.5" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
           {p.lines.map((line, idx) => {
             const isD = line.isDirty;
             const isEmpty = !isD && idx === p.lines.length - 1;
             return (
-              <tr key={line.id} className={`${isD ? 'hover:bg-blue-50/30' : 'bg-slate-50/30'}`}>
-                <td className="px-2 py-1.5 text-center text-xs text-slate-400">
+              <tr key={line.id} className={`${isD ? 'hover:bg-blue-50/30 dark:hover:bg-blue-900/20' : 'bg-slate-50/30 dark:bg-[#1a1a1a]/30'}`}>
+                <td className="px-2 py-1.5 text-center text-xs text-slate-400 dark:text-[#808080]">
                   {isD ? p.dirtyLines.indexOf(line) + 1 : ''}
                 </td>
                 <td className="px-2 py-1.5">
                   <select
-                    className={`w-full rounded border px-2 py-1.5 text-sm outline-none ${isD ? 'border-slate-200 bg-white focus:border-blue-400' : 'cursor-pointer border-dashed border-slate-300 bg-transparent text-slate-400 hover:border-blue-400'}`}
+                    className={`w-full rounded border px-2 py-1.5 text-sm outline-none ${isD ? 'border-slate-200 bg-white focus:border-blue-400 dark:border-[#404040] dark:bg-[#1a1a1a]' : 'cursor-pointer border-dashed border-slate-300 bg-transparent text-slate-400 hover:border-blue-400 dark:border-[#404040] dark:text-[#808080]'}`}
                     value={line.productId}
                     onChange={(e) => {
                       const prod = p.productList.find((x) => x.id === e.target.value);

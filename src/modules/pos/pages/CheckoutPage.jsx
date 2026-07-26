@@ -33,7 +33,7 @@ const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
       <div className="flex items-center gap-4">
         <button
           onClick={handleBack}
-          className="flex items-center gap-2 text-slate-600 hover:text-[#004785]"
+          className="flex items-center gap-2 text-slate-600 hover:text-[#004785] dark:text-[#999999]"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -46,8 +46,8 @@ const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
           Quay lại
         </button>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Thanh toán</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Thanh toán</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             {customer ? `Khách hàng: ${customer.name}` : 'Khách lẻ'}
           </p>
         </div>
@@ -57,7 +57,7 @@ const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
       <Card header="Chi tiết đơn hàng">
         <div className="space-y-3">
           {cartItems.length === 0 ? (
-            <p className="py-4 text-center text-slate-400">Giỏ hàng trống</p>
+            <p className="py-4 text-center text-slate-400 dark:text-[#808080]">Giỏ hàng trống</p>
           ) : (
             cartItems.map((item) => (
               <div
@@ -65,12 +65,12 @@ const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
                 className="flex justify-between rounded-lg bg-slate-50 p-3"
               >
                 <div>
-                  <p className="font-medium text-slate-900">{item.name}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{item.name}</p>
+                  <p className="text-sm text-slate-500 dark:text-[#999999]">
                     {item.quantity || 1} x {formatCurrency(item.price || 0)}
                   </p>
                 </div>
-                <p className="font-semibold text-slate-900">
+                <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
                   {formatCurrency((item.price || 0) * (item.quantity || 1))}
                 </p>
               </div>
@@ -78,12 +78,12 @@ const CheckoutPage = ({ cartItems = [], customer = null, onBack }) => {
           )}
         </div>
 
-        <div className="mt-4 space-y-2 border-t border-slate-200 pt-4">
-          <div className="flex justify-between text-slate-600">
+        <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 dark:border-[#333333]">
+          <div className="flex justify-between text-slate-600 dark:text-[#999999]">
             <span>Tổng tiền hàng:</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
-          <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold text-slate-900">
+          <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]">
             <span>TỔNG CỘNG:</span>
             <span className="text-[#004785]">{formatCurrency(total)}</span>
           </div>

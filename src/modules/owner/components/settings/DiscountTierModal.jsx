@@ -92,7 +92,7 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
             {isEdit && (
               <Button
                 variant="outline"
-                className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50"
+                className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
                 onClick={() => { onDelete?.(tier); onClose(); }}
                 disabled={loading}
               >
@@ -112,7 +112,7 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
+        <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
           <p className="font-medium">💡 Quy tắc chiết khấu:</p>
           <ul className="mt-1 list-inside list-disc space-y-0.5">
             <li>Khi tổng giá trị đơn hàng đạt ngưỡng, chiết khấu tương ứng sẽ được áp dụng</li>

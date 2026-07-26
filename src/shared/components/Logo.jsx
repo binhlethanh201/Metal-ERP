@@ -14,16 +14,16 @@ const Logo = ({ moduleName, className = '' }) => {
       </div>
 
       <div className="flex flex-col justify-center pt-0.5">
-        <div className="flex items-baseline gap-1.5 text-xl font-black leading-none tracking-tighter text-textMain">
+        <div className="flex items-baseline gap-1.5 text-xl font-black leading-none tracking-tighter text-textMain dark:text-[#e5e5e5]">
           <span>M.E.P</span>
-          <span className="text-base font-bold leading-none tracking-tight text-primary">
+          <span className="text-base font-bold leading-none tracking-tight text-primary dark:text-blue-400">
             SYSTEM
           </span>
         </div>
 
         {moduleName && (
-          <div className="mt-1.5 flex w-fit items-center rounded-full bg-primary/10 px-2.5 py-1">
-            <span className="text-[9px] font-black uppercase leading-none tracking-[0.2em] text-primary">
+          <div className="mt-1.5 flex w-fit items-center rounded-full bg-primary/10 px-2.5 py-1 dark:bg-blue-900/40">
+            <span className="text-[9px] font-black uppercase leading-none tracking-[0.2em] text-primary dark:text-blue-300">
               {moduleName}
             </span>
           </div>

@@ -41,18 +41,18 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
 
   // Lớp CSS dùng chung cho các ô input để đảm bảo hiển thị sắc nét
   const inputCss =
-    'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors';
+    'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:placeholder-[#808080]';
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-800">
+      <div className="w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-[#0f0f0f]">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
             {branch ? 'Cập nhật Chi nhánh' : 'Tạo Chi nhánh mới'}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
+            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
           >
             <Icon name="close" size={24} />
           </button>
@@ -61,7 +61,7 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                 Tên chi nhánh <span className="text-red-500">*</span>
               </label>
               <input
@@ -76,7 +76,7 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
 
             {!branch && (
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                   Mã chi nhánh <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -91,7 +91,7 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
             )}
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                 Số điện thoại
               </label>
               <input
@@ -105,7 +105,7 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                   Tỉnh/Thành phố
                 </label>
                 <input
@@ -117,7 +117,7 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                   Loại cơ sở
                 </label>
                 <select
@@ -133,7 +133,7 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                 Địa chỉ cụ thể
               </label>
               <input
@@ -147,7 +147,7 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
 
             {branch && (
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                   Trạng thái hoạt động
                 </label>
                 <select
@@ -162,11 +162,11 @@ const BranchModal = ({ isOpen, onClose, branch, onSave }) => {
             )}
           </div>
 
-          <div className="mt-8 flex justify-end gap-3 border-t border-slate-200 pt-5">
+          <div className="mt-8 flex justify-end gap-3 border-t border-slate-200 pt-5 dark:border-[#333333]">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
               Hủy bỏ
             </button>

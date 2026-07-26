@@ -128,19 +128,19 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
     {lastOrder && (
       <div className="space-y-3 text-sm">
         <div className="text-center">
-          <p className="font-bold text-slate-900">HÓA ĐƠN BÁN HÀNG</p>
-          <p className="text-xs text-slate-500">Mã: {lastOrder.id}</p>
-          <p className="text-xs text-slate-400">{formatDateTime(lastOrder.date)}</p>
+          <p className="font-bold text-slate-900 dark:text-[#e5e5e5]">HÓA ĐƠN BÁN HÀNG</p>
+          <p className="text-xs text-slate-500 dark:text-[#999999]">Mã: {lastOrder.id}</p>
+          <p className="text-xs text-slate-400 dark:text-[#808080]">{formatDateTime(lastOrder.date)}</p>
         </div>
-        <div className="border-b border-t border-slate-200 py-2">
-          <div className="mb-1 grid grid-cols-4 gap-1 text-xs font-bold text-slate-500">
+        <div className="border-b border-t border-slate-200 py-2 dark:border-[#333333]">
+          <div className="mb-1 grid grid-cols-4 gap-1 text-xs font-bold text-slate-500 dark:text-[#999999]">
             <span>Sản phẩm</span>
             <span className="text-center">SL</span>
             <span className="text-right">Đơn giá</span>
             <span className="text-right">Thành tiền</span>
           </div>
           {lastOrder.items.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-4 gap-1 py-0.5 text-xs text-slate-700">
+            <div key={idx} className="grid grid-cols-4 gap-1 py-0.5 text-xs text-slate-700 dark:text-[#b3b3b3]">
               <span className="truncate">{item.name}</span>
               <span className="text-center">
                 {item.quantity}
@@ -154,7 +154,7 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
           ))}
         </div>
         <div className="space-y-1">
-          <div className="flex justify-between text-xs text-slate-500">
+          <div className="flex justify-between text-xs text-slate-500 dark:text-[#999999]">
             <span>Tạm tính</span>
             <span>{formatCurrency(lastOrder.subtotal)}</span>
           </div>
@@ -164,12 +164,12 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
               <span>-{formatCurrency(lastOrder.discount)}</span>
             </div>
           )}
-          <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785]">
+          <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785] dark:border-[#333333]">
             <span>TỔNG CỘNG</span>
             <span>{formatCurrency(lastOrder.total)}</span>
           </div>
         </div>
-        <div className="space-y-1 rounded-lg bg-slate-50 p-3 text-xs">
+        <div className="space-y-1 rounded-lg bg-slate-50 p-3 text-xs dark:bg-[#1a1a1a]/50">
           <div className="flex justify-between">
             <span>Khách hàng:</span>
             <span className="font-medium">{lastOrder.customer}</span>
@@ -180,7 +180,7 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
               <span className="font-medium">{formatCurrency(pl.amount)}</span>
             </div>
           ))}
-          <div className="flex justify-between border-t border-slate-200 pt-1">
+          <div className="flex justify-between border-t border-slate-200 pt-1 dark:border-[#333333]">
             <span>Đã thanh toán:</span>
             <span className="font-bold text-green-600">{formatCurrency(lastOrder.totalPaid)}</span>
           </div>
@@ -191,7 +191,7 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
             </div>
           )}
         </div>
-        <p className="text-center text-xs text-slate-400">Cảm ơn quý khách!</p>
+        <p className="text-center text-xs text-slate-400 dark:text-[#808080]">Cảm ơn quý khách!</p>
       </div>
     )}
   </Modal>

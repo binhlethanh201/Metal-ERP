@@ -381,8 +381,8 @@ const OwnerStaffManagement = () => {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Quản lý nhân viên</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e5e5e5]">Quản lý nhân viên</h1>
+        <p className="text-sm text-slate-500 dark:text-[#999999]">
           Thêm tài khoản, phân công quyền hạn và quản lý nhân viên trong chi nhánh của bạn.
         </p>
       </div>
@@ -403,12 +403,12 @@ const OwnerStaffManagement = () => {
         {/* ============================================================
             LEFT — Staff list
         ============================================================ */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
           {/* Toolbar */}
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Danh sách nhân viên</h2>
-              <p className="text-sm text-slate-500">{filtered.length} nhân viên</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">Danh sách nhân viên</h2>
+              <p className="text-sm text-slate-500 dark:text-[#999999]">{filtered.length} nhân viên</p>
             </div>
             <button
               onClick={openCreate}
@@ -429,7 +429,7 @@ const OwnerStaffManagement = () => {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-purple-400 focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 dark:border-[#333333] py-2 pl-9 pr-3 text-sm focus:border-purple-400 focus:outline-none"
               />
               <span className="absolute left-3 top-2.5 text-sm text-slate-400">🔍</span>
             </div>
@@ -439,7 +439,7 @@ const OwnerStaffManagement = () => {
                 setRoleFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
+              className="rounded-lg border border-slate-200 dark:border-[#333333] px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
             >
               <option value="">Tất cả vai trò</option>
               <option value="SalesStaff">Nhân viên bán hàng</option>
@@ -449,28 +449,28 @@ const OwnerStaffManagement = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-[#333333]">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Nhân viên</th>
-                  {/* <th className="px-4 py-3 text-left font-medium text-slate-600">Chi nhánh</th> */}
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Vai trò</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Quyền hạn</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Trạng thái</th>
+                <tr className="border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a]">
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-[#b3b3b3]">Nhân viên</th>
+                  {/* <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-[#b3b3b3]">Chi nhánh</th> */}
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-[#b3b3b3]">Vai trò</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-[#b3b3b3]">Quyền hạn</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-[#b3b3b3]">Trạng thái</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500 dark:text-[#999999]">
                       Đang tải...
                     </td>
                   </tr>
                 ) : paginatedStaffs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500 dark:text-[#999999]">
                       👥 Không có nhân viên nào.
                     </td>
                   </tr>
@@ -482,7 +482,7 @@ const OwnerStaffManagement = () => {
                       <tr
                         key={st.userId}
                         onClick={() => openEdit(st)}
-                        className="cursor-pointer border-b border-slate-200 transition hover:bg-slate-50"
+                        className="cursor-pointer border-b border-slate-200 dark:border-[#333333] transition hover:bg-slate-50 dark:hover:bg-[#333333]"
                       >
                         {/* Nhân viên */}
                         <td className="px-4 py-3">
@@ -491,14 +491,14 @@ const OwnerStaffManagement = () => {
                               {getInitials(st.fullName)}
                             </div>
                             <div>
-                              <div className="font-medium text-slate-900">{st.fullName}</div>
-                              <div className="text-xs text-slate-500">{st.email}</div>
+                              <div className="font-medium text-slate-900 dark:text-[#e5e5e5]">{st.fullName}</div>
+                              <div className="text-xs text-slate-500 dark:text-[#999999]">{st.email}</div>
                             </div>
                           </div>
                         </td>
 
                         {/* Chi nhánh */}
-                        {/* <td className="px-4 py-3 text-xs text-slate-600">
+                        {/* <td className="px-4 py-3 text-xs text-slate-600 dark:text-[#b3b3b3]">
                           {st.branchName ?? <span className="text-slate-400">—</span>}
                         </td> */}
 
@@ -513,13 +513,13 @@ const OwnerStaffManagement = () => {
                             {perms.slice(0, 2).map((p) => (
                               <span
                                 key={p}
-                                className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600"
+                                className="inline-block rounded bg-slate-100 dark:bg-[#272727] px-1.5 py-0.5 text-xs text-slate-600 dark:text-[#b3b3b3]"
                               >
                                 {p}
                               </span>
                             ))}
                             {perms.length > 2 && (
-                              <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                              <span className="inline-block rounded bg-slate-100 dark:bg-[#272727] px-1.5 py-0.5 text-xs text-slate-500 dark:text-[#999999]">
                                 +{perms.length - 2}
                               </span>
                             )}
@@ -553,7 +553,7 @@ const OwnerStaffManagement = () => {
           </div>
 
           {/* Pagination */}
-          <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
+          <div className="mt-4 flex items-center justify-between text-sm text-slate-600 dark:text-[#b3b3b3]">
             <span>
               {filtered.length > 0
                 ? `Hiển thị ${Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–${Math.min(page * PAGE_SIZE, filtered.length)} trong ${filtered.length}`
@@ -563,7 +563,7 @@ const OwnerStaffManagement = () => {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="rounded px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded px-3 py-1 hover:bg-slate-100 dark:hover:bg-[#333333] disabled:opacity-40"
               >
                 ←
               </button>
@@ -573,7 +573,7 @@ const OwnerStaffManagement = () => {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="rounded px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded px-3 py-1 hover:bg-slate-100 dark:hover:bg-[#333333] disabled:opacity-40"
               >
                 →
               </button>
@@ -584,23 +584,23 @@ const OwnerStaffManagement = () => {
         {/* ============================================================
             RIGHT — Create / Edit panel
         ============================================================ */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+        <div className="rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm lg:sticky lg:top-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
           {/* Panel header */}
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <h3 className="text-base font-semibold text-slate-900">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-[#e5e5e5]">
                 {mode === 'create'
                   ? 'Thêm nhân viên mới'
                   : (editStaff?.fullName ?? 'Cài đặt tài khoản')}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-[#999999]">
                 {mode === 'create' ? 'Điền thông tin và cấp quyền' : 'Cập nhật thông tin & quyền'}
               </p>
             </div>
             {mode === 'edit' && (
               <button
                 onClick={resetPanel}
-                className="text-xl leading-none text-slate-400 hover:text-slate-600"
+                className="text-xl leading-none text-slate-400 hover:text-slate-600 dark:text-[#b3b3b3]"
               >
                 ✕
               </button>
@@ -621,7 +621,7 @@ const OwnerStaffManagement = () => {
 
           {/* Tabs — only in edit mode */}
           {mode === 'edit' && (
-            <div className="mb-4 flex gap-2 border-b border-slate-200 pb-2">
+            <div className="mb-4 flex gap-2 border-b border-slate-200 dark:border-[#333333] pb-2">
               {['info'].map((tab) => (
                 <button
                   key={tab}
@@ -629,7 +629,7 @@ const OwnerStaffManagement = () => {
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                     activeTab === tab
                       ? 'bg-purple-100 text-purple-700'
-                      : 'text-slate-500 hover:bg-slate-100'
+                      : 'text-slate-500 dark:text-[#999999] hover:bg-slate-100 dark:hover:bg-[#333333]'
                   }`}
                 >
                   {tab === 'info' ? '📋 Thông tin' : '🏢 Chi nhánh'}
@@ -644,7 +644,7 @@ const OwnerStaffManagement = () => {
               {/* Họ tên + SĐT */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">
+                  <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">
                     Họ và tên *
                   </label>
                   <input
@@ -652,12 +652,12 @@ const OwnerStaffManagement = () => {
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                     placeholder="Nguyễn Văn A"
-                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
+                    className="w-full rounded border border-slate-200 dark:border-[#333333] px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">
+                  <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">
                     Số điện thoại
                   </label>
                   <input
@@ -665,20 +665,20 @@ const OwnerStaffManagement = () => {
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                     placeholder="0912345678"
-                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
+                    className="w-full rounded border border-slate-200 dark:border-[#333333] px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Email */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Email *</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">Email *</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="nhanvien@email.com"
-                  className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
+                  className="w-full rounded border border-slate-200 dark:border-[#333333] px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
                   required
                 />
               </div>
@@ -687,7 +687,7 @@ const OwnerStaffManagement = () => {
               {mode === 'create' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">
+                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">
                       Tên đăng nhập *
                     </label>
                     <input
@@ -695,12 +695,12 @@ const OwnerStaffManagement = () => {
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                       placeholder="nhanvien01"
-                      className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
+                      className="w-full rounded border border-slate-200 dark:border-[#333333] px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">
+                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">
                       Mật khẩu *
                     </label>
                     <input
@@ -708,7 +708,7 @@ const OwnerStaffManagement = () => {
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="••••••••"
-                      className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
+                      className="w-full rounded border border-slate-200 dark:border-[#333333] px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
                       required
                     />
                   </div>
@@ -717,9 +717,9 @@ const OwnerStaffManagement = () => {
 
               {/* Chi nhánh hiện tại (chỉ hiện trong edit, dùng tab Branch để thay đổi) */}
               {/* {mode === 'edit' && (
-                <div className="rounded border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                <div className="rounded border border-slate-100 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-3 py-2 text-xs text-slate-600 dark:text-[#b3b3b3]">
                   🏢 Chi nhánh hiện tại:{' '}
-                  <span className="font-medium text-slate-800">
+                  <span className="font-medium text-slate-800 dark:text-[#e5e5e5]">
                     {editStaff?.branchName ?? <em className="text-slate-400">Chưa có</em>}
                   </span>
                   {editStaff?.branchId && (
@@ -728,12 +728,12 @@ const OwnerStaffManagement = () => {
                 </div>
               )} */}
 
-              <hr className="border-slate-200" />
+              <hr className="border-slate-200 dark:border-[#333333]" />
 
               {/* Phân quyền */}
               <div>
-                <p className="mb-1 text-sm font-medium text-slate-900">🔒 Cấp quyền tài khoản</p>
-                <p className="mb-3 text-xs text-slate-500">
+                <p className="mb-1 text-sm font-medium text-slate-900 dark:text-[#e5e5e5]">🔒 Cấp quyền tài khoản</p>
+                <p className="mb-3 text-xs text-slate-500 dark:text-[#999999]">
                   Chọn nhanh theo vai trò hoặc tuỳ chỉnh từng quyền:
                 </p>
 
@@ -754,8 +754,8 @@ const OwnerStaffManagement = () => {
                             ? 'border-purple-400 bg-purple-100 text-purple-700'
                             : role === 'InventoryStaff'
                               ? 'border-green-400 bg-green-100 text-green-700'
-                              : 'border-slate-400 bg-slate-100 text-slate-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                              : 'border-slate-400 bg-slate-100 dark:bg-[#272727] text-slate-700 dark:text-[#b3b3b3]'
+                          : 'border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333]'
                       }`}
                     >
                       <div className="mb-0.5">{icon}</div>
@@ -768,7 +768,7 @@ const OwnerStaffManagement = () => {
                 <div className="space-y-3">
                   {PERM_GROUPS.map((grp) => (
                     <div key={grp.group}>
-                      <p className="mb-2 text-xs font-medium text-slate-600">{grp.group}</p>
+                      <p className="mb-2 text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">{grp.group}</p>
                       <div className="grid grid-cols-2 gap-2">
                         {grp.items.map((item) => (
                           <label
@@ -776,7 +776,7 @@ const OwnerStaffManagement = () => {
                             className={`flex cursor-pointer items-start gap-2 rounded border px-2 py-1.5 text-xs transition ${
                               selectedPerms.includes(item.code)
                                 ? 'border-purple-300 bg-purple-50'
-                                : 'border-slate-200 bg-white hover:bg-slate-50'
+                                : 'border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] hover:bg-slate-50 dark:hover:bg-[#333333]'
                             }`}
                           >
                             <input
@@ -786,8 +786,8 @@ const OwnerStaffManagement = () => {
                               className="mt-0.5 accent-purple-600"
                             />
                             <div>
-                              <div className="font-medium text-slate-900">{item.label}</div>
-                              <div className="text-slate-500">{item.desc}</div>
+                              <div className="font-medium text-slate-900 dark:text-[#e5e5e5]">{item.label}</div>
+                              <div className="text-slate-500 dark:text-[#999999]">{item.desc}</div>
                             </div>
                           </label>
                         ))}
@@ -798,7 +798,7 @@ const OwnerStaffManagement = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 border-t border-slate-200 pt-4">
+              <div className="flex gap-3 border-t border-slate-200 dark:border-[#333333] pt-4">
                 <button
                   type="submit"
                   disabled={submitting}
@@ -813,7 +813,7 @@ const OwnerStaffManagement = () => {
                 <button
                   type="button"
                   onClick={resetPanel}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-200 dark:border-[#333333] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333]"
                 >
                   Huỷ
                 </button>
@@ -826,10 +826,10 @@ const OwnerStaffManagement = () => {
             <div className="space-y-4">
               {/* Chi nhánh hiện tại */}
               <div>
-                <p className="mb-2 text-xs font-medium text-slate-600">Chi nhánh hiện tại</p>
+                <p className="mb-2 text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">Chi nhánh hiện tại</p>
                 {editStaff?.branchId ? (
-                  <div className="flex items-center justify-between rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-                    <span className="text-slate-800">
+                  <div className="flex items-center justify-between rounded border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-3 py-2 text-sm">
+                    <span className="text-slate-800 dark:text-[#e5e5e5]">
                       🏢 {editStaff.branchName ?? editStaff.branchId}
                     </span>
                     <button
@@ -846,14 +846,14 @@ const OwnerStaffManagement = () => {
 
               {/* Gán chi nhánh mới — POST /{id}/assign-branch */}
               <div>
-                <p className="mb-2 text-xs font-medium text-slate-600">Gán chi nhánh mới</p>
+                <p className="mb-2 text-xs font-medium text-slate-600 dark:text-[#b3b3b3]">Gán chi nhánh mới</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={assignBranchId}
                     onChange={(e) => setAssignBranchId(e.target.value)}
                     placeholder="Branch ID (UUID)"
-                    className="flex-1 rounded border border-slate-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
+                    className="flex-1 rounded border border-slate-200 dark:border-[#333333] px-3 py-2 text-sm focus:border-purple-400 focus:outline-none"
                   />
                   <button
                     onClick={handleAssignBranch}

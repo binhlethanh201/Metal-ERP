@@ -94,7 +94,7 @@ export const ProductManagement = () => {
   };
 
   return (
-    <div className="mt-2 w-full space-y-4 text-slate-800">
+    <div className="mt-2 w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* Toast thông báo thành công */}
       {successMsg && (
         <div className="fixed left-1/2 top-5 z-[100] -translate-x-1/2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-2xl">
@@ -109,10 +109,10 @@ export const ProductManagement = () => {
         <div
           className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${
             apiStatus.error
-              ? 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400'
               : apiStatus.loading
-                ? 'border-slate-200 bg-slate-50 text-slate-600'
-                : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                ? 'border-slate-200 bg-slate-50 text-slate-600 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3]'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
           }`}
         >
           {apiStatus.loading
@@ -125,7 +125,7 @@ export const ProductManagement = () => {
 
       {/* Error banner */}
       {apiStatus.error && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-950/30">
           <svg
             className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
             viewBox="0 0 24 24"
@@ -140,8 +140,8 @@ export const ProductManagement = () => {
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <div className="flex-1">
-            <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
-            <p className="mt-1 text-sm text-red-700">{apiStatus.error}</p>
+            <p className="font-semibold text-red-800 dark:text-red-300">Đã xảy ra lỗi</p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-400">{apiStatus.error}</p>
           </div>
         </div>
       )}
@@ -149,14 +149,14 @@ export const ProductManagement = () => {
       {/* Không còn sidebar cố định — bảng full-width, filter mở qua Drawer */}
       <div className="flex w-full flex-col gap-4 pb-6 pt-2">
         {selectedIds.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-950/30">
+            <div className="flex items-center gap-2 text-sm font-semibold text-blue-800 dark:text-blue-300">
               <Icon name="check_circle" size={20} /> Đã chọn {selectedIds.length} hàng hóa
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+                className="flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-[#1a1a1a] dark:text-blue-400 dark:hover:bg-[#333333]"
                 onClick={async () => {
                   if (window.confirm(`Mở bán ${selectedIds.length} sản phẩm?`)) {
                     const ok = await handleBulkToggleStatus(selectedIds, true);
@@ -183,12 +183,12 @@ export const ProductManagement = () => {
         )}
 
         {/* Toolbar: search + Bộ lọc (mở Drawer) + các nút thao tác */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
           <div className="flex flex-1 gap-3">
-            <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1">
-              <Icon name="search" className="mr-2 text-slate-400" />
+            <div className="flex min-w-[240px] max-w-sm flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:ring-1 dark:border-[#333333] dark:bg-[#1a1a1a]">
+              <Icon name="search" className="mr-2 text-slate-400 dark:text-[#808080]" />
               <input
-                className="w-full border-none bg-transparent text-sm outline-none focus:ring-0"
+                className="w-full border-none bg-transparent text-sm outline-none focus:ring-0 dark:text-[#e5e5e5]"
                 placeholder="Tìm theo mã, tên hàng, mã vạch..."
                 value={filters.search}
                 onChange={(e) => {
@@ -200,9 +200,9 @@ export const ProductManagement = () => {
             <button
               type="button"
               onClick={() => setFilterDrawerOpen(true)}
-              className="relative flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              className="relative flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
-              <Icon name="Layers" size={16} className="text-slate-500" />
+              <Icon name="Layers" size={16} className="text-slate-500 dark:text-[#999999]" />
               Bộ lọc
               {activeFilterCount > 0 && (
                 <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#004785] px-1 text-[11px] font-bold text-white">
@@ -214,18 +214,18 @@ export const ProductManagement = () => {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               onClick={() => setCategoryModalOpen(true)}
             >
-              <Icon name="Bookmark" className="text-sm text-slate-500" />
+              <Icon name="Bookmark" className="text-sm text-slate-500 dark:text-[#999999]" />
               Nhóm hàng & Thương hiệu
             </button>
             <button
               type="button"
-              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               onClick={() => setLocationAttrModalOpen(true)}
             >
-              <Icon name="location_on" className="text-sm text-slate-500" />
+              <Icon name="location_on" className="text-sm text-slate-500 dark:text-[#999999]" />
               Vị trí & Thuộc tính
             </button>
             <button
@@ -241,7 +241,7 @@ export const ProductManagement = () => {
           </div>
         </div>
 
-        <div className="flex w-full flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="flex w-full flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
           <div className="w-full overflow-x-auto">
             <ProductTable
               rows={products}
@@ -259,14 +259,14 @@ export const ProductManagement = () => {
               onSelectAll={handleSelectAll}
             />
           </div>
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3">
-            <div className="flex items-center gap-4 text-sm text-slate-600">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
               <div className="flex items-center gap-2">
                 <span>Hiển thị</span>
                 <select
                   value={filters.pageSize}
                   onChange={(e) => filters.handlePageSizeChange(Number(e.target.value))}
-                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 >
                   <option value={20}>20 dòng</option>
                   <option value={50}>50 dòng</option>
@@ -280,18 +280,18 @@ export const ProductManagement = () => {
                 type="button"
                 onClick={() => filters.setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={filters.currentPage <= 1}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               >
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              <div className="px-3 text-sm text-slate-700">
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
                 Trang {filters.currentPage} / {totalPages}
               </div>
               <button
                 type="button"
                 onClick={() => filters.setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
                 disabled={filters.currentPage >= totalPages}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               >
                 <Icon name="chevron_right" className="text-[18px]" />
               </button>

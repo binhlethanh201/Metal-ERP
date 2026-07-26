@@ -24,8 +24,8 @@ const StaffTable = ({ staffs, loading, currentUserId, onClickRow }) => {
       header: 'Nhân viên',
       render: (_, staff) => (
         <div>
-          <div className="font-bold text-slate-800">{staff.fullName}</div>
-          <div className="text-xs font-medium text-slate-400">
+          <div className="font-bold text-slate-800 dark:text-[#e5e5e5]">{staff.fullName}</div>
+          <div className="text-xs font-medium text-slate-400 dark:text-[#808080]">
             Vai trò: {staff.roles?.join(', ') || 'Chưa gán'}
           </div>
         </div>
@@ -36,8 +36,8 @@ const StaffTable = ({ staffs, loading, currentUserId, onClickRow }) => {
       header: 'Liên hệ',
       render: (_, staff) => (
         <div>
-          <div className="font-medium text-slate-700">{staff.email}</div>
-          <div className="text-xs text-slate-400">{staff.phoneNumber || 'Chưa cập nhật SĐT'}</div>
+          <div className="font-medium text-slate-700 dark:text-[#b3b3b3]">{staff.email}</div>
+          <div className="text-xs text-slate-400 dark:text-[#808080]">{staff.phoneNumber || 'Chưa cập nhật SĐT'}</div>
         </div>
       ),
     },
@@ -45,7 +45,7 @@ const StaffTable = ({ staffs, loading, currentUserId, onClickRow }) => {
       key: 'branch',
       header: 'Chi nhánh',
       render: (_, staff) => (
-        <div className="font-medium text-slate-700">{staff.branchName || '---'}</div>
+        <div className="font-medium text-slate-700 dark:text-[#b3b3b3]">{staff.branchName || '---'}</div>
       ),
     },
     {
@@ -56,7 +56,7 @@ const StaffTable = ({ staffs, loading, currentUserId, onClickRow }) => {
         return (
           <div>
             {renderStatusBadge(staff.isActive)}
-            {isSelf && <div className="mt-0.5 text-[10px] italic text-slate-400">Bạn</div>}
+            {isSelf && <div className="mt-0.5 text-[10px] italic text-slate-400 dark:text-[#808080]">Bạn</div>}
           </div>
         );
       },
@@ -69,7 +69,7 @@ const StaffTable = ({ staffs, loading, currentUserId, onClickRow }) => {
       data={staffs}
       loading={loading}
       emptyMessage="Không tìm thấy nhân viên nào."
-      className="bg-white shadow-sm"
+      className="bg-white shadow-sm dark:bg-[#0f0f0f]"
       onClickRow={onClickRow}
     />
   );

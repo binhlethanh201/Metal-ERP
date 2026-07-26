@@ -54,7 +54,7 @@ const DurationInput = ({ label, value, onChange, hint }) => {
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="text"
@@ -63,12 +63,12 @@ const DurationInput = ({ label, value, onChange, hint }) => {
           value={value.value}
           onChange={(e) => handleValueChange(e.target.value)}
           placeholder="0"
-          className="w-24 rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm focus:border-[#004785] focus:outline-none"
+          className="w-24 rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
         />
         <select
           value={value.unit}
           onChange={(e) => handleUnitChange(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+          className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
         >
           {UNIT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -78,9 +78,9 @@ const DurationInput = ({ label, value, onChange, hint }) => {
         </select>
       </div>
       {!value.value && (
-        <p className="mt-1 text-xs italic text-slate-400">Để trống = không cho phép</p>
+        <p className="mt-1 text-xs italic text-slate-400 dark:text-[#808080]">Để trống = không cho phép</p>
       )}
-      <p className="mt-1 text-xs text-slate-400">{hint}</p>
+      <p className="mt-1 text-xs text-slate-400 dark:text-[#808080]">{hint}</p>
     </div>
   );
 };
@@ -237,7 +237,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
       >
         <div className="flex items-center justify-center py-8">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#004785] border-t-transparent" />
-          <span className="ml-2 text-sm text-slate-500">Đang tải...</span>
+          <span className="ml-2 text-sm text-slate-500 dark:text-[#999999]">Đang tải...</span>
         </div>
       </Card>
     );
@@ -292,8 +292,8 @@ const CategoryReturnPolicy = ({ branchId }) => {
       )}
 
       {configuredEntries.length === 0 ? (
-        <div className="py-8 text-center text-sm text-slate-400">
-          <Icon name="info" size={32} className="mx-auto mb-3 text-slate-300" />
+        <div className="py-8 text-center text-sm text-slate-400 dark:text-[#808080]">
+          <Icon name="info" size={32} className="mx-auto mb-3 text-slate-300 dark:text-[#666666]" />
           <p className="font-medium">Chưa có thiết lập nào</p>
           <p className="mt-1">
             Nhấn "Thêm nhóm" để thiết lập chính sách đổi/trả cho từng nhóm hàng.
@@ -306,7 +306,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+              <tr className="border-b border-slate-200 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:border-[#333333] dark:text-[#999999]">
                 <th className="pb-3 pr-4">Nhóm hàng</th>
                 <th className="pb-3 pr-4">SL SP</th>
                 <th className="pb-3 pr-4">Trả hàng</th>
@@ -321,11 +321,11 @@ const CategoryReturnPolicy = ({ branchId }) => {
                 return (
                   <tr
                     key={vals.categoryId || catName}
-                    className="cursor-pointer border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/70"
+                    className="cursor-pointer border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/70 dark:border-[#333333] dark:hover:bg-blue-900/30"
                     onClick={() => handleOpenEdit(catName)}
                   >
-                    <td className="py-3 pr-4 font-medium text-slate-900">{catName || vals.categoryId}</td>
-                    <td className="py-3 pr-4 text-slate-500">
+                    <td className="py-3 pr-4 font-medium text-slate-900 dark:text-[#e5e5e5]">{catName || vals.categoryId}</td>
+                    <td className="py-3 pr-4 text-slate-500 dark:text-[#999999]">
                       {productCount !== null ? `${productCount}` : '-'}
                     </td>
                     <td className="py-3 pr-4">
@@ -334,7 +334,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
                           {formatDuration(vals.returnDays)}
                         </span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-slate-300 dark:text-[#666666]">—</span>
                       )}
                     </td>
                     <td className="py-3 pr-4">
@@ -343,7 +343,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
                           {formatDuration(vals.exchangeDays)}
                         </span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-slate-300 dark:text-[#666666]">—</span>
                       )}
                     </td>
                   </tr>
@@ -354,8 +354,8 @@ const CategoryReturnPolicy = ({ branchId }) => {
         </div>
       )}
 
-      <div className="mt-4 border-t border-slate-100 pt-4">
-        <p className="text-xs text-slate-400">
+      <div className="mt-4 border-t border-slate-100 pt-4 dark:border-[#333333]">
+        <p className="text-xs text-slate-400 dark:text-[#808080]">
           Chỉ sản phẩm thuộc nhóm hàng được thiết lập mới được phép đổi/trả. Để trống = không cho
           phép.
         </p>
@@ -373,7 +373,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
               {editCategory && (
                 <Button
                   variant="outline"
-                  className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50"
+                  className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
                   onClick={() => { handleDelete(editCategory); setShowModal(false); }}
                 >
                   Xóa
@@ -398,13 +398,13 @@ const CategoryReturnPolicy = ({ branchId }) => {
         <div className="space-y-5">
           {!editCategory ? (
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                 Nhóm hàng <span className="text-red-500">*</span>
               </label>
               <select
                 value={formCategory}
                 onChange={(e) => setFormCategory(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               >
                 {availableCategories.map((cat) => (
                   <option key={getCategoryName(cat)} value={getCategoryName(cat)}>
@@ -415,8 +415,8 @@ const CategoryReturnPolicy = ({ branchId }) => {
             </div>
           ) : (
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Nhóm hàng</label>
-              <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-900">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Nhóm hàng</label>
+              <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-900 dark:bg-[#1a1a1a] dark:text-[#e5e5e5]">
                 {editCategory}
               </p>
             </div>

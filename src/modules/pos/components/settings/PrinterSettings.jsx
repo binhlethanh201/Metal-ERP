@@ -19,12 +19,12 @@ const PrinterSettings = ({ data, onChange, disabled }) => {
     <Card header="Cài đặt máy in">
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Tên máy in</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Tên máy in</label>
           <select
             value={data.printerName || ''}
             onChange={(e) => onChange({ printerName: e.target.value })}
             disabled={disabled}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none disabled:bg-slate-50"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none disabled:bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:disabled:bg-[#1a1a1a]"
           >
             <option value="">-- Chọn máy in --</option>
             {MOCK_PRINTERS.map((p) => (
@@ -35,10 +35,10 @@ const PrinterSettings = ({ data, onChange, disabled }) => {
           </select>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+        <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3 dark:border-[#333333]">
           <div>
-            <p className="text-sm font-medium text-slate-900">Tự động in hóa đơn</p>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="text-sm font-medium text-slate-900 dark:text-[#e5e5e5]">Tự động in hóa đơn</p>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-[#999999]">
               Tự động in hóa đơn sau khi thanh toán thành công
             </p>
           </div>

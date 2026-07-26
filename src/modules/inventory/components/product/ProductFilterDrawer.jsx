@@ -6,11 +6,11 @@ import { getSuppliers } from '../../services/supplierService';
 
 // Style select đồng bộ với input trong Input.jsx (border-slate-200, focus:border-[#004785])
 const selectClass =
-  'w-full min-w-0 max-w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 truncate';
+  'w-full min-w-0 max-w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 truncate dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]';
 
 const FilterField = ({ label, children }) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-slate-700">{label}</label>
+    <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{label}</label>
     {children}
   </div>
 );
@@ -169,10 +169,10 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
             ))}
           </select>
           {loadingSuppliers && (
-            <p className="text-xs text-slate-400">Đang tải danh sách nhà cung cấp...</p>
+            <p className="text-xs text-slate-400 dark:text-[#808080]">Đang tải danh sách nhà cung cấp...</p>
           )}
           {!loadingSuppliers && supplierOptions.length === 0 && (
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 dark:text-[#808080]">
               Chưa có nhà cung cấp nào hoặc API chưa sẵn sàng.
             </p>
           )}

@@ -14,7 +14,7 @@ const ExpenseStats = ({ summary }) => {
       <Card>
         <div className="py-3 text-center">
           <div className="text-2xl font-bold text-[#004785]">{summary.totalCount}</div>
-          <p className="mt-0.5 text-xs text-gray-600">Tổng phiếu chi</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Tổng phiếu chi</p>
         </div>
       </Card>
       <Card>
@@ -22,19 +22,19 @@ const ExpenseStats = ({ summary }) => {
           <div className="text-2xl font-bold text-emerald-600">
             {formatCurrency(summary.totalAmount)}
           </div>
-          <p className="mt-0.5 text-xs text-gray-600">Tổng tiền (trang hiện tại)</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Tổng tiền (trang hiện tại)</p>
         </div>
       </Card>
       <Card>
         <div className="py-3 text-center">
           <div className="text-2xl font-bold text-amber-500">{summary.pending}</div>
-          <p className="mt-0.5 text-xs text-gray-600">Chờ xác nhận</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Chờ xác nhận</p>
         </div>
       </Card>
       <Card>
         <div className="py-3 text-center">
           <div className="text-2xl font-bold text-slate-500">{summary.completed}</div>
-          <p className="mt-0.5 text-xs text-gray-600">Đã xác nhận</p>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-[#999999]">Đã xác nhận</p>
         </div>
       </Card>
     </div>

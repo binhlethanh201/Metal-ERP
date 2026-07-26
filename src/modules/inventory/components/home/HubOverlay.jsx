@@ -49,11 +49,11 @@ const HubOverlay = ({ isOpen, config, onClose, onSelect }) => {
                 <button
                   type="button"
                   onClick={() => onSelect?.(action)}
-                  className="flex h-16 w-16 items-center justify-center rounded-full border border-primary/10 bg-white text-primary shadow-xl transition-all hover:scale-110 hover:bg-primary hover:text-white"
+                  className="flex h-16 w-16 items-center justify-center rounded-full border border-primary/10 bg-white text-primary shadow-xl transition-all hover:scale-110 hover:bg-primary hover:text-white dark:border-[#404040] dark:bg-[#0f0f0f]"
                 >
                   <Icon name={action.icon} className="text-2xl" />
                 </button>
-                <div className="whitespace-nowrap rounded bg-white/90 px-3 py-1 text-[11px] font-bold uppercase text-primary shadow-sm backdrop-blur">
+                <div className="whitespace-nowrap rounded bg-white/90 px-3 py-1 text-[11px] font-bold uppercase text-primary shadow-sm backdrop-blur dark:bg-[#1a1a1a]/90">
                   {action.label}
                 </div>
               </div>

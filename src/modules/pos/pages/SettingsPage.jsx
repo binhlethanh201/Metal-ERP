@@ -71,8 +71,8 @@ const SettingsPage = () => {
     <div className="h-full overflow-y-auto px-6 py-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-slate-900">Cài đặt</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Cài đặt</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
           Quản lý cấu hình hóa đơn và máy in cho máy bán hàng
         </p>
       </div>

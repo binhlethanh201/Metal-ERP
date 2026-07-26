@@ -79,12 +79,12 @@ const ExpenseManagement = () => {
   }, [vouchers, paginationMeta.totalCount]);
 
   return (
-    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+    <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* PAGE HEADER */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Phiếu Chi Tiền</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Phiếu Chi Tiền</h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-[#b3b3b3]">
             Quản lý các phiếu chi tiền, xác nhận hoặc hủy theo nhóm chi phí.
           </p>
         </div>

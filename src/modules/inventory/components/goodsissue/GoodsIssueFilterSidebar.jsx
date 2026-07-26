@@ -19,17 +19,17 @@ const quickRangeOptions = [
 ];
 
 const QuickRangePopover = ({ onSelect, onReset }) => (
-  <div className="absolute left-[calc(100%+10px)] top-6 z-30 w-[500px] rounded-xl border border-slate-200 bg-white p-4 shadow-2xl">
+  <div className="absolute left-[calc(100%+10px)] top-6 z-30 w-[500px] rounded-xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-[#333333] dark:bg-[#1a1a1a]">
     <div className="grid grid-cols-2 gap-4">
       {quickRangeOptions.map((col) => (
         <div key={col.title}>
-          <p className="mb-2 text-sm font-bold text-slate-800">{col.title}</p>
+          <p className="mb-2 text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">{col.title}</p>
           <div className="flex flex-col gap-2">
             {col.options.map((opt) => (
               <button
                 key={opt}
                 type="button"
-                className="rounded-full border border-slate-300 px-3 py-1.5 text-left text-sm text-slate-700 hover:border-blue-600 hover:text-blue-600"
+                className="rounded-full border border-slate-300 px-3 py-1.5 text-left text-sm text-slate-700 hover:border-blue-600 hover:text-blue-600 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:border-blue-500 dark:hover:text-blue-400"
                 onClick={() => onSelect(opt)}
               >
                 {opt}
@@ -168,10 +168,10 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
     const cells = buildCalendar(year, month);
     return (
       <div>
-        <p className="mb-3 text-center text-sm font-bold text-slate-700">
+        <p className="mb-3 text-center text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">
           {MONTH_NAMES[month]} {year}
         </p>
-        <div className="mb-1 grid grid-cols-7 text-center text-xs text-slate-400">
+        <div className="mb-1 grid grid-cols-7 text-center text-xs text-slate-400 dark:text-[#808080]">
           {DAY_HEADERS.map((d) => (
             <span key={d}>{d}</span>
           ))}
@@ -189,7 +189,7 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
               <button
                 key={cell.key}
                 type="button"
-                className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors ${start || end ? 'bg-blue-600 font-bold text-white' : ''} ${inRange && !start && !end ? 'bg-blue-100 text-blue-800' : ''} ${!start && !end && !inRange ? 'text-slate-700 hover:bg-blue-50' : ''} ${isToday && !start && !end ? 'ring-2 ring-blue-400' : ''} `}
+                className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors ${start || end ? 'bg-blue-600 font-bold text-white' : ''} ${inRange && !start && !end ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' : ''} ${!start && !end && !inRange ? 'text-slate-700 hover:bg-blue-50 dark:text-[#b3b3b3] dark:hover:bg-[#333333]' : ''} ${isToday && !start && !end ? 'ring-2 ring-blue-400' : ''} `}
                 onClick={() => handleDateClick(d)}
               >
                 {cell.day}
@@ -205,13 +205,13 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
   const toStr = selTo ? selTo.toLocaleDateString('vi-VN') : '__/__/____';
 
   return (
-    <div className="absolute left-[calc(100%+10px)] top-14 z-30 w-[620px] rounded-xl border border-slate-200 bg-white shadow-2xl">
+    <div className="absolute left-[calc(100%+10px)] top-14 z-30 w-[620px] rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-[#333333] dark:bg-[#1a1a1a]">
       <div className="px-4 pb-3 pt-4">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-[#999999]">
           {selecting === 'from' ? 'Chọn Từ ngày' : 'Chọn Đến ngày'}:{' '}
-          <span className="font-semibold text-slate-800">{fromStr}</span>
+          <span className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{fromStr}</span>
           {' - '}
-          <span className="font-semibold text-slate-800">{toStr}</span>
+          <span className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{toStr}</span>
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-6">
@@ -220,12 +220,12 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
             <div className="mb-3 flex items-center justify-between">
               <button
                 type="button"
-                className="rounded-lg border border-slate-300 p-1 text-slate-500 hover:bg-slate-50"
+                className="rounded-lg border border-slate-300 p-1 text-slate-500 hover:bg-slate-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
                 onClick={handlePrevMonth}
               >
                 <Icon name="chevron_left" className="text-[16px]" />
               </button>
-              <p className="text-sm font-bold text-slate-700">
+              <p className="text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">
                 {MONTH_NAMES[leftMonthNorm]} {viewYear}
               </p>
               <span className="w-7" />
@@ -237,12 +237,12 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <span className="w-7" />
-              <p className="text-sm font-bold text-slate-700">
+              <p className="text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">
                 {MONTH_NAMES[rightMonthNorm]} {rightYear}
               </p>
               <button
                 type="button"
-                className="rounded-lg border border-slate-300 p-1 text-slate-500 hover:bg-slate-50"
+                className="rounded-lg border border-slate-300 p-1 text-slate-500 hover:bg-slate-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
                 onClick={handleNextMonth}
               >
                 <Icon name="chevron_right" className="text-[16px]" />
@@ -253,10 +253,10 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+      <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 dark:border-[#333333]">
         <button
           type="button"
-          className="text-sm font-semibold text-blue-600 hover:underline"
+          className="text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400"
           onClick={handleToday}
         >
           Hôm nay
@@ -264,7 +264,7 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             onClick={onCancel}
           >
             Bỏ qua
@@ -360,7 +360,7 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
 
       {/* Panel chính */}
       <aside
-        className={`relative shrink-0 space-y-5 self-start rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 ${
+        className={`relative shrink-0 space-y-5 self-start rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 dark:border-[#333333] dark:bg-[#1a1a1a] ${
           isCollapsed ? '-ml-[280px] w-[280px] -translate-x-5 opacity-0' : 'w-[280px]'
         }`}
       >
@@ -374,11 +374,11 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
         </button>
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 className="text-sm font-bold uppercase tracking-tight text-slate-700">Bộ lọc</h3>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#333333]">
+          <h3 className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">Bộ lọc</h3>
           <button
             type="button"
-            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
             onClick={resetFilters}
             title="Xóa bộ lọc"
           >
@@ -387,12 +387,12 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
         </div>
 
         {/* 1. Tìm kiếm */}
-        <div className="border-b border-slate-100 pb-4">
-          <h3 className="mb-3 text-sm font-bold uppercase tracking-tight text-slate-700">
+        <div className="border-b border-slate-100 pb-4 dark:border-[#333333]">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">
             Tìm kiếm
           </h3>
           <input
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             placeholder="Số phiếu, đối tượng, tham chiếu..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -402,7 +402,7 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
         {/* 2. Thời gian */}
         <div className="relative mb-6 space-y-2" ref={timeRef}>
           <div className="flex items-center gap-1.5">
-            <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Thời gian</p>
+            <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">Thời gian</p>
             <div className="h-2 w-2 rounded-full bg-blue-600" />
           </div>
           {[
@@ -430,11 +430,11 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
           ].map((opt) => (
             <label
               key={opt.val}
-              className={`flex cursor-pointer items-center gap-3 rounded-lg bg-white p-2 ${
+              className={`flex cursor-pointer items-center gap-3 rounded-lg bg-white p-2 dark:bg-[#1a1a1a] ${
                 (opt.val === 'allTime' && timePreset !== 'custom') ||
                 (opt.val === 'custom' && timePreset === 'custom')
                   ? 'border border-blue-900'
-                  : 'border border-slate-200'
+                  : 'border border-slate-200 dark:border-[#333333]'
               }`}
             >
               <input
@@ -444,11 +444,11 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
                 onChange={opt.onChange}
                 className="h-4 w-4 text-blue-900 focus:ring-blue-900"
               />
-              <span className="flex w-full items-center justify-between text-sm text-slate-600">
+              <span className="flex w-full items-center justify-between text-sm text-slate-600 dark:text-[#b3b3b3]">
                 {opt.label}
                 <Icon
                   name={opt.val === 'custom' ? 'calendar_today' : 'chevron_right'}
-                  className="text-sm text-slate-400"
+                  className="text-sm text-slate-400 dark:text-[#808080]"
                 />
               </span>
             </label>
@@ -475,11 +475,11 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
 
         {/* 3. Loại phiếu xuất */}
         <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">
             Loại phiếu xuất
           </p>
           <select
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             value={issueTypeFilter}
             onChange={(e) => setIssueTypeFilter(e.target.value)}
           >
@@ -494,11 +494,11 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
 
         {/* 4. Hình thức thanh toán */}
         <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">
             Hình thức thanh toán
           </p>
           <select
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             value={paymentMethodFilter}
             onChange={(e) => setPaymentMethodFilter(e.target.value)}
           >
@@ -510,11 +510,11 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
 
         {/* 5. Trạng thái đồng bộ */}
         <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">
             Trạng thái đồng bộ
           </p>
           <select
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             value={syncStatusFilter}
             onChange={(e) => setSyncStatusFilter(e.target.value)}
           >
@@ -526,9 +526,9 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
 
         {/* 6. Đối tượng */}
         <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Đối tượng</p>
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">Đối tượng</p>
           <select
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             value={customerFilter}
             onChange={(e) => setCustomerFilter(e.target.value)}
           >
@@ -543,9 +543,9 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
 
         {/* 7. Người lập */}
         <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Người lập</p>
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">Người lập</p>
           <select
-            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+            className="w-full rounded-lg border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             value={creatorFilter}
             onChange={(e) => setCreatorFilter(e.target.value)}
           >
@@ -560,19 +560,19 @@ const GoodsIssueFilterSidebar = ({ isCollapsed, onToggleCollapse, filters }) => 
 
         {/* 8. Khoảng tiền */}
         <div className="mb-6 space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700">Khoảng tiền</p>
+          <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">Khoảng tiền</p>
           <div className="flex items-center gap-2">
             <input
               type="number"
-              className="w-full rounded-lg border-slate-200 px-2.5 py-2 text-sm focus:border-primary focus:ring-primary"
+              className="w-full rounded-lg border-slate-200 px-2.5 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               placeholder="Từ"
               value={amountFrom}
               onChange={(e) => setAmountFrom(e.target.value)}
             />
-            <span className="text-sm text-slate-400">-</span>
+            <span className="text-sm text-slate-400 dark:text-[#808080]">-</span>
             <input
               type="number"
-              className="w-full rounded-lg border-slate-200 px-2.5 py-2 text-sm focus:border-primary focus:ring-primary"
+              className="w-full rounded-lg border-slate-200 px-2.5 py-2 text-sm focus:border-primary focus:ring-primary dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               placeholder="Đến"
               value={amountTo}
               onChange={(e) => setAmountTo(e.target.value)}

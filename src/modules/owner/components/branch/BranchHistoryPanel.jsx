@@ -69,9 +69,9 @@ const BranchHistoryPanel = ({ branchId }) => {
   };
 
   return (
-    <div className="space-y-4 border-l-4 border-blue-600 bg-slate-50 p-5 shadow-inner">
+    <div className="space-y-4 border-l-4 border-blue-600 bg-slate-50 p-5 shadow-inner dark:bg-[#1a1a1a]/50">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">
           <Icon name="history" size={18} className="text-blue-600" />
           <span>Lịch sử biến động kho hàng</span>
         </div>
@@ -79,7 +79,7 @@ const BranchHistoryPanel = ({ branchId }) => {
         {/* Khối Bộ Lọc Nâng Cao */}
         <div className="flex items-center gap-3">
           <select
-            className="rounded-lg border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-blue-500 focus:ring-blue-500"
+            className="rounded-lg border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-blue-500 focus:ring-blue-500 dark:border-[#404040] dark:bg-[#1a1a1a]"
             value={type}
             onChange={(e) => {
               setType(e.target.value);
@@ -96,7 +96,7 @@ const BranchHistoryPanel = ({ branchId }) => {
           </select>
 
           <select
-            className="rounded-lg border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-blue-500 focus:ring-blue-500"
+            className="rounded-lg border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-blue-500 focus:ring-blue-500 dark:border-[#404040] dark:bg-[#1a1a1a]"
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
@@ -116,9 +116,9 @@ const BranchHistoryPanel = ({ branchId }) => {
       )}
 
       {/* Bảng dữ liệu phiếu kho */}
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-xs text-slate-600">
-          <thead className="bg-slate-100 font-bold uppercase tracking-wide text-slate-500">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+        <table className="w-full text-left text-xs text-slate-600 dark:text-[#999999]">
+          <thead className="bg-slate-100 font-bold uppercase tracking-wide text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
             <tr>
               <th className="px-4 py-3">Mã chứng từ</th>
               <th className="px-4 py-3">Phân loại</th>
@@ -129,17 +129,17 @@ const BranchHistoryPanel = ({ branchId }) => {
               <th className="px-4 py-3">Thời gian tạo</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
             {loading ? (
               <tr>
-                <td colSpan={7} className="p-6 text-center text-slate-400">
+                <td colSpan={7} className="p-6 text-center text-slate-400 dark:text-[#808080]">
                   <Icon name="sync" className="mr-2 inline animate-spin text-xl" /> Đang tải lịch sử
                   phiếu kho...
                 </td>
               </tr>
             ) : historyItems.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-6 text-center font-medium text-slate-400">
+                <td colSpan={7} className="p-6 text-center font-medium text-slate-400 dark:text-[#808080]">
                   Không tìm thấy dữ liệu phiếu kho phù hợp.
                 </td>
               </tr>
@@ -149,8 +149,8 @@ const BranchHistoryPanel = ({ branchId }) => {
                 const ticketStatusInfo = formatTicketStatus(ticket.status);
 
                 return (
-                  <tr key={ticket.stockTicketId} className="transition-colors hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-bold tracking-tight text-slate-800">
+                  <tr key={ticket.stockTicketId} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-[#272727]/80">
+                    <td className="px-4 py-3 font-bold tracking-tight text-slate-800 dark:text-[#e5e5e5]">
                       {ticket.ticketCode}
                     </td>
 
@@ -171,22 +171,22 @@ const BranchHistoryPanel = ({ branchId }) => {
                     </td>
 
                     <td
-                      className="max-w-xs truncate px-4 py-3 font-medium text-slate-700"
+                      className="max-w-xs truncate px-4 py-3 font-medium text-slate-700 dark:text-[#b3b3b3]"
                       title={ticket.notes}
                     >
                       {ticket.notes || 'Không có ghi chú'}
                     </td>
 
                     <td className="px-4 py-3">
-                      <div className="font-bold text-slate-800">{ticket.userFullName}</div>
-                      <div className="text-[10px] text-slate-400">{ticket.userEmail}</div>
+                      <div className="font-bold text-slate-800 dark:text-[#e5e5e5]">{ticket.userFullName}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-[#808080]">{ticket.userEmail}</div>
                     </td>
 
                     <td className="px-4 py-3 font-bold text-blue-900">
                       {ticket.itemCount} mặt hàng
                     </td>
 
-                    <td className="px-4 py-3 font-medium text-slate-500">
+                    <td className="px-4 py-3 font-medium text-slate-500 dark:text-[#999999]">
                       {formatDateTime(ticket.createdAt)}
                     </td>
                   </tr>
@@ -198,9 +198,9 @@ const BranchHistoryPanel = ({ branchId }) => {
 
         {/* Thanh Điều Hướng Phân Trang Con */}
         {paginationMeta.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-2 text-slate-500">
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-2 text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
             <span className="text-[11px]">
-              Tổng số: <strong className="text-slate-700">{paginationMeta.totalCount}</strong> chứng
+              Tổng số: <strong className="text-slate-700 dark:text-[#b3b3b3]">{paginationMeta.totalCount}</strong> chứng
               từ
             </span>
             <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ const BranchHistoryPanel = ({ branchId }) => {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="rounded border border-slate-300 bg-white p-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded border border-slate-300 bg-white p-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#404040] dark:bg-[#1a1a1a] dark:hover:bg-[#333333]"
               >
                 <Icon name="chevron_left" size={14} />
               </button>
@@ -219,7 +219,7 @@ const BranchHistoryPanel = ({ branchId }) => {
                 type="button"
                 disabled={page >= paginationMeta.totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="rounded border border-slate-300 bg-white p-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded border border-slate-300 bg-white p-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#404040] dark:bg-[#1a1a1a] dark:hover:bg-[#333333]"
               >
                 <Icon name="chevron_right" size={14} />
               </button>

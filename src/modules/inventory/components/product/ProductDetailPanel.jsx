@@ -18,11 +18,11 @@ const SummaryBar = ({ row }) => {
     },
   ];
   return (
-    <div className="flex flex-wrap gap-x-8 gap-y-2 border-b border-slate-200 pb-4">
+    <div className="flex flex-wrap gap-x-8 gap-y-2 border-b border-slate-200 pb-4 dark:border-[#333333]">
       {items.map((it) => (
         <div key={it.label} className="flex items-center gap-2 text-sm">
-          <span className="font-medium text-slate-500">{it.label}:</span>
-          <span className="font-bold text-slate-800">{it.value || '-'}</span>
+          <span className="font-medium text-slate-500 dark:text-[#999999]">{it.label}:</span>
+          <span className="font-bold text-slate-800 dark:text-[#e5e5e5]">{it.value || '-'}</span>
         </div>
       ))}
     </div>
@@ -31,11 +31,11 @@ const SummaryBar = ({ row }) => {
 
 const InfoTabPanel = ({ row, loading }) => {
   if (loading)
-    return <div className="p-8 text-center text-slate-400">Đang tải thông tin chi tiết...</div>;
+    return <div className="p-8 text-center text-slate-400 dark:text-[#808080]">Đang tải thông tin chi tiết...</div>;
   return (
     <div>
       {row.minimumStock > 0 && (row.actualStock ?? row.stock ?? 0) <= row.minimumStock && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
           <svg
             className="h-5 w-5 shrink-0"
             fill="none"
@@ -54,7 +54,7 @@ const InfoTabPanel = ({ row, loading }) => {
         </div>
       )}
       <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:gap-8">
-        <div className="h-36 w-36 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="h-36 w-36 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#1a1a1a]">
           <img
             src={
               row.imageUrl ||
@@ -66,18 +66,18 @@ const InfoTabPanel = ({ row, loading }) => {
           />
         </div>
         <div className="flex-1">
-          <h3 className="mb-1 text-xl font-bold text-slate-900">{row.productName || row.name}</h3>
-          <p className="mb-3 text-xs text-slate-500">
+          <h3 className="mb-1 text-xl font-bold text-slate-900 dark:text-[#e5e5e5]">{row.productName || row.name}</h3>
+          <p className="mb-3 text-xs text-slate-500 dark:text-[#999999]">
             Danh mục:{' '}
-            <span className="font-bold uppercase text-slate-700">
+            <span className="font-bold uppercase text-slate-700 dark:text-[#b3b3b3]">
               {row.categoryName || row.group || 'Chưa có'}
             </span>
           </p>
           <div className="flex flex-wrap gap-2">
-            <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
+            <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]">
               {row.unit || 'Sản phẩm'}
             </span>
-            <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
+            <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]">
               {row.directSale !== false ? 'Bán trực tiếp' : 'Không bán trực tiếp'}
             </span>
           </div>
@@ -113,12 +113,12 @@ const InfoTabPanel = ({ row, loading }) => {
           ];
 
           return items.map(([label, value]) => (
-            <div key={label} className="space-y-1 border-b border-slate-100 pb-3">
-              <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">
+            <div key={label} className="space-y-1 border-b border-slate-100 pb-3 dark:border-[#333333]">
+              <p className="text-[11px] font-bold uppercase tracking-tighter text-slate-400 dark:text-[#808080]">
                 {label}
               </p>
               <p
-                className={`text-sm font-bold ${value === 'Chưa có' ? 'text-slate-400' : 'text-slate-800'}`}
+                className={`text-sm font-bold ${value === 'Chưa có' ? 'text-slate-400 dark:text-[#808080]' : 'text-slate-800 dark:text-[#e5e5e5]'}`}
               >
                 {value}
               </p>
@@ -131,12 +131,12 @@ const InfoTabPanel = ({ row, loading }) => {
 };
 
 const DescTabPanel = ({ row, loading, onEdit }) => {
-  if (loading) return <div className="p-8 text-center text-slate-400">Đang tải...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-400 dark:text-[#808080]">Đang tải...</div>;
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">Mô tả</h4>
-        <div className="flex min-h-[120px] items-center justify-center text-sm text-slate-400">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
+        <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-[#b3b3b3]">Mô tả</h4>
+        <div className="flex min-h-[120px] items-center justify-center text-sm text-slate-400 dark:text-[#808080]">
           {row.specification || row.description || 'Chưa có mô tả kỹ thuật'}
         </div>
       </div>
@@ -144,7 +144,7 @@ const DescTabPanel = ({ row, loading, onEdit }) => {
         <button
           type="button"
           onClick={() => onEdit?.(row, 'description')}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
         >
           <Icon name="edit" size={16} /> Chỉnh sửa
         </button>
@@ -159,26 +159,26 @@ const StatusToggleModal = ({ open, onClose, onConfirm, isActive }) => {
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4">
       <div
-        className="w-full max-w-md rounded-xl bg-white shadow-2xl"
+        className="w-full max-w-md rounded-xl bg-white shadow-2xl dark:bg-[#1a1a1a]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h3 className="text-lg font-bold text-slate-800">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-[#333333]">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
             {isStopping ? 'Ngừng kinh doanh' : 'Mở bán lại'}
           </h3>
-          <button onClick={onClose} className="rounded-full p-1 text-slate-400 hover:bg-gray-100">
+          <button onClick={onClose} className="rounded-full p-1 text-slate-400 hover:bg-gray-100 dark:text-[#808080] dark:hover:bg-[#333333]">
             <Icon name="close" size={20} />
           </button>
         </div>
-        <div className="p-6 text-sm text-slate-600">
+        <div className="p-6 text-sm text-slate-600 dark:text-[#b3b3b3]">
           {isStopping
             ? 'Sản phẩm sẽ bị ẩn khỏi các kênh bán hàng. Thông tin tồn kho vẫn được giữ nguyên. Bạn có chắc chắn?'
             : 'Sản phẩm sẽ hiển thị lại và có thể giao dịch bình thường. Bạn có muốn tiếp tục?'}
         </div>
-        <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+        <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4 dark:border-[#333333]">
           <button
             onClick={onClose}
-            className="rounded-lg border px-5 py-2 text-sm font-semibold hover:bg-gray-50"
+            className="rounded-lg border px-5 py-2 text-sm font-semibold hover:bg-gray-50 dark:border-[#404040] dark:hover:bg-[#333333]"
           >
             Hủy
           </button>
@@ -202,14 +202,14 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const currentActive = isProductActive(row);
   return (
-    <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-4">
+    <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-4 dark:border-[#333333]">
       <div className="flex gap-4">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete?.(row.id || row.productId);
           }}
-          className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-red-600"
+          className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-red-600 dark:text-[#b3b3b3] dark:hover:text-red-400"
         >
           <Icon name="delete" size={18} /> Xóa
         </button>
@@ -230,18 +230,18 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
               e.stopPropagation();
               setMenuOpen((p) => !p);
             }}
-            className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50"
+            className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
           >
             <Icon name="more_horiz" size={20} />
           </button>
           {menuOpen && (
-            <div className="absolute bottom-full right-0 z-30 mb-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+            <div className="absolute bottom-full right-0 z-30 mb-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-[#333333] dark:bg-[#1a1a1a]">
               <button
                 onClick={() => {
                   setMenuOpen(false);
                   setStatusModalOpen(true);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               >
                 {currentActive ? 'Ngừng kinh doanh' : 'Mở bán lại'}
               </button>
@@ -302,14 +302,14 @@ export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) =>
   }, [productId, row]);
 
   return (
-    <div className="overflow-hidden border-l-4 border-blue-500 bg-[#f8fbff] p-4 sm:p-6">
+    <div className="overflow-hidden border-l-4 border-blue-500 bg-[#f8fbff] p-4 sm:p-6 dark:bg-[#0f0f0f]">
       <SummaryBar row={fullData} />
-      <div className="mt-4 flex gap-0 border-b border-slate-200">
+      <div className="mt-4 flex gap-0 border-b border-slate-200 dark:border-[#333333]">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors ${activeTab === tab.key ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors ${activeTab === tab.key ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:text-[#999999] dark:hover:text-[#b3b3b3]'}`}
           >
             {tab.label}
           </button>

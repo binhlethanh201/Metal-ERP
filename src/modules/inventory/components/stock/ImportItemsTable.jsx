@@ -84,7 +84,7 @@ export const ImportItemsTable = ({
       key: 'productCode',
       header: 'Mã hàng',
       width: 120,
-      render: (val) => <span className="font-bold text-slate-800">{val}</span>,
+      render: (val) => <span className="font-bold text-slate-800 dark:text-[#d4d4d4]">{val}</span>,
     },
     {
       key: 'productName',
@@ -98,7 +98,7 @@ export const ImportItemsTable = ({
       width: 70,
       align: 'center',
       render: (_, row) => (
-        <span className="text-slate-500">{row.unitName || row.unit || '---'}</span>
+        <span className="text-slate-500 dark:text-[#999999]">{row.unitName || row.unit || '---'}</span>
       ),
     },
     {
@@ -109,7 +109,7 @@ export const ImportItemsTable = ({
       render: (_, row) => {
         const stock = row.actualStock ?? row.stock ?? row.availableStock ?? 0;
         return (
-          <span className={`font-semibold ${stock <= 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+          <span className={`font-semibold ${stock <= 0 ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
             {stock.toLocaleString('vi-VN')}
           </span>
         );
@@ -151,7 +151,7 @@ export const ImportItemsTable = ({
                 return;
               if (!/^\d$/.test(e.key)) e.preventDefault();
             }}
-            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm font-semibold outline-none focus:border-[#004785]"
+            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm font-semibold outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
           />
         );
       },
@@ -211,7 +211,7 @@ export const ImportItemsTable = ({
             : '---';
         return (
           <span
-            className="block truncate text-right font-bold tabular-nums text-slate-900"
+            className="block truncate text-right font-bold tabular-nums text-slate-900 dark:text-[#e5e5e5]"
             title={display}
           >
             {display}
@@ -238,11 +238,11 @@ export const ImportItemsTable = ({
   ];
 
   return (
-    <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Danh sách sản phẩm nhập</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-[#e5e5e5]">Danh sách sản phẩm nhập</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             Tìm nhanh bằng phím F3, chỉnh trực tiếp số lượng và đơn giá nhập.
           </p>
         </div>
@@ -274,7 +274,7 @@ export const ImportItemsTable = ({
           />
           <label
             htmlFor="excel-upload"
-            className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
           >
             <FileSpreadsheet size={16} />
             Import Excel

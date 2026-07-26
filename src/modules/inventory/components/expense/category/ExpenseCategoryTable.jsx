@@ -13,13 +13,13 @@ const ExpenseCategoryTable = ({
       key: 'categoryName',
       header: 'Tên nhóm chi phí',
       render: (_, c) => (
-        <span className="font-semibold text-slate-800">{c.categoryName}</span>
+        <span className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{c.categoryName}</span>
       ),
     },
     {
       key: 'voucherCount',
       header: <div className="text-center">Số phiếu</div>,
-      render: (val) => <div className="text-center font-medium text-slate-700">{val}</div>,
+      render: (val) => <div className="text-center font-medium text-slate-700 dark:text-[#b3b3b3]">{val}</div>,
     },
     {
       key: 'pendingCount',
@@ -29,7 +29,7 @@ const ExpenseCategoryTable = ({
           {val > 0 ? (
             <Badge variant="warning">{val}</Badge>
           ) : (
-            <span className="text-slate-400">0</span>
+            <span className="text-slate-400 dark:text-[#808080]">0</span>
           )}
         </div>
       ),

@@ -20,18 +20,18 @@ const StatCard = ({
   loading = false,
 }) => {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
+          <p className="text-sm font-medium text-slate-500 dark:text-[#999999]">{title}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-[#e5e5e5]">
             {loading ? (
-              <span className="inline-block h-8 w-24 animate-pulse rounded bg-slate-200" />
+              <span className="inline-block h-8 w-24 animate-pulse rounded bg-slate-200 dark:bg-[#272727]" />
             ) : (
               value
             )}
           </p>
-          {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">{subtitle}</p>}
           {trend && (
             <p
               className={`mt-2 flex items-center gap-1 text-xs font-medium ${trendUp ? 'text-emerald-600' : 'text-rose-600'}`}
@@ -59,8 +59,8 @@ export const TransactionStats = ({ stats, loading = false }) => {
         value: stats?.totalInward?.toLocaleString('vi-VN') || '0',
         subtitle: 'Tất cả chi nhánh',
         icon: PackagePlus,
-        iconBgColor: 'bg-emerald-100',
-        iconTextColor: 'text-emerald-600',
+        iconBgColor: 'bg-emerald-100 dark:bg-emerald-900/50',
+        iconTextColor: 'text-emerald-600 dark:text-emerald-300',
         trend: stats?.inwardTrend,
         trendUp: true,
       },
@@ -69,8 +69,8 @@ export const TransactionStats = ({ stats, loading = false }) => {
         value: stats?.totalOutward?.toLocaleString('vi-VN') || '0',
         subtitle: 'Tất cả chi nhánh',
         icon: PackageMinus,
-        iconBgColor: 'bg-rose-100',
-        iconTextColor: 'text-rose-600',
+        iconBgColor: 'bg-rose-100 dark:bg-rose-900/50',
+        iconTextColor: 'text-rose-600 dark:text-rose-300',
         trend: stats?.outwardTrend,
         trendUp: false,
       },
@@ -81,8 +81,8 @@ export const TransactionStats = ({ stats, loading = false }) => {
           : '0 đ',
         subtitle: 'Theo giá vốn',
         icon: TrendingUp,
-        iconBgColor: 'bg-emerald-100',
-        iconTextColor: 'text-emerald-600',
+        iconBgColor: 'bg-emerald-100 dark:bg-emerald-900/50',
+        iconTextColor: 'text-emerald-600 dark:text-emerald-300',
         trend: stats?.todayInwardTrend,
         trendUp: true,
       },
@@ -93,8 +93,8 @@ export const TransactionStats = ({ stats, loading = false }) => {
           : '0 đ',
         subtitle: 'Theo giá vốn',
         icon: TrendingDown,
-        iconBgColor: 'bg-rose-100',
-        iconTextColor: 'text-rose-600',
+        iconBgColor: 'bg-rose-100 dark:bg-rose-900/50',
+        iconTextColor: 'text-rose-600 dark:text-rose-300',
         trend: stats?.todayOutwardTrend,
         trendUp: false,
       },
@@ -103,8 +103,8 @@ export const TransactionStats = ({ stats, loading = false }) => {
         value: stats?.pendingCount?.toLocaleString('vi-VN') || '0',
         subtitle: 'Cần xử lý',
         icon: Clock,
-        iconBgColor: 'bg-amber-100',
-        iconTextColor: 'text-amber-600',
+        iconBgColor: 'bg-amber-100 dark:bg-amber-900/50',
+        iconTextColor: 'text-amber-600 dark:text-amber-300',
       },
       {
         title: 'Tổng giá trị tồn kho',
@@ -113,8 +113,8 @@ export const TransactionStats = ({ stats, loading = false }) => {
           : '0 đ',
         subtitle: 'Theo giá vốn',
         icon: Warehouse,
-        iconBgColor: 'bg-blue-100',
-        iconTextColor: 'text-blue-600',
+        iconBgColor: 'bg-blue-100 dark:bg-blue-900/50',
+        iconTextColor: 'text-blue-600 dark:text-blue-300',
       },
     ],
     [stats]

@@ -52,7 +52,7 @@ const BranchSettingsForm = ({ branchId }) => {
       <Card header="Chính sách đổi/trả hàng">
         <div className="flex items-center justify-center py-8">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#004785] border-t-transparent" />
-          <span className="ml-2 text-sm text-slate-500">Đang tải...</span>
+          <span className="ml-2 text-sm text-slate-500 dark:text-[#999999]">Đang tải...</span>
         </div>
       </Card>
     );
@@ -99,7 +99,7 @@ const BranchSettingsForm = ({ branchId }) => {
         <div className="grid gap-6 md:grid-cols-2">
           {/* Return Days */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Thời hạn trả hàng (ngày)
             </label>
             <Input
@@ -116,7 +116,7 @@ const BranchSettingsForm = ({ branchId }) => {
 
           {/* Exchange Days */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Thời hạn đổi hàng (ngày)
             </label>
             <Input

@@ -5,15 +5,15 @@ import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const toneMap = {
-  navy: { iconBox: 'bg-blue-50 text-blue-900 group-hover:bg-[#004785]', value: 'text-blue-900' },
+  navy: { iconBox: 'bg-blue-50 text-blue-900 group-hover:bg-[#004785] dark:bg-blue-900/50 dark:text-blue-100', value: 'text-blue-900 dark:text-blue-100' },
   orange: {
-    iconBox: 'bg-orange-50 text-orange-600 group-hover:bg-orange-600',
-    value: 'text-orange-600',
+    iconBox: 'bg-orange-50 text-orange-600 group-hover:bg-orange-600 dark:bg-orange-900/50 dark:text-orange-300',
+    value: 'text-orange-600 dark:text-orange-300',
   },
-  red: { iconBox: 'bg-red-50 text-red-600 group-hover:bg-red-600', value: 'text-red-600' },
+  red: { iconBox: 'bg-red-50 text-red-600 group-hover:bg-red-600 dark:bg-red-900/50 dark:text-red-300', value: 'text-red-600 dark:text-red-300' },
   green: {
-    iconBox: 'bg-green-50 text-green-600 group-hover:bg-green-600',
-    value: 'text-green-600',
+    iconBox: 'bg-green-50 text-green-600 group-hover:bg-green-600 dark:bg-green-900/50 dark:text-green-300',
+    value: 'text-green-600 dark:text-green-300',
   },
 };
 
@@ -21,7 +21,7 @@ const KPICard = ({ icon, label, value, unit, change, tone = 'navy' }) => {
   const colors = toneMap[tone] || toneMap.navy;
 
   return (
-    <div className="group rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-[#004785]">
+    <div className="group rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-[#004785] dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="mb-4 flex items-start justify-between">
         <div
           className={`rounded-lg p-2 transition-colors group-hover:text-white ${colors.iconBox}`}
@@ -29,16 +29,16 @@ const KPICard = ({ icon, label, value, unit, change, tone = 'navy' }) => {
           <Icon name={icon} />
         </div>
         {change && (
-          <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-bold text-green-600">
+          <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-bold text-green-600 dark:bg-green-900/50 dark:text-green-300">
             {change}
           </span>
         )}
       </div>
-      <p className="mb-1 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500">
+      <p className="mb-1 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500 dark:text-[#999999]">
         {label}
       </p>
       <h2 className={`text-2xl font-extrabold leading-tight ${colors.value}`}>{value}</h2>
-      <p className="mt-2 text-xs leading-[1.4] text-slate-400">{unit}</p>
+      <p className="mt-2 text-xs leading-[1.4] text-slate-400 dark:text-[#808080]">{unit}</p>
     </div>
   );
 };

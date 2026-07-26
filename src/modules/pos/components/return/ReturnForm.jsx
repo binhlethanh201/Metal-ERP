@@ -565,7 +565,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       {step === 1 && (
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Mã hóa đơn gốc <span className="text-red-500">*</span>
             </label>
             <Input
@@ -579,7 +579,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               onKeyDown={(e) => e.key === 'Enter' && handleFindInvoice()}
             />
           </div>
-          <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+          <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 dark:bg-[#1a1a1a]/50 dark:text-[#999999]">
             Nhập mã hóa đơn đã hoàn thành để tạo yêu cầu đổi/trả hàng. Hệ thống sẽ kiểm tra hóa đơn
             và hiển thị danh sách sản phẩm có thể đổi trả.
           </div>
@@ -589,26 +589,26 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       {step === 2 && invoice && (
         <div className="space-y-4">
           {/* Invoice info */}
-          <div className="rounded-lg bg-slate-50 p-4">
+          <div className="rounded-lg bg-slate-50 p-4 dark:bg-[#1a1a1a]/50">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Mã hóa đơn</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Mã hóa đơn</p>
                 <p className="mt-0.5 font-mono text-sm font-semibold">
                   {invoice.invoiceCode || invoice.invoiceId}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Khách hàng</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Khách hàng</p>
                 <p className="mt-0.5 font-semibold">{invoice.customerName || 'Khách lẻ'}</p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Ngày mua</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Ngày mua</p>
                 <p className="mt-0.5 text-sm">
                   {invoice.createdAt ? formatDateTime(invoice.createdAt) : '-'}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Tổng tiền</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Tổng tiền</p>
                 <p className="mt-0.5 font-semibold text-green-600">
                   {formatCurrency(invoice.totalAmount || 0)}
                 </p>
@@ -637,14 +637,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                   returnType === 'REFUND'
                     ? 'border-[#004785] bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-300'
+                    : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
                 }`}
               >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
                     returnType === 'REFUND'
                       ? 'bg-[#004785] text-white'
-                      : 'bg-slate-100 text-slate-500'
+                      : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
                   }`}
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -657,8 +657,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-900">Trả hàng</p>
-                  <p className="text-xs text-slate-500">Hoàn tiền cho khách</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Trả hàng</p>
+                  <p className="text-xs text-slate-500 dark:text-[#999999]">Hoàn tiền cho khách</p>
                 </div>
               </button>
               <button
@@ -670,7 +670,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                   returnType === 'EXCHANGE'
                     ? 'border-[#004785] bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-300'
+                    : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
                 }`}
               >
                 <div
@@ -690,8 +690,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-900">Đổi hàng</p>
-                  <p className="text-xs text-slate-500">Đổi sản phẩm cùng loại, không hoàn tiền</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Đổi hàng</p>
+                  <p className="text-xs text-slate-500 dark:text-[#999999]">Đổi sản phẩm cùng loại, không hoàn tiền</p>
                 </div>
               </button>
             </div>
@@ -702,7 +702,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Sản phẩm đổi trả <span className="text-red-500">*</span>
             </label>
-            <div className="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200">
+            <div className="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 dark:divide-[#333333] dark:border-[#333333]">
               {(invoice.items || []).map((item) => {
                 const itemKey = item._key || item.invoiceItemId || item.productId;
                 const selected = selectedProducts.find((p) => p._key === itemKey);
@@ -729,7 +729,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 return (
                   <div
                     key={itemKey}
-                    className={`flex items-center gap-2 px-3 py-2 transition-colors ${selected ? 'bg-blue-50' : notAllowed ? 'bg-slate-100 opacity-50 cursor-not-allowed select-none' : 'hover:bg-slate-50'}`}
+                    className={`flex items-center gap-2 px-3 py-2 transition-colors ${selected ? 'bg-blue-50' : notAllowed ? 'bg-slate-100 opacity-50 cursor-not-allowed select-none dark:bg-[#1a1a1a]' : 'hover:bg-slate-50 dark:hover:bg-[#272727]'}`}
                   >
                     <input
                       type="checkbox"
@@ -767,7 +767,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                           type="button"
                           disabled={notAllowed}
                           onClick={() => updateQty(itemKey, (selected.quantity || 1) - 1)}
-                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300' : 'border-slate-200 hover:bg-slate-100'}`}
+                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
                         >
                           -
                         </button>
@@ -778,7 +778,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                           type="button"
                           disabled={notAllowed}
                           onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
-                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300' : 'border-slate-200 hover:bg-slate-100'}`}
+                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
                         >
                           +
                         </button>
@@ -791,14 +791,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 );
               })}
               {(!invoice.items || invoice.items.length === 0) && (
-                <p className="p-4 text-center text-sm text-slate-400">Hóa đơn không có sản phẩm</p>
+                <p className="p-4 text-center text-sm text-slate-400 dark:text-[#808080]">Hóa đơn không có sản phẩm</p>
               )}
             </div>
           </div>
 
           {/* Reason */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Lý do đổi trả <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -806,7 +806,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               placeholder="VD: Sản phẩm bị lỗi kỹ thuật, khách không hài lòng, sai quy cách..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
           </div>
 
@@ -814,13 +814,13 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           {!isExchange && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   Phương thức hoàn tiền
                 </label>
                 <select
                   value={refundMethod}
                   onChange={(e) => setRefundMethod(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                 >
                   {REFUND_METHODS.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -830,11 +830,11 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   Số tiền hoàn dự kiến
                 </label>
-                <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                  <span className="text-lg font-bold text-green-700">
+                <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-700 dark:bg-green-900/30">
+                  <span className="text-lg font-bold text-green-700 dark:text-green-400">
                     {formatCurrency(totalRefund)}
                   </span>
                 </div>
@@ -844,7 +844,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Exchange note */}
           {isExchange && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/30">
               <div className="flex items-start gap-3">
                 <svg
                   className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
@@ -872,13 +872,13 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Notes */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Ghi chú</label>
             <textarea
               rows={2}
               placeholder="Ghi chú thêm (không bắt buộc)..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
           </div>
 

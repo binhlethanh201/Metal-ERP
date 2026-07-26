@@ -13,11 +13,11 @@ const OrderTable = ({
   onRowClick,
 }) => {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-xs">
           <thead>
-            <tr className="select-none border-b border-slate-300 bg-slate-50 font-mono text-[10px] font-black uppercase tracking-wider text-slate-400">
+            <tr className="select-none border-b border-slate-300 bg-slate-50 font-mono text-[10px] font-black uppercase tracking-wider text-slate-400 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#808080]">
               <th className="w-10 px-4 py-3">
                 <input
                   type="checkbox"
@@ -34,7 +34,7 @@ const OrderTable = ({
               <th className="px-4 py-3 text-right">Tổng tiền (VND)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 font-semibold text-slate-700">
+          <tbody className="divide-y divide-slate-200 font-semibold text-slate-700 dark:divide-[#333333] dark:text-[#b3b3b3]">
             {orders.map((order) => {
               const isChecked = selectedIds.includes(order.id);
               const isCurrentOpen = selectedOrderIds.includes(order.id);
@@ -47,7 +47,7 @@ const OrderTable = ({
                       ? 'border-y border-y-[#004785]/30 bg-blue-50/80'
                       : isChecked
                         ? 'bg-slate-50/80'
-                        : 'hover:bg-slate-50/50'
+                        : 'hover:bg-slate-50/50 dark:hover:bg-[#272727]/50'
                   }`}
                 >
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -59,10 +59,10 @@ const OrderTable = ({
                     />
                   </td>
                   <td className="px-4 py-3 font-mono font-black text-[#004785]">{order.code}</td>
-                  <td className="px-4 py-3 font-mono font-medium text-slate-400">
+                  <td className="px-4 py-3 font-mono font-medium text-slate-400 dark:text-[#808080]">
                     {formatDateTime(order.date)}
                   </td>
-                  <td className="max-w-[200px] truncate px-4 py-3 text-xs text-slate-900">
+                  <td className="max-w-[200px] truncate px-4 py-3 text-xs text-slate-900 dark:text-[#e5e5e5]">
                     {order.customer}
                   </td>
                   <td className="px-4 py-3">
@@ -82,12 +82,12 @@ const OrderTable = ({
                         ĐÃ XUẤT GIAO
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-[2px] border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                      <span className="inline-flex items-center rounded-[2px] border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#999999]">
                         CHỜ ĐIỀU PHỐI
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-xs font-black text-slate-900">
+                  <td className="px-4 py-3 text-right font-mono text-xs font-black text-slate-900 dark:text-[#e5e5e5]">
                     {order.total}
                   </td>
                 </tr>

@@ -63,24 +63,24 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
           <div className="font-bold text-[#004785]">
             {r.returnCode}
           </div>
-          <div className="text-xs font-medium text-slate-500">HĐ gốc: {r.invoiceCode || '—'}</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-[#999999]">HĐ gốc: {r.invoiceCode || '—'}</div>
         </div>
       ),
     },
     {
       key: 'staff',
       header: 'Nhân viên tạo',
-      render: (_, r) => <span className="text-slate-700">{r.staffName || '—'}</span>,
+      render: (_, r) => <span className="text-slate-700 dark:text-[#b3b3b3]">{r.staffName || '—'}</span>,
     },
     {
       key: 'type',
       header: 'Loại / Phương thức',
       render: (_, r) => (
         <div className="text-sm">
-          <div className="font-medium text-slate-700">
+          <div className="font-medium text-slate-700 dark:text-[#b3b3b3]">
             {TYPE_LABEL[r.returnType] || r.returnType}
           </div>
-          <div className="text-xs text-slate-800">
+          <div className="text-xs text-slate-800 dark:text-[#e5e5e5]">
             {METHOD_LABEL[r.refundMethod] || r.refundMethod}
           </div>
         </div>
@@ -90,7 +90,7 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
       key: 'amount',
       header: <div className="text-right">Tiền hoàn</div>,
       render: (_, r) => (
-        <div className="text-right font-semibold text-slate-800">
+        <div className="text-right font-semibold text-slate-800 dark:text-[#e5e5e5]">
           {formatCurrency(r.refundAmount)}
         </div>
       ),
@@ -106,7 +106,7 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
       key: 'createdAt',
       header: 'Ngày tạo',
       render: (_, r) => (
-        <span className="text-sm text-slate-800">
+        <span className="text-sm text-slate-800 dark:text-[#e5e5e5]">
           {r.createdAt ? formatDateTime(r.createdAt) : '—'}
         </span>
       ),
@@ -120,7 +120,7 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
       data={returns}
       loading={loading}
       emptyMessage="Không tìm thấy phiếu đổi/trả nào."
-      className="bg-white shadow-sm"
+      className="bg-white shadow-sm dark:bg-[#0f0f0f]"
       onClickRow={(row) => onViewDetail(row.returnOrderId)}
     />
   );

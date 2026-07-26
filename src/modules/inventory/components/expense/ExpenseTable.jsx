@@ -63,8 +63,8 @@ const ExpenseTable = ({
       header: 'Lý do',
       render: (_, v) => (
         <div>
-          <div className="max-w-xs truncate font-medium text-slate-800">{v.reason}</div>
-          {v.note && <div className="max-w-xs truncate text-xs text-slate-500">{v.note}</div>}
+          <div className="max-w-xs truncate font-medium text-slate-800 dark:text-[#e5e5e5]">{v.reason}</div>
+          {v.note && <div className="max-w-xs truncate text-xs text-slate-500 dark:text-[#999999]">{v.note}</div>}
         </div>
       ),
     },
@@ -79,7 +79,7 @@ const ExpenseTable = ({
       key: 'createdAt',
       header: 'Ngày tạo',
       render: (val) => (
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500 dark:text-[#999999]">
           {val ? new Date(val).toLocaleDateString('vi-VN') : '---'}
         </span>
       ),
@@ -102,8 +102,8 @@ const ExpenseTable = ({
       />
 
       {!loading && paginationMeta?.totalCount > 0 && (
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
               <select
@@ -112,7 +112,7 @@ const ExpenseTable = ({
                   setPageSize(Number(e.target.value));
                   setPageNumber(1);
                 }}
-                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785]"
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               >
                 <option value={20}>20 dòng</option>
                 <option value={50}>50 dòng</option>
@@ -130,18 +130,18 @@ const ExpenseTable = ({
               type="button"
               onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
               disabled={pageNumber <= 1}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
             >
               <Icon name="chevron_left" className="text-[18px]" />
             </button>
-            <div className="px-3 text-sm text-slate-700">
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
               Trang {pageNumber} / {paginationMeta.totalPages || 1}
             </div>
             <button
               type="button"
               onClick={() => setPageNumber((p) => Math.min(paginationMeta.totalPages || 1, p + 1))}
               disabled={pageNumber >= paginationMeta.totalPages}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
             >
               <Icon name="chevron_right" className="text-[18px]" />
             </button>

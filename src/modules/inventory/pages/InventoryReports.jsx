@@ -57,7 +57,7 @@ const LOW_STOCK_COLUMNS = [
       // Lấy cấu hình tương ứng, nếu không khớp thì dùng mặc định
       const config = severityMap[v] || {
         label: v || 'Bình thường',
-        className: 'bg-slate-100 text-slate-700 border border-slate-200',
+        className: 'bg-slate-100 text-slate-700 dark:text-[#b3b3b3] border border-slate-200 dark:border-[#333333]',
       };
 
       return (
@@ -260,15 +260,15 @@ export const InventoryReports = () => {
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Báo cáo Kho hàng</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Báo cáo Kho hàng</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             Kiểm soát chi tiết tình trạng xuất nhập và cảnh báo hàng hóa
           </p>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-slate-200 dark:border-[#333333]">
         <div className="no-scrollbar flex space-x-1 overflow-x-auto">
           {REPORT_TYPES.map((report) => (
             <button
@@ -277,7 +277,7 @@ export const InventoryReports = () => {
               className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
                 selectedReport === report.key
                   ? 'border-[#004785] bg-blue-50/50 text-[#004785]'
-                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                  : 'border-transparent text-slate-500 dark:text-[#999999] hover:border-slate-300 dark:border-[#404040] hover:text-slate-700 dark:text-[#b3b3b3]'
               }`}
             >
               {report.label}
@@ -287,7 +287,7 @@ export const InventoryReports = () => {
       </div>
 
       {/* Filters Area */}
-      <Card className="border-slate-200 bg-white shadow-sm" padding="p-5">
+      <Card className="border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] shadow-sm" padding="p-5">
         <div className="flex flex-wrap items-end gap-4">
           {/* Khoảng thời gian */}
           {selectedReport === 'stock-movement' && (
@@ -310,7 +310,7 @@ export const InventoryReports = () => {
               </div>
 
               <div className="min-w-[150px] flex-1 lg:flex-none">
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Nhóm sản phẩm
                 </label>
                 <select
@@ -319,7 +319,7 @@ export const InventoryReports = () => {
                     setCategoryId(e.target.value);
                     setProductId('');
                   }}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">-- Tất cả nhóm --</option>
                   {categories.map((c) => (
@@ -331,13 +331,13 @@ export const InventoryReports = () => {
               </div>
 
               <div className="min-w-[150px] flex-1 lg:flex-none">
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Sản phẩm cụ thể
                 </label>
                 <select
                   value={productId}
                   onChange={(e) => setProductId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">-- Tất cả sản phẩm --</option>
                   {products.map((product) => (
@@ -355,17 +355,17 @@ export const InventoryReports = () => {
 
           {/* Low Stock specifics */}
           {selectedReport === 'low-stock' && (
-            <div className="flex h-[38px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-4">
+            <div className="flex h-[38px] items-center gap-2 rounded-lg border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-4">
               <input
                 id="includeZeroStock"
                 type="checkbox"
                 checked={includeZeroStock}
                 onChange={(e) => setIncludeZeroStock(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-slate-300 dark:border-[#404040] text-blue-600 focus:ring-blue-500"
               />
               <label
                 htmlFor="includeZeroStock"
-                className="cursor-pointer text-sm font-medium text-slate-700"
+                className="cursor-pointer text-sm font-medium text-slate-700 dark:text-[#b3b3b3]"
               >
                 Không tồn kho
               </label>
@@ -376,7 +376,7 @@ export const InventoryReports = () => {
           <div className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto">
             <Button
               variant="secondary"
-              className="h-[38px] flex-1 border border-slate-300 bg-white sm:flex-none"
+              className="h-[38px] flex-1 border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] sm:flex-none"
               onClick={handleDownload}
               disabled={!hasDataToExport || selectedLoading}
             >
@@ -442,7 +442,7 @@ export const InventoryReports = () => {
           <>
             <div className="grid gap-4 md:grid-cols-3">
               <Card padding="p-5" className="border-l-4 border-l-blue-500">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                   Giá trị Tồn Đầu Kỳ
                 </p>
                 <p className="mt-1 text-2xl font-extrabold text-blue-700">
@@ -450,7 +450,7 @@ export const InventoryReports = () => {
                 </p>
               </Card>
               <Card padding="p-5" className="border-l-4 border-l-emerald-500">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                   Giá trị Nhập Trong Kỳ
                 </p>
                 <p className="mt-1 text-2xl font-extrabold text-emerald-600">
@@ -458,7 +458,7 @@ export const InventoryReports = () => {
                 </p>
               </Card>
               <Card padding="p-5" className="border-l-4 border-l-rose-500">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                   Giá trị Xuất Trong Kỳ
                 </p>
                 <p className="mt-1 text-2xl font-extrabold text-rose-600">

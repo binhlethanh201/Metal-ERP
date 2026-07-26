@@ -64,7 +64,7 @@ const LandingPage = () => {
         {/* ========== TRANG 1: NỘI DUNG CHÍNH ========== */}
         <div className="flex h-full w-screen shrink-0 flex-col overflow-y-auto overflow-x-hidden">
           {/* HEADER */}
-          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-6 shadow-sm backdrop-blur-md md:px-12">
+          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-6 shadow-sm backdrop-blur-md md:px-12 dark:border-[#333333] dark:bg-[#0f0f0f]/90">
             <div
               className="cursor-pointer transition-transform active:scale-95"
               onClick={() => handleSmoothNavigate('/')}
@@ -76,7 +76,7 @@ const LandingPage = () => {
               <button
                 type="button"
                 onClick={() => handleSmoothNavigate('/login')}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               >
                 ĐĂNG NHẬP
               </button>
@@ -91,7 +91,7 @@ const LandingPage = () => {
           </header>
 
           {/* HERO SECTION */}
-          <section className="relative shrink-0 overflow-hidden border-b border-slate-200 bg-white px-6 py-16 md:px-12 lg:py-24">
+          <section className="relative shrink-0 overflow-hidden border-b border-slate-200 bg-white px-6 py-16 md:px-12 lg:py-24 dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-12">
               <div className="space-y-6 text-left lg:col-span-6">
                 <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#004785] shadow-sm">
@@ -99,16 +99,16 @@ const LandingPage = () => {
                   Phiên bản nền tảng quản trị thông minh 2026
                 </div>
 
-                <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl md:leading-[1.12]">
+                <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl md:leading-[1.12] dark:text-[#e5e5e5]">
                   Quản trị chuỗi cung ứng{' '}
                   <span className="bg-gradient-to-r from-[#004785] to-[#1E293B] bg-clip-text text-transparent">
                     Vật liệu & Kim khí điện nước
                   </span>
                 </h1>
 
-                <p className="max-w-xl text-sm font-medium leading-relaxed text-slate-500 md:text-base">
+                <p className="max-w-xl text-sm font-medium leading-relaxed text-slate-500 md:text-base dark:text-[#999999]">
                   Giải quyết triệt để bài toán hao hụt vật tư tại kho và kiểm soát chặt chẽ dòng
-                  tiền điểm bán. <strong className="font-bold text-slate-800">MetalERP</strong> tự
+                  tiền điểm bán. <strong className="font-bold text-slate-800 dark:text-[#d4d4d4]">MetalERP</strong> tự
                   động hóa toàn diện quy trình kinh doanh từ điểm bán POS mượt mà đến hệ thống tối
                   ưu hóa danh mục tồn kho dựa trên dữ liệu trực quan.
                 </p>
@@ -128,7 +128,7 @@ const LandingPage = () => {
                   <button
                     type="button"
                     onClick={() => handleSmoothNavigate('/login')}
-                    className="flex items-center justify-center rounded-lg border border-slate-300 bg-white px-8 py-3.5 font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95"
+                    className="flex items-center justify-center rounded-lg border border-slate-300 bg-white px-8 py-3.5 font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-[#555555] dark:hover:bg-[#333333]"
                   >
                     ĐĂNG NHẬP NGAY
                   </button>
@@ -137,12 +137,12 @@ const LandingPage = () => {
 
               {/* HERO VISUAL */}
               <div className="hidden w-full lg:col-span-6 lg:block">
-                <div className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-8 shadow-2xl">
+                <div className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-8 shadow-2xl dark:border-[#333333] dark:bg-[#1a1a1a]">
                   <div className="absolute inset-0 bg-[linear-gradient(to_right,#E2E8F0_1px,transparent_1px),linear-gradient(to_bottom,#E2E8F0_1px,transparent_1px)] bg-[size:32px_32px] opacity-40" />
                   <div className="absolute -right-10 -top-10 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl transition-transform duration-1000 group-hover:translate-x-4" />
                   <div className="absolute bottom-10 left-10 h-64 w-64 rounded-full bg-[#004785]/5 blur-3xl" />
 
-                  <div className="relative z-10 flex h-full w-full flex-col justify-between rounded-lg border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm">
+                  <div className="relative z-10 flex h-full w-full flex-col justify-between rounded-lg border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-[#333333] dark:bg-[#0f0f0f]/80">
                     <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                       <span className="h-2.5 w-2.5 rounded-full bg-slate-200" />
                       <span className="h-2 w-16 rounded bg-slate-200" />
@@ -161,54 +161,54 @@ const LandingPage = () => {
           </section>
 
           {/* THẾ MẠNH NỀN TẢNG */}
-          <section className="shrink-0 border-b border-slate-200 bg-white px-6 py-12 md:px-12">
+          <section className="shrink-0 border-b border-slate-200 bg-white px-6 py-12 md:px-12 dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="mx-auto max-w-7xl">
               <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
                 <div className="space-y-1.5 lg:col-span-4">
                   <span className="block text-[10px] font-bold uppercase tracking-widest text-[#004785]">
                     Thế mạnh nền tảng
                   </span>
-                  <h2 className="text-xl font-bold uppercase tracking-tight text-slate-900">
+                  <h2 className="text-xl font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
                     Khác biệt của MetalERP
                   </h2>
-                  <p className="text-xs font-medium leading-relaxed text-slate-400">
+                  <p className="text-xs font-medium leading-relaxed text-slate-400 dark:text-[#808080]">
                     Tại sao các chủ doanh nghiệp lớn lại tin dùng MetalERP?
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-8">
-                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
                     <span className="block text-[#9A1616]">
                       <AlertCircle size={16} />
                     </span>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-900">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-900 dark:text-[#e5e5e5]">
                       Vượt trội hơn phần mềm cũ
                     </h4>
-                    <p className="text-xs font-medium leading-relaxed text-slate-500">
+                    <p className="text-xs font-medium leading-relaxed text-slate-500 dark:text-[#999999]">
                       Khác biệt hoàn toàn với các công cụ quản lý sổ sách đơn thuần chỉ tập trung
                       ghi chép dữ liệu nội bộ tĩnh.
                     </p>
                   </div>
-                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
                     <span className="block text-emerald-600">
                       <CheckCircle size={16} />
                     </span>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-900">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-900 dark:text-[#e5e5e5]">
                       Nhập kho tự động
                     </h4>
-                    <p className="text-xs font-medium leading-relaxed text-slate-500">
+                    <p className="text-xs font-medium leading-relaxed text-slate-500 dark:text-[#999999]">
                       Tích hợp công nghệ AI OCR tự động quét, nhận diện và bóc tách dữ liệu chứng từ
                       nhập kho vật tư từ ảnh chụp điện thoại.
                     </p>
                   </div>
-                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
                     <span className="block text-[#004785]">
                       <ShieldCheck size={16} />
                     </span>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-900">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-slate-900 dark:text-[#e5e5e5]">
                       Mạng lưới chuỗi liên kết
                     </h4>
-                    <p className="text-xs font-medium leading-relaxed text-slate-500">
+                    <p className="text-xs font-medium leading-relaxed text-slate-500 dark:text-[#999999]">
                       Tạo không gian chia sẻ thông số kỹ thuật, tương tác trực tiếp giữa xưởng đại
                       lý sỉ và cửa hàng bán lẻ điểm đơn.
                     </p>
@@ -222,11 +222,11 @@ const LandingPage = () => {
           <section className="shrink-0 bg-[#FAFAFA] px-6 py-16 md:px-12">
             <div className="mx-auto max-w-7xl">
               <div className="mb-10 text-left md:text-center">
-                <h2 className="text-xl font-bold uppercase tracking-tight text-slate-900">
+                <h2 className="text-xl font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
                   Giải pháp cho mọi nghiệp vụ kinh doanh chuyên sâu
                 </h2>
                 <div className="mt-2 h-1 w-10 bg-[#004785] md:mx-auto" />
-                <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#808080]">
                   [SYSTEM_INTEGRATION_INDEX] Đầy đủ cấu hình module lõi giúp doanh nghiệp vận hành
                   ổn định tinh gọn
                 </p>
@@ -238,15 +238,15 @@ const LandingPage = () => {
                   return (
                     <div
                       key={idx}
-                      className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-150 hover:border-[#004785] hover:shadow-md"
+                      className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-150 hover:border-[#004785] hover:shadow-md dark:border-[#333333] dark:bg-[#0f0f0f]"
                     >
-                      <div className="mb-4 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[#004785] transition-colors duration-150 group-hover:bg-[#004785] group-hover:text-white">
+                      <div className="mb-4 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[#004785] transition-colors duration-150 group-hover:bg-[#004785] group-hover:text-white dark:border-[#404040] dark:bg-[#1a1a1a]">
                         <IconComponent size={16} />
                       </div>
-                      <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-800">
+                      <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-800 dark:text-[#e5e5e5]">
                         {idx + 1}. {feature.title}
                       </h3>
-                      <p className="text-xs font-medium leading-relaxed text-slate-500">
+                      <p className="text-xs font-medium leading-relaxed text-slate-500 dark:text-[#999999]">
                         {feature.description}
                       </p>
                     </div>
@@ -257,12 +257,12 @@ const LandingPage = () => {
           </section>
 
           {/* FOOTER */}
-          <footer className="shrink-0 border-t border-slate-200 bg-white py-6">
+          <footer className="shrink-0 border-t border-slate-200 bg-white py-6 dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-4 md:flex-row md:justify-between md:px-12">
               <div className="shrink-0 opacity-90">
                 <Logo />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#808080]">
                 &copy; 2026 M.E.P METAL_ERP SYSTEM. TO&Agrave;N QUYỀN BẢO HỘ PHẦN MỀM CHUỖI CUNG
                 ỨNG.
               </span>

@@ -35,14 +35,14 @@ const RegisterStep1Email = ({ onNextStep }) => {
 
       <div className="space-y-1.5">
         <label
-          className="text-xs font-bold uppercase tracking-widest text-on-surface-variant"
+          className="text-xs font-bold uppercase tracking-widest text-on-surface-variant dark:text-[#999999]"
           htmlFor="email"
         >
           Email Doanh Nghiệp
         </label>
         <div className="group relative">
           <Mail
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary dark:text-[#808080]"
             size={18}
           />
           <input
@@ -55,7 +55,7 @@ const RegisterStep1Email = ({ onNextStep }) => {
               setError('');
             }}
             disabled={loading}
-            className="w-full rounded-md border border-outline-variant bg-surface-container-lowest py-3 pl-10 pr-4 text-sm font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60"
+            className="w-full rounded-md border border-outline-variant bg-surface-container-lowest py-3 pl-10 pr-4 text-sm font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60 dark:border-[#404040] dark:bg-[#0f0f0f] dark:text-[#e5e5e5]"
             placeholder="owner@mepcoffee.com"
           />
         </div>

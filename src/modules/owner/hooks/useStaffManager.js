@@ -49,7 +49,7 @@ export const useStaffManager = () => {
   const [currentUserId] = useState(decodeCurrentUserId());
 
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('active');
   const [paginationMeta, setPaginationMeta] = useState({ totalCount: 0, totalPages: 1 });
@@ -218,6 +218,7 @@ export const useStaffManager = () => {
     page,
     setPage,
     pageSize,
+    setPageSize,
     search,
     setSearch,
     statusFilter,

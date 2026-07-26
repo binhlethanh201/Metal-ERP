@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './shared/hooks/useAuth';
+import { ThemeProvider } from './shared/contexts/ThemeContext';
 
 // Layouts
 import PrivateRoute from './shared/components/layout/PrivateRoute';
@@ -87,19 +88,20 @@ const InventoryRedirect = () => {
 
 function App() {
   const LoadingSpinner = (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0f0f0f]">
       <div className="text-center">
         <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[#004785]" />
-        <p className="text-sm font-semibold text-slate-600">Đang tải dữ liệu...</p>
+        <p className="text-sm font-semibold text-slate-600 dark:text-[#999999]">Đang tải dữ liệu...</p>
       </div>
     </div>
   );
 
   return (
     <BrowserRouter>
-      <IdleTimeout timeoutMinutes={30} />
-      <Suspense fallback={LoadingSpinner}>
-        <Routes>
+      <ThemeProvider>
+        <IdleTimeout timeoutMinutes={30} />
+        <Suspense fallback={LoadingSpinner}>
+          <Routes>
           {/* PUBLIC ROUTE */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -186,7 +188,8 @@ function App() {
           <Route path="/500" element={<ServerError />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </Suspense>
+        </Suspense>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

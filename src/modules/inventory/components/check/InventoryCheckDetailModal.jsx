@@ -296,7 +296,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
     {
       key: 'productCode',
       header: 'Mã SP',
-      render: (val) => <span className="font-semibold text-slate-700">{val}</span>,
+      render: (val) => <span className="font-semibold text-slate-700 dark:text-[#d4d4d4]">{val}</span>,
     },
     {
       key: 'productName',
@@ -307,13 +307,13 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
       header: (
         <div className="text-center" title="Tồn kho được chốt từ DB tại thời điểm Fill.">
           Tồn Hệ Thống{' '}
-          <Icon name="info" size={14} className="inline align-text-bottom text-slate-400" />
+          <Icon name="info" size={14} className="inline align-text-bottom text-slate-400 dark:text-[#808080]" />
         </div>
       ),
       render: (_, item) => (
-        <div className="text-center font-bold text-slate-500">
+        <div className="text-center font-bold text-slate-500 dark:text-[#b3b3b3]">
           {isDraft ? (
-            <span className="italic text-slate-400" title="Sẽ được chốt khi bấm Gửi duyệt">
+            <span className="italic text-slate-400 dark:text-[#808080]" title="Sẽ được chốt khi bấm Gửi duyệt">
               Chốt lúc fill
             </span>
           ) : (
@@ -339,8 +339,8 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                 placeholder="Nhập..."
                 className={`w-24 rounded border px-2 py-1.5 text-center font-bold shadow-inner focus:outline-none focus:ring-2 focus:ring-[#004785] ${
                   !hasValue
-                    ? 'border-orange-300 bg-orange-50 text-orange-700'
-                    : 'border-slate-300 text-[#004785]'
+                    ? 'border-orange-300 bg-orange-50 text-orange-700 dark:text-orange-400 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-300'
+                    : 'border-slate-300 text-[#004785] dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                 }`}
                 value={currentActualRaw}
                 onChange={(e) =>
@@ -377,16 +377,16 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
             className={`text-center font-bold ${
               isDraft
                 ? !hasValue
-                  ? 'text-slate-300'
+                  ? 'text-slate-300 dark:text-[#666666]'
                   : displayDiscrepancy === 0
-                    ? 'text-slate-400'
+                    ? 'text-slate-400 dark:text-[#808080]'
                     : displayDiscrepancy > 0
                       ? 'text-emerald-600'
                       : 'text-red-600'
                 : !item.isCounted
-                  ? 'text-slate-300'
+                  ? 'text-slate-300 dark:text-[#666666]'
                   : item.discrepancy === 0
-                    ? 'text-slate-400'
+                    ? 'text-slate-400 dark:text-[#808080]'
                     : item.discrepancy > 0
                       ? 'text-emerald-600'
                       : 'text-red-600'
@@ -419,7 +419,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
             <input
               type="text"
               placeholder="Nhập giải trình..."
-              className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-[#004785] focus:outline-none"
+              className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
               value={reasonNotes[item.detailId] || ''}
               onChange={(e) =>
                 setReasonNotes((prev) => ({
@@ -430,7 +430,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
             />
           );
         }
-        return <span className="text-xs italic text-slate-500">{item.reasonNote || '—'}</span>;
+        return <span className="text-xs italic text-slate-500 dark:text-[#999999]">{item.reasonNote || '—'}</span>;
       },
     });
   }
@@ -475,7 +475,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                 variant="secondary"
                 onClick={() => setIsCancelling(true)}
                 disabled={actionLoading}
-                className="flex items-center gap-2 border border-slate-300 bg-white"
+                className="flex items-center gap-2 border border-slate-300 bg-white dark:border-[#404040] dark:bg-[#272727]"
               >
                 <Icon name="Ban" size={18} /> Hủy phiếu
               </Button>
@@ -596,22 +596,22 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   // ==================== CẤU HÌNH HEADER TITLE ====================
   const modalTitle = (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-lg font-bold text-slate-800">
+      <div className="flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
         Chi tiết phiếu: <span className="text-[#004785]">{detailData?.ticketCode || '...'}</span>
         {detailData?.recountNumber > 0 && (
           <Badge variant="warning">Đếm lại lần {detailData.recountNumber}</Badge>
         )}
       </div>
-      <div className="text-sm font-normal text-slate-500">
+      <div className="text-sm font-normal text-slate-500 dark:text-[#999999]">
         Người phụ trách:{' '}
-        <strong className="text-slate-700">
+        <strong className="text-slate-700 dark:text-[#d4d4d4]">
           {formatUserName(detailData?.assigneeUserName) || 'Chưa gán'}
         </strong>
         {detailData?.createdByUserName && (
           <>
             {' '}
             • Người tạo:{' '}
-            <strong className="text-slate-700">
+            <strong className="text-slate-700 dark:text-[#d4d4d4]">
               {formatUserName(detailData.createdByUserName)}
             </strong>
           </>
@@ -623,7 +623,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="5xl" footer={modalFooter}>
       {loading ? (
-        <div className="py-10 text-center text-slate-400">
+        <div className="py-10 text-center text-slate-400 dark:text-[#808080]">
           <Icon name="sync" className="mb-2 animate-spin text-3xl" />
           <p>Đang tải chi tiết phiếu...</p>
         </div>
@@ -649,7 +649,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
             </Badge>
 
             {detailData.notes && (
-              <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700">
+              <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 dark:border-[#333333] dark:bg-[#1a1a1a]/50 dark:text-[#b3b3b3]">
                 <strong>Ghi chú:</strong> {detailData.notes}
               </div>
             )}
@@ -657,13 +657,13 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
 
           {/* Cảnh báo đếm lại */}
           {detailData.recountNumber > 0 && (
-            <div className="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4 shadow-sm">
+            <div className="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4 shadow-sm dark:border-orange-800 dark:bg-orange-950/30">
               <Icon name="warning" className="mt-0.5 shrink-0 text-orange-500" size={20} />
               <div>
-                <strong className="mb-1 block text-sm font-bold text-orange-800">
+                <strong className="mb-1 block text-sm font-bold text-orange-800 dark:text-orange-300">
                   Phiếu này đã bị yêu cầu đếm lại!
                 </strong>
-                <span className="text-sm italic text-orange-700">
+                <span className="text-sm italic text-orange-700 dark:text-orange-400">
                   Lý do: "{detailData.recountReason}"
                 </span>
               </div>
@@ -671,7 +671,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
           )}
 
           {/* Bảng chi tiết sản phẩm */}
-          <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#0f0f0f]">
             <Table
               columns={tableColumns}
               data={detailData.details || []}
@@ -679,7 +679,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
               emptyMessage="Không có sản phẩm nào trong phiếu."
             />
             {isDraft && (
-              <div className="border-t border-blue-100 bg-blue-50 p-3 text-center text-xs italic text-blue-600">
+              <div className="border-t border-blue-100 bg-blue-50 p-3 text-center text-xs italic text-blue-600 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400">
                 * Cột "Tồn Hệ Thống" và "Chênh Lệch" sẽ được hệ thống chốt chính xác từ DB tại thời
                 điểm bấm "Gửi duyệt".
               </div>
@@ -688,7 +688,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
 
           {/* Hiển thị Banner Lỗi */}
           {error && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
               <Icon name="error" size={18} className="mt-0.5 shrink-0" />
               <span className="flex-1">{error}</span>
               <button onClick={() => setError('')} className="text-red-400 hover:text-red-600">
@@ -699,7 +699,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
 
           {/* Form phụ: lý do đếm lại */}
           {isRejecting && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
               <Textarea
                 label="Lý do yêu cầu đếm lại"
                 required
@@ -713,11 +713,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
 
           {/* Form phụ: lý do hủy phiếu */}
           {isCancelling && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
               <Textarea
                 label={
                   <>
-                    Lý do hủy phiếu <span className="font-normal text-slate-400">(tùy chọn)</span>
+                    Lý do hủy phiếu <span className="font-normal text-slate-400 dark:text-[#808080]">(tùy chọn)</span>
                   </>
                 }
                 placeholder="VD: Hủy vì sai sản phẩm..."

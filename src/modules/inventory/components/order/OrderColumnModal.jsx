@@ -56,20 +56,20 @@ const OrderColumnModal = ({
         </div>
       }
     >
-      <p className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">ĐƠN HÀNG</p>
+      <p className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#808080]">ĐƠN HÀNG</p>
       <div className="flex gap-4">
         {/* Main grid */}
         <div className="flex-1 overflow-auto" style={{ maxHeight: '50vh' }}>
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left">
-                <th className="px-3 py-2 text-xs font-bold uppercase text-slate-500">
+              <tr className="border-b border-slate-200 bg-slate-50 text-left dark:border-[#333333] dark:bg-[#1a1a1a]">
+                <th className="px-3 py-2 text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   Tên cột dữ liệu
                 </th>
-                <th className="px-3 py-2 text-xs font-bold uppercase text-slate-500">
+                <th className="px-3 py-2 text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   Tên cột hiển thị
                 </th>
-                <th className="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500">
+                <th className="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   <div className="flex items-center justify-center gap-1">
                     <input
                       type="checkbox"
@@ -89,7 +89,7 @@ const OrderColumnModal = ({
                     <span>Hiển thị</span>
                   </div>
                 </th>
-                <th className="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500">
+                <th className="px-3 py-2 text-center text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   <div className="flex items-center justify-center gap-1">
                     <input
                       type="checkbox"
@@ -132,11 +132,11 @@ const OrderColumnModal = ({
                   <tr
                     key={col.key}
                     onClick={() => setSelectedColKey(colKey)}
-                    className={`cursor-pointer border-b border-slate-50 text-sm hover:bg-blue-50/30 ${
-                      selectedColKey === colKey ? 'bg-blue-50/60' : ''
+                    className={`cursor-pointer border-b border-slate-50 text-sm hover:bg-blue-50/30 dark:border-[#333333] dark:hover:bg-[#333333] ${
+                      selectedColKey === colKey ? 'bg-blue-50/60 dark:bg-[#272727]' : ''
                     }`}
                   >
-                    <td className="px-3 py-2 text-xs text-slate-600">{col.header}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 dark:text-[#b3b3b3]">{col.header}</td>
                     <td className="px-3 py-2">
                       <input
                         type="text"
@@ -148,7 +148,7 @@ const OrderColumnModal = ({
                             [colKey]: { ...cfg, displayName: e.target.value },
                           });
                         }}
-                        className="w-full rounded border border-slate-200 px-2 py-1 text-xs focus:border-[#004785] focus:outline-none"
+                        className="w-full rounded border border-slate-200 px-2 py-1 text-xs focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                       />
                     </td>
                     <td className="px-3 py-2 text-center">
@@ -199,7 +199,7 @@ const OrderColumnModal = ({
               setEditColOrder(next);
             }}
             disabled={!selectedColKey}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             title="Di chuyển lên"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,7 +221,7 @@ const OrderColumnModal = ({
               setEditColOrder(next);
             }}
             disabled={!selectedColKey}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             title="Di chuyển xuống"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

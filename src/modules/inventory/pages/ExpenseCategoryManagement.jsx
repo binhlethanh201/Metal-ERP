@@ -88,12 +88,12 @@ const ExpenseCategoryManagement = () => {
   }, [categories]);
 
   return (
-    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+    <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* ==================== PAGE HEADER ==================== */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nhóm Chi Phí</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Nhóm Chi Phí</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">
             Quản lý danh mục nhóm chi phí dùng để phân loại phiếu chi tiền.
           </p>
         </div>
@@ -124,10 +124,10 @@ const ExpenseCategoryManagement = () => {
       )}
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
-      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a]/60 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
               <Filter size={14} /> Trạng thái:
             </span>
             {[
@@ -184,14 +184,14 @@ const ExpenseCategoryManagement = () => {
 
       {/* Pagination */}
       {!loading && filteredCategories.length > 0 && (
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                className="rounded border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] px-2 py-1 text-xs outline-none focus:border-primary"
               >
                 <option value={20}>20 dòng</option>
                 <option value={50}>50 dòng</option>
@@ -209,18 +209,18 @@ const ExpenseCategoryManagement = () => {
               type="button"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333] disabled:opacity-50"
             >
               <Icon name="chevron_left" className="text-[18px]" />
             </button>
-            <div className="px-3 text-sm text-slate-700">
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
               Trang {currentPage} / {totalPages}
             </div>
             <button
               type="button"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333] disabled:opacity-50"
             >
               <Icon name="chevron_right" className="text-[18px]" />
             </button>

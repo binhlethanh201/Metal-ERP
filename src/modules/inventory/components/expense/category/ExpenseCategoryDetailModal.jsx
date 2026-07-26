@@ -53,7 +53,7 @@ const ExpenseCategoryDetailModal = ({
 
   const detailTitle = category ? (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-lg font-bold text-slate-800">
+      <div className="flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
         Chi tiết nhóm chi phí
       </div>
     </div>
@@ -69,7 +69,7 @@ const ExpenseCategoryDetailModal = ({
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
-          className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50"
+          className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
           onClick={handleDelete}
           disabled={saving}
         >
@@ -107,8 +107,8 @@ const ExpenseCategoryDetailModal = ({
       {category ? (
         <div className="space-y-5">
           {isEditing ? (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                 Tên nhóm chi phí
               </label>
               <Input
@@ -119,21 +119,21 @@ const ExpenseCategoryDetailModal = ({
               />
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 p-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 p-4 sm:grid-cols-2 dark:border-[#333333]">
               <div className="sm:col-span-2">
-                <div className="text-xs font-medium uppercase text-slate-400">Tên nhóm chi phí</div>
-                <div className="mt-0.5 text-base font-bold text-slate-800">
+                <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Tên nhóm chi phí</div>
+                <div className="mt-0.5 text-base font-bold text-slate-800 dark:text-[#e5e5e5]">
                   {category.categoryName}
                 </div>
               </div>
               <div>
-                <div className="text-xs font-medium uppercase text-slate-400">Số phiếu</div>
-                <div className="mt-0.5 text-sm font-semibold text-slate-800">
+                <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Số phiếu</div>
+                <div className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
                   {category.voucherCount ?? 0}
                 </div>
               </div>
               <div>
-                <div className="text-xs font-medium uppercase text-slate-400">Đang chờ</div>
+                <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Đang chờ</div>
                 <div className="mt-0.5">
                   {category.pendingCount > 0 ? (
                     <Badge variant="warning">{category.pendingCount}</Badge>
@@ -143,7 +143,7 @@ const ExpenseCategoryDetailModal = ({
                 </div>
               </div>
               <div>
-                <div className="text-xs font-medium uppercase text-slate-400">Trạng thái</div>
+                <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Trạng thái</div>
                 <div className="mt-0.5">
                   {category.isActive ? (
                     <Badge variant="success" size="sm">HOẠT ĐỘNG</Badge>
@@ -156,7 +156,7 @@ const ExpenseCategoryDetailModal = ({
           )}
         </div>
       ) : (
-        <div className="py-6 text-center text-sm text-slate-400">Không có dữ liệu</div>
+        <div className="py-6 text-center text-sm text-slate-400 dark:text-[#808080]">Không có dữ liệu</div>
       )}
     </Modal>
   );

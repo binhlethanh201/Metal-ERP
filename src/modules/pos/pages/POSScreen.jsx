@@ -988,7 +988,7 @@ const POSScreen = () => {
     <>
       <div className="flex flex-1 gap-2 overflow-hidden p-3">
         {/* Center: Cart panel */}
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333] dark:bg-[#1a1a1a]">
           <CustomerBar
             selectedCustomer={selectedCustomer}
             onOpenPicker={() => setShowCustModal(true)}
@@ -1040,11 +1040,11 @@ const POSScreen = () => {
         </div>
 
         {/* Right: Product panel */}
-        <div className="flex w-[500px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="shrink-0 border-b border-slate-100 px-3 py-2">
-            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
+        <div className="flex w-[500px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333] dark:bg-[#1a1a1a]">
+          <div className="shrink-0 border-b border-slate-100 px-3 py-2 dark:border-[#333]">
+            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-[#444] dark:bg-[#272727]">
               <svg
-                className="mr-2 h-4 w-4 shrink-0 text-slate-400"
+                className="mr-2 h-4 w-4 shrink-0 text-slate-400 dark:text-[#888]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1060,7 +1060,7 @@ const POSScreen = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm sản phẩm..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 dark:text-[#e5e5e5] dark:placeholder:text-[#888]"
               />
               {productsLoading && posProducts.length > 0 && (
                 <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
@@ -1072,22 +1072,22 @@ const POSScreen = () => {
               <div className="space-y-4 p-4">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="flex animate-pulse gap-4">
-                    <div className="h-16 w-16 shrink-0 rounded-lg bg-slate-200"></div>
+                    <div className="h-16 w-16 shrink-0 rounded-lg bg-slate-200 dark:bg-[#333]"></div>
                     <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 w-3/4 rounded bg-slate-200"></div>
-                      <div className="h-3 w-1/4 rounded bg-slate-200"></div>
-                      <div className="h-4 w-1/2 rounded bg-slate-200"></div>
+                      <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-[#333]"></div>
+                      <div className="h-3 w-1/4 rounded bg-slate-200 dark:bg-[#333]"></div>
+                      <div className="h-4 w-1/2 rounded bg-slate-200 dark:bg-[#333]"></div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : productsError ? (
               <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-                <div className="mb-4 rounded-full bg-red-50 p-4 text-red-500">
+                <div className="mb-4 rounded-full bg-red-50 p-4 text-red-500 dark:bg-red-900/50">
                   <Icon name="cloud_off" size={32} />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-slate-800">Lỗi kết nối</h3>
-                <p className="mb-4 text-sm text-slate-500">{productsError}</p>
+                <h3 className="mb-2 text-lg font-semibold text-slate-800 dark:text-[#e5e5e5]">Lỗi kết nối</h3>
+                <p className="mb-4 text-sm text-slate-500 dark:text-[#999]">{productsError}</p>
                 <button
                   onClick={() => refetchProducts(search)}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800"

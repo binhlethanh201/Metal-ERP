@@ -98,8 +98,8 @@ const SupplierManagement = () => {
     <div className="animate-fade-in mt-2 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Quản lý nhà cung cấp</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Quản lý nhà cung cấp</h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-[#b3b3b3]">
             Theo dõi danh sách nhà cung cấp, thông tin liên hệ và công nợ tổng quan.
           </p>
         </div>
@@ -108,7 +108,7 @@ const SupplierManagement = () => {
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/inventory/supplier-debt')}
-            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-[#b3b3b3] shadow-sm transition hover:bg-slate-50 dark:hover:bg-[#333333]"
           >
             <Icon name="account_balance_wallet" size={18} />
             Sổ Công Nợ
@@ -124,32 +124,32 @@ const SupplierManagement = () => {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">
           {error}
         </div>
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card padding="p-4" className="border border-slate-200">
-          <p className="text-sm font-semibold text-slate-500">Tổng nhà cung cấp</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{suppliers.length}</p>
+        <Card padding="p-4" className="border border-slate-200 dark:border-[#333333]">
+          <p className="text-sm font-semibold text-slate-500 dark:text-[#999999]">Tổng nhà cung cấp</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">{suppliers.length}</p>
           <p className="mt-1 text-sm font-medium text-emerald-600">
             Đang hoạt động: {summary.activeSuppliers}
           </p>
         </Card>
-        <Card padding="p-4" className="border border-slate-200">
-          <p className="text-sm font-semibold text-slate-500">Tổng công nợ</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
+        <Card padding="p-4" className="border border-slate-200 dark:border-[#333333]">
+          <p className="text-sm font-semibold text-slate-500 dark:text-[#999999]">Tổng công nợ</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">
             {formatCurrency(summary.totalDebt)}
           </p>
-          <p className="mt-1 text-sm font-medium text-slate-500">Tổng số tiền cần thanh toán</p>
+          <p className="mt-1 text-sm font-medium text-slate-500 dark:text-[#999999]">Tổng số tiền cần thanh toán</p>
         </Card>
-        <Card padding="p-4" className="border border-red-100 bg-red-50/50">
-          <p className="text-sm font-semibold text-red-600">Nợ cần ưu tiên</p>
-          <p className="mt-2 text-3xl font-bold text-red-600">
+        <Card padding="p-4" className="border border-red-100 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20">
+          <p className="text-sm font-semibold text-red-600 dark:text-red-400">Nợ cần ưu tiên</p>
+          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
             {formatCurrency(summary.overdueDebt)}
           </p>
-          <p className="mt-1 text-sm font-medium text-red-500">Đã đến hạn hoặc sắp đến hạn</p>
+          <p className="mt-1 text-sm font-medium text-red-500 dark:text-red-400">Đã đến hạn hoặc sắp đến hạn</p>
         </Card>
       </div>
 
@@ -161,14 +161,14 @@ const SupplierManagement = () => {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 placeholder="Tìm theo tên, nhóm, số điện thoại..."
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm outline-none focus:border-blue-500"
               />
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <select
                 value={groupFilter}
                 onChange={(e) => { setGroupFilter(e.target.value); setCurrentPage(1); }}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
+                className="rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-[#b3b3b3] outline-none focus:border-blue-500"
               >
                 <option value="all">Tất cả nhóm</option>
                 {groupOptions.map((group) => (
@@ -180,7 +180,7 @@ const SupplierManagement = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
+                className="rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-[#b3b3b3] outline-none focus:border-blue-500"
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="active">Đang hợp tác</option>
@@ -197,14 +197,14 @@ const SupplierManagement = () => {
 
           {/* Pagination */}
           {!loading && suppliers.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-              <div className="flex items-center gap-4 text-sm text-slate-600">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 dark:border-[#333333] pt-4">
+              <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
                 <div className="flex items-center gap-2">
                   <span>Hiển thị</span>
                   <select
                     value={pageSize}
                     onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                    className="rounded border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] px-2 py-1 text-xs outline-none focus:border-primary"
                   >
                     <option value={20}>20 dòng</option>
                     <option value={50}>50 dòng</option>
@@ -222,18 +222,18 @@ const SupplierManagement = () => {
                   type="button"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-lg border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333] disabled:opacity-50"
                 >
                   <Icon name="chevron_left" className="text-[18px]" />
                 </button>
-                <div className="px-3 text-sm text-slate-700">
+                <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
                   Trang {currentPage} / {totalPages}
                 </div>
                 <button
                   type="button"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-lg border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333] disabled:opacity-50"
                 >
                   <Icon name="chevron_right" className="text-[18px]" />
                 </button>
@@ -266,11 +266,11 @@ const SupplierManagement = () => {
               {suppliers.map((supplier) => (
                 <div
                   key={supplier.id}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100"
+                  className="rounded-xl border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] p-3 transition-colors hover:bg-slate-100 dark:hover:bg-[#333333]"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-bold text-slate-900">{supplier.name}</p>
+                      <p className="font-bold text-slate-900 dark:text-[#e5e5e5]">{supplier.name}</p>
                       <p className="mt-1 text-sm font-semibold text-blue-700">
                         Nợ: {formatCurrency(supplier.currentDebt || 0)}
                       </p>

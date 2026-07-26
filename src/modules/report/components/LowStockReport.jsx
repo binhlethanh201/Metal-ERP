@@ -9,7 +9,7 @@ export const LowStockReport = ({ data, isLoading }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const items = data?.items || [];
+  const items = useMemo(() => data?.items || [], [data?.items]);
   const totalPages = Math.ceil(items.length / pageSize) || 1;
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -43,11 +43,11 @@ export const LowStockReport = ({ data, isLoading }) => {
           emptyMessage="Kho đang ở trạng thái an toàn, không có mặt hàng nào sắp hết."
         />
         {items.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-3">
-            <div className="flex items-center gap-4 text-sm text-slate-600">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
+            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
               <div className="flex items-center gap-2">
                 <span>Hiển thị</span>
-                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary">
+                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]">
                   <option value={20}>20 dòng</option>
                   <option value={50}>50 dòng</option>
                   <option value={100}>100 dòng</option>
@@ -56,11 +56,11 @@ export const LowStockReport = ({ data, isLoading }) => {
               <span>{(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, items.length)} trong tổng số {items.length} dòng</span>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+              <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]">
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              <div className="px-3 text-sm text-slate-700">Trang {currentPage} / {totalPages}</div>
-              <button type="button" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">Trang {currentPage} / {totalPages}</div>
+              <button type="button" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]">
                 <Icon name="chevron_right" className="text-[18px]" />
               </button>
             </div>
