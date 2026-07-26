@@ -87,7 +87,7 @@ const OrderDetailPanel = ({ order, detailTab, onTabChange, onClose }) => {
             <tbody>
               {order.items.map((item, idx) => (
                 <tr key={idx} className="border-b border-slate-50 text-xs dark:border-[#333333]">
-                  <td className="px-3 py-1 font-mono text-[11px] text-[#004785]">{item.sku}</td>
+                  <td className="px-3 py-1 font-mono text-[11px] text-[#004785] dark:text-blue-300">{item.sku}</td>
                   <td className="px-3 py-1 text-[11px] dark:text-[#d4d4d4]">{item.name}</td>
                   <td className="px-3 py-1 text-[11px] dark:text-[#b3b3b3]">{item.unit}</td>
                   <td className="px-3 py-1 text-right text-[11px] dark:text-[#b3b3b3]">

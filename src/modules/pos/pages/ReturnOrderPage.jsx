@@ -378,7 +378,7 @@ const ReturnOrderPage = () => {
       key: 'returnCode',
       header: 'Mã đơn',
       width: '160px',
-      render: (v) => <span className="font-mono text-xs font-bold text-[#004785]">{v}</span>,
+      render: (v) => <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{v}</span>,
     },
     {
       key: 'createdAt',

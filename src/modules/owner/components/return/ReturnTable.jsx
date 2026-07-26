@@ -60,7 +60,7 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
       header: 'Phiếu đổi/trả',
       render: (_, r) => (
         <div>
-          <div className="font-bold text-[#004785]">
+          <div className="font-bold text-[#004785] dark:text-blue-300">
             {r.returnCode}
           </div>
           <div className="text-xs font-medium text-slate-500 dark:text-[#999999]">HĐ gốc: {r.invoiceCode || '—'}</div>

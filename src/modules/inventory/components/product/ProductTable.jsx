@@ -186,7 +186,7 @@ export const ProductTable = ({
                         <Icon name="image" className="text-slate-400 dark:text-[#808080]" size={20} />
                       )}
                     </div>
-                    <span className="truncate font-medium text-primary">
+                    <span className="truncate font-medium text-primary dark:text-blue-300">
                       {row.productCode || row.id}
                     </span>
                   </div>

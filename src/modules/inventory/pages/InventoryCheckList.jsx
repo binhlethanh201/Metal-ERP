@@ -249,7 +249,7 @@ const InventoryCheckList = () => {
       header: 'Mã phiếu',
       render: (_, row) => (
         <div className="flex flex-col items-start gap-1">
-          <span className="font-bold text-[#004785]">
+          <span className="font-bold text-[#004785] dark:text-blue-300">
             {row.ticketCode}
           </span>
           {row.recountNumber > 0 && (

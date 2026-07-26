@@ -59,7 +59,7 @@ const ReconciliationDetailTable = ({ orders, selectedIds, onToggle, onToggleAll 
                       className="h-3.5 w-3.5 rounded text-[#004785]"
                     />
                   </td>
-                  <td className="px-2 py-1.5 font-mono text-[11px] font-medium text-[#004785]">
+                  <td className="px-2 py-1.5 font-mono text-[11px] font-medium text-[#004785] dark:text-blue-300">
                     {order.id}
                   </td>
                   <td className="px-2 py-1.5 text-[11px] text-slate-600 dark:text-[#b3b3b3]">{order.createdDate}</td>

@@ -214,7 +214,7 @@ export const InventoryHistoryCard = ({
       header: 'Mã phiếu',
       width: '140px',
       render: (_, row) => (
-        <span className="font-bold text-[#004785]">
+        <span className="font-bold text-[#004785] dark:text-blue-300">
           {row.ticketCode || row.id}
         </span>
       ),

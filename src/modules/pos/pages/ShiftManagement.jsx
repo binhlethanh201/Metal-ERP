@@ -905,7 +905,7 @@ export const ShiftManagement = () => {
                                 </div>
                                 <div className="flex flex-col">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
+                                    <span className="shrink-0 font-mono text-xs font-bold text-[#004785] dark:text-blue-300">
                                       {act.code}
                                     </span>
                                     <span className="rounded bg-green-100 px-1 py-0.5 text-[9px] font-semibold text-green-700">
@@ -1710,7 +1710,7 @@ export const ShiftManagement = () => {
                                     />
                                   </svg>
                                 </div>
-                                <span className="shrink-0 font-mono text-xs font-bold text-[#004785]">
+                                <span className="shrink-0 font-mono text-xs font-bold text-[#004785] dark:text-blue-300">
                                   {act.code}
                                 </span>
                                 <span className="rounded bg-green-100 px-1 py-0.5 text-[9px] font-semibold text-green-700">

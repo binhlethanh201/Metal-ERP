@@ -54,7 +54,7 @@ const ExpenseTable = ({
     {
       key: 'voucherCode',
       header: 'Mã phiếu',
-      render: (val) => <span className="font-mono text-xs font-bold text-[#004785]">{val}</span>,
+      render: (val) => <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{val}</span>,
     },
     { key: 'categoryName', header: 'Nhóm chi phí' },
     { key: 'supplierName', header: 'Nhà cung cấp', render: (val) => val || '---' },

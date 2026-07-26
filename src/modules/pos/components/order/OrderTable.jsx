@@ -58,7 +58,7 @@ const OrderTable = ({
                       onChange={() => onToggleSelect(order.id)}
                     />
                   </td>
-                  <td className="px-4 py-3 font-mono font-black text-[#004785]">{order.code}</td>
+                  <td className="px-4 py-3 font-mono font-black text-[#004785] dark:text-blue-300">{order.code}</td>
                   <td className="px-4 py-3 font-mono font-medium text-slate-400 dark:text-[#808080]">
                     {formatDateTime(order.date)}
                   </td>

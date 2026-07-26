@@ -103,8 +103,8 @@ export const ProductManagement = () => {
       )}
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Hàng hóa</h1>
-          <p className="mt-1 text-sm text-gray-600">Quản lý kho hàng hóa</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Hàng hóa</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-[#b3b3b3]">Quản lý kho hàng hóa</p>
         </div>
         <div
           className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${

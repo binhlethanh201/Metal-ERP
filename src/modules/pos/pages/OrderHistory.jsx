@@ -762,7 +762,7 @@ const OrderHistory = () => {
         const exchanged = exchangeByInvoice[code];
         return (
           <div className="flex flex-col gap-0.5">
-            <span className="font-mono text-xs font-bold text-[#004785]">{code}</span>
+            <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{code}</span>
             <div className="flex flex-wrap gap-1">
               {refunded > 0 && (
                 <span className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
