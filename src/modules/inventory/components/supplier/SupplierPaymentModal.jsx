@@ -45,7 +45,7 @@ const SupplierPaymentModal = ({ isOpen, onClose, onSave, suppliers }) => {
       await onSave(payload);
       onClose();
     } catch (err) {
-      setError(err?.data?.message || err.message || 'Lỗi khi tạo phiếu chi');
+      setError(err?.data?.message || err.message || 'Lỗi khi tạo phiếu thanh toán NCC');
     } finally {
       setSubmitting(false);
     }
@@ -57,7 +57,7 @@ const SupplierPaymentModal = ({ isOpen, onClose, onSave, suppliers }) => {
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
           <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
             <Icon name="payments" className="text-orange-500" />
-            Lập Phiếu Chi Tiền
+            Lập Phiếu Thanh Toán NCC
           </h2>
           <button
             onClick={onClose}

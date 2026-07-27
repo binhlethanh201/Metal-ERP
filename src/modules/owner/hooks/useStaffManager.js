@@ -58,23 +58,20 @@ export const useStaffManager = () => {
     setLoading(true);
     setError('');
     try {
-      let isActiveParam = undefined;
-      let isDeletedParam = undefined;
-      
-      if (statusFilter === 'active') {
-        isActiveParam = true;
-      } else if (statusFilter === 'inactive') {
-        isActiveParam = false;
-      } else if (statusFilter === 'deleted') {
-        isDeletedParam = true;
-      }
+      // BE ưu tiên tham số view (active|hidden|deleted)
+      // Status UI: 'active' → view=active, 'inactive' → view=hidden, 'deleted' → view=deleted
+      const viewParam =
+        statusFilter === 'inactive'
+          ? 'hidden'
+          : statusFilter === 'deleted'
+            ? 'deleted'
+            : 'active';
 
-      const response = await getStaffs({ 
-        page, 
-        pageSize, 
-        search, 
-        isActive: isActiveParam,
-        isDeleted: isDeletedParam 
+      const response = await getStaffs({
+        page,
+        pageSize,
+        search,
+        view: viewParam,
       });
       if (response?.success && response?.data) {
         setStaffs(response.data.items || []);

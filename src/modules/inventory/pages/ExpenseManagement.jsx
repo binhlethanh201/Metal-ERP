@@ -154,7 +154,6 @@ const ExpenseManagement = () => {
         onClose={() => setShowCreateModal(false)}
         handleCreate={handleCreate}
         categories={categories}
-        suppliers={suppliers}
       />
 
       {/* MODAL XEM CHI TIẾT (Kèm xử lý Duyệt & Hủy) */}
