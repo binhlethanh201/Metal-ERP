@@ -13,10 +13,12 @@ const SupplierPaymentModal = ({ isOpen, onClose, onSave, suppliers }) => {
   const [formData, setFormData] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [displayAmount, setDisplayAmount] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setFormData(emptyForm);
+      setDisplayAmount('');
       setError('');
     }
   }, [isOpen]);
@@ -26,6 +28,25 @@ const SupplierPaymentModal = ({ isOpen, onClose, onSave, suppliers }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const formatWithDots = (val) => {
+    if (!val) return '';
+    return Number(val).toLocaleString('vi-VN');
+  };
+
+  const handleAmountChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    setFormData((prev) => ({ ...prev, amount: raw }));
+    setDisplayAmount(formatWithDots(raw));
+  };
+
+  const handleAmountBlur = () => {
+    setDisplayAmount(formatWithDots(formData.amount));
+  };
+
+  const handleAmountFocus = () => {
+    setDisplayAmount(formData.amount);
   };
 
   const handleSubmit = async (e) => {
@@ -100,13 +121,14 @@ const SupplierPaymentModal = ({ isOpen, onClose, onSave, suppliers }) => {
                 Số tiền (VNĐ) <span className="text-red-500">*</span>
               </span>
               <input
-                type="number"
+                type="text"
                 name="amount"
-                min="1"
-                value={formData.amount}
-                onChange={handleChange}
+                value={displayAmount}
+                onChange={handleAmountChange}
+                onBlur={handleAmountBlur}
+                onFocus={handleAmountFocus}
                 className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-bold text-slate-900 outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                placeholder="VD: 5000000"
+                placeholder="VD: 5.000.000"
                 required
               />
             </label>

@@ -164,24 +164,22 @@ const SupplierDebtManagement = () => {
             <thead className="border-b border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-xs uppercase text-slate-500 dark:text-[#999999]">
               <tr>
                 <th className="px-4 py-3 font-bold">Nhà cung cấp</th>
-                <th className="px-4 py-3 text-right font-bold">Nợ Đầu Kỳ</th>
-                <th className="px-4 py-3 text-right font-bold">Mua Trong Kỳ</th>
-                <th className="px-4 py-3 text-right font-bold text-emerald-600">Đã Trả Kỳ Này</th>
-                <th className="px-4 py-3 text-right font-bold text-rose-600">NỢ CUỐI KỲ</th>
-                <th className="px-4 py-3 text-center font-bold">Hạn Thanh Toán</th>
+                <th className="px-4 py-3 text-right font-bold">Mua</th>
+                <th className="px-4 py-3 text-right font-bold text-emerald-600">Đã trả</th>
+                <th className="px-4 py-3 text-right font-bold text-rose-600">Còn nợ</th>
                 <th className="px-4 py-3 text-center font-bold">Trạng thái</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400 dark:text-[#808080]">
+                  <td colSpan={5} className="p-8 text-center text-slate-400 dark:text-[#808080]">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : debts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400 dark:text-[#808080]">
+                  <td colSpan={5} className="p-8 text-center text-slate-400 dark:text-[#808080]">
                     Không tìm thấy dữ liệu công nợ
                   </td>
                 </tr>
@@ -197,9 +195,6 @@ const SupplierDebtManagement = () => {
                       <div className="text-xs text-slate-400">{d.code}</div>
                     </td>
                     <td className="px-4 py-4 text-right font-medium">
-                      {formatCurrency(d.openingDebt)}
-                    </td>
-                    <td className="px-4 py-4 text-right font-medium">
                       {formatCurrency(d.purchasedInPeriod)}
                     </td>
                     <td className="px-4 py-4 text-right font-medium text-emerald-600">
@@ -207,16 +202,6 @@ const SupplierDebtManagement = () => {
                     </td>
                     <td className="px-4 py-4 text-right text-base font-bold text-rose-600">
                       {formatCurrency(d.closingDebt)}
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <div className="font-medium">
-                        {d.dueDate ? d.dueDate.split('T')[0] : '---'}
-                      </div>
-                      {d.overdueDays > 0 && (
-                        <div className="mt-1 text-xs font-bold text-red-500">
-                          Trễ {d.overdueDays} ngày
-                        </div>
-                      )}
                     </td>
                     <td className="px-4 py-4 text-center">
                       {d.status === 'overdue' ? (
