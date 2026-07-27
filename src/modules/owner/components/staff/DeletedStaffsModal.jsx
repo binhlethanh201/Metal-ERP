@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import { Modal } from '../../../../shared/components/Modal';
 import { getDeletedStaffs, restoreStaff, permanentDeleteStaff } from '../../services/staffService';
 
-const DeletedStaffsModal = ({ onAction }) => {
+const DeletedStaffsModal = ({ isOpen, onClose, onAction }) => {
   const [deletedStaffs, setDeletedStaffs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
-    fetchDeletedStaffs();
-  }, []);
+    if (isOpen) fetchDeletedStaffs();
+  }, [isOpen]);
 
   const fetchDeletedStaffs = async () => {
     setLoading(true);
@@ -69,27 +70,47 @@ const DeletedStaffsModal = ({ onAction }) => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-[#999999]">
-        <Icon name="sync" className="animate-spin text-3xl text-blue-600" />
-        <p className="mt-3">Đang tải...</p>
-      </div>
+      <Modal isOpen={isOpen} onClose={onClose} title="Nhân viên đã xóa" size="4xl">
+        <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-[#999999]">
+          <Icon name="sync" className="animate-spin text-3xl text-blue-600" />
+          <p className="mt-3">Đang tải...</p>
+        </div>
+      </Modal>
     );
   }
 
   if (deletedStaffs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-12 text-slate-500 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]">
-        <Icon name="folder_open" className="text-5xl text-slate-300 dark:text-[#666666]" />
-        <p className="mt-4 font-medium">Không có nhân viên nào đã xóa</p>
-        <p className="text-sm">
-          Nhân viên bị xóa sẽ hiện ở đây trong 15 ngày trước khi bị xóa vĩnh viễn
-        </p>
-      </div>
+      <Modal isOpen={isOpen} onClose={onClose} title="Nhân viên đã xóa" size="4xl">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-12 text-slate-500 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]">
+          <Icon name="folder_open" className="text-5xl text-slate-300 dark:text-[#666666]" />
+          <p className="mt-4 font-medium">Không có nhân viên nào đã xóa</p>
+          <p className="text-sm">
+            Nhân viên bị xóa sẽ hiện ở đây trong 15 ngày trước khi bị xóa vĩnh viễn
+          </p>
+        </div>
+      </Modal>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Nhân viên đã xóa"
+      size="4xl"
+      footer={
+        <div className="flex w-full items-center justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
+          >
+            Đóng
+          </button>
+        </div>
+      }
+    >
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-slate-600 dark:text-[#999999]">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-[#1a1a1a] dark:text-[#999999]">
@@ -181,7 +202,8 @@ const DeletedStaffsModal = ({ onAction }) => {
           </tbody>
         </table>
       </div>
-    </div>
+      </div>
+    </Modal>
   );
 };
 

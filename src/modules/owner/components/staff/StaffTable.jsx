@@ -26,6 +26,8 @@ const StaffTable = ({
   showRowActions = false,
   onActivate,
   onPermanentDelete,
+  onHide,
+  showHideAction = true,
 }) => {
   const columns = [
     {
@@ -109,6 +111,32 @@ const StaffTable = ({
           )}
         </div>
       ),
+    });
+  } else if (showHideAction && onHide) {
+    // View ACTIVE (main page): chỉ 1 nút "Ẩn" để chuyển nhân viên sang trang "Đã ẩn"
+    columns.push({
+      key: 'actions',
+      header: <div className="text-right">Thao tác</div>,
+      render: (_, staff) => {
+        const isSelf = currentUserId && staff.userId === currentUserId;
+        return (
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              disabled={isSelf}
+              onClick={(e) => {
+                e.stopPropagation();
+                onHide(staff.userId);
+              }}
+              className="flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+              title={isSelf ? 'Không thể ẩn chính mình' : 'Ẩn nhân viên (chuyển sang trang Đã ẩn)'}
+            >
+              <Icon name="eye-off" size={14} />
+              Ẩn
+            </button>
+          </div>
+        );
+      },
     });
   }
 
