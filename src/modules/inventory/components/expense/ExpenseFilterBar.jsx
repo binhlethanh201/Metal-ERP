@@ -17,8 +17,6 @@ const ExpenseFilterBar = ({
   setStatus,
   categoryId,
   setCategoryId,
-  supplierId,
-  setSupplierId,
   fromDate,
   setFromDate,
   toDate,
@@ -31,20 +29,17 @@ const ExpenseFilterBar = ({
   refetch,
   loading,
   categories,
-  suppliers,
   showFilterDrawer,
   setShowFilterDrawer,
 }) => {
   let activeFilterCount = 0;
   if (categoryId) activeFilterCount++;
-  if (supplierId) activeFilterCount++;
   if (fromDate) activeFilterCount++;
   if (toDate) activeFilterCount++;
   if (sort && sort !== 'createdat') activeFilterCount++;
 
   const handleReset = () => {
     setCategoryId('');
-    setSupplierId('');
     setFromDate('');
     setToDate('');
     setStatus('ALL');
@@ -110,7 +105,6 @@ const ExpenseFilterBar = ({
           </Button>
 
           {(categoryId ||
-            supplierId ||
             fromDate ||
             toDate ||
             (status && status !== 'ALL') ||
@@ -159,25 +153,6 @@ const ExpenseFilterBar = ({
               {categories.map((c) => (
                 <option key={c.categoryId} value={c.categoryId}>
                   {c.categoryName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Nhà cung cấp</label>
-            <select
-              value={supplierId}
-              onChange={(e) => {
-                setSupplierId(e.target.value);
-                setPageNumber(1);
-              }}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-            >
-              <option value="">Tất cả nhà cung cấp</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
                 </option>
               ))}
             </select>

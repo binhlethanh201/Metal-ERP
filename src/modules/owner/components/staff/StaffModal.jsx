@@ -62,7 +62,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   Staff: [],
 };
 
-const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, onToggleStatus, onDelete }) => {
+const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
   const [form, setForm] = useState(initialFormState);
   const [isCustomizing, setIsCustomizing] = useState(false);
 
@@ -162,34 +162,11 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, onToggle
     'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-[#004785] focus:outline-none transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:disabled:bg-[#1a1a1a]';
 
   const modalFooter = (
-    <div className="flex w-full items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        {staff && (
-          <>
-            <Button
-              variant="outline"
-              className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
-              onClick={() => onDelete?.(staff.userId)}
-            >
-              <Icon name="delete" size={16} /> Xóa
-            </Button>
-            <Button
-              variant="outline"
-              className={`flex items-center gap-1 ${staff.isActive === 1 ? 'border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-900/30' : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/30'}`}
-              onClick={() => onToggleStatus?.(staff.userId)}
-            >
-              <Icon name="ban" size={16} />
-              {staff.isActive === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
-            </Button>
-          </>
-        )}
-      </div>
-      <div className="flex items-center gap-2">
-        <Button variant="primary" type="submit" form="staff-form" className="flex items-center gap-2">
-          <Icon name="save" size={18} />
-          {staff ? 'Lưu thay đổi' : 'Tạo nhân viên'}
-        </Button>
-      </div>
+    <div className="flex w-full items-center justify-end gap-2">
+      <Button variant="primary" type="submit" form="staff-form" className="flex items-center gap-2">
+        <Icon name="save" size={18} />
+        {staff ? 'Lưu thay đổi' : 'Tạo nhân viên'}
+      </Button>
     </div>
   );
 

@@ -74,6 +74,7 @@ export const ENDPOINTS = {
     GET_SUPPLIER: (id) => `/api/suppliers/${id}`,
     UPDATE_SUPPLIER: (id) => `/api/suppliers/${id}`,
     DELETE_SUPPLIER: (id) => `/api/suppliers/${id}`,
+    TOGGLE_SUPPLIER_STATUS: (id) => `/api/suppliers/${id}/status`,
 
     // ================= Supplier Debt =================
     GET_SUPPLIER_DEBTS: '/api/supplierdebt',
