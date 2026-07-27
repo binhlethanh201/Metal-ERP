@@ -17,7 +17,7 @@ import ServerError from './pages/errors/ServerError';
 
 // Auth Pages
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+
 
 // Account settings
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettings/AccountSettingsPage'));
@@ -69,6 +69,7 @@ const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotif
 const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
 
 // Owner Module
+const OwnerAuditLog = lazy(() => import('./modules/owner/pages/OwnerAuditLog'));
 const OwnerDashboard = lazy(() => import('./modules/owner/pages/Dashboard'));
 const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManagement'));
 const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement'));
@@ -105,7 +106,6 @@ function App() {
           {/* PUBLIC ROUTE */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
 
           {/* PRIVATE & PROTECTED ROUTES */}
           {/* ACCOUNT SETTINGS ROUTE */}
@@ -156,6 +156,7 @@ function App() {
                 <Route path="expenses" element={<ExpenseManagement />} />
                 <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
                 <Route path="transactions" element={<InventoryTransactionManagement />} />
+                <Route path="audit-logs" element={<OwnerAuditLog />} />
               </Route>
 
               {/* --- ROUTE OWNER & STAFF --- */}

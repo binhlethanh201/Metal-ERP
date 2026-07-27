@@ -82,7 +82,7 @@ const LandingPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => handleSmoothNavigate('/register')}
+                onClick={() => handleSmoothNavigate('/login')}
                 className="rounded-lg bg-[#004785] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-blue-900/10 transition-all hover:bg-[#0F172A] active:scale-95"
               >
                 Dùng thử miễn phí
@@ -116,7 +116,7 @@ const LandingPage = () => {
                 <div className="flex w-full flex-col gap-3 pt-2 text-xs font-bold sm:w-auto sm:flex-row">
                   <button
                     type="button"
-                    onClick={() => handleSmoothNavigate('/register')}
+                    onClick={() => handleSmoothNavigate('/login')}
                     className="group flex items-center justify-center gap-1.5 rounded-lg bg-[#004785] px-8 py-3.5 font-bold uppercase tracking-wider text-white shadow-md shadow-blue-900/10 transition-all hover:bg-black active:scale-95"
                   >
                     <span>ĐĂNG KÝ SỬ DỤNG MIỄN PHÍ</span>

@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import CreateAccountModal from '../components/account/CreateAccountModal';
-import { getUserList, createUser, getRoleList } from '../services/adminService';
+import { getUserList, createOwner, createStaff, getRoleList } from '../services/adminService';
 
 const AdminUserManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +19,7 @@ const AdminUserManagement = () => {
     setLoading(true);
     setError(null);
 
-    Promise.all([getUserList(), getRoleList()])
+    Promise.all([getUserList({ status: statusFilter }), getRoleList()])
       .then(([userData, roleData]) => {
         const list = Array.isArray(userData) ? userData : userData?.items || [];
         setUsers(list);
@@ -30,15 +31,19 @@ const AdminUserManagement = () => {
         setError(err.message || 'Không tải được danh sách tài khoản');
         setLoading(false);
       });
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, statusFilter]);
 
   const handleCreateUser = async (formData) => {
     try {
-      await createUser(formData);
+      if (formData.roleName === 'Owner') {
+        await createOwner(formData);
+      } else {
+        await createStaff(formData);
+      }
       alert('Tạo người dùng thành công!');
       setIsCreateModalOpen(false);
       fetchData();
@@ -100,9 +105,19 @@ const AdminUserManagement = () => {
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span
-                    className={`rounded-sm px-2 py-1 text-[10px] font-bold ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                    className={`rounded-sm px-2 py-1 text-[10px] font-bold ${
+                      user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
+                        ? 'bg-gray-200 text-gray-800'
+                        : isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                    }`}
                   >
-                    {isActive ? 'ACTIVE' : 'LOCKED'}
+                    {user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
+                      ? 'ĐÃ XÓA'
+                      : isActive
+                        ? 'ACTIVE'
+                        : 'LOCKED'}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -154,6 +169,18 @@ const AdminUserManagement = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded border border-outline-variant bg-surface-container-lowest py-2 pl-9 pr-3 text-xs font-semibold text-on-surface placeholder:text-outline focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
+        </div>
+        <div className="w-48">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full rounded border border-outline-variant bg-surface-container-lowest py-2 px-3 text-xs font-semibold text-on-surface outline-none focus:border-primary"
+          >
+            <option value="">-- Tất cả trạng thái (Trừ Đã xóa) --</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="suspended">Đã khóa</option>
+            <option value="deleted">Đã xóa (Lưu trữ)</option>
+          </select>
         </div>
       </div>
 
