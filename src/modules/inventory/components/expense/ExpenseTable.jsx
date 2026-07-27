@@ -57,7 +57,6 @@ const ExpenseTable = ({
       render: (val) => <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{val}</span>,
     },
     { key: 'categoryName', header: 'Nhóm chi phí' },
-    { key: 'supplierName', header: 'Nhà cung cấp', render: (val) => val || '---' },
     {
       key: 'reason',
       header: 'Lý do',

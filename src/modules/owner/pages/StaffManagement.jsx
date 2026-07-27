@@ -4,6 +4,7 @@ import Input from '../../../shared/components/Input';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { useStaffManager } from '../hooks/useStaffManager';
+import { permanentDeleteStaff } from '../services/staffService';
 import StaffTable from '../components/staff/StaffTable';
 import StaffModal from '../components/staff/StaffModal';
 import DeletedStaffsModal from '../components/staff/DeletedStaffsModal';
@@ -149,7 +150,7 @@ const StaffManagement = () => {
             {[
               { key: 'active', label: 'Đang hoạt động' },
               { key: 'all', label: 'Tất cả' },
-              { key: 'deleted', label: 'Đã ẩn' },
+              { key: 'inactive', label: 'Đã ẩn' },
             ].map((tab) => (
               <Button
                 key={tab.key}
@@ -194,6 +195,18 @@ const StaffManagement = () => {
             staffs={staffs}
             loading={loading}
             currentUserId={currentUserId}
+            showRowActions={statusFilter === 'inactive'}
+            onActivate={(id) => handleToggleStatus(id)}
+            onPermanentDelete={async (id) => {
+              if (!window.confirm('Bạn có chắc muốn XOÁ VĨNH VIỄN nhân viên này? Hành động không thể hoàn tác.')) return;
+              try {
+                await permanentDeleteStaff(id);
+                alert('Đã xóa vĩnh viễn nhân viên.');
+                refetch();
+              } catch (err) {
+                alert(err?.data?.message || err?.message || 'Lỗi khi xóa vĩnh viễn nhân viên.');
+              }
+            }}
             onClickRow={(row) => handleViewDetailClick(row)}
           />
 
@@ -256,8 +269,8 @@ const StaffManagement = () => {
         staff={editingStaff}
         permissions={permissions}
         onSave={onSave}
-        onToggleStatus={handleToggleStatus}
-        onDelete={handleDeleteStaff}
+        onToggleStatus={(id) => handleToggleStatus(id, closeModal)}
+        onDelete={(id) => handleDeleteStaff(id, closeModal)}
       />
     </div>
   );
