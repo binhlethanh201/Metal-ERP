@@ -33,6 +33,7 @@ const SupplierManagement = () => {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleToggleStatus,
   } = useSupplierManager();
 
   // States quản lý Modal
@@ -91,6 +92,17 @@ const SupplierManagement = () => {
       setError(err?.message || 'Không thể xóa nhà cung cấp');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  // Toggle hợp tác/ngừng hợp tác — handleToggleStatus đã confirm sẵn trong SupplierTable
+  const onToggleStatus = async (supplier, targetStatus) => {
+    try {
+      await handleToggleStatus(supplier.id, targetStatus);
+    } catch (err) {
+      setError(
+        err?.data?.message || err?.message || 'Không thể cập nhật trạng thái nhà cung cấp.'
+      );
     }
   };
 
@@ -193,6 +205,7 @@ const SupplierManagement = () => {
             suppliers={paginatedSuppliers}
             loading={loading}
             onDetail={(s) => openModal('edit', s)}
+            onToggleStatus={onToggleStatus}
           />
 
           {/* Pagination */}
@@ -263,21 +276,28 @@ const SupplierManagement = () => {
             }
           >
             <div className="max-h-[500px] space-y-3 overflow-y-auto pr-2">
-              {suppliers.map((supplier) => (
-                <div
-                  key={supplier.id}
-                  className="rounded-xl border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] p-3 transition-colors hover:bg-slate-100 dark:hover:bg-[#333333]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-[#e5e5e5]">{supplier.name}</p>
-                      <p className="mt-1 text-sm font-semibold text-blue-700">
-                        Nợ: {formatCurrency(supplier.currentDebt || 0)}
-                      </p>
+              {suppliers.map((supplier) => {
+                const overpaid = Number(supplier.overpaidAmount || 0);
+                return (
+                  <div
+                    key={supplier.id}
+                    className="rounded-xl border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] p-3 transition-colors hover:bg-slate-100 dark:hover:bg-[#333333]"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-[#e5e5e5]">{supplier.name}</p>
+                        <p
+                          className={`mt-1 text-sm font-semibold ${overpaid > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-blue-700'}`}
+                        >
+                          {overpaid > 0
+                            ? `Trả thừa ${formatCurrency(overpaid)}`
+                            : `Nợ: ${formatCurrency(supplier.currentDebt || 0)}`}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </div>

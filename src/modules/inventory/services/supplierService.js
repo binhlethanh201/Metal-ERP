@@ -1,7 +1,7 @@
 /**
  * Supplier Service - API calls cho module Quản lý Nhà cung cấp & Công nợ
  */
-import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../../services/apiClient';
 import ENDPOINTS from '../../../services/endpoints';
 
 // Hàm hỗ trợ build Query string cho các API GET có phân trang/lọc
@@ -37,6 +37,14 @@ export const updateSupplier = (id, data) => {
 
 export const deleteSupplier = (id) => {
   return apiDelete(ENDPOINTS.INVENTORY.DELETE_SUPPLIER(id));
+};
+
+/**
+ * Toggle trạng thái hợp tác NCC: "active" ↔ "inactive"
+ * Body: { status: "active" | "inactive" }
+ */
+export const toggleSupplierStatus = (id, status) => {
+  return apiPatch(ENDPOINTS.INVENTORY.TOGGLE_SUPPLIER_STATUS(id), { status });
 };
 
 // ==========================================
