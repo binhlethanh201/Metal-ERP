@@ -7,6 +7,8 @@ import {
   updateStaff,
   toggleStaffStatus,
   deleteStaff,
+  restoreStaff,
+  permanentDeleteStaff,
   checkStaffRelations,
 } from '../services/staffService';
 
@@ -41,9 +43,13 @@ const formatApiError = (err, defaultMsg = 'Đã có lỗi xảy ra.') => {
 };
 
 export const useStaffManager = () => {
-  const [staffs, setStaffs] = useState([]);
+  const [activeStaffs, setActiveStaffs] = useState([]);
+  const [hiddenStaffs, setHiddenStaffs] = useState([]);
+  const [deletedStaffs, setDeletedStaffs] = useState([]);
   const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [activeLoading, setActiveLoading] = useState(true);
+  const [hiddenLoading, setHiddenLoading] = useState(true);
+  const [deletedLoading, setDeletedLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentUserId] = useState(decodeCurrentUserId());
@@ -51,41 +57,73 @@ export const useStaffManager = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('active');
-  const [paginationMeta, setPaginationMeta] = useState({ totalCount: 0, totalPages: 1 });
+  const [activePaginationMeta, setActivePaginationMeta] = useState({ totalCount: 0, totalPages: 1 });
+  const [hiddenPaginationMeta, setHiddenPaginationMeta] = useState({ totalCount: 0, totalPages: 1 });
 
-  const fetchStaffs = useCallback(async () => {
-    setLoading(true);
+  // Fetch ACTIVE list (theo search + phân trang)
+  const fetchActiveStaffs = useCallback(async () => {
+    setActiveLoading(true);
     setError('');
     try {
-      // BE ưu tiên tham số view (active|hidden|deleted)
-      // Status UI: 'active' → view=active, 'inactive' → view=hidden, 'deleted' → view=deleted
-      const viewParam =
-        statusFilter === 'inactive'
-          ? 'hidden'
-          : statusFilter === 'deleted'
-            ? 'deleted'
-            : 'active';
-
       const response = await getStaffs({
         page,
         pageSize,
         search,
-        view: viewParam,
+        view: 'active',
       });
       if (response?.success && response?.data) {
-        setStaffs(response.data.items || []);
-        setPaginationMeta({
+        setActiveStaffs(response.data.items || []);
+        setActivePaginationMeta({
           totalCount: response.data.totalCount || 0,
           totalPages: response.data.totalPages || 1,
         });
       }
     } catch (err) {
-      setError(formatApiError(err, 'Không thể tải danh sách nhân viên.'));
+      setError(formatApiError(err, 'Không thể tải danh sách nhân viên đang hoạt động.'));
     } finally {
-      setLoading(false);
+      setActiveLoading(false);
     }
-  }, [page, pageSize, search, statusFilter]);
+  }, [page, pageSize, search]);
+
+  // Fetch HIDDEN list (chỉ search thôi, pageSize mặc định 100 đủ cho danh sách ẩn)
+  const fetchHiddenStaffs = useCallback(async () => {
+    setHiddenLoading(true);
+    try {
+      const response = await getStaffs({
+        page: 1,
+        pageSize: 100,
+        search: '',
+        view: 'hidden',
+      });
+      if (response?.success && response?.data) {
+        setHiddenStaffs(response.data.items || []);
+        setHiddenPaginationMeta({
+          totalCount: response.data.totalCount || 0,
+          totalPages: response.data.totalPages || 1,
+        });
+      }
+    } catch (err) {
+      console.error('Lỗi tải danh sách nhân viên đã ẩn:', err);
+    } finally {
+      setHiddenLoading(false);
+    }
+  }, []);
+
+  // Fetch DELETED list (gọi service riêng, có daysUntilPermanentDelete)
+  const fetchDeletedStaffs = useCallback(async () => {
+    setDeletedLoading(true);
+    try {
+      const { getDeletedStaffs } = await import('../services/staffService');
+      const response = await getDeletedStaffs();
+      if (response?.success && response?.data) {
+        setDeletedStaffs(Array.isArray(response.data) ? response.data : []);
+      }
+    } catch (err) {
+      console.error('Lỗi tải danh sách nhân viên đã xóa:', err);
+    } finally {
+      setDeletedLoading(false);
+    }
+  }, []);
 
   const fetchAvailablePermissions = useCallback(async () => {
     try {
@@ -113,8 +151,16 @@ export const useStaffManager = () => {
   }, []);
 
   useEffect(() => {
-    fetchStaffs();
-  }, [fetchStaffs]);
+    fetchActiveStaffs();
+  }, [fetchActiveStaffs]);
+
+  useEffect(() => {
+    fetchHiddenStaffs();
+  }, [fetchHiddenStaffs]);
+
+  useEffect(() => {
+    fetchDeletedStaffs();
+  }, [fetchDeletedStaffs]);
 
   useEffect(() => {
     fetchAvailablePermissions();
@@ -125,7 +171,7 @@ export const useStaffManager = () => {
       const response = await createStaff(formData);
       if (response?.success) {
         alert(response.message || 'Tạo nhân viên thành công!');
-        fetchStaffs();
+        fetchActiveStaffs();
         onSuccess?.();
       }
     } catch (err) {
@@ -138,7 +184,7 @@ export const useStaffManager = () => {
       const response = await updateStaff(id, formData);
       if (response?.success) {
         alert(response.message || 'Cập nhật nhân viên thành công!');
-        fetchStaffs();
+        fetchActiveStaffs();
         onSuccess?.();
       }
     } catch (err) {
@@ -147,13 +193,14 @@ export const useStaffManager = () => {
   };
 
   const handleToggleStatus = async (id, onSuccess) => {
-    if (!window.confirm('Bạn có chắc muốn thay đổi trạng thái hoạt động của nhân viên này?'))
+    if (!window.confirm('Bạn có chắc muốn ẨN nhân viên này?'))
       return;
     try {
       const response = await toggleStaffStatus(id);
       if (response?.success) {
-        alert(response.message);
-        fetchStaffs();
+        // Khi ẩn → nhân viên rời ACTIVE → nhảy sang HIDDEN
+        fetchActiveStaffs();
+        fetchHiddenStaffs();
         onSuccess?.();
       }
     } catch (err) {
@@ -161,57 +208,85 @@ export const useStaffManager = () => {
     }
   };
 
-  const handleDeleteStaff = async (id, onSuccess) => {
-    // Bước 1: Gọi API check-relations
-    let checkResult;
-    try {
-      checkResult = await checkStaffRelations(id);
-    } catch (err) {
-      alert(formatApiError(err, 'Không thể kiểm tra dữ liệu liên quan đến nhân viên.'));
+  // Ẩn từ row bảng ACTIVE
+  const handleHideStaff = async (id) => {
+    if (!window.confirm('Bạn có chắc muốn ẨN nhân viên này? Họ sẽ chuyển sang tab "Đã ẩn".'))
       return;
-    }
-
-    const relations = checkResult?.data;
-    let confirmed = true;
-
-    // Bước 2: Nếu có quan hệ dữ liệu, hiển thị popup cảnh báo
-    if (relations?.hasRelations) {
-      const warnings = [];
-      if (relations.invoiceCount > 0) warnings.push(`${relations.invoiceCount} hóa đơn`);
-      if (relations.orderCount > 0) warnings.push(`${relations.orderCount} đơn hàng`);
-      if (relations.returnOrderCount > 0)
-        warnings.push(`${relations.returnOrderCount} phiếu trả hàng`);
-      if (relations.purchaseOrderCount > 0)
-        warnings.push(`${relations.purchaseOrderCount} đơn mua hàng`);
-      if (relations.shiftCount > 0) warnings.push(`${relations.shiftCount} ca làm việc`);
-      if (relations.stockTicketCount > 0) warnings.push(`${relations.stockTicketCount} phiếu kho`);
-
-      confirmed = window.confirm(
-        `Nhân viên này có liên kết với: ${warnings.join(', ')}.\nNếu xóa, các dữ liệu liên quan sẽ bị ảnh hưởng. Bạn có chắc muốn xóa?`
-      );
-    } else {
-      confirmed = window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?');
-    }
-
-    if (!confirmed) return;
-
-    // Bước 3: Thực hiện xóa mềm
     try {
-      const response = await deleteStaff(id);
+      const response = await toggleStaffStatus(id);
       if (response?.success) {
-        alert(response.message || 'Đã xóa nhân viên.');
-        fetchStaffs();
-        onSuccess?.();
+        fetchActiveStaffs();
+        fetchHiddenStaffs();
       }
     } catch (err) {
-      alert(formatApiError(err, 'Lỗi khi xóa nhân viên.'));
+      alert(formatApiError(err, 'Lỗi khi ẩn nhân viên.'));
     }
   };
 
+  // Kích hoạt từ row bảng HIDDEN
+  const handleActivateStaff = async (id) => {
+    if (!window.confirm('Kích hoạt lại nhân viên này? Họ sẽ chuyển sang tab "Đang hoạt động".'))
+      return;
+    try {
+      const response = await toggleStaffStatus(id);
+      if (response?.success) {
+        fetchActiveStaffs();
+        fetchHiddenStaffs();
+      }
+    } catch (err) {
+      alert(formatApiError(err, 'Lỗi khi kích hoạt nhân viên.'));
+    }
+  };
+
+  // Khôi phục từ row bảng DELETED
+  const handleRestoreStaff = async (id) => {
+    if (!window.confirm('Khôi phục nhân viên này? Họ sẽ chuyển sang tab "Đang hoạt động".'))
+      return;
+    try {
+      const response = await restoreStaff(id);
+      if (response?.success) {
+        fetchActiveStaffs();
+        fetchDeletedStaffs();
+      }
+    } catch (err) {
+      alert(formatApiError(err, 'Lỗi khi khôi phục nhân viên.'));
+    }
+  };
+
+  const handlePermanentDeleteStaff = async (id, staffObj) => {
+    const fullName = staffObj?.fullName || 'nhân viên này';
+    if (
+      !window.confirm(
+        `Bạn có chắc muốn XOÁ VĨNH VIỄN nhân viên "${fullName}"?\nHành động KHÔNG thể hoàn tác.`
+      )
+    )
+      return;
+    try {
+      const response = await permanentDeleteStaff(id);
+      if (response?.success) {
+        alert('Đã xóa vĩnh viễn nhân viên.');
+        fetchHiddenStaffs();
+        fetchDeletedStaffs();
+      }
+    } catch (err) {
+      alert(formatApiError(err, 'Lỗi khi xóa vĩnh viễn nhân viên.'));
+    }
+  };
+
+  const refetchAll = useCallback(() => {
+    fetchActiveStaffs();
+    fetchHiddenStaffs();
+    fetchDeletedStaffs();
+  }, [fetchActiveStaffs, fetchHiddenStaffs, fetchDeletedStaffs]);
+
   return {
-    staffs,
+    activeStaffs,
+    hiddenStaffs,
+    deletedStaffs,
     permissions,
-    loading,
+    activeLoading,
+    hiddenLoading,
+    deletedLoading,
     detailLoading,
     error,
     page,
@@ -220,15 +295,17 @@ export const useStaffManager = () => {
     setPageSize,
     search,
     setSearch,
-    statusFilter,
-    setStatusFilter,
-    paginationMeta,
+    activePaginationMeta,
+    hiddenPaginationMeta,
     currentUserId,
     fetchStaffDetail,
     handleCreateStaff,
     handleUpdateStaff,
     handleToggleStatus,
-    handleDeleteStaff,
-    refetch: fetchStaffs,
+    handleHideStaff,
+    handleActivateStaff,
+    handleRestoreStaff,
+    handlePermanentDeleteStaff,
+    refetch: refetchAll,
   };
 };
