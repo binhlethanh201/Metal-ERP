@@ -1,4 +1,25 @@
-import * as XLSX from 'xlsx';
+// xlsx được load qua CDN script để tránh lỗi webpack không resolve được
+// (react-scripts 5 không polyfill node modules)
+const XLSX_CDN_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+
+const ensureXlsxLoaded = () => {
+  if (typeof window.XLSX !== 'undefined') return Promise.resolve(window.XLSX);
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-xlsx="true"]`);
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.XLSX));
+      existing.addEventListener('error', reject);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = XLSX_CDN_URL;
+    script.async = true;
+    script.dataset.xlsx = 'true';
+    script.onload = () => resolve(window.XLSX);
+    script.onerror = () => reject(new Error('Không thể tải thư viện xlsx từ CDN.'));
+    document.head.appendChild(script);
+  });
+};
 
 const EXCEL_TEMPLATE_HEADERS = [
   'STT',
@@ -15,7 +36,8 @@ const EXCEL_TEMPLATE_SAMPLE_DATA = [
   ['3', 'SP-003', 'Thép ống D50', 'Cây', '20', '120000'],
 ];
 
-export const downloadExcelTemplate = () => {
+export const downloadExcelTemplate = async () => {
+  const XLSX = await ensureXlsxLoaded();
   const ws = XLSX.utils.aoa_to_sheet([EXCEL_TEMPLATE_HEADERS, ...EXCEL_TEMPLATE_SAMPLE_DATA]);
 
   ws['!cols'] = [
@@ -74,7 +96,8 @@ const parseNumber = (raw) => {
  * Parse file Excel/CSV người dùng upload, validate đúng định dạng mẫu.
  * Trả về { success: true, data: [...] } hoặc { success: false, error: '...' }
  */
-export const parseImportExcelFile = (file) => {
+export const parseImportExcelFile = async (file) => {
+  const XLSX = await ensureXlsxLoaded();
   return new Promise((resolve) => {
     const reader = new FileReader();
 
