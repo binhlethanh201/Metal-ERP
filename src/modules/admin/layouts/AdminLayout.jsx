@@ -4,6 +4,7 @@ import * as signalR from '@microsoft/signalr';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import Icon from '../../../shared/components/Icon';
 import Logo from '../../../shared/components/Logo';
+import AdminNotificationDropdown from '../components/AdminNotificationDropdown';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5100';
 const HUB_URL = `${API_BASE}/r/mepHub`;
@@ -212,10 +213,8 @@ const AdminLayout = () => {
               <Icon name="clock" size={14} /> {currentTime || '00:00:00'}
             </span>
 
-            <button className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-high">
-              <Icon name="notifications" size={16} />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-error" />
-            </button>
+            {/* ADMIN NOTIFICATION DROPDOWN */}
+            <AdminNotificationDropdown />
 
             <div className="h-6 w-px bg-outline-variant" />
 

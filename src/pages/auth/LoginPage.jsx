@@ -66,10 +66,7 @@ const LoginPage = () => {
         />
 
         <p className="mt-8 text-center text-sm font-medium text-on-surface-variant dark:text-[#999999]">
-          Doanh nghiệp của bạn chưa tham gia?{' '}
-          <Link to="/register" className="font-bold text-primary hover:underline">
-            Mở gian hàng ngay
-          </Link>
+          Liên hệ Admin để cấp tài khoản.
         </p>
       </div>
 

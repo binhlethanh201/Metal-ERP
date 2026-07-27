@@ -59,7 +59,20 @@ const translateErrorMessage = (msg) => {
  */
 export const apiClient = async (endpoint, options = {}) => {
   const baseURL = options.baseURL || API_CONFIG.baseURL;
-  const url = `${baseURL}${endpoint}`;
+  let url = `${baseURL}${endpoint}`;
+
+  if (options.params) {
+    const searchParams = new URLSearchParams();
+    Object.keys(options.params).forEach((key) => {
+      if (options.params[key] !== undefined && options.params[key] !== null && options.params[key] !== '') {
+        searchParams.append(key, options.params[key]);
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url += (url.includes('?') ? '&' : '?') + queryString;
+    }
+  }
 
   const config = {
     method: options.method || 'GET',

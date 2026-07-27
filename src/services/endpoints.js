@@ -209,14 +209,21 @@ export const ENDPOINTS = {
     DASHBOARD_EVENTS: '/api/admin/dashboard/recent-events',
     DASHBOARD_EXPORT: '/api/admin/dashboard/export',
 
-    // User Accounts (Quản lý Người dùng)
-    USER_LIST: '/api/admin/users',
-    USER_DETAIL: (id) => `/api/admin/users/${id}`,
-    USER_CREATE: '/api/admin/users',
-    USER_UPDATE: (id) => `/api/admin/users/${id}`,
-    USER_ROLES: (id) => `/api/admin/users/${id}/roles`,
-    USER_STATUS: (id) => `/api/admin/users/${id}/status`,
-    USER_RESET_PASSWORD: (id) => `/api/admin/users/${id}/reset-password`,
+    // User Accounts (Quản lý Người dùng) - NEW Unified Controller
+    ACCOUNT_LIST: '/api/admin/accounts',
+    ACCOUNT_DETAIL: (id) => `/api/admin/accounts/${id}`,
+    ACCOUNT_CREATE_OWNER: '/api/admin/accounts/owners',
+    ACCOUNT_CREATE_STAFF: '/api/admin/accounts/staff',
+    ACCOUNT_UPDATE: (id) => `/api/admin/accounts/${id}`,
+    ACCOUNT_ROLES: (id) => `/api/admin/accounts/${id}/roles`,
+    ACCOUNT_STATUS: (id) => `/api/admin/accounts/${id}/status`,
+    ACCOUNT_RESET_PASSWORD: (id) => `/api/admin/accounts/${id}/reset-password`,
+    ACCOUNT_SOFT_DELETE: (id) => `/api/admin/accounts/${id}`,
+    ACCOUNT_RESTORE: (id) => `/api/admin/accounts/${id}/restore`,
+    ACCOUNT_PERMANENT_DELETE: (id) => `/api/admin/accounts/${id}/permanent`,
+    ACCOUNT_CHECK_RELATIONS: (id) => `/api/admin/accounts/${id}/check-relations`,
+    
+    // Legacy Users (Keep for compatibility)
     USER_ACTIVITIES: (id) => `/api/admin/users/${id}/activities`,
 
     // Roles & Permissions (Quản lý Quyền)
@@ -243,6 +250,12 @@ export const ENDPOINTS = {
     LOG_LIST: '/api/admin/system-logs',
     LOG_DETAIL: (id) => `/api/admin/system-logs/${id}`,
     LOG_EXPORT: '/api/admin/system-logs/export',
+
+    // Owner Accounts (Quản lý Chủ cửa hàng)
+    OWNER_LIST: '/api/admin/owners',
+    OWNER_CREATE: '/api/admin/owners',
+    OWNER_UPDATE: (id) => `/api/admin/owners/${id}`,
+    OWNER_BAN: (id) => `/api/admin/owners/${id}/ban`,
   },
 
   // ============ AUTH (Xác thực) ============
