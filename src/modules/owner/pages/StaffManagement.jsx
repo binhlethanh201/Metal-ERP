@@ -10,11 +10,9 @@ const StaffManagement = () => {
   const {
     activeStaffs,
     hiddenStaffs,
-    deletedStaffs,
     permissions,
     activeLoading,
     hiddenLoading,
-    deletedLoading,
     detailLoading,
     page,
     setPage,
@@ -29,14 +27,12 @@ const StaffManagement = () => {
     handleUpdateStaff,
     handleHideStaff,
     handleActivateStaff,
-    handleRestoreStaff,
     handlePermanentDeleteStaff,
   } = useStaffManager();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
-  // tab hiện tại trong trang — 3 lựa chọn
-  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'hidden' | 'deleted'
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'hidden'
 
   const openCreateModal = () => {
     setEditingStaff(null);
@@ -84,7 +80,6 @@ const StaffManagement = () => {
   const tabs = [
     { key: 'active', label: 'Đang hoạt động', icon: 'user-check' },
     { key: 'hidden', label: 'Đã ẩn', icon: 'eye-off' },
-    { key: 'deleted', label: 'Đã xóa', icon: 'history' },
   ];
 
   return (
@@ -127,7 +122,6 @@ const StaffManagement = () => {
               const counts = {
                 active: activePaginationMeta.totalCount,
                 hidden: hiddenStaffs.length,
-                deleted: deletedStaffs.length,
               };
               return (
                 <button
@@ -203,18 +197,6 @@ const StaffManagement = () => {
               currentUserId={currentUserId}
               variant="hidden"
               onActivate={handleActivateStaff}
-              onPermanentDelete={handlePermanentDeleteStaff}
-              onClickRow={handleViewDetailClick}
-            />
-          )}
-
-          {activeTab === 'deleted' && (
-            <StaffTable
-              staffs={deletedStaffs}
-              loading={deletedLoading}
-              currentUserId={currentUserId}
-              variant="deleted"
-              onRestore={handleRestoreStaff}
               onPermanentDelete={handlePermanentDeleteStaff}
               onClickRow={handleViewDetailClick}
             />
