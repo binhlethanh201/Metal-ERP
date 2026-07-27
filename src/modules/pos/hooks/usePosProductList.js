@@ -63,6 +63,7 @@ export const usePosProductList = (searchTerm = '') => {
         ? response
         : (response?.Items ?? response?.items ?? response?.data ?? []);
 
+      let resultList = [];
       if (items.length > 0) {
         const normalized = items.map(normalizePosProduct);
 
@@ -93,24 +94,28 @@ export const usePosProductList = (searchTerm = '') => {
           );
 
           if (activeIds.size > 0) {
-            setProducts(normalized.filter((p) => activeIds.has(String(p.productId))));
+            resultList = normalized.filter((p) => activeIds.has(String(p.productId)));
           } else {
-            setProducts(normalized.filter((p) => p.productStatus !== 'inactive'));
+            resultList = normalized.filter((p) => p.productStatus !== 'inactive');
           }
         } catch (e) {
           console.warn('Không thể lấy trạng thái từ Inventory, dùng filter mặc định:', e);
-          setProducts(normalized.filter((p) => p.productStatus !== 'inactive'));
+          resultList = normalized.filter((p) => p.productStatus !== 'inactive');
         }
+        setProducts(resultList);
         setIsMock(false);
+        return resultList;
       } else {
         // API trả về danh sách rỗng (không có sản phẩm nào) -> không fallback về mock data
         setProducts([]);
         setIsMock(false);
+        return [];
       }
     } catch (err) {
       console.error('Lỗi lấy sản phẩm POS:', err);
       setError(err.message || 'Không thể tải sản phẩm');
       setProducts([]);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -125,6 +130,21 @@ export const usePosProductList = (searchTerm = '') => {
       clearTimeout(handler);
     };
   }, [searchTerm, fetchProducts]);
+
+  // Tự động refetch danh sách sản phẩm khi người dùng quay lại tab/màn hình POS
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProducts(searchTerm);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onVisibilityChange);
+    };
+  }, [fetchProducts, searchTerm]);
 
   return {
     products,

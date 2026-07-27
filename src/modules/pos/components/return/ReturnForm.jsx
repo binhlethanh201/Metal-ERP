@@ -2,7 +2,7 @@
  * ReturnForm - Tạo đơn đổi trả
  * Flow: nhập mã hóa đơn → tìm hóa đơn → chọn sản phẩm → chọn loại + lý do → tạo
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
@@ -13,6 +13,7 @@ import {
   getReturns,
   createReturn,
   addReturnItem,
+  cancelReturn,
   getInvoice,
   getProductCategory,
 } from '../../services/posService';
@@ -37,25 +38,41 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [policies, setPolicies] = useState({});
-
-  // Load category return policies từ localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(POLICIES_STORAGE_KEY);
-      if (raw) setPolicies(JSON.parse(raw));
-    } catch {}
-  }, []);
 
   const isExchange = returnType === 'EXCHANGE';
 
   // Kiểm tra sản phẩm có được phép đổi/trả theo policy không
-  const isItemAllowed = (item, type) => {
+  // Trả về { allowed: boolean, reason: string | null }
+  const getReturnStatus = (item, type) => {
     const policy = item._policy;
-    if (!policy) return Object.keys(policies).length === 0; // Không có policy → cho phép nếu chưa có policy nào
-    if (type === 'REFUND') return !!policy.returnDays;
-    if (type === 'EXCHANGE') return !!policy.exchangeDays;
-    return true;
+    const catName = item._categoryName || '';
+    const isExchange = type === 'EXCHANGE';
+    const actionLabel = isExchange ? 'đổi' : 'trả';
+
+    let result;
+    if (!policy) {
+      result = catName
+        ? { allowed: false, reason: `Nhóm hàng "${catName}" chưa được cấu hình chính sách ${actionLabel}` }
+        : { allowed: false, reason: 'Không xác định được nhóm hàng của sản phẩm' };
+    } else {
+      const days = isExchange
+        ? parseInt(policy.exchangeDays, 10)
+        : parseInt(policy.returnDays, 10);
+      result = days > 0
+        ? { allowed: true, reason: null }
+        : { allowed: false, reason: `Nhóm hàng "${catName}" không được phép ${actionLabel}` };
+    }
+
+    console.log('[DEBUG] getReturnStatus:', {
+      product: item.productName || item.productId,
+      categoryId: item._categoryId,
+      categoryName: item._categoryName,
+      hasPolicy: !!item._policy,
+      policyVal: item._policy,
+      type,
+      result,
+    });
+    return result;
   };
   const subtotal = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
   const discountRatio =
@@ -98,7 +115,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         return {};
       }
     })();
-    if (Object.keys(localPolicies).length > 0) setPolicies(localPolicies);
+    // Luôn đồng bộ policies từ localStorage (kể cả khi rỗng)
 
     setInvoiceLoading(true);
     setInvoiceError('');
@@ -203,21 +220,102 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         // Tính số lượng còn lại có thể đổi trả cho từng dòng (phân biệt cùng SP khác đơn vị)
         const invoiceItems = fullInvoice.items || fullInvoice.invoiceItems || [];
 
-        // Xác định category cho từng item & kiểm tra policy
-        const itemsWithCategory = await Promise.all(
-          invoiceItems.map(async (item) => {
+        // ========== DEBUG: Kiểm tra dữ liệu items từ API ==========
+        console.log('=== DEBUG ReturnForm ===');
+        console.log('[DEBUG] invoiceItems raw:', invoiceItems.map((it) => ({
+          productId: it.productId,
+          productName: it.productName || it.name,
+          productCode: it.productCode || it.code,
+          categoryId: it.categoryId || it.CategoryId || it.product?.categoryId || it.product?.category?.id || it.category?.id,
+          categoryName: it.categoryName || it.CategoryName || it.product?.categoryName || it.product?.category?.name || it.category?.name,
+          quantity: it.quantity,
+        })));
+        console.log('[DEBUG] localPolicies keys:', Object.keys(localPolicies));
+        console.log('[DEBUG] localPolicies:', JSON.stringify(localPolicies));
+
+        // Xác định category cho từng item & kiểm tra policy — mỗi item độc lập
+        const norm = (s) => (s || '').trim().normalize('NFC').toLowerCase();
+        const itemsWithCategory = invoiceItems.map((item) => {
+            // Ưu tiên categoryId, fallback categoryName
+            const catId =
+              item.categoryId || item.CategoryId ||
+              item.product?.categoryId || item.product?.CategoryId ||
+              item.product?.category?.id ||
+              item.category?.id || '';
             let catName =
-              item.categoryName || item.CategoryName || item.product?.categoryName || '';
-            if (!catName && item.productId) {
-              try {
-                const pCat = await getProductCategory(item.productId);
-                if (pCat) catName = pCat;
-              } catch {}
+              item.categoryName || item.CategoryName ||
+              item.product?.categoryName || item.product?.CategoryName ||
+              item.product?.category?.name ||
+              item.category?.name || '';
+            // Chỉ lấy catId/catName từ API fallback nếu cả hai đều rỗng
+            // (getProductCategory trả về { id, name })
+            // Không fallback product.group — group quá generic, gây sai policy
+            // Tìm policy: ưu tiên categoryId, fallback scan categoryName
+            let policy = null;
+            if (catId && localPolicies[catId]) {
+              // Tra cứu bằng categoryId (chính xác nhất, key = id)
+              policy = localPolicies[catId];
+            } else if (catName) {
+              // Tra cứu bằng categoryName:
+              // 1. Direct key match (old format: key = name)
+              if (localPolicies[catName]) {
+                policy = localPolicies[catName];
+              } else {
+                // 2. Scan values (new format: key = id, value có categoryName field)
+                const normCatName = norm(catName);
+                const match = Object.values(localPolicies).find(
+                  (p) => p.categoryName && norm(p.categoryName) === normCatName
+                );
+                if (match) policy = match;
+              }
             }
-            const policy = localPolicies[catName];
-            return { ...item, _categoryName: catName, _policy: policy || null };
-          })
-        );
+            return { ...item, _categoryId: catId || '', _categoryName: catName || '', _policy: policy || null };
+          });
+
+        // Tra cứu category từ kho cho các sản phẩm chưa xác định được nhóm hàng
+        // (hóa đơn cũ không lưu thông tin nhóm hàng)
+        for (const item of itemsWithCategory) {
+          if (!item._categoryId && !item._categoryName) {
+            const raw = await getProductCategory(
+              item.productId || item.id,
+              item.productCode || item.code || item.barcode,
+              item.productName
+            );
+            if (raw) {
+              // getProductCategory trả về { id, name } hoặc string (backward compatible)
+              if (typeof raw === 'object' && raw !== null) {
+                item._categoryId = raw.id || '';
+                item._categoryName = raw.name || '';
+              } else if (typeof raw === 'string') {
+                item._categoryName = raw;
+              }
+              // Gán policy — mỗi item độc lập, ưu tiên categoryId
+              let policy = null;
+              if (item._categoryId && localPolicies[item._categoryId]) {
+                policy = localPolicies[item._categoryId];
+              } else if (item._categoryName) {
+                if (localPolicies[item._categoryName]) {
+                  policy = localPolicies[item._categoryName];
+                } else {
+                  const normName = norm(item._categoryName);
+                  const match = Object.values(localPolicies).find(
+                    (p) => p.categoryName && norm(p.categoryName) === normName
+                  );
+                  if (match) policy = match;
+                }
+              }
+              item._policy = policy || null;
+            }
+          }
+        }
+
+        // ========== DEBUG: Kiểm tra items sau khi gán category & policy ==========
+        console.log('[DEBUG] itemsWithCategory after policy assignment:', itemsWithCategory.map((it) => ({
+          name: it.productName || it.productId,
+          catId: it._categoryId,
+          catName: it._categoryName,
+          policy: it._policy ? { categoryId: it._policy.categoryId, categoryName: it._policy.categoryName, returnDays: it._policy.returnDays, exchangeDays: it._policy.exchangeDays } : null,
+        })));
 
         const enrichedItems = itemsWithCategory.map((item) => {
           const lineKey = item.invoiceItemId || item.id || item.productId;
@@ -257,12 +355,10 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           };
         });
 
-        const availableItems = enrichedItems.filter((item) => item._remainingQty > 0);
-
-        if (availableItems.length === 0) {
-          setInvoiceError(
-            'Tất cả sản phẩm trong hóa đơn này đã được đổi trả hết. Không thể tạo thêm phiếu.'
-          );
+        // Mỗi item tự đánh giá policy riêng — không dùng biến global, không quyết định theo invoice
+        const anyItemRemaining = enrichedItems.some((item) => item._remainingQty > 0);
+        if (!anyItemRemaining) {
+          setInvoiceError('Tất cả sản phẩm trong hóa đơn này đã được đổi trả hết.');
           setInvoiceLoading(false);
           return;
         }
@@ -283,7 +379,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
   const toggleProduct = (product) => {
     // Kiểm tra policy trước khi cho chọn
-    if (!isItemAllowed(product, returnType)) return;
+    const status = getReturnStatus(product, returnType);
+    if (!status.allowed) return;
     setSelectedProducts((prev) => {
       const idx = prev.findIndex((p) => p._key === product._key);
       if (idx >= 0) {
@@ -324,22 +421,23 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     }
 
     // Kiểm tra policy cho tất cả sản phẩm đã chọn
-    if (Object.keys(policies).length > 0) {
-      const blocked = selectedProducts.filter((sp) => {
-        const item = invoice.items?.find((i) => i._key === sp._key);
-        return !isItemAllowed(item, returnType);
-      });
-      if (blocked.length > 0) {
-        setSubmitError(
-          `Sản phẩm "${blocked[0].productName}" không được phép ${isExchange ? 'đổi' : 'trả'} theo chính sách nhóm hàng.`
-        );
-        setSubmitting(false);
-        return;
-      }
+    const blocked = selectedProducts.filter((sp) => {
+      const item = invoice.items?.find((i) => i._key === sp._key);
+      if (!item) return true;
+      const status = getReturnStatus(item, returnType);
+      return !status.allowed;
+    });
+    if (blocked.length > 0) {
+      setSubmitError(
+        `Sản phẩm "${blocked[0].productName}" không được phép ${isExchange ? 'đổi' : 'trả'}.`
+      );
+      setSubmitting(false);
+      return;
     }
 
     setSubmitting(true);
     setSubmitError('');
+    let createdReturnId = null;
     try {
       const invId = invoice.invoiceId || invoice.invoiceCode || invoice.id;
       const payload = {
@@ -361,6 +459,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       console.log('[ReturnForm] Response:', retData);
       const returnId =
         retData.returnOrderId || retData.returnId || retData.return?.returnId || retData.id;
+      createdReturnId = returnId;
 
       // Nếu backend không nhận items inline thì gọi thêm API addReturnItem
       if (!retData.returnItems || retData.returnItems.length === 0) {
@@ -392,6 +491,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     } catch (err) {
       console.error('[ReturnForm] Full error:', err);
       console.error('[ReturnForm] Error data:', err.data);
+      if (createdReturnId) {
+        try {
+          await cancelReturn(createdReturnId);
+          console.info('[ReturnForm] Cancelled incomplete return', createdReturnId);
+        } catch (cancelErr) {
+          console.warn('[ReturnForm] Failed to cancel incomplete return', createdReturnId, cancelErr);
+        }
+      }
       const detail = err?.data?.errors
         ? Object.values(err.data.errors).flat().join(', ')
         : err?.data?.title || err?.message || 'Lỗi';
@@ -446,7 +553,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <Button variant="secondary" onClick={() => setStep(1)}>
               Quay lại
             </Button>
-            <Button variant="primary" onClick={handleSubmit} loading={submitting}>
+            <Button variant="primary" onClick={handleSubmit} loading={submitting} disabled={selectedProducts.length === 0}>
               {isExchange ? 'Tạo đơn đổi hàng' : 'Tạo đơn trả hàng'}
             </Button>
           </>
@@ -458,7 +565,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       {step === 1 && (
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Mã hóa đơn gốc <span className="text-red-500">*</span>
             </label>
             <Input
@@ -472,7 +579,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               onKeyDown={(e) => e.key === 'Enter' && handleFindInvoice()}
             />
           </div>
-          <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+          <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 dark:bg-[#1a1a1a]/50 dark:text-[#999999]">
             Nhập mã hóa đơn đã hoàn thành để tạo yêu cầu đổi/trả hàng. Hệ thống sẽ kiểm tra hóa đơn
             và hiển thị danh sách sản phẩm có thể đổi trả.
           </div>
@@ -482,26 +589,26 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       {step === 2 && invoice && (
         <div className="space-y-4">
           {/* Invoice info */}
-          <div className="rounded-lg bg-slate-50 p-4">
+          <div className="rounded-lg bg-slate-50 p-4 dark:bg-[#1a1a1a]/50">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Mã hóa đơn</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Mã hóa đơn</p>
                 <p className="mt-0.5 font-mono text-sm font-semibold">
                   {invoice.invoiceCode || invoice.invoiceId}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Khách hàng</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Khách hàng</p>
                 <p className="mt-0.5 font-semibold">{invoice.customerName || 'Khách lẻ'}</p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Ngày mua</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Ngày mua</p>
                 <p className="mt-0.5 text-sm">
                   {invoice.createdAt ? formatDateTime(invoice.createdAt) : '-'}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-slate-400">Tổng tiền</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-[#808080]">Tổng tiền</p>
                 <p className="mt-0.5 font-semibold text-green-600">
                   {formatCurrency(invoice.totalAmount || 0)}
                 </p>
@@ -523,18 +630,21 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setReturnType('REFUND')}
+                onClick={() => {
+                  setReturnType('REFUND');
+                  setSelectedProducts([]); // Clear khi đổi loại để tránh giữ lại SP không hợp lệ
+                }}
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                   returnType === 'REFUND'
                     ? 'border-[#004785] bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-300'
+                    : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
                 }`}
               >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
                     returnType === 'REFUND'
                       ? 'bg-[#004785] text-white'
-                      : 'bg-slate-100 text-slate-500'
+                      : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
                   }`}
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -547,17 +657,20 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-900">Trả hàng</p>
-                  <p className="text-xs text-slate-500">Hoàn tiền cho khách</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Trả hàng</p>
+                  <p className="text-xs text-slate-500 dark:text-[#999999]">Hoàn tiền cho khách</p>
                 </div>
               </button>
               <button
                 type="button"
-                onClick={() => setReturnType('EXCHANGE')}
+                onClick={() => {
+                  setReturnType('EXCHANGE');
+                  setSelectedProducts([]); // Clear khi đổi loại để tránh giữ lại SP không hợp lệ
+                }}
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                   returnType === 'EXCHANGE'
                     ? 'border-[#004785] bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-300'
+                    : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
                 }`}
               >
                 <div
@@ -577,8 +690,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-900">Đổi hàng</p>
-                  <p className="text-xs text-slate-500">Đổi sản phẩm cùng loại, không hoàn tiền</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Đổi hàng</p>
+                  <p className="text-xs text-slate-500 dark:text-[#999999]">Đổi sản phẩm cùng loại, không hoàn tiền</p>
                 </div>
               </button>
             </div>
@@ -589,14 +702,26 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Sản phẩm đổi trả <span className="text-red-500">*</span>
             </label>
-            <div className="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200">
+            <div className="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 dark:divide-[#333333] dark:border-[#333333]">
               {(invoice.items || []).map((item) => {
                 const itemKey = item._key || item.invoiceItemId || item.productId;
                 const selected = selectedProducts.find((p) => p._key === itemKey);
                 const remainingQty = item._remainingQty ?? parseFloat(item.quantity || 0);
                 const returnedQty = item._returnedQty || 0;
-                const allowed = isItemAllowed(item, returnType);
-                const policyBlocked = !allowed && Object.keys(policies).length > 0;
+                const status = getReturnStatus(item, returnType);
+                const notAllowed = !status.allowed;
+
+                // ========== DEBUG: Kiểm tra trạng thái từng item ==========
+                console.log('[DEBUG] Item render:', {
+                  name: item.productName || item.productId,
+                  categoryId: item._categoryId,
+                  categoryName: item._categoryName,
+                  hasPolicy: !!item._policy,
+                  policyKeys: item._policy ? Object.keys(item._policy) : null,
+                  policyDays: item._policy ? { returnDays: item._policy.returnDays, exchangeDays: item._policy.exchangeDays } : null,
+                  allowed: status.allowed,
+                  reason: status.reason,
+                });
 
                 // Ẩn sản phẩm đã đổi trả hết
                 if (remainingQty <= 0 && !selected) return null;
@@ -604,65 +729,59 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 return (
                   <div
                     key={itemKey}
-                    className={`flex items-center gap-3 p-3 transition-colors ${selected ? 'bg-blue-50' : remainingQty <= 0 || policyBlocked ? 'bg-slate-50 opacity-50' : 'hover:bg-slate-50'}`}
+                    className={`flex items-center gap-2 px-3 py-2 transition-colors ${selected ? 'bg-blue-50' : notAllowed ? 'bg-slate-100 opacity-50 cursor-not-allowed select-none dark:bg-[#1a1a1a]' : 'hover:bg-slate-50 dark:hover:bg-[#272727]'}`}
                   >
                     <input
                       type="checkbox"
                       checked={!!selected}
-                      disabled={remainingQty <= 0 || policyBlocked}
+                      disabled={notAllowed}
                       onChange={() =>
                         toggleProduct({ ...item, quantity: remainingQty, _key: itemKey })
                       }
-                      className="h-4 w-4 rounded border-slate-300 text-[#004785]"
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-[#004785] shrink-0"
                     />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{item.productName || item.productId}</p>
-                      <p className="text-xs text-slate-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-slate-900">{item.productName || item.productId}</p>
+                      <p className="truncate text-[10px] text-slate-400">
                         {item.productCode || '-'}
                         {isExchange ? '' : ` · Đơn giá: ${formatCurrency(item.unitPrice || 0)}`} ·
                         Đã mua: {item.quantity}
+                        {selected ? ` · Đổi: ${selected.quantity}` : ''}
                         {item._displayUnit ? ` (${item._displayUnit})` : ''}
-                        {item._categoryName ? ` · [${item._categoryName}]` : ''}
                       </p>
                       {returnedQty > 0 && (
-                        <p className="text-xs text-amber-600">
+                        <p className="truncate text-[10px] text-amber-500">
                           Đã đổi trả: {returnedQty} · Còn lại:{' '}
                           <span className="font-semibold">{remainingQty}</span>
                         </p>
                       )}
-                      {policyBlocked && (
-                        <p className="text-xs font-medium text-red-500">
-                          {isExchange
-                            ? 'Nhóm hàng này không được phép đổi'
-                            : 'Nhóm hàng này không được phép trả'}
+                      {notAllowed && status.reason && (
+                        <p className="truncate text-[11px] font-semibold text-red-600">
+                          ❌ {status.reason}
                         </p>
                       )}
                     </div>
                     {selected && remainingQty > 0 && (
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-[10px] font-semibold uppercase text-slate-400">
-                            {isExchange ? 'Số lượng đổi' : 'Số lượng trả'}
-                          </p>
-                          <p className="text-lg font-black text-[#004785]">{selected.quantity}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => updateQty(itemKey, (selected.quantity || 1) - 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-sm font-bold hover:bg-slate-100"
-                          >
-                            -
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-sm font-bold hover:bg-slate-100"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <span className="text-xs text-slate-400">/ {remainingQty}</span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={notAllowed}
+                          onClick={() => updateQty(itemKey, (selected.quantity || 1) - 1)}
+                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
+                        >
+                          -
+                        </button>
+                        <span className="min-w-[32px] text-center text-sm font-black text-[#004785] leading-tight">
+                          {selected.quantity}/{remainingQty}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={notAllowed}
+                          onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
+                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
+                        >
+                          +
+                        </button>
                       </div>
                     )}
                     {remainingQty <= 0 && (
@@ -672,14 +791,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 );
               })}
               {(!invoice.items || invoice.items.length === 0) && (
-                <p className="p-4 text-center text-sm text-slate-400">Hóa đơn không có sản phẩm</p>
+                <p className="p-4 text-center text-sm text-slate-400 dark:text-[#808080]">Hóa đơn không có sản phẩm</p>
               )}
             </div>
           </div>
 
           {/* Reason */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Lý do đổi trả <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -687,7 +806,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               placeholder="VD: Sản phẩm bị lỗi kỹ thuật, khách không hài lòng, sai quy cách..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
           </div>
 
@@ -695,13 +814,13 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           {!isExchange && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   Phương thức hoàn tiền
                 </label>
                 <select
                   value={refundMethod}
                   onChange={(e) => setRefundMethod(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                 >
                   {REFUND_METHODS.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -711,11 +830,11 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                   Số tiền hoàn dự kiến
                 </label>
-                <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                  <span className="text-lg font-bold text-green-700">
+                <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-700 dark:bg-green-900/30">
+                  <span className="text-lg font-bold text-green-700 dark:text-green-400">
                     {formatCurrency(totalRefund)}
                   </span>
                 </div>
@@ -725,7 +844,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Exchange note */}
           {isExchange && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/30">
               <div className="flex items-start gap-3">
                 <svg
                   className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
@@ -753,13 +872,13 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Notes */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Ghi chú</label>
             <textarea
               rows={2}
               placeholder="Ghi chú thêm (không bắt buộc)..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
           </div>
 

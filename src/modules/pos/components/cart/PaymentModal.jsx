@@ -49,30 +49,30 @@ const PaymentModal = ({
       }
     >
       <div className="space-y-5">
-        <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+        <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3 dark:bg-[#1a1a1a]/50">
           <div>
-            <span className="text-sm text-slate-500">Khách hàng: </span>
-            <span className="font-semibold text-slate-900">
+            <span className="text-sm text-slate-500 dark:text-[#999999]">Khách hàng: </span>
+            <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
               {selectedCustomer ? selectedCustomer.name : 'Khách lẻ'}
             </span>
           </div>
           <div className="text-right">
-            <span className="text-sm text-slate-500">Tổng cộng: </span>
+            <span className="text-sm text-slate-500 dark:text-[#999999]">Tổng cộng: </span>
             <span className="text-xl font-extrabold text-[#004785]">
               {formatCurrency(finalTotal)}
             </span>
           </div>
         </div>
 
-        <details className="rounded-lg border border-slate-200">
-          <summary className="cursor-pointer px-4 py-2 text-xs font-bold uppercase tracking-[0.05em] text-slate-500 hover:text-slate-700">
+        <details className="rounded-lg border border-slate-200 dark:border-[#333333]">
+          <summary className="cursor-pointer px-4 py-2 text-xs font-bold uppercase tracking-[0.05em] text-slate-500 hover:text-slate-700 dark:text-[#999999] dark:hover:text-[#b3b3b3]">
             Chi tiết đơn hàng ({cart.cart.length} sản phẩm)
           </summary>
-          <div className="max-h-36 space-y-1 overflow-y-auto border-t border-slate-100 px-4 py-2">
+          <div className="max-h-36 space-y-1 overflow-y-auto border-t border-slate-100 px-4 py-2 dark:border-[#333333]">
             {cart.cart.map((item) => (
               <div key={item.id} className="flex items-center justify-between text-xs">
-                <span className="flex-1 truncate text-slate-700">{item.name}</span>
-                <span className="mx-2 text-slate-400">
+                <span className="flex-1 truncate text-slate-700 dark:text-[#b3b3b3]">{item.name}</span>
+                <span className="mx-2 text-slate-400 dark:text-[#808080]">
                   x{item.quantity}
                   {item.displayUnit || item.selectedUnit || ''}
                 </span>
@@ -83,7 +83,7 @@ const PaymentModal = ({
         </details>
 
         <div className="space-y-1 text-sm">
-          <div className="flex justify-between text-slate-500">
+          <div className="flex justify-between text-slate-500 dark:text-[#999999]">
             <span>Tạm tính</span>
             <span>{formatCurrency(cart.subtotal)}</span>
           </div>
@@ -95,9 +95,9 @@ const PaymentModal = ({
           )}
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
+        <div className="border-t border-slate-200 pt-4 dark:border-[#333333]">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-700">Hình thức thanh toán</h3>
+            <h3 className="text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">Hình thức thanh toán</h3>
             {payLines.length < 2 && (
               <button
                 type="button"
@@ -111,12 +111,12 @@ const PaymentModal = ({
 
           <div className="space-y-4">
             {payLines.map((line) => (
-              <div key={line.id} className="rounded-lg border border-slate-200 bg-white p-4">
+              <div key={line.id} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-[#333333] dark:bg-[#0f0f0f]">
                 <div className="mb-3 flex items-center justify-between">
                   <select
                     value={line.method}
                     onChange={(e) => onLineChange(line.id, 'method', e.target.value)}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium focus:border-[#004785] focus:outline-none"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a]"
                   >
                     {allMethods.map((m) => (
                       <option key={m.id} value={m.id}>
@@ -128,7 +128,7 @@ const PaymentModal = ({
                     <button
                       type="button"
                       onClick={() => onRemoveLine(line.id)}
-                      className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                      className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:text-[#808080] dark:hover:bg-red-900/30"
                     >
                       <svg
                         className="h-5 w-5"
@@ -147,7 +147,7 @@ const PaymentModal = ({
                   )}
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-500">Số tiền</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#999999]">Số tiền</label>
                   <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="text"
@@ -159,19 +159,19 @@ const PaymentModal = ({
                         if (raw === '' || /^\d+$/.test(raw))
                           onLineChange(line.id, 'amount', raw === '' ? 0 : Number(raw));
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-lg font-bold focus:border-[#004785] focus:outline-none"
+                      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-lg font-bold focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a]"
                     />
                     {remaining > 0 && line.amount < remaining && (
                       <button
                         type="button"
                         onClick={() => onQuickFill(line.id)}
-                        className="shrink-0 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-[#004785] hover:bg-blue-100"
+                        className="shrink-0 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-[#004785] hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60"
                       >
                         Nhập nốt {formatCurrency(remaining)}
                       </button>
                     )}
                     {line.amount > 0 && line.amount >= remaining && remaining > 0 && (
-                      <span className="shrink-0 rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
+                      <span className="shrink-0 rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-400">
                         ✅ Đủ
                       </span>
                     )}
@@ -181,12 +181,12 @@ const PaymentModal = ({
             ))}
           </div>
 
-          <div className="mt-5 space-y-2 rounded-lg bg-slate-50 p-4">
+          <div className="mt-5 space-y-2 rounded-lg bg-slate-50 p-4 dark:bg-[#1a1a1a]/50">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Tổng đơn hàng</span>
-              <span className="font-bold text-slate-900">{formatCurrency(finalTotal)}</span>
+              <span className="font-bold text-slate-900 dark:text-[#e5e5e5]">{formatCurrency(finalTotal)}</span>
             </div>
-            <div className="flex justify-between border-t border-slate-200 pt-2 text-sm">
+            <div className="flex justify-between border-t border-slate-200 pt-2 text-sm dark:border-[#333333]">
               <span className="text-slate-500">Đã nhập</span>
               <span className="font-bold text-slate-900">{formatCurrency(totalPaid)}</span>
             </div>
@@ -202,8 +202,8 @@ const PaymentModal = ({
               </div>
             )}
             {totalPaid > finalTotal && (
-              <div className="mt-2 flex justify-between rounded-lg border-2 border-green-400 bg-green-50 p-3 text-sm">
-                <span className="font-bold text-green-800">Tiền thừa trả khách</span>
+              <div className="mt-2 flex justify-between rounded-lg border-2 border-green-400 bg-green-50 p-3 text-sm dark:border-green-600 dark:bg-green-900/30">
+                <span className="font-bold text-green-800 dark:text-green-400">Tiền thừa trả khách</span>
                 <span className="font-bold text-green-700">
                   + {formatCurrency(totalPaid - finalTotal)}
                 </span>

@@ -34,8 +34,8 @@ export const PaymentBox = ({ total, onPaymentComplete }) => {
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="font-bold text-slate-900">Chọn phương thức thanh toán</h3>
+    <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-[#333333] dark:bg-[#0f0f0f]">
+      <h3 className="font-bold text-slate-900 dark:text-[#e5e5e5]">Chọn phương thức thanh toán</h3>
 
       {/* Payment Methods */}
       <div className="grid grid-cols-3 gap-2">
@@ -46,11 +46,11 @@ export const PaymentBox = ({ total, onPaymentComplete }) => {
             className={`rounded-lg border p-3 text-center transition-all ${
               selectedMethod === method.id
                 ? 'border-[#004785] bg-blue-50'
-                : 'border-slate-200 hover:border-slate-300'
+                : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
             } `}
           >
             <div className="mb-1 text-2xl">{method.icon}</div>
-            <p className="text-xs font-medium text-slate-900">{method.name}</p>
+            <p className="text-xs font-medium text-slate-900 dark:text-[#e5e5e5]">{method.name}</p>
           </button>
         ))}
       </div>
@@ -65,12 +65,12 @@ export const PaymentBox = ({ total, onPaymentComplete }) => {
       />
 
       {/* Change */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
         <div className="flex justify-between text-sm">
           <span className="text-blue-900">Tổng cần thanh toán:</span>
           <span className="font-semibold text-blue-900">{formatCurrency(total)}</span>
         </div>
-        <div className="mt-2 flex justify-between border-t border-blue-200 pt-2 text-sm">
+        <div className="mt-2 flex justify-between border-t border-blue-200 pt-2 text-sm dark:border-blue-800">
           <span className="text-blue-900">Tiền thừa:</span>
           <span className={`font-semibold ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatCurrency(change)}

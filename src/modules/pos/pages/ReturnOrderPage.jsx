@@ -19,6 +19,7 @@ import {
   finalizeReturn,
   getOrders,
 } from '../services/posService';
+import Icon from '../../../shared/components/Icon';
 import ReturnForm from '../components/return/ReturnForm';
 
 const VN_TZ = 'Asia/Ho_Chi_Minh';
@@ -189,7 +190,7 @@ const ReturnOrderPage = () => {
 
   // ---- Pagination ----
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 15;
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -377,7 +378,7 @@ const ReturnOrderPage = () => {
       key: 'returnCode',
       header: 'Mã đơn',
       width: '160px',
-      render: (v) => <span className="font-mono text-xs font-bold text-[#004785]">{v}</span>,
+      render: (v) => <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{v}</span>,
     },
     {
       key: 'createdAt',
@@ -450,8 +451,8 @@ const ReturnOrderPage = () => {
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-3">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Đổi trả hàng</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Đổi trả hàng</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             Quản lý yêu cầu đổi/trả hàng cho khách đã mua
           </p>
         </div>
@@ -461,7 +462,7 @@ const ReturnOrderPage = () => {
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-[#004785]">{stats.total}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Tổng phiếu
               </p>
             </div>
@@ -469,7 +470,7 @@ const ReturnOrderPage = () => {
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-amber-500">{stats.pending}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Chờ duyệt
               </p>
             </div>
@@ -477,7 +478,7 @@ const ReturnOrderPage = () => {
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-green-600">{stats.completed}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Đã hoàn tất
               </p>
             </div>
@@ -486,7 +487,7 @@ const ReturnOrderPage = () => {
 
         {/* Error banner */}
         {fetchError && (
-          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
             <strong>Lưu ý:</strong> {fetchError}.
             <button
               type="button"
@@ -508,13 +509,13 @@ const ReturnOrderPage = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="flex rounded-lg border border-slate-200 p-0.5">
+            <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-[#333333]">
               {STATUS_FILTERS.map((f) => (
                 <button
                   key={f.id}
                   type="button"
                   onClick={() => setStatusFilter(f.id)}
-                  className={`rounded-md px-4 py-1.5 text-xs font-bold transition-colors ${statusFilter === f.id ? 'bg-[#004785] text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                  className={`rounded-md px-4 py-1.5 text-xs font-bold transition-colors ${statusFilter === f.id ? 'bg-[#004785] text-white' : 'text-slate-500 hover:text-slate-900 dark:text-[#999999] dark:hover:text-[#e5e5e5]'}`}
                 >
                   {f.label}
                 </button>
@@ -534,61 +535,47 @@ const ReturnOrderPage = () => {
             loading={loading}
             emptyMessage="Chưa có phiếu đổi trả nào"
           />
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-              <span className="text-sm text-slate-500">
-                Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
-                {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} phiếu
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Trước
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    if (
-                      totalPages > 7 &&
-                      i !== 0 &&
-                      i !== totalPages - 1 &&
-                      Math.abs(currentPage - 1 - i) > 2
-                    ) {
-                      if (Math.abs(currentPage - 1 - i) === 3) {
-                        return (
-                          <span key={i} className="px-1 text-slate-400">
-                            ...
-                          </span>
-                        );
-                      }
-                      return null;
-                    }
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
-                          currentPage === i + 1
-                            ? 'bg-[#004785] text-white'
-                            : 'text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    );
-                  })}
+          {filtered.length > 0 && (
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
+              <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
+                <div className="flex items-center gap-2">
+                  <span>Hiển thị</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+                  >
+                    <option value={20}>20 dòng</option>
+                    <option value={50}>50 dòng</option>
+                    <option value={100}>100 dòng</option>
+                  </select>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                <span>
+                  {filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+                  {Math.min(currentPage * pageSize, filtered.length)} trong tổng số{' '}
+                  {filtered.length} phiếu
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999] dark:hover:bg-[#272727]"
                 >
-                  Sau
-                </Button>
+                  <Icon name="chevron_left" className="text-[18px]" />
+                </button>
+                <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+                  Trang {currentPage} / {totalPages || 1}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999] dark:hover:bg-[#272727]"
+                >
+                  <Icon name="chevron_right" className="text-[18px]" />
+                </button>
               </div>
             </div>
           )}
@@ -649,21 +636,21 @@ const ReturnOrderPage = () => {
                 </div>
               </div>
 
-              <div className="space-y-2 border-t border-slate-100 pt-3">
+              <div className="space-y-2 border-t border-slate-100 pt-3 dark:border-[#333333]">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Khách hàng</span>
+                  <span className="text-slate-500 dark:text-[#999999]">Khách hàng</span>
                   <span className="font-semibold">{detail.customerName}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Hóa đơn gốc</span>
+                  <span className="text-slate-500 dark:text-[#999999]">Hóa đơn gốc</span>
                   <span className="font-mono font-semibold">{detail.invoiceCode || '-'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Người tạo</span>
+                  <span className="text-slate-500 dark:text-[#999999]">Người tạo</span>
                   <span>{detail.userName}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Loại</span>
+                  <span className="text-slate-500 dark:text-[#999999]">Loại</span>
                   <span
                     className={`font-semibold ${detail.returnType === 'EXCHANGE' ? 'text-blue-700' : ''}`}
                   >
@@ -672,18 +659,18 @@ const ReturnOrderPage = () => {
                 </div>
                 {detail.returnType !== 'EXCHANGE' && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Phương thức hoàn</span>
+                    <span className="text-slate-500 dark:text-[#999999]">Phương thức hoàn</span>
                     <span className="font-semibold">{getRefundLabel(detail.refundMethod)}</span>
                   </div>
                 )}
               </div>
 
               {detail.reason && (
-                <div className="rounded-lg bg-amber-50 p-3">
+                <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/30">
                   <p className="text-xs font-bold uppercase tracking-wide text-amber-600">
                     Lý do đổi trả
                   </p>
-                  <p className="mt-1 text-sm text-amber-800">{detail.reason}</p>
+                  <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">{detail.reason}</p>
                 </div>
               )}
             </div>
@@ -696,12 +683,13 @@ const ReturnOrderPage = () => {
                 {detail.returnItems.map((item, i) => (
                   <div
                     key={item.returnItemId || i}
-                    className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0"
+                    className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0 dark:border-[#333333]"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-900">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-[#e5e5e5]">
                         {item.productName}
                       </p>
+                      <p className="text-xs text-slate-400 dark:text-[#808080]">Số lượng: {item.quantity}</p>
                     </div>
                     {detail.returnType !== 'EXCHANGE' && (
                       <span className="ml-2 shrink-0 text-sm font-bold text-green-600">

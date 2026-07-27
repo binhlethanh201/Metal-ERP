@@ -18,7 +18,7 @@ const Toggle = ({ checked, onChange, size = 'md', disabled = false }) => {
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.checked)}
       />
-      <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-[#004785] peer-checked:after:translate-x-full" />
+      <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-[#004785] peer-checked:after:translate-x-full dark:bg-[#333333] dark:after:bg-[#b3b3b3]" />
     </label>
   );
 };

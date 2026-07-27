@@ -24,7 +24,7 @@ const OrderFilters = ({
         onChange={(e) => {
           setDateCriteria(e.target.value);
         }}
-        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
       >
         <option value="Ngày giao hàng">Ngày giao hàng</option>
         <option value="Ngày tạo đơn">Ngày tạo đơn</option>
@@ -33,7 +33,7 @@ const OrderFilters = ({
       <select
         value={quickDate}
         onChange={(e) => handleQuickDateChange(e.target.value)}
-        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
       >
         {QUICK_DATE_OPTIONS.map((o) => (
           <option key={o} value={o}>
@@ -41,23 +41,23 @@ const OrderFilters = ({
           </option>
         ))}
       </select>
-      <span className="text-xs text-slate-500">Từ ngày</span>
+      <span className="text-xs text-slate-500 dark:text-[#999999]">Từ ngày</span>
       <input
         type="date"
         value={fromDate}
         onChange={(e) => {
           setFromDate(e.target.value);
         }}
-        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
       />
-      <span className="text-xs text-slate-500">Đến ngày</span>
+      <span className="text-xs text-slate-500 dark:text-[#999999]">Đến ngày</span>
       <input
         type="date"
         value={toDate}
         onChange={(e) => {
           setToDate(e.target.value);
         }}
-        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+        className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
       />
       <Button variant="outline" size="sm" onClick={onOpenLabelFilter}>
         Lọc nhãn {selectedTags.length > 0 && `(${selectedTags.length})`}

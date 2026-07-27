@@ -14,15 +14,15 @@ const FinanceMetric = ({ label, value, unit, progress, subtitle, tone = 'navy' }
   const [barClass, textClass] = toneClass.split(' ');
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <p className="mb-1 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-[#333333] dark:bg-[#0f0f0f]">
+      <p className="mb-1 text-[11px] font-bold uppercase leading-none tracking-[0.05em] text-slate-500 dark:text-[#999999]">
         {label}
       </p>
       <h2 className={`text-xl font-extrabold leading-snug ${textClass}`}>
         {value} {unit && <span className="text-sm font-medium">{unit}</span>}
       </h2>
       {progress ? (
-        <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#272727]">
           <div className={`h-full ${barClass}`} style={{ width: `${progress}%` }} />
         </div>
       ) : (

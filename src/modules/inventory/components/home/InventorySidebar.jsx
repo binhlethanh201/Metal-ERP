@@ -83,14 +83,14 @@ const InventorySidebar = ({ open = true, onToggle }) => {
 
   if (!isAuthenticated) {
     return (
-      <aside className="flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white" />
+      <aside className="flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#0f0f0f]" />
     );
   }
 
   return (
     <>
       <aside
-        className={`flex shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-200 ${
+        className={`flex shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-200 dark:border-[#333333] dark:bg-[#0f0f0f] ${
           open ? 'w-[260px]' : 'w-0'
         }`}
       >
@@ -110,10 +110,10 @@ const InventorySidebar = ({ open = true, onToggle }) => {
                     onClick={() => toggleParentMenu(item.label, item.path, item.children)}
                     className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors duration-150 ${
                       active
-                        ? 'bg-blue-50 font-bold text-[#004785]'
+                        ? 'bg-blue-50 font-bold text-[#004785] dark:bg-blue-900/50 dark:text-blue-300'
                         : isAnyChildActive
-                          ? 'bg-slate-100 font-bold text-[#004785]'
-                          : 'font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          ? 'bg-slate-100 font-bold text-[#004785] dark:bg-[#1a1a1a] dark:text-blue-300'
+                          : 'font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-[#999999] dark:hover:bg-[#272727] dark:hover:text-[#d4d4d4]'
                     } ${hasChildren ? 'cursor-pointer' : ''}`}
                   >
                     <div className="flex items-center gap-3">
@@ -147,13 +147,13 @@ const InventorySidebar = ({ open = true, onToggle }) => {
                             onClick={() => child.path && navigate(child.path)}
                             className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-150 ${
                               childActive
-                                ? 'bg-blue-50 font-bold text-[#004785]'
-                                : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                ? 'bg-blue-50 font-bold text-[#004785] dark:bg-blue-900/50 dark:text-blue-300'
+                                : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-[#999999] dark:hover:bg-[#272727] dark:hover:text-[#d4d4d4]'
                             }`}
                           >
                             <span
                               className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                                childActive ? 'bg-[#004785]' : 'bg-slate-300'
+                                childActive ? 'bg-[#004785]' : 'bg-slate-300 dark:bg-[#333333]'
                               }`}
                             />
                             <span className="whitespace-normal break-words leading-snug">
@@ -175,13 +175,13 @@ const InventorySidebar = ({ open = true, onToggle }) => {
       <button
         type="button"
         onClick={onToggle}
-        className={`inventory-sidebar-toggle z-50 flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full border border-slate-200 bg-white shadow-md transition-all hover:bg-slate-50 ${
+        className={`inventory-sidebar-toggle z-50 flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full border border-slate-200 bg-white shadow-md transition-all hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:hover:bg-[#333333] ${
           open ? '-ml-4 mr-1' : 'ml-2'
         }`}
         aria-label="Toggle sidebar"
       >
         <svg
-          className={`h-4 w-4 text-slate-500 transition-transform ${open ? '' : 'rotate-180'}`}
+          className={`h-4 w-4 text-slate-500 transition-transform dark:text-[#999999] ${open ? '' : 'rotate-180'}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

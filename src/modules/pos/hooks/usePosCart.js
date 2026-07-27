@@ -261,6 +261,46 @@ export const usePosCart = (initialItems = []) => {
     localStorage.removeItem(CART_STORAGE_KEY);
   }, []);
 
+  /**
+   * Revalidate active cart items against latest products
+   * Updates price and stock for matching items if they changed
+   */
+  const revalidateActiveCart = useCallback((latestProducts) => {
+    if (!latestProducts || latestProducts.length === 0) return;
+    setCart((prevCart) => {
+      if (!prevCart || prevCart.length === 0) return prevCart;
+      let hasChanges = false;
+      const updatedCart = prevCart.map((item) => {
+        const productId = item.productId || getProductId(item);
+        const currentProduct = latestProducts.find(
+          (p) =>
+            String(p.id) === String(productId) ||
+            String(p.productId) === String(productId) ||
+            String(p.sku) === String(item.sku || item.productCode || '')
+        );
+        if (!currentProduct) return item;
+
+        const basePrice = Number(currentProduct.price ?? currentProduct.retailPrice ?? 0);
+        const newPrice = item.convertValue ? basePrice * item.convertValue : basePrice;
+        const newStock = Number(currentProduct.stock ?? currentProduct.availableStock ?? 0);
+
+        if (item.price !== newPrice || item.baseStock !== newStock || item.stock !== newStock) {
+          hasChanges = true;
+          return {
+            ...item,
+            price: newPrice,
+            stock: newStock,
+            baseStock: newStock,
+            availableStock: newStock,
+            maxQty: Math.floor(Math.max(0, newStock) / (item.convertValue || 1)),
+          };
+        }
+        return item;
+      });
+      return hasChanges ? updatedCart : prevCart;
+    });
+  }, []);
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = 0; // Voucher removed; tier discount applied separately in PaymentModal
   const total = subtotal;
@@ -281,6 +321,7 @@ export const usePosCart = (initialItems = []) => {
     addToCart,
     addToCartWithQuantity,
     loadDraft,
+    revalidateActiveCart,
     changeQty,
     setItemQuantity,
     removeItem,

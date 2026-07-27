@@ -147,6 +147,13 @@ const POSScreen = () => {
 
   const cart = usePosCart([]);
 
+  // Tự động revalidate giá/tồn kho của các sản phẩm đang nằm trong giỏ hàng hiện tại khi danh sách posProducts thay đổi
+  useEffect(() => {
+    if (cart.cart.length > 0 && posProducts.length > 0) {
+      cart.revalidateActiveCart(posProducts);
+    }
+  }, [posProducts]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
   const hasSaleCreate = user?.permissions?.includes('SALE_CREATE') || isOwner;
@@ -211,16 +218,83 @@ const POSScreen = () => {
   useEffect(() => {
     if (draftData && draftData.id !== loadedDraft.current) {
       loadedDraft.current = draftData.id;
-      // Load trực tiếp items vào cart, giữ nguyên id và quantity gốc từ draft
-      cart.loadDraft(draftData.items);
-      setSelectedCustomer(draftData.customer);
-      // Xoa draft khoi danh sach
-      setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
 
-      // Xóa state trong history để tránh bị nạp lại nếu người dùng ấn F5
+      const loadDraftWithRevalidation = async () => {
+        // 1. Fetch fresh products from API
+        const latestRawProducts = await refetchProducts(search);
+        const mappedLatestProducts = (
+          Array.isArray(latestRawProducts) && latestRawProducts.length > 0
+            ? latestRawProducts
+            : posApiProducts
+        ).map(mapToPosProduct);
+
+        const priceChanges = [];
+        const stockWarnings = [];
+
+        // 2. Revalidate price & stock for each item in draft
+        const updatedItems = (draftData.items || []).map((draftItem) => {
+          const draftItemId = draftItem.productId || draftItem.id;
+          const currentProduct = mappedLatestProducts.find(
+            (p) =>
+              String(p.id) === String(draftItemId) ||
+              String(p.productId) === String(draftItemId) ||
+              String(p.sku) === String(draftItem.sku || draftItem.productCode)
+          );
+
+          if (currentProduct) {
+            const oldPrice = Number(draftItem.price || 0);
+            const newPrice = Number(currentProduct.price || 0);
+            const stock = Number(currentProduct.stock || 0);
+            const qty = Number(draftItem.quantity || 1);
+
+            if (oldPrice !== newPrice) {
+              priceChanges.push(
+                `${draftItem.name || currentProduct.name}: ${oldPrice.toLocaleString('vi-VN')}đ ➔ ${newPrice.toLocaleString('vi-VN')}đ`
+              );
+            }
+            if (stock < qty) {
+              stockWarnings.push(
+                `${draftItem.name || currentProduct.name}: tồn kho (${stock}) không đủ SL yêu cầu (${qty})`
+              );
+            }
+
+            return {
+              ...draftItem,
+              price: newPrice,
+              stock: stock,
+              availableStock: stock,
+              baseStock: stock,
+              maxQty: Math.floor(Math.max(0, stock) / (draftItem.convertValue || 1)),
+            };
+          }
+          return draftItem;
+        });
+
+        // 3. Load revalidated items into POS cart
+        cart.loadDraft(updatedItems);
+
+        // 4. Notify user if price or stock changes occurred
+        if (priceChanges.length > 0 || stockWarnings.length > 0) {
+          const alerts = [];
+          if (priceChanges.length > 0) {
+            alerts.push(`Giá sản phẩm đã thay đổi: ${priceChanges.join('; ')}`);
+          }
+          if (stockWarnings.length > 0) {
+            alerts.push(`Tồn kho không đủ: ${stockWarnings.join('; ')}`);
+          }
+          showNotice(alerts.join(' | '));
+        } else {
+          showNotice('Đã khôi phục đơn nháp thành công');
+        }
+      };
+
+      loadDraftWithRevalidation();
+
+      setSelectedCustomer(draftData.customer);
+      setDrafts((prev) => prev.filter((d) => d.id !== draftData.id));
       window.history.replaceState({}, '');
     }
-  }, [draftData, cart, setDrafts]);
+  }, [draftData, cart, setDrafts, posApiProducts, refetchProducts, search, showNotice]);
 
   // ---- Chon khach hang tu trang Khach hang ----
   useEffect(() => {
@@ -261,6 +335,8 @@ const POSScreen = () => {
   const isPaymentValid = Math.abs(totalPaid - finalTotal) <= 1 && totalPaid > 0;
 
   const processOrder = async (lines, totalPaidAmount) => {
+    // Guard: prevent double-click
+    if (paying) return;
     setPaying(true);
     try {
       // 1. Tạo hóa đơn — kèm shiftId nếu có ca đang mở
@@ -454,6 +530,9 @@ const POSScreen = () => {
   };
 
   const handleOpenPay = async () => {
+    // Guard: prevent double-click
+    if (paying) return;
+
     if (cart.cart.length === 0) {
       showNotice('Giỏ hàng đang trống');
       return;
@@ -909,7 +988,7 @@ const POSScreen = () => {
     <>
       <div className="flex flex-1 gap-2 overflow-hidden p-3">
         {/* Center: Cart panel */}
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333] dark:bg-[#1a1a1a]">
           <CustomerBar
             selectedCustomer={selectedCustomer}
             onOpenPicker={() => setShowCustModal(true)}
@@ -922,6 +1001,7 @@ const POSScreen = () => {
               discountInfo={discountInfo}
               onClearCart={handleClearCart}
               onPay={handleOpenPay}
+              disabled={paying}
               onSaveDraft={() => {
                 if (cart.cart.length === 0) {
                   showNotice('Giỏ hàng trống, không có gì để lưu');
@@ -960,11 +1040,11 @@ const POSScreen = () => {
         </div>
 
         {/* Right: Product panel */}
-        <div className="flex w-[500px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="shrink-0 border-b border-slate-100 px-3 py-2">
-            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
+        <div className="flex w-[500px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333] dark:bg-[#1a1a1a]">
+          <div className="shrink-0 border-b border-slate-100 px-3 py-2 dark:border-[#333]">
+            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-[#444] dark:bg-[#272727]">
               <svg
-                className="mr-2 h-4 w-4 shrink-0 text-slate-400"
+                className="mr-2 h-4 w-4 shrink-0 text-slate-400 dark:text-[#888]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -980,7 +1060,7 @@ const POSScreen = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm sản phẩm..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 dark:text-[#e5e5e5] dark:placeholder:text-[#888]"
               />
               {productsLoading && posProducts.length > 0 && (
                 <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
@@ -992,22 +1072,22 @@ const POSScreen = () => {
               <div className="space-y-4 p-4">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="flex animate-pulse gap-4">
-                    <div className="h-16 w-16 shrink-0 rounded-lg bg-slate-200"></div>
+                    <div className="h-16 w-16 shrink-0 rounded-lg bg-slate-200 dark:bg-[#333]"></div>
                     <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 w-3/4 rounded bg-slate-200"></div>
-                      <div className="h-3 w-1/4 rounded bg-slate-200"></div>
-                      <div className="h-4 w-1/2 rounded bg-slate-200"></div>
+                      <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-[#333]"></div>
+                      <div className="h-3 w-1/4 rounded bg-slate-200 dark:bg-[#333]"></div>
+                      <div className="h-4 w-1/2 rounded bg-slate-200 dark:bg-[#333]"></div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : productsError ? (
               <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-                <div className="mb-4 rounded-full bg-red-50 p-4 text-red-500">
+                <div className="mb-4 rounded-full bg-red-50 p-4 text-red-500 dark:bg-red-900/50">
                   <Icon name="cloud_off" size={32} />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-slate-800">Lỗi kết nối</h3>
-                <p className="mb-4 text-sm text-slate-500">{productsError}</p>
+                <h3 className="mb-2 text-lg font-semibold text-slate-800 dark:text-[#e5e5e5]">Lỗi kết nối</h3>
+                <p className="mb-4 text-sm text-slate-500 dark:text-[#999]">{productsError}</p>
                 <button
                   onClick={() => refetchProducts(search)}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800"

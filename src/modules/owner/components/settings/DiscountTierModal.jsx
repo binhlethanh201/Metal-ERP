@@ -6,7 +6,7 @@ import Button from '../../../../shared/components/Button';
 /**
  * Modal thêm/sửa mức chiết khấu
  */
-const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading }) => {
+const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete }) => {
   const isEdit = !!tier;
   const [formData, setFormData] = useState({
     minOrderValue: '',
@@ -87,18 +87,32 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading }) => {
       title={isEdit ? 'Sửa mức chiết khấu' : 'Thêm mức chiết khấu mới'}
       size="md"
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
-            Hủy
-          </Button>
-          <Button variant="primary" onClick={handleSubmit} loading={loading}>
-            {isEdit ? 'Lưu thay đổi' : 'Tạo mới'}
-          </Button>
-        </>
+        <div className="flex w-full items-center justify-between gap-3">
+          <div>
+            {isEdit && (
+              <Button
+                variant="outline"
+                className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
+                onClick={() => { onDelete?.(tier); onClose(); }}
+                disabled={loading}
+              >
+                Xóa
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={onClose} disabled={loading}>
+              Hủy
+            </Button>
+            <Button variant="primary" onClick={handleSubmit} loading={loading}>
+              {isEdit ? 'Lưu thay đổi' : 'Tạo mới'}
+            </Button>
+          </div>
+        </div>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
+        <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
           <p className="font-medium">💡 Quy tắc chiết khấu:</p>
           <ul className="mt-1 list-inside list-disc space-y-0.5">
             <li>Khi tổng giá trị đơn hàng đạt ngưỡng, chiết khấu tương ứng sẽ được áp dụng</li>

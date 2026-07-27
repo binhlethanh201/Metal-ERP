@@ -16,7 +16,7 @@ const FieldInput = ({ label, error, disabled, type = 'text', ...props }) => {
   return (
     <div className="w-full">
       {label && (
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-[#808080]">
           {label}
         </label>
       )}
@@ -28,8 +28,8 @@ const FieldInput = ({ label, error, disabled, type = 'text', ...props }) => {
             'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2',
             error
               ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100'
-              : 'border-slate-200 focus:border-[#004785] focus:ring-blue-50',
-            disabled ? 'cursor-not-allowed bg-slate-50 text-slate-400' : 'bg-white text-slate-800',
+              : 'border-slate-200 focus:border-[#004785] focus:ring-blue-50 dark:border-[#404040]',
+            disabled ? 'cursor-not-allowed bg-slate-50 text-slate-400 dark:bg-[#1a1a1a] dark:text-[#808080]' : 'bg-white text-slate-800 dark:bg-[#0f0f0f] dark:text-[#e5e5e5]',
             isPassword ? 'pr-10' : '',
           ]
             .filter(Boolean)
@@ -41,7 +41,7 @@ const FieldInput = ({ label, error, disabled, type = 'text', ...props }) => {
             type="button"
             tabIndex={-1}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-[#808080] dark:hover:text-[#b3b3b3]"
           >
             <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={15} />
           </button>
@@ -109,20 +109,20 @@ const ChangePasswordModal = ({ isOpen, onClose, hook }) => {
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={handleClose} />
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm dark:bg-[#0a0a0a]/70" onClick={handleClose} />
       {/* Modal panel */}
-      <div className="relative z-10 mx-4 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="relative z-10 mx-4 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#0f0f0f]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-[#333333]">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#004785]/10">
               <Icon name="shield" size={16} className="text-[#004785]" />
             </div>
-            <span className="font-bold text-slate-800">Đổi mật khẩu</span>
+            <span className="font-bold text-slate-800 dark:text-[#e5e5e5]">Đổi mật khẩu</span>
           </div>
           <button
             onClick={handleClose}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
           >
             <Icon name="close" size={16} />
           </button>
@@ -131,9 +131,9 @@ const ChangePasswordModal = ({ isOpen, onClose, hook }) => {
         {/* Body */}
         <div className="space-y-4 px-6 py-5">
           {/* Hint */}
-          <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-relaxed text-slate-500">
+          <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-relaxed text-slate-500 dark:bg-[#1a1a1a] dark:text-[#999999]">
             Mật khẩu mới phải có ít nhất{' '}
-            <span className="font-semibold text-slate-700">6 ký tự</span>. Sau khi đổi thành công,
+            <span className="font-semibold text-slate-700 dark:text-[#b3b3b3]">6 ký tự</span>. Sau khi đổi thành công,
             bạn sẽ dùng mật khẩu mới để đăng nhập lần tiếp theo.
           </p>
 
@@ -166,7 +166,7 @@ const ChangePasswordModal = ({ isOpen, onClose, hook }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
           <Button variant="secondary" onClick={handleClose} size="md">
             Huỷ
           </Button>
@@ -182,11 +182,11 @@ const ChangePasswordModal = ({ isOpen, onClose, hook }) => {
 
 // InfoRow
 const InfoRow = ({ label, children }) => (
-  <div className="flex items-start gap-4 border-b border-slate-100 py-3 last:border-0">
-    <span className="w-32 shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+  <div className="flex items-start gap-4 border-b border-slate-100 py-3 last:border-0 dark:border-[#333333]">
+    <span className="w-32 shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-[#808080]">
       {label}
     </span>
-    <div className="flex-1 text-sm text-slate-800">{children}</div>
+    <div className="flex-1 text-sm text-slate-800 dark:text-[#e5e5e5]">{children}</div>
   </div>
 );
 
@@ -221,12 +221,12 @@ const AccountSettingsPage = () => {
       <div className="animate-fade-in mx-auto w-full max-w-2xl space-y-5 pb-10">
         {/* ── Page header ── */}
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Cài đặt tài khoản</h1>
-          <p className="mt-0.5 text-sm text-slate-500">Quản lý thông tin cá nhân của bạn</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e5e5e5]">Cài đặt tài khoản</h1>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-[#999999]">Quản lý thông tin cá nhân của bạn</p>
         </div>
 
         {/* ── Profile card ── */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
           {/* Avatar banner */}
           <div className="bg-gradient-to-r from-[#004785] to-[#0066b8] px-6 pb-10 pt-6">
             <div className="flex items-center gap-4">
@@ -251,13 +251,13 @@ const AccountSettingsPage = () => {
           </div>
 
           {/* Read-only info block */}
-          <div className="mx-4 -mt-4 mb-0 rounded-xl border border-slate-200 bg-slate-50 px-4">
+          <div className="mx-4 -mt-4 mb-0 rounded-xl border border-slate-200 bg-slate-50 px-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
             <InfoRow label="Email">
-              <span className="text-slate-500">{profile.email || user?.email || '—'}</span>
+              <span className="text-slate-500 dark:text-[#999999]">{profile.email || user?.email || '—'}</span>
             </InfoRow>
             {profile.username && (
               <InfoRow label=" Tên đăng nhập">
-                <span className="text-slate-500">{profile.username}</span>
+                <span className="text-slate-500 dark:text-[#999999]">{profile.username}</span>
               </InfoRow>
             )}
             <InfoRow label="Vai trò">
@@ -269,7 +269,7 @@ const AccountSettingsPage = () => {
                     </Badge>
                   ))
                 ) : (
-                  <span className="text-slate-400">—</span>
+                  <span className="text-slate-400 dark:text-[#808080]">—</span>
                 )}
               </div>
             </InfoRow>

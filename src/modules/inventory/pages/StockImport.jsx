@@ -15,6 +15,7 @@ import { createProduct } from '../services/productService';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Modal } from '../../../shared/components/Modal';
+import Icon from '../../../shared/components/Icon';
 
 const fallbackProducts = [
   {
@@ -145,7 +146,73 @@ export const StockImport = () => {
     loadInitData();
   }, [loadInwardHistory]);
 
-  const getItemKey = (item) => item?.branchProductId || item?.productId || item?.id || '';
+  const getItemKey = (item) =>
+    item?.branchProductId || item?.productId || item?.productCode || item?.id || '';
+
+  const handleImportRows = useCallback((rows) => {
+    if (!rows || rows.length === 0) return;
+
+    let importedCount = 0;
+    let newCount = 0;
+
+    setItems((current) => {
+      const updated = [...current];
+
+      for (const row of rows) {
+        if (!row) continue;
+
+        const matched = row.matchedProduct;
+        let key;
+        let importItem;
+
+        if (matched) {
+          key = getItemKey(matched);
+          importItem = {
+            ...matched,
+            id: key,
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
+        } else {
+          key = row.productCode || `new-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+          importItem = {
+            id: key,
+            productCode: row.productCode || '',
+            productName: row.productName || '',
+            unitName: row.unitName || row.unit || '',
+            unit: row.unitName || row.unit || '',
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
+          newCount++;
+        }
+
+        const existingIdx = updated.findIndex((i) =>
+          key ? getItemKey(i) === key : false
+        );
+
+        if (existingIdx >= 0) {
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
+        } else {
+          updated.push(importItem);
+        }
+
+        importedCount++;
+      }
+
+      return updated;
+    });
+
+    const msg =
+      newCount > 0
+        ? `Đã import ${importedCount} dòng (${newCount} mã mới từ file Excel).`
+        : `Đã import ${importedCount} dòng từ file Excel.`;
+    setStatus({ type: 'success', message: msg });
+  }, []);
 
   const addProductToTicket = useCallback((product) => {
     setItems((current) => {
@@ -212,12 +279,21 @@ export const StockImport = () => {
       supplierId: parseId(selectedSupplier?.id),
       reason: note || 'Nhập kho',
       note,
-      items: items.map((i) => ({
-        id: parseId(i.branchProductId || i.productId || i.id),
-        quantity: Number(i.quantity || 0),
-        costPrice: Number(i.costPrice || 0),
-        note: '',
-      })),
+      items: items.map((i) => {
+        const systemId = parseId(i.branchProductId || i.productId);
+        const item = {
+          quantity: Number(i.quantity || 0),
+          costPrice: Number(i.costPrice || 0),
+          note: '',
+        };
+        if (systemId) {
+          item.id = systemId;
+        } else {
+          item.productCode = i.productCode || i.id || '';
+          item.productName = i.productName || '';
+        }
+        return item;
+      }),
     };
 
     setIsSubmitting(true);
@@ -280,22 +356,22 @@ export const StockImport = () => {
     <div className="animate-in fade-in w-full space-y-6 duration-200">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Nhập kho</h1>
-          <p className="mt-1 text-gray-600">Ghi nhận và quản lý các phiếu nhập kho</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Nhập kho</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">Ghi nhận và quản lý các phiếu nhập kho</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
+          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
             {isLoadingData ? 'Đang tải dữ liệu...' : 'Sẵn sàng tạo phiếu'}
           </div>
-          <Button variant="primary" onClick={openModal}>
-            Nhập hàng
+          <Button variant="primary" onClick={openModal} className="flex items-center gap-2">
+            <Icon name="add" size={20} /> Nhập hàng
           </Button>
         </div>
       </div>
 
       {/* Error banner */}
       {globalError && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-950/30">
           <svg
             className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
             viewBox="0 0 24 24"
@@ -310,13 +386,13 @@ export const StockImport = () => {
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <div className="flex-1">
-            <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
-            <p className="mt-1 text-sm text-red-700">{globalError}</p>
+            <p className="font-semibold text-red-800 dark:text-red-300">Đã xảy ra lỗi</p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-400">{globalError}</p>
           </div>
           <button
             type="button"
             onClick={() => setGlobalError('')}
-            className="shrink-0 rounded p-1 text-red-400 hover:bg-red-100 hover:text-red-600"
+            className="shrink-0 rounded p-1 text-red-400 hover:bg-red-100 hover:text-red-600 dark:text-red-500 dark:hover:bg-red-900/30"
           >
             <svg
               className="h-4 w-4"
@@ -337,20 +413,20 @@ export const StockImport = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-blue-600">{summary.totalImports}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng phiếu nhập</p>
+            <div className="text-3xl font-bold text-blue-600">{(summary.totalImports)}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu nhập</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-green-600">{summary.totalQuantity}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng số lượng nhập</p>
+            <div className="text-3xl font-bold text-green-600">{(summary.totalQuantity)}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng số lượng nhập</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-yellow-600">{summary.monthlyCount}</div>
-            <p className="mt-1 text-sm text-gray-600">Trong tháng</p>
+            <div className="text-3xl font-bold text-yellow-600">{(summary.monthlyCount)}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Trong tháng</p>
           </div>
         </Card>
       </div>
@@ -380,6 +456,7 @@ export const StockImport = () => {
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
               onAddNewProduct={() => setIsProductModalOpen(true)}
+              onImportRows={handleImportRows}
               formatCurrency={formatCurrency}
             />
           </div>

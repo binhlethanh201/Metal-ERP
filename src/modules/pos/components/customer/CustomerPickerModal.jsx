@@ -84,23 +84,23 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
               onSelect(null);
               onClose();
             }}
-            className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 ${!selectedCustomer ? 'border-[#004785] bg-blue-50' : 'border-slate-100'}`}
+            className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] ${!selectedCustomer ? 'border-[#004785] bg-blue-50' : 'border-slate-100 dark:border-[#333333]'}`}
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-500">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
                 L
               </div>
               <div>
-                <p className="font-semibold text-slate-900">Khách lẻ</p>
-                <p className="text-xs text-slate-400">Không lưu thông tin khách hàng</p>
+                <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">Khách lẻ</p>
+                <p className="text-xs text-slate-400 dark:text-[#808080]">Không lưu thông tin khách hàng</p>
               </div>
             </div>
           </button>
 
-          {loading && <div className="py-4 text-center text-sm text-slate-400">Đang tải...</div>}
+          {loading && <div className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">Đang tải...</div>}
 
           {!loading && filtered.length === 0 && (
-            <div className="py-4 text-center text-sm text-slate-400">
+            <div className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">
               {search ? 'Không tìm thấy khách hàng' : 'Chưa có khách hàng nào'}
             </div>
           )}
@@ -114,7 +114,7 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
                   onSelect(c);
                   onClose();
                 }}
-                className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 ${selectedCustomer && selectedCustomer.id === c.id ? 'border-[#004785] bg-blue-50' : 'border-slate-100'}`}
+                className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] ${selectedCustomer && selectedCustomer.id === c.id ? 'border-[#004785] bg-blue-50' : 'border-slate-100 dark:border-[#333333]'}`}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#004785] text-sm font-bold text-white">
@@ -122,18 +122,18 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-slate-900">{c.name}</p>
+                      <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{c.name}</p>
                       <Badge variant={GROUP_COLORS[c.group] || 'secondary'} size="sm">
                         {c.group}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-[#999999]">
                       {c.phone} {c.email ? '- ' + c.email : ''}
                     </p>
                   </div>
                   <div className="text-right text-xs">
                     <p className="font-bold text-green-600">{formatCurrency(c.totalSpent)}</p>
-                    <p className="text-slate-400">{c.orderCount} đơn</p>
+                    <p className="text-slate-400 dark:text-[#808080]">{c.orderCount} đơn</p>
                   </div>
                 </div>
               </button>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // BỔ SUNG IMPORT ĐIỀU HƯỚNG
+import { useNavigate } from 'react-router-dom';
+import { Search, Filter } from 'lucide-react';
 import { Card } from '../../../shared/components/Card';
 import Icon from '../../../shared/components/Icon';
+import { Button } from '../../../shared/components/Button';
 import { useSupplierDebt } from '../hooks/useSupplierDebt';
 import SupplierDebtDetailModal from '../components/supplier/SupplierDebtDetailModal';
 import { useSupplierPayment } from '../hooks/useSupplierPayment';
@@ -14,8 +16,15 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
 
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'normal', label: 'Bình thường' },
+  { value: 'overdue', label: 'Quá hạn' },
+  { value: 'paid', label: 'Đã trả hết' },
+];
+
 const SupplierDebtManagement = () => {
-  const navigate = useNavigate(); // KHỞI TẠO ĐIỀU HƯỚNG
+  const navigate = useNavigate();
 
   const {
     debts,
@@ -36,9 +45,21 @@ const SupplierDebtManagement = () => {
     refetch,
   } = useSupplierDebt();
 
+  const [localSearch, setLocalSearch] = useState(searchTerm);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(localSearch);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [localSearch, setSearchTerm]);
+
+  useEffect(() => {
+    setLocalSearch(searchTerm);
+  }, [searchTerm]);
 
   const openDetail = (id) => {
     setSelectedSupplierId(id);
@@ -51,7 +72,6 @@ const SupplierDebtManagement = () => {
     handleCreate: createPayment,
   } = useSupplierPayment();
 
-  // Tải danh sách NCC để đưa vào dropdown của Modal thanh toán
   useEffect(() => {
     fetchActiveSuppliers();
   }, [fetchActiveSuppliers]);
@@ -64,171 +84,182 @@ const SupplierDebtManagement = () => {
   };
 
   return (
-    <div className="animate-fade-in mt-2 space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="animate-fade-in mt-2 space-y-4">
+      {/* ==================== PAGE HEADER ==================== */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Công nợ Nhà cung cấp</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Công nợ Nhà cung cấp</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">
             Kiểm soát dòng tiền, theo dõi công nợ kỳ này và các khoản nợ quá hạn.
           </p>
         </div>
 
-        {/* BỔ SUNG NÚT "LỊCH SỬ THANH TOÁN" VÀO NHÓM NÚT */}
-        <div className="flex gap-2">
-          <button
+        <div className="flex items-center gap-2">
+          <Button
             onClick={() => navigate('/inventory/supplier-payments')}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5"
           >
-            <Icon name="history" size={18} /> Lịch sử Thanh toán
-          </button>
-          <button
+            <Icon name="history" size={16} /> Lịch sử Thanh toán
+          </Button>
+          <Button
             onClick={handleExport}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5"
           >
-            <Icon name="download" size={18} /> Xuất Excel
-          </button>
-          <button
+            <Icon name="download" size={16} /> Xuất Excel
+          </Button>
+          <Button
             onClick={() => setPaymentModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
+            className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white"
           >
-            <Icon name="payments" size={18} /> Lập Phiếu Chi
-          </button>
+            <Icon name="payments" size={16} /> Lập Phiếu Chi
+          </Button>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">
           {error}
         </div>
       )}
 
-      {/* KPI Cards từ Summary */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card padding="p-4" className="border border-slate-200">
-          <p className="text-sm font-semibold text-slate-500">Tổng Nợ Cuối Kỳ</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
+      {/* ==================== KPI CARDS ==================== */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card padding="p-4" className="border border-slate-200 dark:border-[#333]">
+          <p className="text-sm font-semibold text-slate-500 dark:text-[#999]">Tổng nợ</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-[#e5e5e5]">
             {formatCurrency(summary.totalClosingDebt)}
           </p>
           <p className="mt-1 text-xs text-slate-400">Trên {summary.totalSuppliers} nhà cung cấp</p>
         </Card>
-        <Card padding="p-4" className="border border-red-100 bg-red-50/40">
-          <p className="text-sm font-semibold text-red-600">Nợ Quá Hạn</p>
-          <p className="mt-2 text-2xl font-bold text-red-600">
-            {formatCurrency(summary.totalOverdueDebt)}
-          </p>
-          <p className="mt-1 text-xs text-red-400">Từ {summary.overdueCount} nhà cung cấp</p>
-        </Card>
-        <Card padding="p-4" className="border border-slate-200">
-          <p className="text-sm font-semibold text-slate-500">Phát Sinh Mua (Kỳ này)</p>
+        <Card padding="p-4" className="border border-slate-200 dark:border-[#333]">
+          <p className="text-sm font-semibold text-slate-500 dark:text-[#999]">Tổng tiền Đã mua</p>
           <p className="mt-2 text-2xl font-bold text-blue-700">
             {formatCurrency(summary.totalPurchasedInPeriod)}
           </p>
         </Card>
-        <Card padding="p-4" className="border border-slate-200">
-          <p className="text-sm font-semibold text-slate-500">Đã Trả (Kỳ này)</p>
+        <Card padding="p-4" className="border border-slate-200 dark:border-[#333]">
+          <p className="text-sm font-semibold text-slate-500 dark:text-[#999]">Tổng tiền Đã trả</p>
           <p className="mt-2 text-2xl font-bold text-emerald-600">
             {formatCurrency(summary.totalPaidInPeriod)}
           </p>
         </Card>
       </div>
 
-      {/* Toolbar */}
-      <Card padding="p-0" className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 bg-slate-50 p-4">
-          <div className="flex flex-1 items-center gap-3">
-            <div className="flex w-72 items-center rounded-lg border border-slate-300 bg-white px-3 py-2 focus-within:border-blue-500">
-              <Icon name="search" size={18} className="mr-2 text-slate-400" />
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm NCC hoặc mã..."
-                className="w-full bg-transparent text-sm outline-none"
-              />
-            </div>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="normal">Bình thường</option>
-              <option value="overdue">Quá hạn</option>
-              <option value="paid">Đã thanh toán hết</option>
-            </select>
+      {/* ==================== FILTERS + SEARCH ==================== */}
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333] dark:bg-[#1a1a1a]/60">
+        {/* Search bar */}
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-[300px] flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-blue-400 focus-within:ring-1 dark:border-[#404040] dark:bg-[#1a1a1a]">
+            <Search size={16} className="mr-2 text-slate-400 dark:text-[#808080]" />
+            <input
+              type="text"
+              placeholder="Tìm theo tên NCC hoặc mã..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="w-full border-none bg-transparent text-sm outline-none focus:ring-0 dark:text-[#e5e5e5] dark:placeholder:text-[#808080]"
+            />
+            {localSearch && (
+              <button
+                onClick={() => { setLocalSearch(''); setSearchTerm(''); }}
+                className="ml-2 rounded-full p-0.5 text-slate-400 hover:text-slate-600 dark:text-[#808080] dark:hover:text-[#b3b3b3]"
+              >
+                <Icon name="close" size={14} />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Table */}
+        {/* Status filter pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999]">
+            <Filter size={14} /> Lọc trạng thái:
+          </span>
+          {STATUS_OPTIONS.map((opt) => {
+            const isActive = status === opt.value;
+            return (
+              <Button
+                key={opt.value}
+                type="button"
+                variant={isActive ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => { setStatus(opt.value); setPageNumber(1); }}
+              >
+                {opt.label}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ==================== BẢNG DANH SÁCH ==================== */}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333] dark:bg-[#0f0f0f]">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="border-b border-slate-200 bg-white text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-bold">Nhà cung cấp</th>
-                <th className="px-4 py-3 text-right font-bold">Nợ Đầu Kỳ</th>
-                <th className="px-4 py-3 text-right font-bold">Mua Trong Kỳ</th>
-                <th className="px-4 py-3 text-right font-bold text-emerald-600">Đã Trả Kỳ Này</th>
-                <th className="px-4 py-3 text-right font-bold text-rose-600">NỢ CUỐI KỲ</th>
-                <th className="px-4 py-3 text-center font-bold">Hạn Thanh Toán</th>
-                <th className="px-4 py-3 text-center font-bold">Trạng thái</th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50 dark:border-[#333] dark:bg-[#1a1a1a]">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Nhà cung cấp</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Mua</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Đã trả</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Còn nợ</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#333]">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
-                    Đang tải dữ liệu...
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <tr key={idx}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <td key={i} className="px-4 py-4">
+                        <div className="h-4 w-20 animate-pulse rounded bg-slate-200 dark:bg-[#333]" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : debts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
-                    Không tìm thấy dữ liệu công nợ
+                  <td colSpan={5} className="px-4 py-16 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Icon name="receipt_long" className="h-10 w-10 text-slate-300 dark:text-[#666]" />
+                      <p className="font-medium text-slate-500 dark:text-[#999]">Không có dữ liệu</p>
+                      <p className="text-sm text-slate-400 dark:text-[#808080]">Thử thay đổi bộ lọc hoặc tạo phiếu chi mới</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 debts.map((d) => (
                   <tr
                     key={d.id}
-                    className="cursor-pointer transition-colors hover:bg-blue-50/30"
+                    className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]"
                     onClick={() => openDetail(d.id)}
                   >
-                    <td className="px-4 py-4">
-                      <div className="font-bold text-blue-700">{d.name}</div>
-                      <div className="text-xs text-slate-400">{d.code}</div>
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-blue-700 dark:text-blue-400">{d.name}</div>
+                      <div className="text-xs text-slate-400 dark:text-[#808080]">{d.code}</div>
                     </td>
-                    <td className="px-4 py-4 text-right font-medium">
-                      {formatCurrency(d.openingDebt)}
-                    </td>
-                    <td className="px-4 py-4 text-right font-medium">
+                    <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
                       {formatCurrency(d.purchasedInPeriod)}
                     </td>
-                    <td className="px-4 py-4 text-right font-medium text-emerald-600">
+                    <td className="px-4 py-3 text-right font-medium text-emerald-600">
                       {formatCurrency(d.paidInPeriod)}
                     </td>
-                    <td className="px-4 py-4 text-right text-base font-bold text-rose-600">
+                    <td className="px-4 py-3 text-right text-base font-bold text-rose-600">
                       {formatCurrency(d.closingDebt)}
                     </td>
-                    <td className="px-4 py-4 text-center">
-                      <div className="font-medium">
-                        {d.dueDate ? d.dueDate.split('T')[0] : '---'}
-                      </div>
-                      {d.overdueDays > 0 && (
-                        <div className="mt-1 text-xs font-bold text-red-500">
-                          Trễ {d.overdueDays} ngày
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-center">
+                    <td className="px-4 py-3 text-center">
                       {d.status === 'overdue' ? (
-                        <span className="rounded bg-red-100 px-2 py-1 text-xs font-bold text-red-700">
+                        <span className="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-300">
                           Quá Hạn
                         </span>
                       ) : d.status === 'paid' ? (
-                        <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">
+                        <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
                           Đã Trả Hết
                         </span>
                       ) : (
-                        <span className="rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
+                        <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-[#272727] dark:text-[#b3b3b3]">
                           Bình Thường
                         </span>
                       )}
@@ -241,49 +272,54 @@ const SupplierDebtManagement = () => {
         </div>
 
         {/* Pagination */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-4 py-3">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
-            <span>Hiển thị</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPageNumber(1);
-              }}
-              className="rounded border border-slate-300 px-2 py-1 text-xs outline-none"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-            <span className="text-slate-400">|</span>
-            <span>
-              Tổng cộng: <strong className="text-slate-800">{paginationMeta.totalCount}</strong>{' '}
-              phiếu
-            </span>
+        {!loading && debts.length > 0 && (
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333] dark:bg-[#0f0f0f]">
+            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
+              <div className="flex items-center gap-2">
+                <span>Hiển thị</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPageNumber(1);
+                  }}
+                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                >
+                  <option value={10}>10 dòng</option>
+                  <option value={20}>20 dòng</option>
+                  <option value={50}>50 dòng</option>
+                </select>
+              </div>
+              <span>
+                {(pageNumber - 1) * pageSize + 1} -{' '}
+                {Math.min(pageNumber * pageSize, paginationMeta.totalCount)} trong tổng số{' '}
+                {paginationMeta.totalCount} phiếu
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPageNumber((p) => p - 1)}
+                disabled={pageNumber <= 1}
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#272727] disabled:opacity-50"
+              >
+                <Icon name="chevron_left" className="text-[18px]" />
+              </button>
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+                Trang {pageNumber} / {paginationMeta.totalPages}
+              </div>
+              <button
+                type="button"
+                onClick={() => setPageNumber((p) => p + 1)}
+                disabled={pageNumber >= paginationMeta.totalPages}
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#272727] disabled:opacity-50"
+              >
+                <Icon name="chevron_right" className="text-[18px]" />
+              </button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPageNumber((p) => p - 1)}
-              disabled={pageNumber <= 1}
-              className="rounded border border-slate-300 bg-white p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-50"
-            >
-              <Icon name="chevron_left" size={18} />
-            </button>
-            <span className="px-2 text-sm font-semibold text-slate-700">
-              {pageNumber} / {paginationMeta.totalPages}
-            </span>
-            <button
-              onClick={() => setPageNumber((p) => p + 1)}
-              disabled={pageNumber >= paginationMeta.totalPages}
-              className="rounded border border-slate-300 bg-white p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-50"
-            >
-              <Icon name="chevron_right" size={18} />
-            </button>
-          </div>
-        </div>
-      </Card>
+        )}
+      </div>
 
       <SupplierDebtDetailModal
         isOpen={detailModalOpen}

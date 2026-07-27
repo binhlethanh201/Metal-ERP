@@ -13,8 +13,8 @@ const ProductGrid = ({
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-        <Icon name="error" size={40} className="mb-3 text-red-400" />
-        <p className="text-sm font-semibold text-red-500">{error}</p>
+        <Icon name="error" size={40} className="mb-3 text-red-400 dark:text-red-500" />
+        <p className="text-sm font-semibold text-red-500 dark:text-red-400">{error}</p>
       </div>
     );
   }
@@ -30,8 +30,8 @@ const ProductGrid = ({
   if (!products || products.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-        <Icon name="inventory_2" size={40} className="mb-3 text-gray-300" />
-        <p className="text-sm font-semibold text-gray-400">Không có sản phẩm nào</p>
+        <Icon name="inventory_2" size={40} className="mb-3 text-gray-300 dark:text-[#666666]" />
+        <p className="text-sm font-semibold text-gray-400 dark:text-[#808080]">Không có sản phẩm nào</p>
       </div>
     );
   }

@@ -30,11 +30,11 @@ export const StockCard = ({ product }) => {
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-lg">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-lg dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="mb-3 flex items-start justify-between">
         <div>
-          <h3 className="font-semibold text-gray-900">{product.name}</h3>
-          <p className="text-sm text-gray-500">{product.sku}</p>
+          <h3 className="font-semibold text-gray-900 dark:text-[#e5e5e5]">{product.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-[#999999]">{product.sku}</p>
         </div>
         <Badge variant={statusColors[status]} size="sm">
           {STOCK_STATUS_LABELS[status]}
@@ -43,17 +43,17 @@ export const StockCard = ({ product }) => {
 
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Tồn kho:</span>
+          <span className="text-gray-600 dark:text-[#999999]">Tồn kho:</span>
           <span className="font-semibold">{product.stock}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Tối thiểu:</span>
+          <span className="text-gray-600 dark:text-[#999999]">Tối thiểu:</span>
           <span className="font-semibold">{product.minStock}</span>
         </div>
 
         {/* Progress bar */}
         <div className="mt-3">
-          <div className="h-2 w-full rounded-full bg-gray-200">
+          <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-[#272727]">
             <div
               className="h-2 rounded-full bg-blue-600"
               style={{ width: `${Math.min((product.stock / (product.minStock * 3)) * 100, 100)}%` }}

@@ -20,6 +20,7 @@ const PosCartPanel = ({
   onOpenPriceCheck,
   onOpenStockCheck,
   embedded,
+  disabled = false,
 }) => {
   const paymentMethods = [
     ['payments', 'Tiền mặt'],
@@ -28,17 +29,17 @@ const PosCartPanel = ({
   ];
   return (
     <aside
-      className={`flex flex-col bg-white ${
+      className={`flex flex-col bg-white dark:bg-[#0f0f0f] ${
         embedded
           ? 'h-full'
-          : 'fixed bottom-12 right-0 top-16 z-30 w-[400px] border-l border-slate-200 shadow-[-4px_0_15px_rgba(0,0,0,0.02)]'
+          : 'fixed bottom-12 right-0 top-16 z-30 w-[400px] border-l border-slate-200 shadow-[-4px_0_15px_rgba(0,0,0,0.02)] dark:border-[#333333]'
       }`}
     >
-      <div className="flex items-center justify-between border-b border-slate-100 p-4">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-[#333333]">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-[#808080]">
           Giỏ hàng hiện tại
         </h3>
-        <button onClick={onClearCart} className="text-slate-400 hover:text-red-600 active:scale-95">
+        <button onClick={onClearCart} className="text-slate-400 hover:text-red-600 active:scale-95 dark:text-[#808080]">
           <Icon name="delete" />
         </button>
       </div>
@@ -47,27 +48,27 @@ const PosCartPanel = ({
       <div className="custom-scrollbar flex flex-1 flex-col gap-y-4 overflow-y-auto p-4">
         {cart.map((item) => (
           <div key={item.id} className="flex items-center gap-x-2">
-            <div className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+            <div className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
               {item.image ? (
                 <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
               ) : (
-                <span className="text-xs font-bold text-slate-300">
+                <span className="text-xs font-bold text-slate-300 dark:text-[#808080]">
                   {item.name?.charAt(0) || '?'}
                 </span>
               )}
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
-              <h5 className="truncate text-sm font-bold text-slate-900">{item.name}</h5>
+              <h5 className="truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{item.name}</h5>
               <div className="mt-0.5 whitespace-nowrap text-base font-black text-[#004785]">
                 {formatCurrency(item.price)}
-                <span className="ml-1 text-xs font-medium text-slate-500">
+                <span className="ml-1 text-xs font-medium text-slate-500 dark:text-[#999999]">
                   / {item.displayUnit || item.selectedUnit || 'Cái'}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-x-1.5">
               {item.quantity > 1 && (
-                <span className="ml-3 whitespace-nowrap text-xs font-semibold text-slate-500">
+                <span className="ml-3 whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-[#999999]">
                   Thành tiền:
                   <span className="ml-1 text-sm font-black text-[#004785]">
                     {formatCurrency(item.price * item.quantity)}
@@ -76,7 +77,7 @@ const PosCartPanel = ({
               )}
               <button
                 onClick={() => onQtyChange(item.id, -1)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#999] dark:hover:bg-[#333]"
               >
                 -
               </button>
@@ -97,34 +98,34 @@ const PosCartPanel = ({
                 onKeyDown={(e) => {
                   if (e.key === '-' || e.key === 'e' || e.key === '.') e.preventDefault();
                 }}
-                className="w-8 text-center text-sm font-bold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="w-8 text-center text-sm font-bold outline-none dark:bg-transparent dark:text-[#e5e5e5] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
               <button
                 onClick={() => onQtyChange(item.id, 1)}
                 disabled={item.quantity >= (item.stock || 999999)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#999] dark:hover:bg-[#333]"
               >
                 +
               </button>
             </div>
             <button
               onClick={() => onRemoveItem(item.id)}
-              className="text-base text-slate-300 hover:text-red-600 active:scale-95"
+              className="text-base text-slate-300 hover:text-red-600 active:scale-95 dark:text-[#666]"
             >
               <Icon name="close" className="text-base" />
             </button>
           </div>
         ))}
         {cart.length === 0 && (
-          <div className="py-16 text-center text-sm font-semibold text-slate-400">
+          <div className="py-16 text-center text-sm font-semibold text-slate-400 dark:text-[#808080]">
             Giỏ hàng trống
           </div>
         )}
       </div>
 
-      <div className="border-t border-slate-200 bg-slate-50 p-6">
+      <div className="border-t border-slate-200 bg-slate-50 p-6 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
         <div className="mb-4 flex flex-col gap-y-2">
-          <div className="flex justify-between text-xs font-medium text-slate-500">
+          <div className="flex justify-between text-xs font-medium text-slate-500 dark:text-[#999999]">
             <span>Tạm tính</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
@@ -134,9 +135,9 @@ const PosCartPanel = ({
               <span>- {formatCurrency(discountInfo.discountAmount)}</span>
             </div>
           )}
-          <div className="my-1 h-px bg-slate-200" />
+          <div className="my-1 h-px bg-slate-200 dark:bg-[#272727]" />
           <div className="flex items-end justify-between">
-            <span className="text-xs font-bold uppercase text-slate-900">Tổng cộng</span>
+            <span className="text-xs font-bold uppercase text-slate-900 dark:text-[#e5e5e5]">Tổng cộng</span>
             <span className="text-2xl font-black text-[#004785]">
               {formatCurrency(subtotal - (discountInfo?.discountAmount || 0))}
             </span>
@@ -153,12 +154,12 @@ const PosCartPanel = ({
               }}
               className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2.5 transition-all active:scale-95 ${
                 !isSplitPay && payMethod === method
-                  ? 'border-[#004785] bg-blue-50'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
+                  ? 'border-[#004785] bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
+                  : 'border-slate-200 bg-white hover:border-slate-300 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:border-[#404040]'
               }`}
             >
-              <Icon name={icon} className="text-lg" />
-              <span className="text-[10px] font-bold text-slate-600">{method}</span>
+              <Icon name={icon} className={`text-lg ${!isSplitPay && payMethod === method ? 'dark:text-blue-300' : ''}`} />
+              <span className={`text-[10px] font-bold ${!isSplitPay && payMethod === method ? 'text-slate-600 dark:text-blue-300' : 'text-slate-600 dark:text-[#999999]'}`}>{method}</span>
             </button>
           ))}
         </div>
@@ -166,13 +167,18 @@ const PosCartPanel = ({
         <div className="flex flex-col gap-y-2">
           <button
             onClick={onPay}
-            className="w-full rounded-lg bg-[#004785] py-4 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-blue-900/20 transition-all hover:opacity-90 active:scale-95"
+            disabled={disabled}
+            className={`w-full rounded-lg py-4 text-sm font-black uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all active:scale-95 ${
+              disabled
+                ? 'cursor-not-allowed bg-slate-400 text-slate-200 dark:bg-[#333333] dark:text-[#999999]'
+                : 'bg-[#004785] text-white hover:opacity-90'
+            }`}
           >
-            THANH TOÁN (F9)
+            {disabled ? 'ĐANG XỬ LÝ...' : 'THANH TOÁN (F9)'}
           </button>
           <button
             onClick={onSaveDraft}
-            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-[#004785] hover:text-[#004785] active:scale-95"
+            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-[#004785] hover:text-[#004785] active:scale-95 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]"
           >
             Lưu bản nháp
           </button>

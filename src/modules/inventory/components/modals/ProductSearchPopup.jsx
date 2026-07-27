@@ -37,13 +37,13 @@ const ProductSearchPopup = ({ isOpen, onClose, onSelect, productList }) => {
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center">
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-3xl rounded-xl bg-white shadow-2xl">
+      <div className="relative z-10 w-full max-w-3xl rounded-xl bg-white shadow-2xl dark:bg-[#0f0f0f]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-900">Chọn hàng hóa</h2>
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-[#333333]">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Chọn hàng hóa</h2>
           <button
             type="button"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
             onClick={onClose}
           >
             <Icon name="close" size={20} />
@@ -51,11 +51,11 @@ const ProductSearchPopup = ({ isOpen, onClose, onSelect, productList }) => {
         </div>
 
         {/* Search */}
-        <div className="border-b border-slate-200 px-6 py-3">
-          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-            <Icon name="search" className="mr-2 text-slate-400" size={16} />
+        <div className="border-b border-slate-200 px-6 py-3 dark:border-[#333333]">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-[#404040] dark:bg-[#1a1a1a]">
+            <Icon name="search" className="mr-2 text-slate-400 dark:text-[#808080]" size={16} />
             <input
-              className="w-full border-none bg-transparent text-sm outline-none"
+              className="w-full border-none bg-transparent text-sm outline-none dark:text-[#e5e5e5]"
               placeholder="Tìm theo mã, tên hàng hóa..."
               value={search}
               onChange={(e) => {
@@ -70,30 +70,30 @@ const ProductSearchPopup = ({ isOpen, onClose, onSelect, productList }) => {
         {/* Table */}
         <div className="max-h-[400px] overflow-y-auto">
           <table className="w-full">
-            <thead className="sticky top-0 border-b border-slate-200 bg-slate-50">
+            <thead className="sticky top-0 border-b border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
               <tr>
                 <th className="w-[50px] px-4 py-2.5" />
-                <th className="px-4 py-2.5 text-left text-xs font-bold uppercase text-slate-500">
+                <th className="px-4 py-2.5 text-left text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   Mã HH
                 </th>
-                <th className="px-4 py-2.5 text-left text-xs font-bold uppercase text-slate-500">
+                <th className="px-4 py-2.5 text-left text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   Tên hàng hóa
                 </th>
-                <th className="px-4 py-2.5 text-center text-xs font-bold uppercase text-slate-500">
+                <th className="px-4 py-2.5 text-center text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   ĐVT
                 </th>
-                <th className="px-4 py-2.5 text-right text-xs font-bold uppercase text-slate-500">
+                <th className="px-4 py-2.5 text-right text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   Giá nhập
                 </th>
-                <th className="px-4 py-2.5 text-right text-xs font-bold uppercase text-slate-500">
+                <th className="px-4 py-2.5 text-right text-xs font-bold uppercase text-slate-500 dark:text-[#999999]">
                   Tồn kho
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400 dark:text-[#808080]">
                     Không tìm thấy hàng hóa
                   </td>
                 </tr>
@@ -101,7 +101,7 @@ const ProductSearchPopup = ({ isOpen, onClose, onSelect, productList }) => {
                 filtered.map((prod) => (
                   <tr
                     key={prod.id}
-                    className={`cursor-pointer transition-colors hover:bg-blue-50 ${selectedId === prod.id ? 'bg-blue-50 ring-1 ring-blue-400' : ''}`}
+                    className={`cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20 ${selectedId === prod.id ? 'bg-blue-50 ring-1 ring-blue-400 dark:bg-blue-900/30' : ''}`}
                     onClick={() => setSelectedId(prod.id)}
                     onDoubleClick={() => handleDoubleClick(prod)}
                   >
@@ -120,18 +120,18 @@ const ProductSearchPopup = ({ isOpen, onClose, onSelect, productList }) => {
                       </span>
                     </td>
                     <td className="px-4 py-2.5">
-                      <span className="text-sm font-medium text-slate-800">{prod.name}</span>
+                      <span className="text-sm font-medium text-slate-800 dark:text-[#e5e5e5]">{prod.name}</span>
                     </td>
                     <td className="px-4 py-2.5 text-center">
-                      <span className="text-sm text-slate-600">{prod.unit}</span>
+                      <span className="text-sm text-slate-600 dark:text-[#999999]">{prod.unit}</span>
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <span className="text-sm tabular-nums text-slate-700">
+                      <span className="text-sm tabular-nums text-slate-700 dark:text-[#b3b3b3]">
                         {prod.price?.toLocaleString('vi-VN')}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <span className="text-sm tabular-nums text-slate-600">
+                      <span className="text-sm tabular-nums text-slate-600 dark:text-[#999999]">
                         {prod.stock?.toLocaleString('vi-VN')}
                       </span>
                     </td>
@@ -143,14 +143,14 @@ const ProductSearchPopup = ({ isOpen, onClose, onSelect, productList }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-200 px-6 py-4">
-          <span className="text-xs text-slate-400">
+        <div className="flex items-center justify-between border-t border-slate-200 px-6 py-4 dark:border-[#333333]">
+          <span className="text-xs text-slate-400 dark:text-[#808080]">
             Double-click hoặc chọn dòng và bấm "Đồng ý"
           </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999] dark:hover:bg-[#333333]"
               onClick={onClose}
             >
               Hủy

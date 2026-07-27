@@ -87,14 +87,14 @@ const GoodsIssueCreate = () => {
       {/* Header Bar: Title + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tạo phiếu xuất kho</h1>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e5e5e5]">Tạo phiếu xuất kho</h1>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-[#999999]">
             Nhập thong tin phiếu xuất va Chi tiết hàng hóa
           </p>
         </div>
         <button
           type="button"
-          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-slate-600 dark:text-[#b3b3b3] transition-colors hover:bg-slate-50 dark:hover:bg-[#333333]"
           onClick={handleClose}
         >
           <Icon name="chevron_left" className="text-base" />
@@ -112,13 +112,13 @@ const GoodsIssueCreate = () => {
       />
 
       {/* Barcode Toggle + Chi tiết hàng hóa */}
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700">
+          <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-[#b3b3b3]">
             Chi tiết hàng hóa
           </h3>
           <label className="flex cursor-pointer items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500">Quét mã vạch</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#999999]">Quét mã vạch</span>
             <button
               type="button"
               role="switch"
@@ -129,7 +129,7 @@ const GoodsIssueCreate = () => {
               }`}
             >
               <span
-                className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                className={`inline-block h-5 w-5 rounded-full bg-white dark:bg-[#1a1a1a] shadow transition-transform ${
                   form.barcodemode ? 'translate-x-[22px]' : 'translate-x-[2px]'
                 }`}
               />
@@ -153,10 +153,10 @@ const GoodsIssueCreate = () => {
       </div>
 
       {/* Footer: Đính kèm + Tổng tiền + Hủy/Lưu */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-6 py-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] px-6 py-4 shadow-sm">
         <button
           type="button"
-          className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600"
+          className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 dark:border-[#404040] px-4 py-2.5 text-sm font-semibold text-slate-500 dark:text-[#999999] transition-colors hover:border-blue-400 hover:text-blue-600"
           onClick={handleAttachFile}
         >
           <Icon name="upload_file" className="text-base" />
@@ -165,15 +165,15 @@ const GoodsIssueCreate = () => {
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <span className="text-xs text-slate-500">Tong Thành tiền: </span>
-            <span className="ml-1 text-lg font-bold text-slate-900">
+            <span className="text-xs text-slate-500 dark:text-[#999999]">Tong Thành tiền: </span>
+            <span className="ml-1 text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
               {formatMoney(form.totalAmount)}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              className="rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] px-6 py-2.5 text-sm font-semibold text-slate-600 dark:text-[#b3b3b3] transition-colors hover:bg-slate-50 dark:hover:bg-[#333333]"
               onClick={handleCancel}
             >
               Huy

@@ -29,12 +29,12 @@ const AssignBranchModal = ({ isOpen, onClose, staff, branches, onSave }) => {
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-800">Điều chuyển chi nhánh</h2>
+      <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-[#0f0f0f]">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Điều chuyển chi nhánh</h2>
           <button
             onClick={onClose}
-            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
+            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
           >
             <Icon name="close" size={24} />
           </button>
@@ -42,18 +42,18 @@ const AssignBranchModal = ({ isOpen, onClose, staff, branches, onSave }) => {
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-4">
-            <p className="mb-4 text-sm text-slate-600">
-              Nhân sự: <strong className="text-slate-800">{staff.fullName}</strong>
+            <p className="mb-4 text-sm text-slate-600 dark:text-[#999999]">
+              Nhân sự: <strong className="text-slate-800 dark:text-[#e5e5e5]">{staff.fullName}</strong>
               <br />
               Đang làm việc tại:{' '}
               <span className="font-semibold text-blue-700">{staff.branchName || 'Chưa gán'}</span>
             </p>
 
-            <label className="mb-1.5 block text-sm font-bold text-slate-700">
+            <label className="mb-1.5 block text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">
               Chọn chi nhánh mới đến <span className="text-red-500">*</span>
             </label>
             <select
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               value={selectedBranchId}
               onChange={(e) => setSelectedBranchId(e.target.value)}
             >
@@ -71,11 +71,11 @@ const AssignBranchModal = ({ isOpen, onClose, staff, branches, onSave }) => {
             </select>
           </div>
 
-          <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-5">
+          <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-5 dark:border-[#333333]">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
               Hủy
             </button>

@@ -159,18 +159,15 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
   };
 
   const selectCss =
-    'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-[#004785] focus:outline-none transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed';
+    'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-[#004785] focus:outline-none transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:disabled:bg-[#1a1a1a]';
 
   const modalFooter = (
-    <>
-      <Button variant="secondary" onClick={onClose}>
-        Đóng
-      </Button>
+    <div className="flex w-full items-center justify-end gap-2">
       <Button variant="primary" type="submit" form="staff-form" className="flex items-center gap-2">
         <Icon name="save" size={18} />
         {staff ? 'Lưu thay đổi' : 'Tạo nhân viên'}
       </Button>
-    </>
+    </div>
   );
 
   return (
@@ -184,7 +181,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
             {staff ? `Chi tiết nhân viên: ${staff.fullName}` : 'Thêm Nhân viên mới'}
           </span>
           {staff && (
-            <span className="mt-1 text-xs font-normal text-slate-500">
+            <span className="mt-1 text-xs font-normal text-slate-500 dark:text-[#999999]">
               {staff.branchName ? `Chi nhánh: ${staff.branchName} — ` : ''}Bạn có thể kiểm tra và
               chỉnh sửa thông tin hoặc phân quyền trực tiếp tại đây.
             </span>
@@ -240,7 +237,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
           />
 
           <div className="w-full">
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               {staff ? 'Vai trò / Chức danh' : 'Vai trò mặc định'}
             </label>
             <select
@@ -255,7 +252,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               {!staff && <option value="">-- Không gán vai trò (Tuỳ chỉnh) --</option>}
             </select>
             {staff && (
-              <p className="mt-1 text-xs italic text-slate-400">
+              <p className="mt-1 text-xs italic text-slate-400 dark:text-[#808080]">
                 * Hệ thống không hỗ trợ đổi chức danh sau khi tạo. Bạn chỉ có thể sửa quyền bên
                 dưới.
               </p>
@@ -264,7 +261,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
 
           {staff && (
             <div className="w-full">
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                 Trạng thái tài khoản
               </label>
               <select
@@ -279,18 +276,18 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
           )}
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 dark:border-[#333333]">
             <div>
-              <label className="text-base font-bold text-slate-800">
+              <label className="text-base font-bold text-slate-800 dark:text-[#e5e5e5]">
                 <Icon
-                  name="Key_Icon"
+                  name="shield"
                   size={20}
                   className="mr-2 inline align-text-bottom text-blue-600"
                 />
                 Phân quyền chi tiết ({form.permissionCodes.length} quyền đang chọn)
               </label>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-[#999999]">
                 {!staff
                   ? 'Chế độ tạo mới: Tùy chỉnh quyền sẽ ghi đè hoàn toàn quyền mặc định của vai trò.'
                   : 'Chế độ xem & cập nhật: Tích hoặc bỏ tích để cập nhật quyền hạn cho nhân viên.'}
@@ -312,7 +309,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
                 <button
                   type="button"
                   onClick={handleApplyRoleDefaults}
-                  className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                  className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                 >
                   Khôi phục bộ quyền mẫu {form.defaultRoleType}
                 </button>
@@ -321,23 +318,23 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
           </div>
 
           {!permissions.length ? (
-            <p className="flex items-center gap-2 py-4 text-sm italic text-slate-500">
+            <p className="flex items-center gap-2 py-4 text-sm italic text-slate-500 dark:text-[#999999]">
               <Icon name="sync" className="animate-spin" /> Đang tải danh sách quyền từ hệ thống...
             </p>
           ) : !isCustomizing && !staff && form.defaultRoleType ? (
-            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-6 text-center">
-              <Icon name="verified_user" size={32} className="mx-auto mb-2 text-blue-600" />
-              <h4 className="text-sm font-bold text-blue-900">
+            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-6 text-center dark:border-blue-900/50 dark:bg-blue-900/20">
+              <Icon name="verified_user" size={32} className="mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+              <h4 className="text-sm font-bold text-blue-900 dark:text-blue-300">
                 Đang áp dụng bộ quyền tự động cho chức danh [{form.defaultRoleType}]
               </h4>
-              <p className="mx-auto mt-1 max-w-lg text-xs text-blue-700">
+              <p className="mx-auto mt-1 max-w-lg text-xs text-blue-700 dark:text-blue-400">
                 Nhân viên sẽ tự động nhận đầy đủ các quyền chuẩn được thiết lập sẵn trong hệ thống
                 khi khởi tạo.
               </p>
               <button
                 type="button"
                 onClick={() => setIsCustomizing(true)}
-                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-800 underline hover:text-black"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-800 underline hover:text-black dark:text-blue-400 dark:hover:text-blue-200"
               >
                 <Icon name="edit" size={14} /> Tôi muốn tự chọn / ghi đè quyền thủ công
               </button>
@@ -346,30 +343,30 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
             <div className="space-y-6">
               {groupedPermissions.map((group) => (
                 <div key={group.label}>
-                  <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-[#999999]">
                     {group.label}
                   </h4>
-                  <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f] sm:grid-cols-2 lg:grid-cols-3">
                     {group.items.map((perm) => {
                       const isChecked = form.permissionCodes.includes(perm.permissionCode);
                       return (
                         <label
                           key={perm.permissionId}
-                          className="group flex cursor-pointer items-start gap-2.5 rounded p-1 hover:bg-slate-50"
+                          className="group flex cursor-pointer items-start gap-2.5 rounded p-1 hover:bg-slate-50 dark:hover:bg-[#272727]"
                         >
                           <input
                             type="checkbox"
-                            className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 transition-colors focus:ring-blue-500"
+                            className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 transition-colors focus:ring-blue-500 dark:border-[#404040]"
                             checked={isChecked}
                             onChange={() => handleTogglePermission(perm.permissionCode)}
                           />
                           <div className="flex flex-col">
                             <span
-                              className={`text-sm font-medium transition-colors ${isChecked ? 'font-semibold text-blue-700' : 'text-slate-700 group-hover:text-black'}`}
+                              className={`text-sm font-medium transition-colors ${isChecked ? 'font-semibold text-blue-700 dark:text-blue-400' : 'text-slate-700 group-hover:text-black dark:text-[#b3b3b3] dark:group-hover:text-[#e5e5e5]'}`}
                             >
                               {perm.permissionName || perm.permissionCode}
                             </span>
-                            <span className="font-mono text-[11px] text-slate-400">
+                            <span className="font-mono text-[11px] text-slate-400 dark:text-[#808080]">
                               {perm.permissionCode}
                             </span>
                           </div>

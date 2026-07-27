@@ -8,11 +8,11 @@ import Icon from '../../../shared/components/Icon';
 import { REPORT_TYPES } from '../constraints/reportConstants';
 
 const selectClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:disabled:bg-[#1a1a1a]';
 
 const FilterField = ({ label, children }) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-slate-700">{label}</label>
+    <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{label}</label>
     {children}
   </div>
 );
@@ -158,7 +158,7 @@ export const ReportFilters = ({
   return (
     <>
       {/* Tabs Navigation */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-slate-200 dark:border-[#333333]">
         <div className="no-scrollbar flex space-x-1 overflow-x-auto">
           {REPORT_TYPES.map((report) => (
             <button
@@ -166,8 +166,8 @@ export const ReportFilters = ({
               onClick={() => onSelectReport(report.key)}
               className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
                 selectedReport === report.key
-                  ? 'border-[#004785] bg-blue-50/50 text-[#004785]'
-                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                  ? 'border-[#004785] bg-blue-50/50 text-[#004785] dark:bg-blue-900/20 dark:text-blue-400'
+                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-[#999999] dark:hover:border-[#404040] dark:hover:text-[#b3b3b3]'
               }`}
             >
               {report.label}
@@ -177,11 +177,11 @@ export const ReportFilters = ({
       </div>
 
       {/* Toolbar */}
-      <Card className="border-slate-200 bg-white shadow-sm" padding="p-5">
+      <Card className="border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]" padding="p-5">
         <div className="flex flex-wrap items-end gap-4">
           {selectedReport === 'supplier-detail' && (
             <div className="min-w-[220px] flex-1 lg:flex-none">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                 Nhà cung cấp
               </label>
               <select
@@ -210,13 +210,13 @@ export const ReportFilters = ({
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="relative flex h-[38px] flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 sm:flex-none"
+              className="relative flex h-[38px] flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 sm:flex-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
-              <Icon name="Layers" className="h-4 w-4 text-slate-500" />
+              <Icon name="Layers" className="h-4 w-4 text-slate-500 dark:text-[#999999]" />
               <span>Bộ lọc</span>
               {dateSummary && (
-                <span className="hidden items-center gap-1 border-l border-slate-200 pl-2 text-xs font-medium text-slate-500 sm:flex">
-                  <Icon name="CalendarDays" className="h-4 w-4 text-slate-500" />
+                <span className="hidden items-center gap-1 border-l border-slate-200 pl-2 text-xs font-medium text-slate-500 sm:flex dark:border-[#333333] dark:text-[#999999]">
+                  <Icon name="CalendarDays" className="h-4 w-4 text-slate-500 dark:text-[#999999]" />
                   {dateSummary}
                 </span>
               )}
@@ -230,11 +230,11 @@ export const ReportFilters = ({
             {selectedReport !== 'daily-end' && (
               <Button
                 variant="secondary"
-                className="flex h-[38px] flex-1 items-center justify-center border border-slate-300 bg-white sm:flex-none"
+                className="flex h-[38px] flex-1 items-center justify-center border border-slate-300 bg-white sm:flex-none dark:border-[#404040] dark:bg-[#1a1a1a]"
                 onClick={onDownload}
                 disabled={!hasDataToExport || isLoading}
               >
-                <Icon name="Download" className="h-4 w-4 text-slate-500" />
+                <Icon name="Download" className="h-4 w-4 text-slate-500 dark:text-[#999999]" />
                 <span>Tải về</span>
               </Button>
             )}
@@ -342,17 +342,17 @@ export const ReportFilters = ({
 
           {selectedReport === 'low-stock' && (
             <FilterField label="Tuỳ chọn hiển thị">
-              <div className="flex h-[38px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-4">
+              <div className="flex h-[38px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 dark:border-[#404040] dark:bg-[#1a1a1a]">
                 <input
                   id="includeZeroStock"
                   type="checkbox"
                   checked={includeZeroStock}
                   onChange={(e) => onIncludeZeroStockChange(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-[#404040]"
                 />
                 <label
                   htmlFor="includeZeroStock"
-                  className="cursor-pointer text-sm font-medium text-slate-700"
+                  className="cursor-pointer text-sm font-medium text-slate-700 dark:text-[#b3b3b3]"
                 >
                   Bao gồm cả sản phẩm tồn = 0
                 </label>

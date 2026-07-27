@@ -17,8 +17,6 @@ const ExpenseFilterBar = ({
   setStatus,
   categoryId,
   setCategoryId,
-  supplierId,
-  setSupplierId,
   fromDate,
   setFromDate,
   toDate,
@@ -31,20 +29,17 @@ const ExpenseFilterBar = ({
   refetch,
   loading,
   categories,
-  suppliers,
   showFilterDrawer,
   setShowFilterDrawer,
 }) => {
   let activeFilterCount = 0;
   if (categoryId) activeFilterCount++;
-  if (supplierId) activeFilterCount++;
   if (fromDate) activeFilterCount++;
   if (toDate) activeFilterCount++;
   if (sort && sort !== 'createdat') activeFilterCount++;
 
   const handleReset = () => {
     setCategoryId('');
-    setSupplierId('');
     setFromDate('');
     setToDate('');
     setStatus('ALL');
@@ -54,10 +49,10 @@ const ExpenseFilterBar = ({
   };
 
   return (
-    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             <Filter size={14} /> Trạng thái:
           </span>
           {[
@@ -110,7 +105,6 @@ const ExpenseFilterBar = ({
           </Button>
 
           {(categoryId ||
-            supplierId ||
             fromDate ||
             toDate ||
             (status && status !== 'ALL') ||
@@ -146,14 +140,14 @@ const ExpenseFilterBar = ({
       >
         <div className="space-y-5">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nhóm chi phí</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Nhóm chi phí</label>
             <select
               value={categoryId}
               onChange={(e) => {
                 setCategoryId(e.target.value);
                 setPageNumber(1);
               }}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785]"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             >
               <option value="">Tất cả nhóm chi phí</option>
               {categories.map((c) => (
@@ -165,26 +159,7 @@ const ExpenseFilterBar = ({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nhà cung cấp</label>
-            <select
-              value={supplierId}
-              onChange={(e) => {
-                setSupplierId(e.target.value);
-                setPageNumber(1);
-              }}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785]"
-            >
-              <option value="">Tất cả nhà cung cấp</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Từ ngày</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Từ ngày</label>
             <Input
               type="date"
               value={fromDate}
@@ -196,7 +171,7 @@ const ExpenseFilterBar = ({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Đến ngày</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Đến ngày</label>
             <Input
               type="date"
               value={toDate}
@@ -207,15 +182,15 @@ const ExpenseFilterBar = ({
             />
           </div>
 
-          <div className="border-t border-slate-100 pt-4">
-            <label className="mb-1 block text-sm font-medium text-slate-700">Sắp xếp theo</label>
+          <div className="border-t border-slate-100 pt-4 dark:border-[#333333]">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Sắp xếp theo</label>
             <select
               value={sort}
               onChange={(e) => {
                 setSort(e.target.value);
                 setPageNumber(1);
               }}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785]"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -226,14 +201,14 @@ const ExpenseFilterBar = ({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Thứ tự</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Thứ tự</label>
             <select
               value={order}
               onChange={(e) => {
                 setOrder(e.target.value);
                 setPageNumber(1);
               }}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785]"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             >
               <option value="desc">Giảm dần</option>
               <option value="asc">Tăng dần</option>

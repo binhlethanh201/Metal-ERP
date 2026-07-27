@@ -19,8 +19,8 @@ const Section = ({ title, subtitle, defaultOpen = true, children }) => {
   const header = (
     <div className="flex items-start justify-between gap-4">
       <div className="flex-1">
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">{title}</h3>
+        {subtitle && <p className="text-sm text-slate-500 dark:text-[#999999]">{subtitle}</p>}
       </div>
       <IconButton
         icon={({ size }) => (
@@ -72,13 +72,13 @@ const AutocompleteInput = ({ label, value, onChange, options = [], placeholder }
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          className="absolute right-2 top-[34px] text-slate-400 hover:text-slate-600"
+          className="absolute right-2 top-[34px] text-slate-400 hover:text-slate-600 dark:text-[#808080] dark:hover:text-[#b3b3b3]"
         >
           <Icon name="expand_more" size={18} />
         </button>
       </div>
       {isOpen && filteredOptions.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
+        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
           {filteredOptions.map((opt) => (
             <li
               key={opt}
@@ -86,7 +86,7 @@ const AutocompleteInput = ({ label, value, onChange, options = [], placeholder }
                 onChange(opt);
                 setIsOpen(false);
               }}
-              className="cursor-pointer px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-[#004785]"
+              className="cursor-pointer px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-[#004785] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
               {opt}
             </li>
@@ -136,7 +136,7 @@ const ImageUploader = ({
         className="hidden"
       />
       <div className="flex w-full items-start gap-4">
-        <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+        <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
           <div className="aspect-square w-full">
             {images?.length > 0 ? (
               <img
@@ -145,13 +145,13 @@ const ImageUploader = ({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center py-8 text-slate-400">
+              <div className="flex h-full w-full items-center justify-center py-8 text-slate-400 dark:text-[#808080]">
                 <button
                   type="button"
                   onClick={onOpenFilePicker}
                   className="flex flex-col items-center gap-2"
                 >
-                  <Icon name="add" className="text-slate-400" size={28} />
+                  <Icon name="add" className="text-slate-400 dark:text-[#808080]" size={28} />
                   <span className="text-sm font-medium">Upload</span>
                 </button>
               </div>
@@ -168,7 +168,7 @@ const ImageUploader = ({
             <button
               onClick={onOpenFilePicker}
               type="button"
-              className="flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white text-slate-500 transition-all hover:border-[#004785] hover:bg-blue-50 hover:text-[#004785]"
+              className="flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white text-slate-500 transition-all hover:border-[#004785] hover:bg-blue-50 hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999] dark:hover:border-[#004785] dark:hover:bg-[#333333]"
             >
               <Icon name="add" size={20} />
             </button>
@@ -178,7 +178,7 @@ const ImageUploader = ({
           {images.map((img, idx) => (
             <div
               key={img.id || idx}
-              className="group relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+              className="group relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]"
             >
               <button
                 type="button"
@@ -188,7 +188,7 @@ const ImageUploader = ({
               >
                 <Icon
                   name="push_pin"
-                  className={idx === 0 ? 'text-[#004785]' : 'text-slate-600'}
+                  className={idx === 0 ? 'text-[#004785]' : 'text-slate-600 dark:text-[#b3b3b3]'}
                   size={14}
                 />
               </button>
@@ -233,8 +233,8 @@ const ImageUploader = ({
 
 const AttributeEditor = ({ f }) => (
   <>
-    <h4 className="mb-1 text-lg font-semibold text-slate-800">Thuộc tính</h4>
-    <p className="mb-5 text-sm text-slate-500">Thêm đặc điểm thuộc tính của sản phẩm</p>
+    <h4 className="mb-1 text-lg font-semibold text-slate-800 dark:text-[#e5e5e5]">Thuộc tính</h4>
+    <p className="mb-5 text-sm text-slate-500 dark:text-[#999999]">Thêm đặc điểm thuộc tính của sản phẩm</p>
     <div className="space-y-3">
       {(f.form.attributes || []).map((attr) => (
         <div
@@ -249,15 +249,15 @@ const AttributeEditor = ({ f }) => (
                 e.stopPropagation();
                 f.setOpenDropdownId(f.openDropdownId === attr.id ? null : attr.id);
               }}
-              className={`h-[42px] w-full border bg-white px-4 text-left ${f.openDropdownId === attr.id ? 'border-[#004785] ring-1 ring-[#004785]' : 'border-slate-200'} flex items-center justify-between rounded-lg`}
+              className={`h-[42px] w-full border bg-white px-4 text-left ${f.openDropdownId === attr.id ? 'border-[#004785] ring-1 ring-[#004785]' : 'border-slate-200 dark:border-[#404040]'} flex items-center justify-between rounded-lg dark:bg-[#1a1a1a]`}
             >
-              <span className={`truncate ${attr.name ? 'text-slate-800' : 'text-slate-500'}`}>
+              <span className={`truncate ${attr.name ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-500 dark:text-[#999999]'}`}>
                 {attr.name || 'Chọn thuộc tính'}
               </span>
-              <Icon name="expand_more" size={16} className="text-slate-500" />
+              <Icon name="expand_more" size={16} className="text-slate-500 dark:text-[#999999]" />
             </button>
             {f.openDropdownId === attr.id && (
-              <div className="absolute bottom-full left-0 z-50 mb-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+              <div className="absolute bottom-full left-0 z-50 mb-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-[#333333] dark:bg-[#1a1a1a]">
                 {(f.availableAttributes || []).map((item, aidx) => (
                   <div
                     key={item + aidx}
@@ -265,9 +265,9 @@ const AttributeEditor = ({ f }) => (
                       f.updateAttr(attr.id, 'name', item);
                       f.setOpenDropdownId(null);
                     }}
-                    className={`flex h-10 cursor-pointer items-center justify-between px-4 ${attr.name === item ? 'bg-blue-50 text-[#004785]' : 'hover:bg-slate-100'}`}
+                    className={`flex h-10 cursor-pointer items-center justify-between px-4 ${attr.name === item ? 'bg-blue-50 text-[#004785] dark:bg-[#272727]' : 'hover:bg-slate-100 dark:hover:bg-[#333333]'}`}
                   >
-                    <span className="flex-1 text-sm">{item}</span>
+                    <span className="flex-1 text-sm dark:text-[#d4d4d4]">{item}</span>
                     <IconButton
                       icon={({ size }) => <Icon name="edit" size={size} />}
                       size="sm"
@@ -289,7 +289,7 @@ const AttributeEditor = ({ f }) => (
                     f.setCreateAttrModalOpen(true);
                     f.setOpenDropdownId(null);
                   }}
-                  className="flex h-10 cursor-pointer items-center px-4 hover:bg-slate-100"
+                  className="flex h-10 cursor-pointer items-center px-4 hover:bg-slate-100 dark:hover:bg-[#333333]"
                 >
                   <span className="text-sm font-medium text-[#004785]">+ Tạo thuộc tính mới</span>
                 </div>
@@ -301,11 +301,14 @@ const AttributeEditor = ({ f }) => (
             value={attr.value || ''}
             onChange={(e) => f.updateAttr(attr.id, 'value', e.target.value)}
           />
-          <IconButton
-            icon={({ size }) => <Icon name="delete" size={size} />}
-            variant="danger"
+          <button
+            type="button"
             onClick={() => f.removeAttr(attr.id)}
-          />
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+            title="Xóa thuộc tính"
+          >
+            <Icon name="delete" size={18} />
+          </button>
         </div>
       ))}
       <div>
@@ -328,25 +331,25 @@ const AttributeEditor = ({ f }) => (
 const UnitManagement = ({ f }) => (
   <div className="mb-8">
     <div className="mb-6 flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
         <Icon name="inventory_2" size={20} />
       </div>
       <div>
-        <h4 className="text-lg font-bold text-slate-900">Đơn vị tính</h4>
-        <p className="text-sm text-slate-500">
+        <h4 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Đơn vị tính</h4>
+        <p className="text-sm text-slate-500 dark:text-[#999999]">
           Quản lý đơn vị cơ bản và đơn vị quy đổi để bán hàng linh hoạt
         </p>
       </div>
     </div>
 
     {/* Đơn vị cơ bản */}
-    <div className="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <div className="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
+      <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
             1
           </span>
-          <span className="text-sm font-semibold text-slate-700">Đơn vị cơ bản</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Đơn vị cơ bản</span>
         </div>
       </div>
       <div className="p-5">
@@ -381,27 +384,27 @@ const UnitManagement = ({ f }) => (
                 f.handleChange('baseUnit', { ...(f.form.baseUnit || {}), directSale: checked })
               }
             />
-            <label className="cursor-pointer text-sm font-medium text-slate-700">
+            <label className="cursor-pointer text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Cho phép bán lẻ
             </label>
           </div>
         </div>
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-2 text-xs text-slate-400 dark:text-[#808080]">
           Đây là đơn vị nhỏ nhất, dùng để quy đổi các đơn vị khác (ví dụ: 1 thùng = 12 cái)
         </p>
       </div>
     </div>
 
     {/* Đơn vị quy đổi */}
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
             2
           </span>
-          <span className="text-sm font-semibold text-slate-700">Đơn vị quy đổi</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Đơn vị quy đổi</span>
           {(f.form.conversionUnits || []).length > 0 && (
-            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
               {f.form.conversionUnits.length} đơn vị
             </span>
           )}
@@ -418,45 +421,45 @@ const UnitManagement = ({ f }) => (
 
       <div className="p-5">
         {(f.form.conversionUnits || []).length > 0 ? (
-          <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-[#333333]">
             <table className="w-full min-w-max text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-100 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                     Đơn vị
                   </th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                     Quy đổi
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                     Giá bán
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                     Bán
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                     Xóa
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
                 {(f.form.conversionUnits || []).map((unit) => (
-                  <tr key={unit.id} className="transition-colors hover:bg-blue-50/50">
+                  <tr key={unit.id} className="transition-colors hover:bg-blue-50/50 dark:hover:bg-[#333333]/50">
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-800">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-800 dark:bg-[#272727] dark:text-[#e5e5e5]">
                         {unit.name}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      1 <span className="font-semibold text-slate-900">{unit.name}</span>
-                      <span className="mx-1.5 text-slate-300">=</span>
-                      <span className="font-semibold text-slate-900">
+                    <td className="px-4 py-3 text-slate-600 dark:text-[#999999]">
+                      1 <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{unit.name}</span>
+                      <span className="mx-1.5 text-slate-300 dark:text-[#666666]">=</span>
+                      <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
                         {unit.rate || unit.convertValue}
                       </span>{' '}
-                      <span className="text-slate-500">{f.form.baseUnit?.name || 'Cái'}</span>
+                      <span className="text-slate-500 dark:text-[#999999]">{f.form.baseUnit?.name || 'Cái'}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-semibold text-slate-900">
+                      <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
                         {unit.price
                           ? fmtMoney(unit.price)
                           : fmtMoney(
@@ -464,7 +467,7 @@ const UnitManagement = ({ f }) => (
                                 (Number(unit.rate || unit.convertValue) || 1)
                             )}
                       </span>
-                      <span className="ml-0.5 text-slate-400">₫</span>
+                      <span className="ml-0.5 text-slate-400 dark:text-[#808080]">₫</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center">
@@ -484,7 +487,7 @@ const UnitManagement = ({ f }) => (
                             f.removeConversionUnit(unit.id);
                           }
                         }}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                         title={`Xóa đơn vị ${unit.name}`}
                       >
                         <Icon name="delete" size={18} />
@@ -497,11 +500,11 @@ const UnitManagement = ({ f }) => (
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-10">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-              <Icon name="add" size={24} className="text-slate-300" />
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-[#272727]">
+              <Icon name="add" size={24} className="text-slate-300 dark:text-[#808080]" />
             </div>
-            <p className="text-sm font-medium text-slate-600">Chưa có đơn vị quy đổi</p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="text-sm font-medium text-slate-600 dark:text-[#b3b3b3]">Chưa có đơn vị quy đổi</p>
+            <p className="mt-1 text-xs text-slate-400 dark:text-[#808080]">
               Thêm đơn vị như thùng, lốc, bộ để bán theo nhiều quy cách
             </p>
             <Button
@@ -545,8 +548,8 @@ const UnitManagement = ({ f }) => (
         />
 
         {/* Preview công thức */}
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm font-medium text-blue-900">Công thức quy đổi:</p>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+          <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Công thức quy đổi:</p>
           <p className="mt-1 text-base">
             <span className="font-semibold">1 {f.newConversionUnit.name || '[tên đơn vị]'}</span>
             <span className="mx-2">=</span>
@@ -575,7 +578,7 @@ const UnitManagement = ({ f }) => (
             }}
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Đơn vị quy đổi từ
             </label>
             <select
@@ -583,7 +586,7 @@ const UnitManagement = ({ f }) => (
               onChange={(e) =>
                 f.setNewConversionUnit({ ...f.newConversionUnit, convertFrom: e.target.value })
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             >
               <option value="">Chọn đơn vị</option>
               {f.form.baseUnit?.name && (
@@ -600,7 +603,7 @@ const UnitManagement = ({ f }) => (
 
         {/* Giá bán */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">Giá bán</label>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Giá bán</label>
           <div className="relative">
             <input
               type="text"
@@ -614,9 +617,9 @@ const UnitManagement = ({ f }) => (
                   price: raw ? Number(raw) : '',
                 });
               }}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-8 text-right text-base font-semibold text-slate-900 transition-colors placeholder:text-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-8 text-right text-base font-semibold text-slate-900 transition-colors placeholder:text-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:placeholder:text-[#808080]"
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-[#808080]">
               ₫
             </span>
           </div>
@@ -649,7 +652,7 @@ const UnitManagement = ({ f }) => (
             if (!mult) return null;
             const suggestPrice = base * mult;
             return (
-              <p className="mt-1.5 text-xs text-emerald-600">
+              <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                 ✦ Giá đề xuất: <span className="font-semibold">{fmtMoney(suggestPrice)}</span>
                 <span className="ml-0.5">₫</span>
               </p>
@@ -666,9 +669,9 @@ const UnitManagement = ({ f }) => (
             onChange={(e) =>
               f.setNewConversionUnit({ ...f.newConversionUnit, directSale: e.target.checked })
             }
-            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-[#404040]"
           />
-          <label htmlFor="direct-sell" className="cursor-pointer text-sm text-slate-700">
+          <label htmlFor="direct-sell" className="cursor-pointer text-sm text-slate-700 dark:text-[#b3b3b3]">
             Cho phép bán đơn vị này
           </label>
         </div>
@@ -684,9 +687,9 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center space-x-3">
         <Toggle checked={f.form.productStatus !== 'inactive'} disabled />
-        <label className="flex items-center text-sm font-semibold text-slate-500">
+        <label className="flex items-center text-sm font-semibold text-slate-500 dark:text-[#999999]">
           Đang hoạt động{' '}
-          <span className="ml-2 hidden text-xs font-normal text-slate-400 sm:inline">
+          <span className="ml-2 hidden text-xs font-normal text-slate-400 dark:text-[#808080] sm:inline">
             — đổi trạng thái ở danh sách
           </span>
         </label>
@@ -711,13 +714,13 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
         size="6xl"
         footer={footerContent}
       >
-        <div className="-mx-6 -mt-4 mb-4 flex gap-4 border-b border-slate-200 px-6">
+        <div className="-mx-6 -mt-4 mb-4 flex gap-4 border-b border-slate-200 px-6 dark:border-[#333333]">
           {['info', 'description'].map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => f.setActiveTab(tab)}
-              className={`flex h-12 items-center text-sm font-medium tracking-wider ${f.activeTab === tab ? 'border-b-2 border-[#004785] text-[#004785]' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex h-12 items-center text-sm font-medium tracking-wider ${f.activeTab === tab ? 'border-b-2 border-[#004785] text-[#004785]' : 'text-slate-500 hover:text-slate-700 dark:text-[#999999] dark:hover:text-[#b3b3b3]'}`}
             >
               {tab === 'info' ? 'Thông tin' : 'Mô tả'}
             </button>
@@ -895,7 +898,7 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       }
                       onChange={(e) => f.handleChange(field, e.target.value.replace(/\./g, ''))}
                     />
-                    <span className="absolute bottom-2.5 right-3 font-medium text-slate-500">
+                    <span className="absolute bottom-2.5 right-3 font-medium text-slate-500 dark:text-[#999999]">
                       đ
                     </span>
                   </div>
@@ -926,12 +929,12 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                     </button>
                   </div>
                   <div className="space-y-1">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                       Trọng lượng
                     </label>
-                    <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-[#004785]">
+                    <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-[#004785] dark:border-[#333333] dark:bg-[#1a1a1a]">
                       <input
-                        className="flex-1 border-none bg-transparent px-3 py-2 text-right focus:outline-none"
+                        className="flex-1 border-none bg-transparent px-3 py-2 text-right focus:outline-none dark:text-[#e5e5e5]"
                         type="number"
                         min="0"
                         step="any"
@@ -939,7 +942,7 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                         onChange={(e) => f.handleChange('weight', e.target.value)}
                       />
                       <select
-                        className="border-l border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none"
+                        className="border-l border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none dark:border-[#333333] dark:bg-[#272727] dark:text-[#b3b3b3]"
                         value={['g', 'kg'].includes(f.form.weightUnit) ? f.form.weightUnit : 'g'}
                         onChange={(e) => f.handleChange('weightUnit', e.target.value)}
                       >
@@ -951,12 +954,12 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                     Kích thước (Dài × Rộng × Cao)
                   </label>
                   <div className="flex items-center gap-2">
                     <input
-                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none"
+                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                       type="number"
                       min="0"
                       step="any"
@@ -964,9 +967,9 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       value={f.form.length ?? ''}
                       onChange={(e) => f.handleChange('length', e.target.value)}
                     />
-                    <span className="font-bold text-slate-400">×</span>
+                    <span className="font-bold text-slate-400 dark:text-[#808080]">×</span>
                     <input
-                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none"
+                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                       type="number"
                       min="0"
                       step="any"
@@ -974,9 +977,9 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       value={f.form.width ?? ''}
                       onChange={(e) => f.handleChange('width', e.target.value)}
                     />
-                    <span className="font-bold text-slate-400">×</span>
+                    <span className="font-bold text-slate-400 dark:text-[#808080]">×</span>
                     <input
-                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none"
+                      className="w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-right focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                       type="number"
                       min="0"
                       step="any"
@@ -985,7 +988,7 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       onChange={(e) => f.handleChange('height', e.target.value)}
                     />
                     <select
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none"
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none dark:border-[#333333] dark:bg-[#272727] dark:text-[#b3b3b3]"
                       value={['mm', 'cm', 'm'].includes(f.form.sizeUnit) ? f.form.sizeUnit : 'mm'}
                       onChange={(e) => f.handleChange('sizeUnit', e.target.value)}
                     >
@@ -1000,7 +1003,7 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
 
             <Section title="Quản lý theo đơn vị tính và thuộc tính" defaultOpen>
               <UnitManagement f={f} />
-              <div className="border-t border-slate-200 pt-6">
+              <div className="border-t border-slate-200 pt-6 dark:border-[#333333]">
                 <AttributeEditor f={f} />
               </div>
             </Section>
@@ -1206,7 +1209,7 @@ export const EditProductModal = (props) => {
         <div className="flex h-32 items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-[#004785]">
             <Icon name="sync" className="animate-spin text-3xl" />
-            <span className="text-sm font-bold text-slate-600">Đang tải dữ liệu...</span>
+            <span className="text-sm font-bold text-slate-600 dark:text-[#b3b3b3]">Đang tải dữ liệu...</span>
           </div>
         </div>
       </Modal>

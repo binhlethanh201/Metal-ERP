@@ -9,6 +9,9 @@ import {
   getRoleList,
   assignUserRoles,
   updateUser,
+  softDeleteUser,
+  permanentDeleteUser,
+  restoreUser,
 } from '../services/adminService';
 import ConfirmActionModal from '../components/ConfirmActionModal';
 import AssignRoleModal from '../components/account/AssignRoleModal';
@@ -75,11 +78,22 @@ const AdminUserDetail = () => {
     }
   };
 
-  const handleToggleLock = async () => {
+  const handleConfirmAction = async () => {
     try {
-      const isLocking = user.isActive === 1 || user.isActive === true;
-      await changeUserStatus(id, !isLocking);
-      alert(isLocking ? 'Đã khóa tài khoản!' : 'Đã mở khóa tài khoản!');
+      if (confirmModal.type === 'lock') {
+        const isLocking = user.isActive === 1 || user.isActive === true;
+        await changeUserStatus(id, !isLocking);
+        alert(isLocking ? 'Đã khóa tài khoản!' : 'Đã mở khóa tài khoản!');
+      } else if (confirmModal.type === 'soft_delete') {
+        await softDeleteUser(id);
+        alert('Đã xóa mềm tài khoản!');
+      } else if (confirmModal.type === 'restore') {
+        await restoreUser(id);
+        alert('Đã khôi phục tài khoản!');
+      } else if (confirmModal.type === 'permanent_delete') {
+        await permanentDeleteUser(id);
+        alert('Đã xóa vĩnh viễn tài khoản!');
+      }
       setConfirmModal({ isOpen: false });
       fetchData();
     } catch (err) {
@@ -142,9 +156,19 @@ const AdminUserDetail = () => {
             <p className="mt-1 text-sm font-semibold text-on-surface-variant">{user.email}</p>
             <div className="mt-2 flex items-center gap-2">
               <span
-                className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider ${isActive ? 'border border-green-200 bg-green-100 text-green-800' : 'border border-red-200 bg-red-100 text-red-800'}`}
+                className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider ${
+                  user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
+                    ? 'border border-gray-400 bg-gray-200 text-gray-800'
+                    : isActive
+                      ? 'border border-green-200 bg-green-100 text-green-800'
+                      : 'border border-red-200 bg-red-100 text-red-800'
+                }`}
               >
-                {isActive ? 'ĐANG HOẠT ĐỘNG' : 'ĐÃ BỊ KHÓA'}
+                {user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
+                  ? 'ĐÃ XÓA'
+                  : isActive
+                    ? 'ĐANG HOẠT ĐỘNG'
+                    : 'ĐÃ BỊ KHÓA'}
               </span>
               {(user.roles || []).map((r) => (
                 <span
@@ -160,41 +184,95 @@ const AdminUserDetail = () => {
 
         {/* CÁC NÚT THAO TÁC IN ĐẬM RÕ RÀNG */}
         <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => setIsEditModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
-          >
-            <Icon name="edit" size={18} /> Sửa Thông Tin
-          </button>
+          {user.status !== 'DELETED' && user.status !== 'PERMANENT_DELETED' && (
+            <>
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
+              >
+                <Icon name="edit" size={18} /> Sửa Thông Tin
+              </button>
 
-          <button
-            onClick={() => setIsAssignModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
-          >
-            <Icon name="manage_accounts" size={18} /> Phân Quyền
-          </button>
+              <button
+                onClick={() => setIsAssignModalOpen(true)}
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
+              >
+                <Icon name="manage_accounts" size={18} /> Phân Quyền
+              </button>
 
-          <button
-            onClick={handleResetPassword}
-            className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
-          >
-            <Icon name="key" size={18} /> Cấp Lại Mật Khẩu
-          </button>
+              <button
+                onClick={handleResetPassword}
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
+              >
+                <Icon name="key" size={18} /> Cấp Lại Mật Khẩu
+              </button>
 
-          <button
-            onClick={() =>
-              setConfirmModal({
-                isOpen: true,
-                type: 'lock',
-                title: isActive ? 'KHÓA TÀI KHOẢN' : 'MỞ KHÓA TÀI KHOẢN',
-                message: `Bạn có chắc chắn muốn ${isActive ? 'khóa' : 'mở khóa'} tài khoản này?`,
-              })
-            }
-            className={`flex items-center gap-2 rounded-lg border-2 px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all ${isActive ? 'border-error text-error hover:bg-error-container/30' : 'border-green-600 text-green-600 hover:bg-green-100/50'}`}
-          >
-            <Icon name={isActive ? 'lock' : 'lock_open'} size={18} />{' '}
-            {isActive ? 'Khóa Tài Khoản' : 'Mở Khóa'}
-          </button>
+              <button
+                onClick={() =>
+                  setConfirmModal({
+                    isOpen: true,
+                    type: 'lock',
+                    title: isActive ? 'KHÓA TÀI KHOẢN' : 'MỞ KHÓA TÀI KHOẢN',
+                    message: `Bạn có chắc chắn muốn ${isActive ? 'khóa' : 'mở khóa'} tài khoản này?`,
+                  })
+                }
+                className={`flex items-center gap-2 rounded-lg border-2 px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all ${
+                  isActive
+                    ? 'border-error text-error hover:bg-error-container/30'
+                    : 'border-green-600 text-green-600 hover:bg-green-100/50'
+                }`}
+              >
+                <Icon name={isActive ? 'lock' : 'lock_open'} size={18} />{' '}
+                {isActive ? 'Khóa Tài Khoản' : 'Mở Khóa'}
+              </button>
+
+              <button
+                onClick={() =>
+                  setConfirmModal({
+                    isOpen: true,
+                    type: 'soft_delete',
+                    title: 'XÓA TÀI KHOẢN',
+                    message: 'Bạn có chắc chắn muốn xóa tài khoản này? Tài khoản sẽ chuyển sang trạng thái ĐÃ XÓA và có thể khôi phục.',
+                  })
+                }
+                className="flex items-center gap-2 rounded-lg border-2 border-error bg-error text-on-error px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-error/90"
+              >
+                <Icon name="delete" size={18} /> Xóa (Lưu trữ)
+              </button>
+            </>
+          )}
+
+          {user.status === 'DELETED' && (
+            <>
+              <button
+                onClick={() =>
+                  setConfirmModal({
+                    isOpen: true,
+                    type: 'restore',
+                    title: 'KHÔI PHỤC TÀI KHOẢN',
+                    message: 'Khôi phục tài khoản này để tiếp tục sử dụng?',
+                  })
+                }
+                className="flex items-center gap-2 rounded-lg border-2 border-green-600 bg-green-600 text-white px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-green-700"
+              >
+                <Icon name="restore" size={18} /> Khôi Phục
+              </button>
+
+              <button
+                onClick={() =>
+                  setConfirmModal({
+                    isOpen: true,
+                    type: 'permanent_delete',
+                    title: 'XÓA VĨNH VIỄN',
+                    message: 'Bạn có chắc chắn xóa VĨNH VIỄN tài khoản này? Dữ liệu cá nhân sẽ bị ẩn danh hoàn toàn.',
+                  })
+                }
+                className="flex items-center gap-2 rounded-lg border-2 border-error bg-error text-on-error px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-error/90"
+              >
+                <Icon name="delete_forever" size={18} /> Xóa Vĩnh Viễn
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -232,7 +310,7 @@ const AdminUserDetail = () => {
       <ConfirmActionModal
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ isOpen: false })}
-        onConfirm={handleToggleLock}
+        onConfirm={handleConfirmAction}
         title={confirmModal.title}
         message={confirmModal.message}
         confirmText="Xác nhận"

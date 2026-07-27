@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Ban, CheckCircle2, Clock, XCircle, RefreshCw, CheckCheck } from 'lucide-react';
+import Icon from '../../../../shared/components/Icon';
 import { CancelTicketModal } from './CancelTicketModal';
 import {
   cancelInwardInventory,
@@ -35,7 +36,7 @@ const renderStatusBadge = (status) => {
         </Badge>
       );
     default:
-      return <span className="text-xs font-medium text-slate-500">{status || 'N/A'}</span>;
+      return <span className="text-xs font-medium text-slate-500 dark:text-[#999999]">{status || 'N/A'}</span>;
   }
 };
 
@@ -106,15 +107,20 @@ export const InventoryHistoryCard = ({
 
   // Client-side pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
   const totalItems = filteredTickets.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
   const handleChangeFilter = (key, value) => {
@@ -208,14 +214,9 @@ export const InventoryHistoryCard = ({
       header: 'Mã phiếu',
       width: '140px',
       render: (_, row) => (
-        <button
-          type="button"
-          onClick={() => setViewingId(row.stockTicketId || row.id)}
-          className="font-bold text-[#004785] hover:underline"
-          title="Click để xem chi tiết & biến động kho"
-        >
+        <span className="font-bold text-[#004785] dark:text-blue-300">
           {row.ticketCode || row.id}
-        </button>
+        </span>
       ),
     },
     {
@@ -224,10 +225,10 @@ export const InventoryHistoryCard = ({
       width: '110px',
       render: (_, row) => {
         const raw = row.date || row.createdAt;
-        if (!raw) return <span className="text-xs text-slate-500">---</span>;
+        if (!raw) return <span className="text-xs text-slate-500 dark:text-[#999999]">---</span>;
         const iso = raw.endsWith('Z') ? raw : `${raw}Z`;
         return (
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-[#999999]">
             {new Date(iso).toLocaleDateString('vi-VN')}
           </span>
         );
@@ -239,11 +240,11 @@ export const InventoryHistoryCard = ({
       width: '1fr',
       render: (_, row) => (
         <div>
-          <span className="font-medium text-slate-700">
+          <span className="font-medium text-slate-700 dark:text-[#b3b3b3]">
             {row.productName || row.reason || 'Không có ghi chú'}
           </span>
           {row.cancelReason && (
-            <div className="mt-0.5 text-xs italic text-rose-600">Lý do hủy: {row.cancelReason}</div>
+            <div className="mt-0.5 text-xs italic text-rose-600 dark:text-rose-400">Lý do hủy: {row.cancelReason}</div>
           )}
         </div>
       ),
@@ -254,7 +255,7 @@ export const InventoryHistoryCard = ({
       width: '100px',
       align: 'right',
       render: (val) => (
-        <span className="font-semibold text-slate-900">
+        <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
           {val != null ? Number(val).toLocaleString('vi-VN') : '---'}
         </span>
       ),
@@ -284,7 +285,7 @@ export const InventoryHistoryCard = ({
                 variant="primary"
                 size="sm"
                 disabled={isConfirming}
-                onClick={() => handleConfirmTicket(row)}
+                onClick={(e) => { e.stopPropagation(); handleConfirmTicket(row); }}
                 title="Xác nhận duyệt để cộng/trừ kho thực tế"
                 className="flex items-center gap-1 whitespace-nowrap !px-2.5 !py-1 !text-[11px]"
               >
@@ -297,7 +298,7 @@ export const InventoryHistoryCard = ({
               space="customer"
               size="sm"
               disabled={isCancelled || isConfirming}
-              onClick={() => setCancellingTicket(row)}
+              onClick={(e) => { e.stopPropagation(); setCancellingTicket(row); }}
               title={isCancelled ? 'Phiếu đã bị hủy' : 'Hủy phiếu này'}
             />
           </div>
@@ -307,9 +308,9 @@ export const InventoryHistoryCard = ({
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3 dark:border-b-[#333333] dark:bg-[#0f0f0f]">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#004785]/5">
             <svg
@@ -327,11 +328,11 @@ export const InventoryHistoryCard = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">{title}</h2>
-            <p className="text-xs text-slate-500">
-              Tổng số: <span className="font-semibold text-slate-700">{tickets.length}</span> phiếu
+            <h2 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">{title}</h2>
+            <p className="text-xs text-slate-500 dark:text-[#999999]">
+              Tổng số: <span className="font-semibold text-slate-700 dark:text-[#b3b3b3]">{tickets.length}</span> phiếu
               {kw && (
-                <span className="ml-1 text-amber-600">(hiển thị {filteredTickets.length})</span>
+                <span className="ml-1 text-amber-600 dark:text-amber-400">(hiển thị {filteredTickets.length})</span>
               )}
             </p>
           </div>
@@ -339,7 +340,7 @@ export const InventoryHistoryCard = ({
         <div className="flex items-center gap-2">
           <div className="relative">
             <svg
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-[#808080]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -356,7 +357,7 @@ export const InventoryHistoryCard = ({
               placeholder="Tìm mã phiếu, sản phẩm..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-56 rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-[#004785] focus:outline-none"
+              className="w-56 rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
             />
           </div>
           {onReload && (
@@ -368,14 +369,14 @@ export const InventoryHistoryCard = ({
               className="flex items-center gap-1.5"
             >
               <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-              Đặt lại
+              Làm mới
             </Button>
           )}
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="border-b border-slate-100 bg-slate-50/30 px-5 py-3">
+      <div className="border-b border-slate-100 bg-slate-50/30 px-5 py-3 dark:border-b-[#333333] dark:bg-[#1a1a1a]/30">
         <InventoryFilterBar
           type={type}
           filters={filters}
@@ -392,53 +393,48 @@ export const InventoryHistoryCard = ({
           data={paginatedTickets}
           loading={isLoading}
           emptyMessage="Chưa có phiếu nào trong hệ thống"
+          onClickRow={(row) => setViewingId(row.stockTicketId || row.id)}
         />
 
         {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-            <div className="text-sm text-slate-500">
-              Trang {currentPage} / {totalPages} ({totalItems} phiếu)
+        {totalItems > 0 && (
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-t-[#333333] dark:bg-[#0f0f0f]">
+            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
+              <div className="flex items-center gap-2">
+                <span>Hiển thị</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+                >
+                  <option value={20}>20 dòng</option>
+                  <option value={50}>50 dòng</option>
+                  <option value={100}>100 dòng</option>
+                </select>
+              </div>
+              <span>
+                {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+                {Math.min(currentPage * pageSize, totalItems)} trong tổng số{' '}
+                {totalItems} phiếu
+              </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="rounded border border-slate-200 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
               >
-                Trước
+                <Icon name="chevron_left" className="text-[18px]" />
               </button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    className={`rounded border px-3 py-1 text-sm ${
-                      currentPage === pageNum
-                        ? 'border-[#004785] bg-[#004785] text-white'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+                Trang {currentPage} / {totalPages}
+              </div>
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="rounded border border-slate-200 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
               >
-                Sau
+                <Icon name="chevron_right" className="text-[18px]" />
               </button>
             </div>
           </div>

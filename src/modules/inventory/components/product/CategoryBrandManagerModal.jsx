@@ -140,21 +140,21 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
               <button
                 type="button"
                 onClick={() => handleRename(name)}
-                className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
+                className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 dark:hover:text-blue-300"
               >
                 Lưu
               </button>
               <button
                 type="button"
                 onClick={() => setEditingName('')}
-                className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+                className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
               >
                 Hủy
               </button>
             </div>
           </div>
         ) : (
-          <span className="font-medium text-slate-800">{name}</span>
+          <span className="font-medium text-slate-800 dark:text-[#e5e5e5]">{name}</span>
         ),
     },
     {
@@ -163,7 +163,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
       width: '180px',
       render: (count) => (
         <div className="flex justify-center">
-          <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+          <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-400">
             {count} Sản phẩm
           </span>
         </div>
@@ -182,7 +182,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
                 setEditingName(item.name);
                 setNewNameInput(item.name);
               }}
-              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-blue-400"
               title="Đổi tên"
             >
               <Icon name="edit" size={18} />
@@ -193,8 +193,8 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
               disabled={(item.productCount || 0) > 0}
               className={`rounded-md p-1.5 transition-colors ${
                 (item.productCount || 0) > 0
-                  ? 'cursor-not-allowed text-slate-200'
-                  : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                  ? 'cursor-not-allowed text-slate-200 dark:text-[#666666]'
+                  : 'text-slate-400 hover:bg-red-50 hover:text-red-600 dark:text-[#808080] dark:hover:bg-red-900/30 dark:hover:text-red-400'
               }`}
               title={
                 (item.productCount || 0) > 0
@@ -221,7 +221,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
         </Button>
       }
     >
-      <div className="-mt-2 mb-5 flex gap-6 border-b border-slate-200 px-1">
+      <div className="-mt-2 mb-5 flex gap-6 border-b border-slate-200 px-1 dark:border-[#333333]">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -232,7 +232,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
               setCreateName('');
             }}
             className={`relative pb-3 text-sm font-semibold transition-colors ${
-              activeTab === tab.key ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+              activeTab === tab.key ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:text-[#999999] dark:hover:text-[#b3b3b3]'
             }`}
           >
             {tab.label}
@@ -245,7 +245,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
 
       <div className="mb-4 flex items-center gap-2">
         <input
-          className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+          className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
           placeholder={
             activeTab === 'categories' ? 'Nhập tên nhóm hàng mới...' : 'Nhập tên thương hiệu mới...'
           }
@@ -258,7 +258,7 @@ export const CategoryBrandManagerModal = ({ open, onClose, onSuccess }) => {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200">
+      <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-[#333333]">
         <Table
           columns={columns}
           data={items}

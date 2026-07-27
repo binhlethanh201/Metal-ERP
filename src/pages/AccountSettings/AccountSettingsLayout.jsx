@@ -14,9 +14,9 @@ const AccountSettingsLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f9fc]">
+    <div className="flex min-h-screen flex-col bg-[#f7f9fc] dark:bg-[#0f0f0f]">
       {/* Header */}
-      <header className="flex h-14 shrink-0 items-center border-b border-slate-200 bg-white px-6 shadow-sm">
+      <header className="flex h-14 shrink-0 items-center border-b border-slate-200 bg-white px-6 shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
         <div className="flex flex-1 justify-start">
           <Button
             variant="primary"
@@ -30,7 +30,7 @@ const AccountSettingsLayout = () => {
         </div>
 
         <div className="flex flex-1 justify-center">
-          <span className="text-sm font-bold uppercase tracking-wider text-slate-400">
+          <span className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
             Quản lý tài khoản
           </span>
         </div>

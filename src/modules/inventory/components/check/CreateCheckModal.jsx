@@ -231,7 +231,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       size="4xl"
       footer={modalFooter}
     >
-      <div className="-mt-2 mb-6 text-sm text-slate-500">
+      <div className="-mt-2 mb-6 text-sm text-slate-500 dark:text-[#999999]">
         Chọn sản phẩm từ kho để bắt đầu kiểm đếm
       </div>
 
@@ -250,9 +250,9 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         {/* Người phụ trách - Chỉ Owner */}
         {isOwner && (
           <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium text-slate-700">Người phụ trách</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Người phụ trách</label>
             <select
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:disabled:bg-[#1a1a1a]"
               value={assigneeUserId}
               onChange={(e) => setAssigneeUserId(e.target.value)}
               disabled={loadingStaff}
@@ -278,8 +278,8 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         {/* Staff: hiển thị thông tin assignee */}
         {!isOwner && (
           <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium text-slate-700">Người phụ trách</label>
-            <div className="w-full rounded-lg border border-slate-200 bg-gray-50 px-3 py-2 text-sm text-slate-600">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Người phụ trách</label>
+            <div className="w-full rounded-lg border border-slate-200 bg-gray-50 px-3 py-2 text-sm text-slate-600 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999]">
               {user?.fullName || user?.email || 'Bạn'} (tự gán)
             </div>
           </div>
@@ -288,9 +288,9 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
 
       {/* Danh sách sản phẩm */}
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-sm font-bold text-slate-800">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">
           Danh sách Sản phẩm
-          <span className="ml-2 font-normal text-slate-500">
+          <span className="ml-2 font-normal text-slate-500 dark:text-[#999999]">
             ({filteredProducts.length} sản phẩm)
           </span>
         </h3>
@@ -304,7 +304,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         </div>
       </div>
 
-      <div className="max-h-[350px] overflow-y-auto rounded-lg border border-slate-200 bg-white">
+      <div className="max-h-[350px] overflow-y-auto rounded-lg border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#0f0f0f]">
         <Table
           columns={tableColumns}
           data={filteredProducts}

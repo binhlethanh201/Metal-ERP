@@ -98,12 +98,12 @@ export const ProductTable = ({
 
   return (
     <table className="w-full min-w-[1250px] table-fixed border-collapse text-left">
-      <thead className="border-b border-slate-200 bg-gray-50">
-        <tr className="text-xs font-semibold text-slate-900">
+      <thead className="border-b border-slate-200 bg-gray-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
+        <tr className="text-xs font-semibold text-slate-900 dark:text-[#e5e5e5]">
           <th className="w-[48px] px-4 py-3 text-center">
             <input
               type="checkbox"
-              className="rounded border-slate-300 text-primary focus:ring-primary"
+              className="rounded border-slate-300 text-primary focus:ring-primary dark:border-[#404040]"
               checked={isAllSelected}
               onChange={(e) => onSelectAll?.(e.target.checked, rows)}
             />
@@ -114,7 +114,7 @@ export const ProductTable = ({
             return (
               <th
                 key={col.label}
-                className={`${col.width} px-4 py-3 ${col.align === 'right' ? 'text-right' : ''} ${col.sortKey ? 'cursor-pointer select-none hover:bg-slate-100' : ''}`}
+                className={`${col.width} px-4 py-3 ${col.align === 'right' ? 'text-right' : ''} ${col.sortKey ? 'cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-[#333333]' : ''}`}
                 onClick={() => handleSort(col.sortKey)}
               >
                 <div
@@ -122,7 +122,7 @@ export const ProductTable = ({
                 >
                   <span className="truncate">{col.label}</span>
                   {col.sortKey && (
-                    <span className="inline-flex flex-none flex-col leading-none text-slate-400">
+                    <span className="inline-flex flex-none flex-col leading-none text-slate-400 dark:text-[#808080]">
                       <Icon
                         name="expand_less"
                         size={14}
@@ -141,10 +141,10 @@ export const ProductTable = ({
           })}
         </tr>
       </thead>
-      <tbody className="divide-y divide-gray-200 text-sm">
+      <tbody className="divide-y divide-gray-200 text-sm dark:divide-[#333333]">
         {sortedRows.length === 0 && (
           <tr>
-            <td colSpan={11} className="px-6 py-8 text-center text-slate-500">
+            <td colSpan={11} className="px-6 py-8 text-center text-slate-500 dark:text-[#999999]">
               Không có dữ liệu
             </td>
           </tr>
@@ -157,13 +157,13 @@ export const ProductTable = ({
           return (
             <Fragment key={currentId}>
               <tr
-                className={`group cursor-pointer transition-colors hover:bg-gray-50 ${isExpanded || isSelected ? 'bg-blue-50' : ''}`}
+                className={`group cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-[#333333] ${isExpanded || isSelected ? 'bg-blue-50 dark:bg-[#272727]' : ''}`}
                 onClick={() => onToggleExpand?.(currentId)}
               >
                 <td className="px-4 py-3 text-center">
                   <input
                     type="checkbox"
-                    className="rounded border-slate-300 text-primary"
+                    className="rounded border-slate-300 text-primary dark:border-[#404040]"
                     checked={isSelected}
                     onChange={(e) => {
                       e.stopPropagation();
@@ -173,11 +173,9 @@ export const ProductTable = ({
                   />
                 </td>
 
-                {/* Đã xóa cột Star */}
-
                 <td className="overflow-hidden px-4 py-3">
                   <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100">
+                    <div className="flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100 dark:border-[#333333] dark:bg-[#272727]">
                       {row.imageUrl || row.image ? (
                         <img
                           src={row.imageUrl || row.image}
@@ -185,36 +183,36 @@ export const ProductTable = ({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <Icon name="image" className="text-slate-400" size={20} />
+                        <Icon name="image" className="text-slate-400 dark:text-[#808080]" size={20} />
                       )}
                     </div>
-                    <span className="truncate font-medium text-primary">
+                    <span className="truncate font-medium text-primary dark:text-blue-300">
                       {row.productCode || row.id}
                     </span>
                   </div>
                 </td>
-                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-700">
+                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-700 dark:text-[#b3b3b3]">
                   {row.productName || row.name}
                 </td>
-                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-600">
+                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-600 dark:text-[#999999]">
                   {row.unit || '---'}
                 </td>
-                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-600">
+                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-600 dark:text-[#999999]">
                   {row.brandName || row.brand || '---'}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-800">
+                <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-800 dark:text-[#e5e5e5]">
                   {fmtMoney(row.salePrice)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right text-slate-500">
+                <td className="whitespace-nowrap px-4 py-3 text-right text-slate-500 dark:text-[#999999]">
                   {fmtMoney(row.costPrice)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-slate-900">
+                <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
                   <div className="inline-flex items-center gap-1.5">
                     {(row.actualStock ?? row.stock ?? 0).toLocaleString('vi-VN')}
                     {row.minimumStock > 0 &&
                       (row.actualStock ?? row.stock ?? 0) <= row.minimumStock && (
                         <span
-                          className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600"
+                          className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-950/30 dark:text-red-400"
                           title={`Tồn kho thấp hơn ngưỡng tối thiểu (${row.minimumStock})`}
                         >
                           <svg
@@ -235,7 +233,7 @@ export const ProductTable = ({
                       )}
                   </div>
                 </td>
-                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-500">
+                <td className="truncate whitespace-nowrap px-4 py-3 text-slate-500 dark:text-[#999999]">
                   {row.shelfLocation || row.location || '---'}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-center">
@@ -246,14 +244,13 @@ export const ProductTable = ({
                     />
                   </div>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500 dark:text-[#999999]">
                   {fmtDateTime(row.createdAt)}
                 </td>
               </tr>
               {isExpanded && (
                 <tr>
-                  {/* Giảm colSpan từ 12 xuống 11 */}
-                  <td colSpan={11} className="border-b border-blue-200 p-0">
+                  <td colSpan={11} className="border-b border-blue-200 p-0 dark:border-blue-800">
                     <ProductDetailPanel
                       row={row}
                       onEdit={(r, tab) => onEdit?.(r, tab)}

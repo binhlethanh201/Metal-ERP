@@ -1,9 +1,8 @@
 import React from 'react';
+import Icon from '../../../../shared/components/Icon';
 import { Table } from '../../../../shared/components/Table';
 import { Badge } from '../../../../shared/components/Badge';
-import { Button } from '../../../../shared/components/Button';
-import IconButton from '../../../../shared/components/IconButton';
-import { Eye, CheckCircle2, Clock, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', {
@@ -55,17 +54,16 @@ const ExpenseTable = ({
     {
       key: 'voucherCode',
       header: 'Mã phiếu',
-      render: (val) => <span className="font-mono text-xs font-bold text-[#004785]">{val}</span>,
+      render: (val) => <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{val}</span>,
     },
     { key: 'categoryName', header: 'Nhóm chi phí' },
-    { key: 'supplierName', header: 'Nhà cung cấp', render: (val) => val || '---' },
     {
       key: 'reason',
       header: 'Lý do',
       render: (_, v) => (
         <div>
-          <div className="max-w-xs truncate font-medium text-slate-800">{v.reason}</div>
-          {v.note && <div className="max-w-xs truncate text-xs text-slate-500">{v.note}</div>}
+          <div className="max-w-xs truncate font-medium text-slate-800 dark:text-[#e5e5e5]">{v.reason}</div>
+          {v.note && <div className="max-w-xs truncate text-xs text-slate-500 dark:text-[#999999]">{v.note}</div>}
         </div>
       ),
     },
@@ -80,7 +78,7 @@ const ExpenseTable = ({
       key: 'createdAt',
       header: 'Ngày tạo',
       render: (val) => (
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500 dark:text-[#999999]">
           {val ? new Date(val).toLocaleDateString('vi-VN') : '---'}
         </span>
       ),
@@ -89,23 +87,6 @@ const ExpenseTable = ({
       key: 'status',
       header: <div className="text-center">Trạng thái</div>,
       render: (val) => <div className="flex justify-center">{renderStatusBadge(val)}</div>,
-    },
-    {
-      key: 'actions',
-      header: <div className="text-center">Thao tác</div>,
-      render: (_, v) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onViewDetail(v)}
-            className="flex items-center gap-1 !border-none !bg-blue-50 text-blue-600 hover:!bg-blue-100"
-            title="Xem chi tiết"
-          >
-            <Eye size={14} /> Xem
-          </Button>
-        </div>
-      ),
     },
   ];
 
@@ -116,48 +97,53 @@ const ExpenseTable = ({
         data={vouchers}
         loading={loading}
         emptyMessage="Không tìm thấy phiếu chi tiền nào"
+        onClickRow={(row) => onViewDetail(row)}
       />
 
-      {!loading && paginationMeta?.totalPages > 1 && (
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
-            <span>Hiển thị</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPageNumber(1);
-              }}
-              className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785]"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
+      {!loading && paginationMeta?.totalCount > 0 && (
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPageNumber(1);
+                }}
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+              >
+                <option value={20}>20 dòng</option>
+                <option value={50}>50 dòng</option>
+                <option value={100}>100 dòng</option>
+              </select>
+            </div>
             <span>
               {(pageNumber - 1) * pageSize + 1} -{' '}
-              {Math.min(pageNumber * pageSize, paginationMeta.totalCount)} /{' '}
+              {Math.min(pageNumber * pageSize, paginationMeta.totalCount)} trong tổng số{' '}
               {paginationMeta.totalCount} phiếu
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <IconButton
-              icon={ChevronLeft}
-              size="sm"
-              variant="outline"
+            <button
+              type="button"
               onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
               disabled={pageNumber <= 1}
-            />
-            <span className="px-3 text-sm font-semibold">
-              Trang {pageNumber} / {paginationMeta.totalPages}
-            </span>
-            <IconButton
-              icon={ChevronRight}
-              size="sm"
-              variant="outline"
-              onClick={() => setPageNumber((p) => p + 1)}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
+            >
+              <Icon name="chevron_left" className="text-[18px]" />
+            </button>
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+              Trang {pageNumber} / {paginationMeta.totalPages || 1}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPageNumber((p) => Math.min(paginationMeta.totalPages || 1, p + 1))}
               disabled={pageNumber >= paginationMeta.totalPages}
-            />
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
+            >
+              <Icon name="chevron_right" className="text-[18px]" />
+            </button>
           </div>
         </div>
       )}

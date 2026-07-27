@@ -50,16 +50,16 @@ export const Drawer = ({
 
       {/* Panel */}
       <div
-        className={`fixed right-0 top-0 flex h-full w-full ${widthClass} flex-col overflow-hidden bg-white shadow-xl transition-transform duration-200 ease-out ${animateIn ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 flex h-full w-full ${widthClass} flex-col overflow-hidden bg-white shadow-xl transition-transform duration-200 ease-out dark:bg-[#0f0f0f] ${animateIn ? 'translate-x-0' : 'translate-x-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - cố định */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-[#333333]">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">{title}</h2>
           {closeButton && (
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 focus:outline-none"
+              className="text-slate-400 hover:text-slate-600 focus:outline-none dark:text-[#808080] dark:hover:text-[#b3b3b3]"
               aria-label="Đóng"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +79,7 @@ export const Drawer = ({
 
         {/* Footer - cố định */}
         {footer && (
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 px-6 py-4 dark:border-[#333333]">
             {footer}
           </div>
         )}

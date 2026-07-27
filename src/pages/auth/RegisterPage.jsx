@@ -20,15 +20,15 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-surface-container-lowest">
+    <div className="flex min-h-screen w-full bg-surface-container-lowest dark:bg-[#0a0a0a]">
       {/* CỘT TRÁI - KHU VỰC FORM */}
       <div className="flex w-full flex-col justify-center px-8 py-10 lg:w-1/2 lg:px-24">
         <div className="mb-6">
           <Logo className="mb-8" />
-          <h1 className="text-3xl font-black tracking-tight text-on-surface">
+          <h1 className="text-3xl font-black tracking-tight text-on-surface dark:text-[#e5e5e5]">
             {step === 1 ? 'Mở gian hàng mới.' : 'Hoàn thiện hồ sơ.'}
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
+          <p className="mt-2 text-sm leading-relaxed text-on-surface-variant dark:text-[#999999]">
             {step === 1 ? (
               'Khởi tạo để quản lý cửa hàng của bạn.'
             ) : (
@@ -52,7 +52,7 @@ const RegisterPage = () => {
         )}
 
         {step === 1 && (
-          <p className="mt-8 text-center text-sm font-medium text-on-surface-variant">
+          <p className="mt-8 text-center text-sm font-medium text-on-surface-variant dark:text-[#999999]">
             Bạn đã có tài khoản doanh nghiệp?{' '}
             <Link to="/login" className="font-bold text-primary hover:underline">
               Đăng nhập ngay

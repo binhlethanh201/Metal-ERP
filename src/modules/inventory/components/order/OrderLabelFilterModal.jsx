@@ -23,13 +23,13 @@ const OrderLabelFilterModal = ({ isOpen, onClose, selectedTags, onToggleTag, onC
       }
     >
       <div className="space-y-2">
-        <p className="text-sm text-slate-500">Chọn nhãn để lọc đơn hàng:</p>
+        <p className="text-sm text-slate-500 dark:text-[#999999]">Chọn nhãn để lọc đơn hàng:</p>
         <div className="flex flex-wrap gap-2">
           {TAG_POOL.map((t) => (
             <button
               key={t.label}
               onClick={() => onToggleTag(t.label)}
-              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${selectedTags.includes(t.label) ? `${TAG_COLORS[t.color]} border-current` : 'border-slate-200 bg-white text-slate-500 hover:border-slate-400'}`}
+              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${selectedTags.includes(t.label) ? `${TAG_COLORS[t.color]} border-current` : 'border-slate-200 bg-white text-slate-500 hover:border-slate-400 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3]'}`}
             >
               {selectedTags.includes(t.label) ? '✓ ' : ''}
               {t.label}

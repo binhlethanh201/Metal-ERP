@@ -22,6 +22,36 @@ const getAuthToken = () => {
 };
 
 /**
+ * Dịch thông báo lỗi tiếng Anh từ backend sang tiếng Việt
+ */
+const translateErrorMessage = (msg) => {
+  if (!msg || typeof msg !== 'string') return msg;
+
+  const translations = [
+    [/[Pp]roduct\/?[Bb]ranch[Pp]roduct\s+with\s+(?:ID\/Code|ID|Code)\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
+      "Không tìm thấy sản phẩm có mã '$1' trong hệ thống."],
+    [/[Pp]roduct\s+with\s+(?:ID|Code)\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
+      "Không tìm thấy sản phẩm có mã '$1'."],
+    [/[Ss]upplier\s+with\s+ID\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
+      "Không tìm thấy nhà cung cấp có mã '$1'."],
+    [/not found/i, 'Không tìm thấy.'],
+    [/invalid/i, 'Dữ liệu không hợp lệ.'],
+    [/unauthorized/i, 'Không có quyền truy cập.'],
+    [/internal server error/i, 'Lỗi máy chủ nội bộ.'],
+    [/bad request/i, 'Yêu cầu không hợp lệ.'],
+    [/conflict/i, 'Dữ liệu bị trùng lặp.'],
+    [/forbidden/i, 'Không có quyền thực hiện thao tác này.'],
+  ];
+
+  for (const [pattern, replacement] of translations) {
+    const translated = msg.replace(pattern, replacement);
+    if (translated !== msg) return translated;
+  }
+
+  return msg;
+};
+
+/**
  * Hàm wrapper cho tất cả API requests
  * @param {string} endpoint - Đường dẫn API (không cần base URL)
  * @param {object} options - Fetch options (method, body, headers, baseURL, etc.)
@@ -29,7 +59,20 @@ const getAuthToken = () => {
  */
 export const apiClient = async (endpoint, options = {}) => {
   const baseURL = options.baseURL || API_CONFIG.baseURL;
-  const url = `${baseURL}${endpoint}`;
+  let url = `${baseURL}${endpoint}`;
+
+  if (options.params) {
+    const searchParams = new URLSearchParams();
+    Object.keys(options.params).forEach((key) => {
+      if (options.params[key] !== undefined && options.params[key] !== null && options.params[key] !== '') {
+        searchParams.append(key, options.params[key]);
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url += (url.includes('?') ? '&' : '?') + queryString;
+    }
+  }
 
   const config = {
     method: options.method || 'GET',
@@ -77,7 +120,7 @@ export const apiClient = async (endpoint, options = {}) => {
           .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
           .join('; ');
       }
-      const msg =
+      const rawMsg =
         detail ||
         errorData.message ||
         errorData.title ||
@@ -85,6 +128,7 @@ export const apiClient = async (endpoint, options = {}) => {
         errorData.error?.message ||
         errorData.Error?.Message ||
         `HTTP ${response.status}`;
+      const msg = translateErrorMessage(rawMsg);
       const error = new Error(msg);
       error.status = response.status;
       error.data = errorData;

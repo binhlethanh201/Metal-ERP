@@ -34,21 +34,21 @@ const ProductSearchDropdown = ({
   return (
     <div
       ref={dropdownRef}
-      className="absolute left-0 z-[200] mt-1 w-[520px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl"
+      className="absolute left-0 z-[200] mt-1 w-[520px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl dark:border-[#333333] dark:bg-[#1a1a1a]"
     >
       {/* Grid Header */}
-      <div className="flex border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+      <div className="flex border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
         <span className="w-[110px] shrink-0">Mã HH</span>
         <span className="flex-1">Tên hàng hóa</span>
         <span className="w-[90px] shrink-0 text-right">Tồn kho</span>
       </div>
 
       {/* Search input trong dropdown */}
-      <div className="border-b border-slate-100 px-2 py-1.5">
+      <div className="border-b border-slate-100 px-2 py-1.5 dark:border-[#333333]">
         <input
           ref={inputRef}
           type="text"
-          className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-blue-400"
+          className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-blue-400 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
           placeholder="Gõ để tìm kiếm..."
           value={searchText}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -60,7 +60,7 @@ const ProductSearchDropdown = ({
       {/* Results */}
       <div className="max-h-[280px] overflow-y-auto">
         {results.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-400">
+          <div className="px-4 py-10 text-center text-sm text-slate-400 dark:text-[#808080]">
             Không tìm thấy hàng hóa phù hợp
           </div>
         ) : (
@@ -70,16 +70,16 @@ const ProductSearchDropdown = ({
               type="button"
               className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors ${
                 idx === activeIndex
-                  ? 'bg-blue-50 text-blue-900'
-                  : 'text-slate-700 hover:bg-slate-50'
-              } ${idx < results.length - 1 ? 'border-b border-slate-50' : ''}`}
+                  ? 'bg-blue-50 text-blue-900 dark:bg-[#272727] dark:text-blue-300'
+                  : 'text-slate-700 hover:bg-slate-50 dark:text-[#b3b3b3] dark:hover:bg-[#333333]'
+              } ${idx < results.length - 1 ? 'border-b border-slate-50 dark:border-[#333333]' : ''}`}
               onClick={() => onSelect(product)}
             >
-              <span className="w-[110px] shrink-0 font-mono text-xs font-semibold text-slate-800">
+              <span className="w-[110px] shrink-0 font-mono text-xs font-semibold text-slate-800 dark:text-[#e5e5e5]">
                 {product.code}
               </span>
-              <span className="flex-1 text-sm">{product.name}</span>
-              <span className="w-[90px] shrink-0 text-right text-xs tabular-nums text-slate-500">
+              <span className="flex-1 text-sm dark:text-[#d4d4d4]">{product.name}</span>
+              <span className="w-[90px] shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-[#999999]">
                 {product.stock != null ? product.stock.toLocaleString('vi-VN') : '-'}
               </span>
             </button>
@@ -88,16 +88,16 @@ const ProductSearchDropdown = ({
       </div>
 
       {/* F9/F3 Footer */}
-      <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
         <button
           type="button"
-          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-[#333333]"
         >
           <span className="text-base leading-none">+</span> Thêm mới (F9)
         </button>
         <button
           type="button"
-          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
         >
           <span className="text-sm">Q</span> Tìm nhanh (F3)
         </button>
@@ -113,27 +113,27 @@ const ConfirmCloseDialog = ({ isOpen, onCancel, onDiscard, onSave }) => {
   return (
     <div className="fixed inset-0 z-[400] flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onCancel} />
-      <div className="relative z-10 w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+      <div className="relative z-10 w-full max-w-md rounded-xl bg-white p-6 shadow-2xl dark:bg-[#1a1a1a]">
         <div className="mb-4 flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
             <Icon name="warning" className="text-amber-600" size={24} />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900">Dữ liệu chưa được lưu</h3>
-            <p className="mt-1 text-sm text-slate-500">Bạn có chắc chắn muốn thoát?</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Dữ liệu chưa được lưu</h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">Bạn có chắc chắn muốn thoát?</p>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
+        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-[#333333]">
           <button
             type="button"
-            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             onClick={onCancel}
           >
             Huy
           </button>
           <button
             type="button"
-            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600"
+            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-red-900/30 dark:hover:text-red-400"
             onClick={onDiscard}
           >
             Khong luu
@@ -160,12 +160,12 @@ const QuickAddCustomerPopup = ({ isOpen, onClose, onSave }) => {
   return (
     <div className="fixed inset-0 z-[350] flex items-center justify-center">
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-900">Thêm mới Đối tượng</h2>
+      <div className="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-[#1a1a1a]">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-[#333333]">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Thêm mới Đối tượng</h2>
           <button
             type="button"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
             onClick={onClose}
           >
             <Icon name="close" size={20} />
@@ -173,54 +173,54 @@ const QuickAddCustomerPopup = ({ isOpen, onClose, onSave }) => {
         </div>
         <div className="grid grid-cols-2 gap-4 px-6 py-4">
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Mã KH
             </label>
             <input
               type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
               value={form.code}
               onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
             />
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Tên KH <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
               value={form.name}
               onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
             />
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               SĐT
             </label>
             <input
               type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
               value={form.phone}
               onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
             />
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Địa chỉ
             </label>
             <input
               type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
               value={form.address}
               onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
             />
           </div>
         </div>
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-[#333333]">
           <button
             type="button"
-            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             onClick={onClose}
           >
             Huy
@@ -286,15 +286,15 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
       <div ref={overlayRef} className="fixed inset-0 bg-black/60" onClick={handleOverlayClick} />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-[1400px] rounded-xl bg-white shadow-2xl">
+      <div className="relative z-10 w-full max-w-[1400px] rounded-xl bg-white shadow-2xl dark:bg-[#1a1a1a]">
         {/* ========== HEADER ========== */}
-        <div className="sticky top-0 z-20 flex items-center justify-between rounded-t-xl border-b border-slate-200 bg-white px-6 py-4">
-          <h1 className="text-xl font-bold text-slate-900">
+        <div className="sticky top-0 z-20 flex items-center justify-between rounded-t-xl border-b border-slate-200 bg-white px-6 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-[#e5e5e5]">
             {isEditMode ? 'Sửa phiếu xuất kho' : 'Thêm mới phiếu xuất kho'}
           </h1>
           <button
             type="button"
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
             onClick={() => popup.requestClose('headerX')}
           >
             <Icon name="close" size={24} />
@@ -303,18 +303,18 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
         <div className="space-y-4 px-6 py-5">
           {/* ========== TOP SECTION: Thông tin chung ========== */}
-          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-5">
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-slate-600">
+          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-5 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
               Thông tin chung
             </h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Loại xuất kho */}
               <div>
-                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Loại xuất kho
                 </label>
                 <select
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                   value={popup.header.issueType}
                   onChange={(e) => popup.handleHeaderChange('issueType', e.target.value)}
                 >
@@ -328,13 +328,13 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
               {/* Đối tượng + Thêm nhanh */}
               <div>
-                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Đối tượng <span className="text-red-400">*</span>
                 </label>
                 <div className="flex gap-1.5">
                   <div className="relative flex-1">
                     <select
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                       value={popup.header.customerId}
                       onChange={(e) => {
                         const cust = popup.customerList.find((c) => c.id === e.target.value);
@@ -352,7 +352,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                   </div>
                   <button
                     type="button"
-                    className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-blue-600 transition-colors hover:bg-blue-50"
+                    className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-blue-400 dark:hover:bg-[#333333]"
                     onClick={() => popup.setShowQuickAddCustomer(true)}
                     title="Thêm nhanh đối tượng"
                   >
@@ -363,12 +363,12 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
               {/* Diễn giải */}
               <div>
-                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Diễn giải
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                   placeholder="Lý do xuất kho..."
                   value={popup.header.description}
                   onChange={(e) => popup.handleHeaderChange('description', e.target.value)}
@@ -377,12 +377,12 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
               {/* Tham chiếu */}
               <div>
-                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Tham chiếu
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                   placeholder="Mã chứng từ liên quan..."
                   value={popup.header.reference}
                   onChange={(e) => popup.handleHeaderChange('reference', e.target.value)}
@@ -391,12 +391,12 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
               {/* Số phiếu (Readonly, auto-gen) */}
               <div>
-                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Số phiếu
                 </label>
                 <input
                   type="text"
-                  className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 font-mono text-sm text-slate-500 outline-none"
+                  className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 font-mono text-sm text-slate-500 outline-none dark:border-[#333333] dark:bg-[#272727] dark:text-[#999999]"
                   value={popup.header.issueNumber}
                   readOnly
                 />
@@ -404,12 +404,12 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
               {/* Thời gian */}
               <div>
-                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Thời gian <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="datetime-local"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                   value={popup.header.date}
                   onChange={(e) => popup.handleHeaderChange('date', e.target.value)}
                 />
@@ -417,12 +417,12 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
               {/* Người lập phiếu (Readonly) */}
               <div>
-                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                   Người lập phiếu
                 </label>
                 <input
                   type="text"
-                  className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-500 outline-none"
+                  className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-500 outline-none dark:border-[#333333] dark:bg-[#272727] dark:text-[#999999]"
                   value={popup.header.createdBy}
                   readOnly
                 />
@@ -431,21 +431,21 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
           </div>
 
           {/* ========== MIDDLE SECTION: BANG HANG HOA ========== */}
-          <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#1a1a1a]">
             {/* Toggle Barcode + Title */}
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-[#333333]">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
                 Chi tiết hàng hóa
               </h3>
               <label className="flex cursor-pointer select-none items-center gap-2.5">
-                <span className="text-xs font-semibold text-slate-500">Quét mã vạch</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-[#999999]">Quét mã vạch</span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={popup.barcodemode}
                   onClick={() => popup.setBarcodemode(!popup.barcodemode)}
                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                    popup.barcodemode ? 'bg-blue-600' : 'bg-slate-300'
+                    popup.barcodemode ? 'bg-blue-600' : 'bg-slate-300 dark:bg-[#333333]'
                   }`}
                 >
                   <span
@@ -459,13 +459,13 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
 
             {/* BARCODE MODE INPUT */}
             {popup.barcodemode && (
-              <div className="border-b border-dashed border-blue-200 bg-blue-50/40 px-5 py-3">
+              <div className="border-b border-dashed border-blue-200 bg-blue-50/40 px-5 py-3 dark:border-blue-800 dark:bg-blue-950/30">
                 <div className="flex items-center gap-3">
                   <Icon name="barcode_scanner" className="text-blue-600" size={22} />
                   <input
                     ref={popup.barcodeInputRef}
                     type="text"
-                    className="flex-1 rounded-lg border border-blue-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    className="flex-1 rounded-lg border border-blue-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-blue-700 dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                     placeholder="Quét mã vạch hoac Nhập Mã hàng hóa..."
                     autoFocus
                     onKeyDown={(e) => {
@@ -474,7 +474,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                       }
                     }}
                   />
-                  <span className="text-xs text-slate-500">Nhấn Enter sau khi quét</span>
+                  <span className="text-xs text-slate-500 dark:text-[#999999]">Nhấn Enter sau khi quét</span>
                 </div>
               </div>
             )}
@@ -483,44 +483,44 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1500px] table-fixed">
                 {/* Table Header */}
-                <thead className="border-b border-slate-200 bg-slate-50">
+                <thead className="border-b border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
                   <tr>
-                    <th className="w-[44px] px-2 py-2.5 text-center text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[44px] px-2 py-2.5 text-center text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       #
                     </th>
-                    <th className="w-[150px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[150px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       Mã HH <span className="text-red-400">*</span>
                     </th>
-                    <th className="w-[170px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[170px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       Tên HH
                     </th>
-                    <th className="w-[95px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[95px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       Số lô
                     </th>
-                    <th className="w-[100px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[100px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       Hạn SD
                     </th>
-                    <th className="w-[135px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[135px] px-2 py-2.5 text-left text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       Kho xuất
                     </th>
-                    <th className="w-[85px] px-2 py-2.5 text-center text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[85px] px-2 py-2.5 text-center text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       DVT
                     </th>
-                    <th className="w-[100px] px-2 py-2.5 text-right text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[100px] px-2 py-2.5 text-right text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       SL <span className="text-red-400">*</span>
                     </th>
-                    <th className="w-[120px] px-2 py-2.5 text-right text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[120px] px-2 py-2.5 text-right text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       Đơn giá
                     </th>
-                    <th className="w-[130px] px-2 py-2.5 text-right text-[11px] font-bold uppercase text-slate-500">
+                    <th className="w-[130px] px-2 py-2.5 text-right text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                       Thành tiền
                     </th>
-                    <th className="w-[44px] px-2 py-1.5 text-center text-[11px] font-bold uppercase text-slate-500"></th>
+                    <th className="w-[44px] px-2 py-1.5 text-center text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]"></th>
                   </tr>
                 </thead>
 
                 {/* Table Body */}
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
                   {popup.lines.map((line, idx) => {
                     const isDirtyLine = line.isDirty;
                     const isLastEmpty = !isDirtyLine && idx === popup.lines.length - 1;
@@ -529,11 +529,11 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                       <tr
                         key={line.id}
                         className={`transition-colors ${
-                          isDirtyLine ? 'hover:bg-blue-50/30' : 'bg-slate-50/30'
+                          isDirtyLine ? 'hover:bg-blue-50/30 dark:hover:bg-[#333333]' : 'bg-slate-50/30 dark:bg-[#1a1a1a]/30'
                         }`}
                       >
                         {/* STT */}
-                        <td className="px-2 py-1.5 text-center text-xs text-slate-400">
+                        <td className="px-2 py-1.5 text-center text-xs text-slate-400 dark:text-[#808080]">
                           {isDirtyLine ? popup.dirtyLines.indexOf(line) + 1 : ''}
                         </td>
 
@@ -543,8 +543,8 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                             type="text"
                             className={`w-full rounded border px-2 py-1.5 text-sm outline-none ${
                               isAutoOpen(line.id)
-                                ? 'border-blue-500 ring-2 ring-blue-100'
-                                : 'border-transparent bg-transparent focus:border-blue-300'
+                                ? 'border-blue-500 ring-2 ring-blue-100 dark:border-blue-400 dark:ring-blue-900'
+                                : 'border-transparent bg-transparent focus:border-blue-300 dark:text-[#e5e5e5]'
                             }`}
                             placeholder={isLastEmpty ? 'Nhập mã hoặc F3...' : ''}
                             value={isAutoOpen(line.id) ? popup.autoSearch : line.productCode}
@@ -586,7 +586,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                         <td className="px-2 py-1.5">
                           <input
                             type="text"
-                            className="w-full cursor-default border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-600 outline-none"
+                            className="w-full cursor-default border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-600 outline-none dark:text-[#b3b3b3]"
                             value={line.productName}
                             readOnly
                           />
@@ -598,8 +598,8 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                             type="text"
                             className={`w-full rounded border px-2 py-1.5 text-sm outline-none ${
                               isDirtyLine && line.hasLotControl
-                                ? 'border-slate-200 bg-white focus:border-blue-400'
-                                : 'cursor-not-allowed border-transparent bg-slate-100 text-slate-400'
+                                ? 'border-slate-200 bg-white focus:border-blue-400 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                                : 'cursor-not-allowed border-transparent bg-slate-100 text-slate-400 dark:bg-[#1a1a1a] dark:text-[#808080]'
                             }`}
                             value={line.lotNumber}
                             onChange={(e) =>
@@ -616,8 +616,8 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                             type="date"
                             className={`w-full rounded border px-2 py-1.5 text-sm outline-none ${
                               isDirtyLine && line.hasExpiryControl
-                                ? 'border-slate-200 bg-white focus:border-blue-400'
-                                : 'cursor-not-allowed border-transparent bg-slate-100 text-slate-400'
+                                ? 'border-slate-200 bg-white focus:border-blue-400 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                                : 'cursor-not-allowed border-transparent bg-slate-100 text-slate-400 dark:bg-[#1a1a1a] dark:text-[#808080]'
                             }`}
                             value={line.expiryDate}
                             onChange={(e) =>
@@ -631,7 +631,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                         <td className="px-2 py-1.5">
                           {isDirtyLine ? (
                             <select
-                              className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-400"
+                              className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-blue-400 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                               value={line.warehouseId}
                               onChange={(e) => {
                                 const wh = popup.warehouseList.find((w) => w.id === e.target.value);
@@ -650,14 +650,14 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                               ))}
                             </select>
                           ) : (
-                            <span className="px-2 py-1.5 text-sm text-slate-400">--</span>
+                            <span className="px-2 py-1.5 text-sm text-slate-400 dark:text-[#808080]">--</span>
                           )}
                         </td>
 
                         {/* ĐVT (Readonly) */}
                         <td className="px-2 py-1.5 text-center">
                           <span
-                            className={`text-sm ${isDirtyLine ? 'font-medium text-slate-700' : 'text-slate-400'}`}
+                            className={`text-sm ${isDirtyLine ? 'font-medium text-slate-700 dark:text-[#b3b3b3]' : 'text-slate-400 dark:text-[#808080]'}`}
                           >
                             {line.unit || '--'}
                           </span>
@@ -672,8 +672,8 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                             type="number"
                             className={`w-full rounded border px-2 py-1.5 text-right text-sm outline-none ${
                               isDirtyLine
-                                ? 'border-slate-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200'
-                                : 'cursor-not-allowed border-transparent bg-transparent text-slate-400'
+                                ? 'border-slate-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                                : 'cursor-not-allowed border-transparent bg-transparent text-slate-400 dark:text-[#808080]'
                             }`}
                             value={isDirtyLine ? line.quantity : ''}
                             min={0}
@@ -688,8 +688,8 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                             type="number"
                             className={`w-full rounded border px-2 py-1.5 text-right text-sm outline-none ${
                               isDirtyLine
-                                ? 'border-slate-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200'
-                                : 'cursor-not-allowed border-transparent bg-transparent text-slate-400'
+                                ? 'border-slate-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                                : 'cursor-not-allowed border-transparent bg-transparent text-slate-400 dark:text-[#808080]'
                             }`}
                             value={isDirtyLine ? line.unitPrice || '' : ''}
                             min={0}
@@ -702,7 +702,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                         <td className="px-2 py-1.5 text-right">
                           <span
                             className={`text-sm font-semibold tabular-nums ${
-                              isDirtyLine ? 'text-slate-800' : 'text-slate-400'
+                              isDirtyLine ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'
                             }`}
                           >
                             {isDirtyLine ? formatMoney(line.totalAmount) : ''}
@@ -714,7 +714,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                           {isDirtyLine && popup.dirtyLines.length > 1 && (
                             <button
                               type="button"
-                              className="rounded p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                              className="rounded p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-[#808080] dark:hover:bg-red-900/30 dark:hover:text-red-400"
                               onClick={() => popup.handleRemoveLine(line.id)}
                               title="Xóa dòng"
                             >
@@ -732,13 +732,13 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
         </div>
 
         {/* ========== FOOTER (Sticky) ========== */}
-        <div className="sticky bottom-0 z-20 rounded-b-xl border-t-2 border-slate-200 bg-white px-6 py-4">
+        <div className="sticky bottom-0 z-20 rounded-b-xl border-t-2 border-slate-200 bg-white px-6 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
           {/* Tổng tiền */}
           <div className="mb-3 flex items-center justify-end">
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Tổng cộng:
             </span>
-            <span className="ml-2 text-xl font-bold tabular-nums text-slate-900">
+            <span className="ml-2 text-xl font-bold tabular-nums text-slate-900 dark:text-[#e5e5e5]">
               {formatMoney(popup.totalAmount)}
             </span>
           </div>
@@ -747,7 +747,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
           <div className="flex items-center justify-between">
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600"
+              className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-[#404040] dark:text-[#999999] dark:hover:border-blue-500 dark:hover:text-blue-400"
               onClick={popup.handleAttachFile}
             >
               <Icon name="upload_file" className="text-base" />
@@ -757,7 +757,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
                 onClick={() => popup.requestClose('cancelBtn')}
               >
                 Huy

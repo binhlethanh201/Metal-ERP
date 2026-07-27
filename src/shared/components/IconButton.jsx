@@ -37,30 +37,30 @@ const IconButton = ({
     case 'outline':
       variantStyles =
         space === 'admin'
-          ? 'bg-surface border border-borderLight text-textAdmin hover:bg-bodyAdmin'
-          : 'bg-surface border border-borderLight text-textMain hover:bg-bodyCustomer';
+          ? 'bg-surface border border-borderLight text-textAdmin hover:bg-bodyAdmin dark:bg-[#272727] dark:border-[#404040] dark:text-[#d4d4d4] dark:hover:bg-[#333333]'
+          : 'bg-surface border border-borderLight text-textMain hover:bg-bodyCustomer dark:bg-[#272727] dark:border-[#404040] dark:text-[#d4d4d4] dark:hover:bg-[#333333]';
       break;
 
     case 'ghost':
-      variantStyles = 'bg-transparent text-placeholder hover:text-danger hover:bg-dangerBorder';
+      variantStyles = 'bg-transparent text-placeholder hover:text-danger hover:bg-dangerBorder dark:text-[#999999] dark:hover:text-red-400';
       break;
 
     case 'primary':
       variantStyles =
         space === 'admin'
           ? 'bg-admin text-surface hover:brightness-90'
-          : 'bg-primary text-surface hover:brightness-90';
+          : 'bg-primary text-surface hover:brightness-90 dark:bg-blue-600';
       break;
 
     case 'danger':
       variantStyles =
         space === 'admin'
           ? 'bg-dangerBorder text-dangerAdmin hover:brightness-90'
-          : 'bg-dangerBorder text-danger hover:brightness-90';
+          : 'bg-dangerBorder text-danger hover:brightness-90 dark:bg-red-900/30 dark:text-red-300';
       break;
 
     default:
-      variantStyles = 'bg-surface border border-borderLight text-textMain hover:bg-bodyCustomer';
+      variantStyles = 'bg-surface border border-borderLight text-textMain hover:bg-bodyCustomer dark:bg-[#272727] dark:border-[#404040] dark:text-[#d4d4d4] dark:hover:bg-[#333333]';
   }
 
   const stateStyles = disabled ? 'opacity-50 cursor-not-allowed' : 'active:scale-95 cursor-pointer';

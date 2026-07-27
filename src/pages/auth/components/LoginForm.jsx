@@ -26,14 +26,14 @@ const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
 
       <div className="space-y-1.5">
         <label
-          className="text-xs font-bold uppercase tracking-widest text-on-surface-variant"
+          className="text-xs font-bold uppercase tracking-widest text-on-surface-variant dark:text-[#999999]"
           htmlFor="email"
         >
           Email đăng nhập
         </label>
         <div className="group relative">
           <Mail
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary dark:text-[#808080]"
             size={18}
           />
           <input
@@ -44,7 +44,7 @@ const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
             value={formData.email}
             onChange={handleChange}
             disabled={isLoading}
-            className="w-full rounded-md border border-outline-variant bg-surface-container-lowest py-3 pl-10 pr-4 text-sm font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60"
+            className="w-full rounded-md border border-outline-variant bg-surface-container-lowest py-3 pl-10 pr-4 text-sm font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60 dark:border-[#404040] dark:bg-[#0f0f0f] dark:text-[#e5e5e5]"
             placeholder="owner@mepcoffee.com"
           />
         </div>
@@ -53,7 +53,7 @@ const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <label
-            className="text-xs font-bold uppercase tracking-widest text-on-surface-variant"
+            className="text-xs font-bold uppercase tracking-widest text-on-surface-variant dark:text-[#999999]"
             htmlFor="password"
           >
             Mật khẩu
@@ -65,7 +65,7 @@ const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
 
         <div className="group relative">
           <Lock
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary dark:text-[#808080]"
             size={18}
           />
           <input
@@ -76,7 +76,7 @@ const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
             value={formData.password}
             onChange={handleChange}
             disabled={isLoading}
-            className="w-full rounded-md border border-outline-variant bg-surface-container-lowest py-3 pl-10 pr-10 text-sm font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60"
+            className="w-full rounded-md border border-outline-variant bg-surface-container-lowest py-3 pl-10 pr-10 text-sm font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60 dark:border-[#404040] dark:bg-[#0f0f0f] dark:text-[#e5e5e5]"
             placeholder="••••••••"
           />
           <button
@@ -84,7 +84,7 @@ const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
             onClick={() => setShowPassword(!showPassword)}
             disabled={isLoading}
             aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary disabled:hover:text-outline"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary disabled:hover:text-outline dark:text-[#808080]"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>

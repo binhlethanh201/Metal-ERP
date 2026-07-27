@@ -129,28 +129,28 @@ const CheckStockTool = ({ isOpen, onClose }) => {
 
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/30 dark:border-red-800">
             <Icon name="error" size={16} className="text-red-600 flex-shrink-0" />
-            <span className="text-sm text-red-700">{error}</span>
+            <span className="text-sm text-red-700 dark:text-red-400">{error}</span>
           </div>
         )}
 
         {/* Product List */}
         {products.length > 0 && !selected && (
           <div className="space-y-2">
-            <p className="text-sm text-gray-500">{products.length} sản phẩm được tìm thấy</p>
+            <p className="text-sm text-gray-500 dark:text-[#999999]">{products.length} sản phẩm được tìm thấy</p>
             <div className="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-2">
               {products.map((p) => (
                 <div
                   key={p.productId || p.id}
-                  className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer border"
+                  className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer border dark:hover:bg-[#272727]"
                   onClick={() => handleSelectProduct(p)}
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{p.productName || p.name}</p>
-                    <p className="text-xs text-gray-500">{p.productCode || p.sku}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-[#e5e5e5]">{p.productName || p.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-[#999999]">{p.productCode || p.sku}</p>
                   </div>
-                  <Icon name="chevron_right" size={16} className="text-gray-400" />
+                  <Icon name="chevron_right" size={16} className="text-gray-400 dark:text-[#808080]" />
                 </div>
               ))}
             </div>
@@ -166,18 +166,18 @@ const CheckStockTool = ({ isOpen, onClose }) => {
                 <Icon name="inventory_2" size={20} className="text-blue-600" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{selected.productName || selected.name}</p>
-                <p className="text-xs text-gray-500">
+                <p className="font-semibold text-gray-900 dark:text-[#e5e5e5]">{selected.productName || selected.name}</p>
+                <p className="text-xs text-gray-500 dark:text-[#999999]">
                   {selected.productCode || selected.sku} — Tổng: {Number(stock.inStockQty || 0).toFixed(0)} sản phẩm
                 </p>
               </div>
               <div className="ml-auto flex gap-4">
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">Còn kho</p>
+                  <p className="text-xs text-gray-500 dark:text-[#999999]">Còn kho</p>
                   <p className="text-lg font-bold text-green-600">{Number(stock.inStockQty || 0).toFixed(0)}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">Đang chuyển</p>
+                  <p className="text-xs text-gray-500 dark:text-[#999999]">Đang chuyển</p>
                   <p className="text-lg font-bold text-amber-600">{Number(stock.inTransitQty || 0).toFixed(0)}</p>
                 </div>
               </div>
@@ -203,7 +203,7 @@ const CheckStockTool = ({ isOpen, onClose }) => {
 
         {/* Empty state */}
         {!loading && !selected && products.length === 0 && !error && (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-gray-400 dark:text-[#808080]">
             <Icon name="inventory_2" size={32} className="mx-auto mb-2 opacity-40" />
             <p className="text-sm">Nhập tên sản phẩm và nhấn Tìm kiếm</p>
           </div>

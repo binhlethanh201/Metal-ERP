@@ -204,7 +204,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={() => startEdit(item)}
-              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-blue-400"
               title={activeTab === 'attributeTypes' ? 'Sửa' : 'Đổi tên'}
             >
               <Icon name="edit" size={18} />
@@ -212,7 +212,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={() => handleDelete(item)}
-              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-[#808080] dark:hover:bg-red-900/30 dark:hover:text-red-400"
               title="Xóa"
             >
               <Icon name="delete" size={18} />
@@ -230,7 +230,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
           render: (_, item) => {
             const isEditing = editingName === item.typeId;
             if (!isEditing) {
-              return <span className="font-medium text-slate-800">{item.typeName}</span>;
+              return <span className="font-medium text-slate-800 dark:text-[#e5e5e5]">{item.typeName}</span>;
             }
             return (
               <div className="flex flex-col gap-2 py-1" onClick={(e) => e.stopPropagation()}>
@@ -251,14 +251,14 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
                   <button
                     type="button"
                     onClick={() => handleSaveEdit(item)}
-                    className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
+                    className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 dark:hover:text-blue-300"
                   >
                     Lưu
                   </button>
                   <button
                     type="button"
                     onClick={cancelEdit}
-                    className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+                    className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
                   >
                     Hủy
                   </button>
@@ -271,7 +271,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
           key: 'typeCode',
           header: 'Mã thuộc tính',
           render: (_, item) => (
-            <span className={item.typeCode ? 'text-sm text-slate-600' : 'text-sm text-slate-400'}>
+            <span className={item.typeCode ? 'text-sm text-slate-600 dark:text-[#b3b3b3]' : 'text-sm text-slate-400 dark:text-[#808080]'}>
               {item.typeCode || '---'}
             </span>
           ),
@@ -288,7 +288,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
         render: (name, item) => {
           const isEditing = editingName === item.name;
           if (!isEditing) {
-            return <span className="font-medium text-slate-800">{name}</span>;
+            return <span className="font-medium text-slate-800 dark:text-[#e5e5e5]">{name}</span>;
           }
           return (
             <div
@@ -305,14 +305,14 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
                 <button
                   type="button"
                   onClick={() => handleSaveEdit(item)}
-                  className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
+                  className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 dark:hover:text-blue-300"
                 >
                   Lưu
                 </button>
                 <button
                   type="button"
                   onClick={cancelEdit}
-                  className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+                  className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
                 >
                   Hủy
                 </button>
@@ -320,15 +320,6 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
             </div>
           );
         },
-      },
-      {
-        key: 'code',
-        header: 'Mã vị trí',
-        render: (_, item) => (
-          <span className={item.code ? 'text-sm text-slate-600' : 'text-sm text-slate-400'}>
-            {item.code || '---'}
-          </span>
-        ),
       },
       actionsCol,
     ];
@@ -346,7 +337,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
         </Button>
       }
     >
-      <div className="-mt-2 mb-5 flex gap-6 border-b border-slate-200 px-1">
+      <div className="-mt-2 mb-5 flex gap-6 border-b border-slate-200 px-1 dark:border-[#333333]">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -358,7 +349,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
               setCreateCode('');
             }}
             className={`relative pb-3 text-sm font-semibold transition-colors ${
-              activeTab === tab.key ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+              activeTab === tab.key ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:text-[#999999] dark:hover:text-[#b3b3b3]'
             }`}
           >
             {tab.label}
@@ -372,7 +363,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
       <div className="mb-4 flex flex-wrap items-end gap-2">
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <input
-            className="min-w-[200px] flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+            className="min-w-[200px] flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             placeholder={PLACEHOLDERS[activeTab]}
             value={createName}
             onChange={(e) => setCreateName(e.target.value)}
@@ -380,7 +371,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
           />
           {activeTab === 'attributeTypes' && (
             <input
-              className="w-[160px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+              className="w-[160px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               placeholder="Mã thuộc tính"
               value={createCode}
               onChange={(e) => setCreateCode(e.target.value)}
@@ -393,7 +384,7 @@ export const LocationAttributeModal = ({ open, onClose, onSuccess }) => {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200">
+      <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-[#333333]">
         <Table
           columns={getColumns()}
           data={items}

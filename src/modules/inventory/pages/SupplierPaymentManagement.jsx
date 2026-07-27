@@ -49,14 +49,14 @@ const SupplierPaymentManagement = () => {
   const onCancelClick = async (payment) => {
     if (
       window.confirm(
-        `Bạn có chắc muốn HỦY phiếu chi ${formatCurrency(payment.amount)} cho ${payment.supplierName} không? (Sẽ khôi phục dư nợ)`
+        `Bạn có chắc muốn HỦY phiếu thanh toán NCC ${formatCurrency(payment.amount)} cho ${payment.supplierName} không? (Sẽ khôi phục dư nợ)`
       )
     ) {
       try {
         await handleCancel(payment.paymentId);
-        alert('Đã hủy phiếu chi thành công');
+        alert('Đã hủy phiếu thanh toán NCC thành công');
       } catch (err) {
-        alert(err.message || 'Lỗi khi hủy phiếu chi');
+        alert(err.message || 'Lỗi khi hủy phiếu thanh toán NCC');
       }
     }
   };
@@ -77,28 +77,28 @@ const SupplierPaymentManagement = () => {
     <div className="animate-fade-in mt-2 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Lịch sử Thanh toán & Phiếu Chi</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Quản lý các giao dịch chi tiền cho nhà cung cấp, hủy phiếu nếu sai sót.
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Phiếu thanh toán NCC</h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-[#b3b3b3]">
+            Quản lý các phiếu thanh toán công nợ cho nhà cung cấp, hủy phiếu nếu sai sót.
           </p>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">
           {error}
         </div>
       )}
 
       <Card padding="p-0" className="overflow-hidden">
-        <div className="flex items-center gap-4 border-b border-slate-100 bg-slate-50 p-4">
+        <div className="flex items-center gap-4 border-b border-slate-100 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] p-4">
           <select
             value={supplierId}
             onChange={(e) => {
               setSupplierId(e.target.value);
               setPageNumber(1);
             }}
-            className="w-64 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+            className="w-64 rounded-lg border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm outline-none focus:border-blue-500"
           >
             <option value="">Tất cả nhà cung cấp</option>
             {suppliers.map((s) => (
@@ -109,17 +109,17 @@ const SupplierPaymentManagement = () => {
           </select>
           <button
             onClick={refetch}
-            className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:text-blue-600"
+            className="rounded-lg border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] p-2 text-slate-500 dark:text-[#999999] hover:text-blue-600"
           >
             <Icon name="RefreshCw" size={20} />
           </button>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="border-b border-slate-200 bg-white text-xs uppercase text-slate-500">
+          <table className="w-full text-left text-sm text-slate-600 dark:text-[#b3b3b3]">
+            <thead className="border-b border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-xs uppercase text-slate-500 dark:text-[#999999]">
               <tr>
-                <th className="px-4 py-3 font-bold">Ngày chi</th>
+                <th className="px-4 py-3 font-bold">Ngày thanh toán</th>
                 <th className="px-4 py-3 font-bold">Nhà cung cấp</th>
                 <th className="px-4 py-3 font-bold">Hình thức</th>
                 <th className="px-4 py-3 font-bold">Tham chiếu</th>
@@ -128,16 +128,16 @@ const SupplierPaymentManagement = () => {
                 <th className="px-4 py-3 text-right font-bold">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
+                  <td colSpan={7} className="p-8 text-center text-slate-400 dark:text-[#808080]">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : payments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
+                  <td colSpan={7} className="p-8 text-center text-slate-400 dark:text-[#808080]">
                     Không tìm thấy giao dịch nào
                   </td>
                 </tr>
@@ -145,12 +145,12 @@ const SupplierPaymentManagement = () => {
                 payments.map((p) => (
                   <tr
                     key={p.paymentId}
-                    className={`transition-colors hover:bg-blue-50/30 ${p.status === 'CANCELLED' ? 'bg-slate-50 opacity-60' : ''}`}
+                    className={`transition-colors hover:bg-blue-50/30 ${p.status === 'CANCELLED' ? 'bg-slate-50 dark:bg-[#1a1a1a] opacity-60' : ''}`}
                   >
                     <td className="px-4 py-4 font-medium">{p.paymentDate?.split(' ')[0]}</td>
                     <td className="px-4 py-4">
-                      <div className="font-bold text-slate-800">{p.supplierName}</div>
-                      <div className="max-w-xs truncate text-xs text-slate-500">
+                      <div className="font-bold text-slate-800 dark:text-[#e5e5e5]">{p.supplierName}</div>
+                      <div className="max-w-xs truncate text-xs text-slate-500 dark:text-[#999999]">
                         {p.note || '---'}
                       </div>
                     </td>
@@ -161,11 +161,11 @@ const SupplierPaymentManagement = () => {
                     </td>
                     <td className="px-4 py-4 text-center">
                       {p.status === 'CANCELLED' ? (
-                        <span className="rounded bg-slate-200 px-2 py-1 text-xs font-bold text-slate-600">
+                        <span className="rounded bg-slate-200 px-2 py-1 text-xs font-bold text-slate-600 dark:text-[#b3b3b3]">
                           ĐÃ HỦY
                         </span>
                       ) : (
-                        <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">
+                        <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
                           HOÀN TẤT
                         </span>
                       )}
@@ -183,7 +183,7 @@ const SupplierPaymentManagement = () => {
                           <button
                             onClick={() => onCancelClick(p)}
                             className="rounded p-1.5 text-red-600 hover:bg-red-100"
-                            title="Hủy phiếu chi"
+                            title="Hủy phiếu thanh toán"
                           >
                             <Icon name="X" size={18} />
                           </button>
@@ -197,8 +197,8 @@ const SupplierPaymentManagement = () => {
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-4 py-3">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-4 py-3">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
             <span>Hiển thị</span>
             <select
               value={pageSize}
@@ -206,7 +206,7 @@ const SupplierPaymentManagement = () => {
                 setPageSize(Number(e.target.value));
                 setPageNumber(1);
               }}
-              className="rounded border border-slate-300 px-2 py-1 text-xs outline-none"
+              className="rounded border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] px-2 py-1 text-xs outline-none"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -217,7 +217,7 @@ const SupplierPaymentManagement = () => {
             <button
               onClick={() => setPageNumber((p) => p - 1)}
               disabled={pageNumber <= 1}
-              className="rounded border bg-white p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded border bg-white dark:bg-[#1a1a1a] p-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-100 dark:hover:bg-[#333333] disabled:opacity-50"
             >
               <Icon name="chevron_left" size={18} />
             </button>
@@ -227,7 +227,7 @@ const SupplierPaymentManagement = () => {
             <button
               onClick={() => setPageNumber((p) => p + 1)}
               disabled={pageNumber >= paginationMeta.totalPages}
-              className="rounded border bg-white p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded border bg-white dark:bg-[#1a1a1a] p-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-100 dark:hover:bg-[#333333] disabled:opacity-50"
             >
               <Icon name="chevron_right" size={18} />
             </button>

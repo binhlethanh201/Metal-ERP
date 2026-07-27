@@ -12,6 +12,7 @@ import { Modal } from '../../../shared/components/Modal';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatDate } from '../../../shared/utils/formatDate';
+import Icon from '../../../shared/components/Icon';
 import {
   getCustomers,
   createCustomer,
@@ -138,7 +139,7 @@ export const CustomerManagement = () => {
   const [search, setSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('Tất cả');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 15;
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -621,8 +622,8 @@ export const CustomerManagement = () => {
       {/* ===== LEFT: Danh sách ===== */}
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Khách hàng</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Khách hàng</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             Quản lý thông tin và lịch sử mua hàng của khách
           </p>
         </div>
@@ -632,7 +633,7 @@ export const CustomerManagement = () => {
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-[#004785]">{totalCustomers}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Tổng khách hàng
               </p>
             </div>
@@ -640,7 +641,7 @@ export const CustomerManagement = () => {
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-green-600">{activeCustomers.length}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Khách đã mua hàng
               </p>
             </div>
@@ -652,7 +653,7 @@ export const CustomerManagement = () => {
                   ? formatCurrency(totalRevenue / activeCustomers.length)
                   : '0 ₫'}
               </div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Bình quân/khách mua
               </p>
             </div>
@@ -660,7 +661,7 @@ export const CustomerManagement = () => {
         </div>
 
         {error && (
-          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
             <strong>Lưu ý:</strong> {error}. Đang hiển thị dữ liệu mẫu.
           </div>
         )}
@@ -677,7 +678,7 @@ export const CustomerManagement = () => {
             <select
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             >
               {CUSTOMER_GROUPS.map((g) => (
                 <option key={g} value={g}>
@@ -698,62 +699,47 @@ export const CustomerManagement = () => {
             loading={loading}
             emptyMessage={error ? `Lỗi: ${error}` : 'Không tìm thấy khách hàng nào'}
           />
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-              <span className="text-sm text-slate-500">
-                Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
-                {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} khách
-                hàng
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Trước
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    if (
-                      totalPages > 7 &&
-                      i !== 0 &&
-                      i !== totalPages - 1 &&
-                      Math.abs(currentPage - 1 - i) > 2
-                    ) {
-                      if (Math.abs(currentPage - 1 - i) === 3) {
-                        return (
-                          <span key={i} className="px-1 text-slate-400">
-                            ...
-                          </span>
-                        );
-                      }
-                      return null;
-                    }
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
-                          currentPage === i + 1
-                            ? 'bg-[#004785] text-white'
-                            : 'text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    );
-                  })}
+          {filtered.length > 0 && (
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
+              <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
+                <div className="flex items-center gap-2">
+                  <span>Hiển thị</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+                  >
+                    <option value={20}>20 dòng</option>
+                    <option value={50}>50 dòng</option>
+                    <option value={100}>100 dòng</option>
+                  </select>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                <span>
+                  {filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+                  {Math.min(currentPage * pageSize, filtered.length)} trong tổng số{' '}
+                  {filtered.length} khách hàng
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
                 >
-                  Sau
-                </Button>
+                  <Icon name="chevron_left" className="text-[18px]" />
+                </button>
+                <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+                  Trang {currentPage} / {totalPages || 1}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
+                >
+                  <Icon name="chevron_right" className="text-[18px]" />
+                </button>
               </div>
             </div>
           )}
@@ -772,21 +758,21 @@ export const CustomerManagement = () => {
                     {selected.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="truncate font-bold leading-tight text-slate-900">
+                    <h3 className="truncate font-bold leading-tight text-slate-900 dark:text-[#e5e5e5]">
                       {selected.name}
                     </h3>
                     <div className="mt-0.5 flex items-center gap-2">
                       <Badge variant={GROUP_COLORS[selected.group] || 'secondary'} size="sm">
                         {selected.group}
                       </Badge>
-                      <span className="text-xs text-slate-400">KH từ {selected.createdAt}</span>
+                      <span className="text-xs text-slate-400 dark:text-[#808080]">KH từ {selected.createdAt}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-1">
                   <button
                     onClick={handleOpenEdit}
-                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#004785]"
+                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#004785] dark:text-[#808080] dark:hover:bg-[#272727]"
                     title="Chỉnh sửa"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -801,24 +787,24 @@ export const CustomerManagement = () => {
                 </div>
               </div>
 
-              <div className="space-y-2 border-t border-slate-100 pt-3">
+              <div className="space-y-2 border-t border-slate-100 pt-3 dark:border-[#333333]">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="w-5 shrink-0 text-center text-slate-400">📞</span>
-                  <span className="truncate font-medium text-slate-900">{selected.phone}</span>
+                  <span className="w-5 shrink-0 text-center text-slate-400 dark:text-[#808080]">📞</span>
+                  <span className="truncate font-medium text-slate-900 dark:text-[#e5e5e5]">{selected.phone}</span>
                 </div>
                 {selected.email && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="w-5 shrink-0 text-center text-slate-400">✉️</span>
-                    <span className="truncate text-slate-600">{selected.email}</span>
+                    <span className="w-5 shrink-0 text-center text-slate-400 dark:text-[#808080]">✉️</span>
+                    <span className="truncate text-slate-600 dark:text-[#999999]">{selected.email}</span>
                   </div>
                 )}
                 <div className="flex items-start gap-2 text-sm">
-                  <span className="w-5 shrink-0 text-center text-slate-400">📍</span>
-                  <span className="truncate text-slate-600">{selected.address || '-'}</span>
+                  <span className="w-5 shrink-0 text-center text-slate-400 dark:text-[#808080]">📍</span>
+                  <span className="truncate text-slate-600 dark:text-[#999999]">{selected.address || '-'}</span>
                 </div>
               </div>
               {selected.notes && (
-                <div className="break-words rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                <div className="break-words rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                   {selected.notes}
                 </div>
               )}
@@ -886,23 +872,23 @@ export const CustomerManagement = () => {
                       key={o.id}
                       type="button"
                       onClick={() => setSelectedOrder(o)}
-                      className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-slate-50"
+                      className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]"
                     >
-                      <span className="min-w-0 truncate font-mono text-xs font-bold text-[#004785]">
+                      <span className="min-w-0 truncate font-mono text-xs font-bold text-[#004785] dark:text-blue-300">
                         {o.invoiceCode}
                       </span>
-                      <span className="shrink-0 text-xs text-slate-400">
+                      <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">
                         {formatCurrency(o.originalValue)}
                       </span>
                     </button>
                   ))}
                   {filteredOrders.length === 0 && (
-                    <p className="py-2 text-center text-xs text-slate-400">Không tìm thấy</p>
+                    <p className="py-2 text-center text-xs text-slate-400 dark:text-[#808080]">Không tìm thấy</p>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="py-4 text-center text-sm text-slate-400">Chưa có đơn hàng</p>
+              <p className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có đơn hàng</p>
             )}
           </Card>
         </div>
@@ -910,7 +896,7 @@ export const CustomerManagement = () => {
 
       {/* Placeholder */}
       {(!selected || !isSelectedInList) && (
-        <div className="hidden w-96 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 xl:flex">
+        <div className="hidden w-96 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 xl:flex dark:border-[#333333]">
           <div className="px-4 text-center">
             <p className="text-4xl text-slate-300">👥</p>
             <p className="mt-3 text-sm font-medium text-slate-400">Chọn một khách hàng</p>
@@ -937,7 +923,7 @@ export const CustomerManagement = () => {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-bold uppercase text-slate-400">Mã đơn</p>
-                  <p className="mt-0.5 truncate font-mono text-lg font-bold text-[#004785]">
+                  <p className="mt-0.5 truncate font-mono text-lg font-bold text-[#004785] dark:text-blue-300">
                     {selectedOrder.invoiceCode}
                   </p>
                 </div>

@@ -82,16 +82,16 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
     >
       <div className="space-y-3">
         {/* Product info */}
-        <div className="rounded-lg bg-slate-50 p-3">
-          <p className="font-semibold text-slate-900">{product.name}</p>
-          <p className="text-xs text-slate-500">
+        <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#1a1a1a]/50">
+          <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{product.name}</p>
+          <p className="text-xs text-slate-500 dark:text-[#999999]">
             SL tồn: {baseStock.toFixed(2)} {baseUnit}
           </p>
         </div>
 
         {/* Unit list */}
         <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-600">Chọn đơn vị:</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-[#999999]">Chọn đơn vị:</p>
           {units.map((unit) => {
             // baseStock là số base unit
             // convertValue = số base unit trong 1 đơn vị này
@@ -108,16 +108,16 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
                 disabled={isDisabled}
                 className={`flex w-full items-center justify-between rounded-lg border p-3 transition-all ${
                   selectedUnitId === unit.id
-                    ? 'border-[#004785] bg-blue-50 shadow-sm'
+                    ? 'border-[#004785] bg-blue-50 shadow-sm dark:border-blue-400 dark:bg-blue-900/30'
                     : isDisabled
-                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-50'
-                      : 'border-slate-200 hover:bg-slate-50'
+                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-50 dark:border-[#333333] dark:bg-[#1a1a1a]'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:hover:bg-[#272727]'
                 }`}
               >
                 <div className="text-left">
-                  <span className="font-semibold text-slate-900">{unit.name}</span>
+                  <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{unit.name}</span>
                   {unit.description && (
-                    <span className="ml-2 text-xs text-slate-500">{unit.description}</span>
+                    <span className="ml-2 text-xs text-slate-500 dark:text-[#999999]">{unit.description}</span>
                   )}
                 </div>
                 <div className="text-right">
@@ -125,7 +125,7 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
                     {formatCurrency(unit.price)}
                   </span>
                   <span
-                    className={`text-[10px] ${maxQty <= 0 ? 'text-red-500' : 'text-slate-400'}`}
+                    className={`text-[10px] ${maxQty <= 0 ? 'text-red-500' : 'text-slate-400 dark:text-[#808080]'}`}
                   >
                     Max: {maxQty.toLocaleString('vi-VN')} {unit.name}
                   </span>

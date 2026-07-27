@@ -16,18 +16,18 @@ export const CartItem = ({ item, onQuantityChange, onRemove }) => {
   const isLowStock = remainingStock <= 0;
 
   return (
-    <div className="flex gap-3 rounded-lg bg-slate-50 p-3">
+    <div className="flex gap-3 rounded-lg bg-slate-50 p-3 dark:bg-[#1a1a1a]/50">
       {/* Product Info */}
       <div className="flex-1">
-        <h4 className="text-sm font-bold text-slate-900">{item.name}</h4>
-        <p className="text-xs text-slate-500">
+        <h4 className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{item.name}</h4>
+        <p className="text-xs text-slate-500 dark:text-[#999999]">
           {formatCurrency(item.price)}
-          {displayUnit && <span className="ml-1 text-slate-400">/ {displayUnit}</span>}
+          {displayUnit && <span className="ml-1 text-slate-400 dark:text-[#808080]">/ {displayUnit}</span>}
         </p>
         {/* Stock warning */}
         {item.convertValue !== 1 && (
           <p
-            className={`text-[10px] ${isLowStock ? 'font-semibold text-red-500' : 'text-slate-400'}`}
+            className={`text-[10px] ${isLowStock ? 'font-semibold text-red-500' : 'text-slate-400 dark:text-[#808080]'}`}
           >
             Còn {remainingStock.toFixed(2)} {item.baseUnit || ''}
           </p>
@@ -38,18 +38,18 @@ export const CartItem = ({ item, onQuantityChange, onRemove }) => {
       <div className="flex items-center gap-2">
         <button
           onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm hover:bg-slate-100"
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm hover:bg-slate-100 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:bg-[#272727]"
         >
           −
         </button>
         <div className="flex flex-col items-center">
           <span className="w-12 text-center text-sm font-semibold">{item.quantity}</span>
           {displayUnit && item.convertValue !== 1 && (
-            <span className="text-[10px] text-slate-400">{displayUnit}</span>
+            <span className="text-[10px] text-slate-400 dark:text-[#808080]">{displayUnit}</span>
           )}
           {displayUnit && item.convertValue !== 1 && (
             <span
-              className="text-[10px] text-slate-400"
+              className="text-[10px] text-slate-400 dark:text-[#808080]"
               title={`Tương đương ${(item.quantity * item.convertValue).toFixed(2)} ${item.baseUnit || ''}`}
             >
               (≈ {(item.quantity * item.convertValue).toFixed(2)} {item.baseUnit || ''})
@@ -58,7 +58,7 @@ export const CartItem = ({ item, onQuantityChange, onRemove }) => {
         </div>
         <button
           onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm hover:bg-slate-100"
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm hover:bg-slate-100 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:bg-[#272727]"
         >
           +
         </button>
@@ -66,7 +66,7 @@ export const CartItem = ({ item, onQuantityChange, onRemove }) => {
 
       {/* Subtotal */}
       <div className="w-20 text-right">
-        <p className="text-sm font-bold text-slate-900">{formatCurrency(subtotal)}</p>
+        <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{formatCurrency(subtotal)}</p>
       </div>
 
       {/* Remove */}

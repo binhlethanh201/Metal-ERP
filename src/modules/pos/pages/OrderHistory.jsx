@@ -9,9 +9,11 @@ import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
 import { Input } from '../../../shared/components/Input';
 import { Table } from '../../../shared/components/Table';
+import { Modal } from '../../../shared/components/Modal';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatDate } from '../../../shared/utils/formatDate';
-import { getOrders, getInvoice, getReturns } from '../services/posService';
+import { getOrders, getInvoice, getReturns, getPosProducts } from '../services/posService';
+import Icon from '../../../shared/components/Icon';
 
 const VN_TZ = 'Asia/Ho_Chi_Minh';
 const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
@@ -366,26 +368,30 @@ const OrderHistory = () => {
   const { drafts, setDrafts, showNotice } = useOutletContext();
   const [orders, setOrders] = useState([]);
   const [returnsData, setReturnsData] = useState([]); // danh sách hoàn trả để tính net revenue
+  const [draftToDelete, setDraftToDelete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [backfilling, setBackfilling] = useState(false); // Track backfill state to prevent "0 đ" flash
-  const pageSize = 15;
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [search, timeFilter]);
 
+  const [latestProductsMap, setLatestProductsMap] = useState({});
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     try {
-      // Fetch orders và returns song song
-      const [data, returnsRaw] = await Promise.all([
+      // Fetch orders, returns, và posProducts song song
+      const [data, returnsRaw, posProductsRaw] = await Promise.all([
         getOrders({ status: 'Completed', pageSize: 1000 }),
         getReturns({}).catch(() => []),
+        getPosProducts({}).catch(() => []),
       ]);
       console.log('[OrderHistory] API response:', data);
       // Backend trả về PageResultDto với Items (capital I) hoặc mảng trực tiếp
@@ -403,6 +409,18 @@ const OrderHistory = () => {
         ? returnsRaw
         : (returnsRaw?.items ?? returnsRaw?.data ?? []);
       setReturnsData(allReturns);
+
+      // Build product price map for real-time draft total calculation
+      const pItems = Array.isArray(posProductsRaw)
+        ? posProductsRaw
+        : (posProductsRaw?.Items ?? posProductsRaw?.items ?? posProductsRaw?.data ?? []);
+      const pMap = {};
+      pItems.forEach((p) => {
+        const id = String(p.ProductId || p.productId || p.id || p.ProductCode || p.productCode || '');
+        const price = parseFloat(p.RetailPrice ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0);
+        if (id) pMap[id] = price;
+      });
+      setLatestProductsMap(pMap);
     } catch (err) {
       console.error('Lỗi khi lấy danh sách đơn hàng:', err);
       setFetchError(err.message || 'Không thể tải danh sách đơn hàng');
@@ -744,7 +762,7 @@ const OrderHistory = () => {
         const exchanged = exchangeByInvoice[code];
         return (
           <div className="flex flex-col gap-0.5">
-            <span className="font-mono text-xs font-bold text-[#004785]">{code}</span>
+            <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{code}</span>
             <div className="flex flex-wrap gap-1">
               {refunded > 0 && (
                 <span className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
@@ -775,7 +793,7 @@ const OrderHistory = () => {
       key: 'customerName',
       header: 'Khách hàng',
       render: (v, row) => (
-        <span className="text-xs font-medium text-slate-900">
+        <span className="text-xs font-medium text-slate-900 dark:text-[#e5e5e5]">
           {v || row.customer || 'Khách lẻ'}
         </span>
       ),
@@ -864,8 +882,8 @@ const OrderHistory = () => {
       >
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Đơn hàng</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Đơn hàng</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             Xem lại các đơn đã bán và đơn nháp chưa thanh toán
           </p>
         </div>
@@ -875,7 +893,7 @@ const OrderHistory = () => {
           <Card padding="p-4">
             <div className="text-center">
               <div className="text-xl font-extrabold text-[#004785]">{todayCount}</div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Đơn hôm nay
               </p>
             </div>
@@ -885,7 +903,7 @@ const OrderHistory = () => {
               <div className="text-xl font-extrabold text-green-600">
                 {formatCurrency(todayRevenue)}
               </div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Doanh thu hôm nay
               </p>
             </div>
@@ -895,7 +913,7 @@ const OrderHistory = () => {
               <div className="text-xl font-extrabold text-purple-600">
                 {todayCount > 0 ? formatCurrency(todayRevenue / todayCount) : formatCurrency(0)}
               </div>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-[#999999]">
                 Bình quân/đơn
               </p>
             </div>
@@ -904,57 +922,65 @@ const OrderHistory = () => {
 
         {drafts.length > 0 && (
           <Card header={`Đơn nháp (${drafts.length})`} padding="p-0">
-            <div className="divide-y divide-slate-100">
-              {drafts.map((d) => (
-                <div key={d.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="warning">Nháp</Badge>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {d.customer ? d.customer.name : 'Khách lẻ'}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {d.items.reduce((sum, item) => sum + (item.quantity || 1), 0)} món -{' '}
-                        {formatCurrency(d.total)}
-                      </p>
+            <div className="divide-y divide-slate-100 dark:divide-[#333333]">
+              {drafts.map((d) => {
+                const currentTotal = (d.items || []).reduce((sum, item) => {
+                  const itemId = String(item.productId || item.id || item.sku || item.productCode || '');
+                  const latestPrice = latestProductsMap[itemId] ?? item.price;
+                  return sum + Number(latestPrice || 0) * Number(item.quantity || 1);
+                }, 0);
+                return (
+                  <div key={d.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="warning">Nháp</Badge>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-[#e5e5e5]">
+                          {d.customer ? d.customer.name : 'Khách lẻ'}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-[#808080]">
+                          {d.items.reduce((sum, item) => sum + (item.quantity || 1), 0)} món -{' '}
+                          {formatCurrency(currentTotal > 0 ? currentTotal : d.total)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate('/pos', { state: { draft: d } })}
+                      >
+                        Tiếp tục
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setDraftToDelete(d)}
+                        title="Hủy đơn nháp"
+                        className="rounded p-1 text-slate-400 hover:text-red-500 transition-colors dark:text-[#808080]"
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => navigate('/pos', { state: { draft: d } })}
-                    >
-                      Tiếp tục
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => setDrafts((prev) => prev.filter((x) => x.id !== d.id))}
-                      className="rounded p-1 text-slate-400 hover:text-red-500"
-                    >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         )}
 
         {fetchError && (
-          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
             <strong>Lưu ý:</strong> {fetchError}. Đang hiển thị dữ liệu mẫu.
           </div>
         )}
@@ -969,13 +995,13 @@ const OrderHistory = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="flex rounded-lg border border-slate-200 p-0.5">
+            <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-[#333333]">
               {FILTERS.map((f) => (
                 <button
                   key={f.id}
                   type="button"
                   onClick={() => setTimeFilter(f.id)}
-                  className={`rounded-md px-4 py-1.5 text-xs font-bold transition-colors ${timeFilter === f.id ? 'bg-[#004785] text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                  className={`rounded-md px-4 py-1.5 text-xs font-bold transition-colors ${timeFilter === f.id ? 'bg-[#004785] text-white' : 'text-slate-500 hover:text-slate-900 dark:text-[#999999] dark:hover:text-[#e5e5e5]'}`}
                 >
                   {f.label}
                 </button>
@@ -995,59 +1021,47 @@ const OrderHistory = () => {
             loading={loading || backfilling}
             emptyMessage={fetchError ? `Lỗi: ${fetchError}` : 'Không có đơn hàng nào'}
           />
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3">
-              <span className="text-sm text-slate-500">
-                Hiển thị {(currentPage - 1) * pageSize + 1} -{' '}
-                {Math.min(currentPage * pageSize, filtered.length)} trên {filtered.length} đơn hàng
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Trước
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    if (
-                      totalPages > 7 &&
-                      i !== 0 &&
-                      i !== totalPages - 1 &&
-                      Math.abs(currentPage - 1 - i) > 2
-                    ) {
-                      if (Math.abs(currentPage - 1 - i) === 3) {
-                        return (
-                          <span key={i} className="px-1 text-slate-400">
-                            ...
-                          </span>
-                        );
-                      }
-                      return null;
-                    }
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`h-8 min-w-[32px] rounded-md px-2 text-sm font-medium transition-colors ${
-                          currentPage === i + 1
-                            ? 'bg-[#004785] text-white'
-                            : 'text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    );
-                  })}
+          {filtered.length > 0 && (
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
+              <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
+                <div className="flex items-center gap-2">
+                  <span>Hiển thị</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+                  >
+                    <option value={20}>20 dòng</option>
+                    <option value={50}>50 dòng</option>
+                    <option value={100}>100 dòng</option>
+                  </select>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                <span>
+                  {filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+                  {Math.min(currentPage * pageSize, filtered.length)} trong tổng số{' '}
+                  {filtered.length} đơn hàng
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
                 >
-                  Sau
-                </Button>
+                  <Icon name="chevron_left" className="text-[18px]" />
+                </button>
+                <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+                  Trang {currentPage} / {totalPages || 1}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"
+                >
+                  <Icon name="chevron_right" className="text-[18px]" />
+                </button>
               </div>
             </div>
           )}
@@ -1062,12 +1076,12 @@ const OrderHistory = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-mono text-sm font-bold text-[#004785]">{selected.id}</h3>
-                  <p className="text-xs text-slate-400">{formatDateTimeVN(selected.date)}</p>
+                  <p className="text-xs text-slate-400 dark:text-[#808080]">{formatDateTimeVN(selected.date)}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelected(null)}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-100"
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:text-[#808080] dark:hover:bg-[#272727]"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -1080,9 +1094,9 @@ const OrderHistory = () => {
                 </button>
               </div>
 
-              <div className="space-y-2 border-t border-slate-100 pt-3">
+              <div className="space-y-2 border-t border-slate-100 pt-3 dark:border-[#333333]">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Khách hàng</span>
+                  <span className="text-slate-500 dark:text-[#999999]">Khách hàng</span>
                   <span className="font-semibold">
                     {selected.customerName || selected.customer || 'Khách lẻ'}
                   </span>
@@ -1122,7 +1136,7 @@ const OrderHistory = () => {
                               item.productCode ||
                               `SP #${item.productId || item.id || ''}`}
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-400 dark:text-[#808080]">
                             {formatCurrency(item.unitPrice || item.price || 0)} x{' '}
                             {item.quantity || 0}
                           </p>
@@ -1158,7 +1172,7 @@ const OrderHistory = () => {
                   );
                 })()
               ) : (
-                <p className="text-sm text-slate-400">Không có chi tiết sản phẩm</p>
+                <p className="text-sm text-slate-400 dark:text-[#808080]">Không có chi tiết sản phẩm</p>
               )}
             </div>
           </Card>
@@ -1183,7 +1197,7 @@ const OrderHistory = () => {
                   ));
                 }
                 return (
-                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
                     <div className="flex items-center justify-between">
                       <Badge
                         variant={PAYMENT_VARIANTS[selected.paymentMethod] || 'secondary'}
@@ -1198,8 +1212,8 @@ const OrderHistory = () => {
                   </div>
                 );
               })()}
-              <div className="space-y-1 border-t border-slate-200 pt-2">
-                <div className="flex justify-between text-xs text-slate-500">
+              <div className="space-y-1 border-t border-slate-200 pt-2 dark:border-[#333333]">
+                <div className="flex justify-between text-xs text-slate-500 dark:text-[#999999]">
                   <span>Tạm tính</span>
                   <span>
                     {formatCurrency(
@@ -1213,15 +1227,15 @@ const OrderHistory = () => {
                     <span>-{formatCurrency(selected.discountAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785]">
+                <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785] dark:border-[#333333]">
                   <span>Tổng</span>
                   <span>{formatCurrency(selected.totalAmount ?? selected.total ?? 0)}</span>
                 </div>
               </div>
               {selected.changeAmount > 0 && (
-                <div className="flex justify-between rounded-lg bg-green-50 p-2 text-sm">
-                  <span className="text-green-700">Tiền thừa</span>
-                  <span className="font-bold text-green-700">
+                <div className="flex justify-between rounded-lg bg-green-50 p-2 text-sm dark:bg-green-900/30">
+                  <span className="text-green-700 dark:text-green-400">Tiền thừa</span>
+                  <span className="font-bold text-green-700 dark:text-green-400">
                     {formatCurrency(selected.changeAmount)}
                   </span>
                 </div>
@@ -1238,13 +1252,58 @@ const OrderHistory = () => {
       )}
 
       {!selected && (
-        <div className="hidden w-96 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 xl:flex">
+        <div className="hidden w-96 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 xl:flex dark:border-[#333333]">
           <div className="px-4 text-center">
             <p className="text-4xl text-slate-300">📋</p>
             <p className="mt-3 text-sm font-medium text-slate-400">Chọn một đơn hàng</p>
             <p className="text-xs text-slate-300">để xem chi tiết</p>
           </div>
         </div>
+      )}
+
+      {/* Modal xác nhận hủy đơn nháp */}
+      {draftToDelete && (
+        <Modal
+          isOpen={!!draftToDelete}
+          onClose={() => setDraftToDelete(null)}
+          title="Xác nhận hủy đơn nháp"
+          size="sm"
+          footer={
+            <div className="flex justify-end gap-2 w-full">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setDraftToDelete(null)}
+              >
+                Không, giữ lại
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => {
+                  setDrafts((prev) => prev.filter((x) => x.id !== draftToDelete.id));
+                  showNotice?.('Đã hủy đơn nháp thành công.');
+                  setDraftToDelete(null);
+                }}
+              >
+                Xác nhận hủy
+              </Button>
+            </div>
+          }
+        >
+          <div className="py-2 space-y-2">
+            <p className="text-sm text-slate-700 dark:text-[#b3b3b3]">
+              Bạn có chắc chắn muốn hủy đơn nháp của khách hàng{' '}
+              <strong className="text-slate-900 dark:text-[#e5e5e5]">
+                {draftToDelete.customer ? draftToDelete.customer.name : 'Khách lẻ'}
+              </strong>{' '}
+              ({draftToDelete.items?.length || 0} sản phẩm) không?
+            </p>
+            <p className="text-xs text-red-500 italic">
+              * Đơn nháp sau khi hủy sẽ bị xóa hoàn toàn và không thể khôi phục.
+            </p>
+          </div>
+        </Modal>
       )}
     </div>
   );

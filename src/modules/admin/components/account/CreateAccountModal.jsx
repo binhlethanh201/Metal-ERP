@@ -17,7 +17,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
         email: '',
         password: '',
         phoneNumber: '',
-        roleIds: [],
+        roleName: '', // 'Owner', 'Sales Staff', 'Inventory Staff', 'Staff'
       });
     }
   }, [isOpen]);
@@ -26,22 +26,26 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleRoleToggle = (roleId) => {
+  const handleRoleChange = (roleName) => {
     setFormData((prev) => ({
       ...prev,
-      roleIds: prev.roleIds.includes(roleId)
-        ? prev.roleIds.filter((id) => id !== roleId)
-        : [...prev.roleIds, roleId],
+      roleName,
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.email || !formData.password) {
-      alert('Vui lòng nhập đầy đủ Tên, Email và Mật khẩu.');
+    if (!formData.fullName || !formData.email || !formData.password || !formData.roleName) {
+      alert('Vui lòng nhập đầy đủ Tên, Email, Mật khẩu và chọn Role.');
       return;
     }
-    onSave(formData);
+    // Set username = email
+    let mappedRoleName = formData.roleName;
+    if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
+    if (mappedRoleName === 'Inventory Staff') mappedRoleName = 'InventoryStaff';
+
+    const dataToSave = { ...formData, username: formData.email, roleName: mappedRoleName };
+    onSave(dataToSave);
   };
 
   // Lọc bỏ role Admin ra khỏi danh sách được cấp
@@ -120,19 +124,25 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
 
           <div>
             <label className="mb-2 block text-xs font-semibold text-on-surface-variant">
-              Gán Chức vụ (Có thể chọn nhiều)
+              Chọn Loại Tài Khoản <span className="text-error">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               {assignableRoles.map((role) => (
                 <label
                   key={role.roleId}
-                  className="flex cursor-pointer items-center gap-2 rounded border border-outline-variant p-2 hover:bg-surface-container-low"
+                  className={`flex cursor-pointer items-center gap-2 rounded border p-2 transition-colors ${
+                    formData.roleName === role.roleName
+                      ? 'border-primary bg-primary-container/20'
+                      : 'border-outline-variant hover:bg-surface-container-low'
+                  }`}
                 >
                   <input
-                    type="checkbox"
-                    checked={formData.roleIds.includes(role.roleId)}
-                    onChange={() => handleRoleToggle(role.roleId)}
-                    className="h-4 w-4 rounded text-primary focus:ring-primary"
+                    type="radio"
+                    name="roleName"
+                    value={role.roleName}
+                    checked={formData.roleName === role.roleName}
+                    onChange={() => handleRoleChange(role.roleName)}
+                    className="h-4 w-4 text-primary focus:ring-primary"
                   />
                   <div>
                     <div className="text-xs font-bold text-on-surface">{role.roleName}</div>

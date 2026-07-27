@@ -10,17 +10,33 @@ export const getRecentEvents = (limit) =>
 export const exportDashboard = () =>
   apiGet(ENDPOINTS.ADMIN.DASHBOARD_EXPORT, { responseType: 'blob' });
 
-// ============ User Management ============
-export const getUserList = (params = {}) => apiGet(ENDPOINTS.ADMIN.USER_LIST, { params });
-export const getUserDetail = (id) => apiGet(ENDPOINTS.ADMIN.USER_DETAIL(id));
-export const createUser = (data) => apiPost(ENDPOINTS.ADMIN.USER_CREATE, data);
-export const updateUser = (id, data) => apiPut(ENDPOINTS.ADMIN.USER_UPDATE(id), data);
-export const assignUserRoles = (id, roleIds) => apiPut(ENDPOINTS.ADMIN.USER_ROLES(id), { roleIds });
+// ============ User Accounts (Unified) ============
+export const getUserList = (params = {}) => apiGet(ENDPOINTS.ADMIN.ACCOUNT_LIST, { params });
+export const getUserDetail = (id) => apiGet(ENDPOINTS.ADMIN.ACCOUNT_DETAIL(id));
+
+// Admin creates Staff (since we want unified flow, we could route based on role)
+export const createStaff = (data) => apiPost(ENDPOINTS.ADMIN.ACCOUNT_CREATE_STAFF, data);
+
+// Note: CreateOwner is now ACCOUNT_CREATE_OWNER
+
+export const updateUser = (id, data) => apiPut(ENDPOINTS.ADMIN.ACCOUNT_UPDATE(id), data);
+export const assignUserRoles = (id, roleIds) => apiPut(ENDPOINTS.ADMIN.ACCOUNT_ROLES(id), { roleIds });
 export const changeUserStatus = (id, isActive) =>
-  apiPatch(ENDPOINTS.ADMIN.USER_STATUS(id), { isActive });
+  apiPatch(ENDPOINTS.ADMIN.ACCOUNT_STATUS(id), { isActive });
 export const resetUserPassword = (id, newPassword) =>
-  apiPost(ENDPOINTS.ADMIN.USER_RESET_PASSWORD(id), { newPassword });
+  apiPost(ENDPOINTS.ADMIN.ACCOUNT_RESET_PASSWORD(id), { newPassword });
 export const getUserActivities = (id) => apiGet(ENDPOINTS.ADMIN.USER_ACTIVITIES(id));
+
+export const softDeleteUser = (id) => apiDelete(ENDPOINTS.ADMIN.ACCOUNT_SOFT_DELETE(id));
+export const permanentDeleteUser = (id) => apiDelete(ENDPOINTS.ADMIN.ACCOUNT_PERMANENT_DELETE(id));
+export const restoreUser = (id) => apiPost(ENDPOINTS.ADMIN.ACCOUNT_RESTORE(id));
+export const checkUserRelations = (id) => apiGet(ENDPOINTS.ADMIN.ACCOUNT_CHECK_RELATIONS(id));
+
+// ============ Owner Accounts ============
+export const getOwnerList = (params = {}) => apiGet(ENDPOINTS.ADMIN.OWNER_LIST, { params });
+export const createOwner = (data) => apiPost(ENDPOINTS.ADMIN.ACCOUNT_CREATE_OWNER, data);
+export const updateOwner = (id, data) => apiPut(ENDPOINTS.ADMIN.OWNER_UPDATE(id), data);
+export const banOwner = (id, reason) => apiPut(ENDPOINTS.ADMIN.OWNER_BAN(id), { reason });
 
 // ============ Role & Permission Management ============
 export const getRoleList = () => apiGet(ENDPOINTS.ADMIN.ROLE_LIST);

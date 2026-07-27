@@ -55,23 +55,23 @@ export const CancelTicketModal = ({
       }
     >
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-[#999999]">
           Bạn đang yêu cầu hủy phiếu mã:{' '}
-          <strong className="font-bold text-slate-900">{ticketCode || 'N/A'}</strong>
+          <strong className="font-bold text-slate-900 dark:text-[#e5e5e5]">{ticketCode || 'N/A'}</strong>
         </p>
 
         {isCompleted ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800">
-            <div className="mb-1 flex items-start gap-2 font-semibold text-amber-900">
-              <AlertTriangle size={15} className="mt-0.5 flex-shrink-0 text-amber-600" />
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+            <div className="mb-1 flex items-start gap-2 font-semibold text-amber-900 dark:text-amber-100">
+              <AlertTriangle size={15} className="mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
               <span>Lưu ý: Hoàn lại tồn kho tự động</span>
             </div>
             Phiếu này đã được xác nhận kho (Hoàn tất). Khi hủy, hệ thống sẽ tự động{' '}
             <strong>hoàn lại số lượng tồn kho thực tế</strong>.
           </div>
         ) : (
-          <div className="flex items-start gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3.5 text-xs text-blue-800">
-            <Info size={15} className="mt-0.5 flex-shrink-0 text-blue-600" />
+          <div className="flex items-start gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3.5 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+            <Info size={15} className="mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
             <div>
               Phiếu đang chờ xác nhận kho (chưa cập nhật tồn). Hủy phiếu sẽ không làm ảnh hưởng đến
               số lượng tồn kho.

@@ -32,13 +32,13 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onSave }) => {
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center">
       <div className="fixed inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-2xl">
+      <div className="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-[#1a1a1a]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-900">Thêm mới Đối tượng</h2>
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-[#333333]">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Thêm mới Đối tượng</h2>
           <button
             type="button"
-            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
             onClick={onClose}
           >
             <Icon name="close" size={20} />
@@ -49,24 +49,24 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onSave }) => {
         <div className="space-y-4 px-6 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                 Mã KHach hang
               </label>
               <input
                 type="text"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 placeholder="KH..."
                 value={form.code}
                 onChange={(e) => handleChange('code', e.target.value)}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                 Tên KHach hang <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 placeholder="Nhập ten..."
                 value={form.name}
                 onChange={(e) => handleChange('name', e.target.value)}
@@ -75,24 +75,24 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onSave }) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                 So dien thoai
               </label>
               <input
                 type="text"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 placeholder="090..."
                 value={form.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                 Địa chỉ
               </label>
               <input
                 type="text"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                 placeholder="Nhập dia chi..."
                 value={form.address}
                 onChange={(e) => handleChange('address', e.target.value)}
@@ -102,10 +102,10 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onSave }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-[#333333]">
           <button
             type="button"
-            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             onClick={onClose}
           >
             Huy

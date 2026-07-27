@@ -230,14 +230,14 @@ export const TicketDetailModal = ({
       size="4xl"
       title={
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 font-bold text-[#004785]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 font-bold text-[#004785] dark:bg-blue-900/50">
             <Package size={20} />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-slate-900">
+            <span className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
               Chi tiết phiếu {type === 'INWARD' ? 'Nhập kho' : 'Xuất kho'}
             </span>
-            <span className="rounded-md bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">
+            <span className="rounded-md bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-[#272727] dark:text-[#b3b3b3]">
               {detail?.ticketCode || ticketId}
             </span>
           </div>
@@ -270,16 +270,16 @@ export const TicketDetailModal = ({
     >
       <div className="space-y-6">
         {isLoading ? (
-          <div className="py-16 text-center text-slate-400">
+          <div className="py-16 text-center text-slate-400 dark:text-[#808080]">
             Đang tải thông tin chi tiết phiếu...
           </div>
         ) : !detail ? (
-          <div className="py-16 text-center text-red-500">Không tìm thấy dữ liệu phiếu kho.</div>
+          <div className="py-16 text-center text-red-500 dark:text-red-400">Không tìm thấy dữ liệu phiếu kho.</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm sm:grid-cols-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
               <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500">
+                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
                   Trạng thái
                 </span>
                 <div className="mt-1">
@@ -305,24 +305,24 @@ export const TicketDetailModal = ({
                 </div>
               </div>
               <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500">
+                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
                   Người lập phiếu
                 </span>
-                <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800">
-                  <User size={14} className="text-slate-400" /> {detail.userName || 'Hệ thống'}
+                <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                  <User size={14} className="text-slate-400 dark:text-[#808080]" /> {detail.userName || 'Hệ thống'}
                 </div>
               </div>
               <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500">
+                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
                   Thời gian
                 </span>
-                <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800">
-                  <CalendarClock size={14} className="text-slate-400" />
+                <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                  <CalendarClock size={14} className="text-slate-400 dark:text-[#808080]" />
                   {detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '---'}
                 </div>
               </div>
               <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500">
+                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
                   Phân loại
                 </span>
                 <div className="mt-1 font-bold text-[#004785]">
@@ -331,30 +331,30 @@ export const TicketDetailModal = ({
               </div>
               {type === 'OUTWARD' && (
                 <div className="sm:col-span-4">
-                  <span className="block text-xs font-semibold uppercase text-slate-500">
+                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
                     Đối tượng
                   </span>
-                  <div className="mt-1 font-semibold text-slate-800">
+                  <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
                     {detail._partyName || '---'}
                   </div>
                 </div>
               )}
               {type === 'INWARD' && (
                 <div className="sm:col-span-4">
-                  <span className="block text-xs font-semibold uppercase text-slate-500">
+                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
                     Nhà cung cấp
                   </span>
-                  <div className="mt-1 font-semibold text-slate-800">
+                  <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
                     {detail._partyName || '---'}
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-slate-200 p-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
-                  <FileText size={16} className="text-slate-500" /> Ghi chú & Lý do giải trình
+            <div className="space-y-3 rounded-2xl border border-slate-200 p-4 dark:border-[#333333]">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-b-[#333333]">
+                <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-[#d4d4d4]">
+                  <FileText size={16} className="text-slate-500 dark:text-[#999999]" /> Ghi chú & Lý do giải trình
                 </span>
                 {!isCancelled && !isEditing && (
                   <IconButton
@@ -406,14 +406,14 @@ export const TicketDetailModal = ({
               ) : (
                 <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                   <div>
-                    <span className="block text-xs font-medium text-slate-500">Lý do phiếu:</span>
-                    <p className="mt-0.5 font-semibold text-slate-800">
+                    <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Lý do phiếu:</span>
+                    <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
                       {detail.reason || 'Không có lý do'}
                     </p>
                   </div>
                   <div>
-                    <span className="block text-xs font-medium text-slate-500">Ghi chú thêm:</span>
-                    <p className="mt-0.5 font-semibold text-slate-800">
+                    <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Ghi chú thêm:</span>
+                    <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
                       {detail.note || 'Không có ghi chú'}
                     </p>
                   </div>
@@ -422,18 +422,18 @@ export const TicketDetailModal = ({
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-bold text-slate-800">Danh sách hàng hóa trong phiếu</h4>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <h4 className="text-sm font-bold text-slate-800 dark:text-[#d4d4d4]">Danh sách hàng hóa trong phiếu</h4>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-[#333333]">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-600">
+                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-600 dark:border-b-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
                       <th className="px-3 py-3">Mã hàng</th>
                       <th className="px-3 py-3">Tên sản phẩm</th>
                       <th className="w-16 px-3 py-3 text-center">ĐVT</th>
                       {type === 'INWARD' && <th className="px-3 py-3 text-right">Đơn giá nhập</th>}
                       {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Đơn giá</th>}
                       {isCompleted && (
-                        <th className="px-3 py-3 text-right text-slate-500">Tồn trước</th>
+                        <th className="px-3 py-3 text-right text-slate-500 dark:text-[#999999]">Tồn trước</th>
                       )}
                       <th className="px-3 py-3 text-right font-extrabold text-[#004785]">
                         {type === 'INWARD' ? '+ Nhập vào' : 'Xuất đi'}
@@ -445,10 +445,10 @@ export const TicketDetailModal = ({
                       {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Thành tiền</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
                     {!detail.items || detail.items.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-slate-400">
+                        <td colSpan={7} className="py-6 text-center text-slate-400 dark:text-[#808080]">
                           Không có sản phẩm nào
                         </td>
                       </tr>
@@ -464,28 +464,28 @@ export const TicketDetailModal = ({
                               : sysQty - qty;
 
                         return (
-                          <tr key={item.ticketItemId || idx} className="hover:bg-slate-50/60">
-                            <td className="px-3 py-3 font-bold text-slate-800">
+                          <tr key={item.ticketItemId || idx} className="hover:bg-slate-50/60 dark:hover:bg-[#272727]/60">
+                            <td className="px-3 py-3 font-bold text-slate-800 dark:text-[#d4d4d4]">
                               {item.productCode || 'N/A'}
                             </td>
-                            <td className="px-3 py-3 font-medium text-slate-800">
+                            <td className="px-3 py-3 font-medium text-slate-800 dark:text-[#d4d4d4]">
                               {item.productName || 'Sản phẩm'}
                             </td>
-                            <td className="px-3 py-3 text-center text-slate-600">
+                            <td className="px-3 py-3 text-center text-slate-600 dark:text-[#999999]">
                               {item.unit || item.Unit || item.unitName || item.UnitName || '---'}
                             </td>
                             {type === 'INWARD' && (
-                              <td className="px-3 py-3 text-right text-slate-600">
+                              <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
                                 {formatCurrency(item.costPrice)}
                               </td>
                             )}
                             {type === 'OUTWARD' && (
-                              <td className="px-3 py-3 text-right text-slate-600">
+                              <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
                                 {formatCurrency(item.unitPrice || item.UnitPrice || 0)}
                               </td>
                             )}
                             {isCompleted && (
-                              <td className="px-3 py-3 text-right font-medium text-slate-500">
+                              <td className="px-3 py-3 text-right font-medium text-slate-500 dark:text-[#999999]">
                                 {item.systemQuantity !== undefined ? item.systemQuantity : '---'}
                               </td>
                             )}
@@ -498,12 +498,12 @@ export const TicketDetailModal = ({
                               </td>
                             )}
                             {type === 'INWARD' && (
-                              <td className="px-3 py-3 text-right font-bold text-slate-900">
+                              <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
                                 {formatCurrency(qty * Number(item.costPrice || 0))}
                               </td>
                             )}
                             {type === 'OUTWARD' && (
-                              <td className="px-3 py-3 text-right font-bold text-slate-900">
+                              <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
                                 {formatCurrency(
                                   qty * Number(item.unitPrice || item.UnitPrice || 0)
                                 )}
@@ -518,7 +518,7 @@ export const TicketDetailModal = ({
               </div>
             </div>
 
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-500 dark:text-[#999999]">
               {isPending && '💡 Phiếu đang lưu nháp. Cần xác nhận để cập nhật vào tồn kho thực tế.'}
               {isCompleted && '💡 Phiếu đã hoàn tất. Tồn kho đã được hạch toán vào hệ thống.'}
               {isCancelled && '💡 Phiếu đã bị hủy bỏ và vô hiệu lực.'}

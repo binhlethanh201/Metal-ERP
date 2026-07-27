@@ -50,10 +50,10 @@ const ShiftHistory = () => {
   if (filters.to) activeFilterCount++;
 
   return (
-    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+    <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* ==================== PAGE HEADER ==================== */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Lịch sử Ca bán hàng</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Lịch sử Ca bán hàng</h1>
       </div>
 
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
@@ -68,10 +68,10 @@ const ShiftHistory = () => {
       )}
 
       {/* ==================== FILTERS (Tích hợp Shared Button & Drawer) ==================== */}
-      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-semibold text-slate-600">Danh sách các ca đã lưu</span>
+            <span className="text-sm font-semibold text-slate-600 dark:text-[#999999]">Danh sách các ca đã lưu</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -130,25 +130,25 @@ const ShiftHistory = () => {
         >
           <div className="space-y-5">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Từ ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Từ ngày</label>
               <input
                 type="date"
                 value={filters.from ? filters.from.slice(0, 10) : ''}
                 onChange={(e) =>
                   setDateRange(e.target.value ? `${e.target.value}T00:00:00Z` : '', filters.to)
                 }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Đến ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Đến ngày</label>
               <input
                 type="date"
                 value={filters.to ? filters.to.slice(0, 10) : ''}
                 onChange={(e) =>
                   setDateRange(filters.from, e.target.value ? `${e.target.value}T23:59:59Z` : '')
                 }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />
             </div>
           </div>
@@ -156,43 +156,52 @@ const ShiftHistory = () => {
       </div>
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
-      <ShiftTable shifts={shifts} loading={loading} onViewSummary={handleViewSummary} />
+      <ShiftTable
+        shifts={shifts}
+        loading={loading}
+        onViewSummary={handleViewSummary}
+        onClickRow={(row) => handleViewSummary(row.shiftId)}
+      />
 
       {/* ==================== PHÂN TRANG ==================== */}
       {!loading && totalPages > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
               <select
                 value={filters.pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               >
                 <option value={20}>20 dòng</option>
                 <option value={50}>50 dòng</option>
                 <option value={100}>100 dòng</option>
               </select>
             </div>
-            <span>Tổng {pagination.totalCount || 0} ca bán</span>
+            <span>
+              {pagination.totalCount === 0 ? 0 : (filters.page - 1) * filters.pageSize + 1} -{' '}
+              {Math.min(filters.page * filters.pageSize, pagination.totalCount || 0)} trong tổng số{' '}
+              {pagination.totalCount || 0} ca bán
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setPage(filters.page - 1)}
               disabled={filters.page <= 1}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
             >
               <Icon name="chevron_left" className="text-[18px]" />
             </button>
-            <div className="px-3 text-sm text-slate-700">
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
               Trang {filters.page} / {totalPages}
             </div>
             <button
               type="button"
               onClick={() => setPage(filters.page + 1)}
               disabled={filters.page >= totalPages}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
             >
               <Icon name="chevron_right" className="text-[18px]" />
             </button>

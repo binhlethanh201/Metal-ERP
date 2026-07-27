@@ -39,59 +39,59 @@ const GoodsIssueLineTable = ({
   }, [handleKeyDown]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-[#333333]">
       <table ref={tableRef} className="w-full min-w-[1400px] table-fixed">
         {/* Header */}
-        <thead className="border-b border-slate-200 bg-slate-50">
+        <thead className="border-b border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
           <tr>
-            <th className="w-[48px] px-2 py-2.5 text-center text-xs font-bold text-slate-500">#</th>
-            <th className="w-[160px] px-2 py-2.5 text-left text-xs font-bold text-slate-500">
+            <th className="w-[48px] px-2 py-2.5 text-center text-xs font-bold text-slate-500 dark:text-[#999999]">#</th>
+            <th className="w-[160px] px-2 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#999999]">
               Mã hàng hóa <span className="text-red-400">*</span>
             </th>
-            <th className="w-[180px] px-2 py-2.5 text-left text-xs font-bold text-slate-500">
+            <th className="w-[180px] px-2 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#999999]">
               Tên hàng hóa
             </th>
-            <th className="w-[100px] px-2 py-2.5 text-left text-xs font-bold text-slate-500">
+            <th className="w-[100px] px-2 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#999999]">
               Số lô
             </th>
-            <th className="w-[100px] px-2 py-2.5 text-left text-xs font-bold text-slate-500">
+            <th className="w-[100px] px-2 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#999999]">
               Hạn SD
             </th>
-            <th className="w-[140px] px-2 py-2.5 text-left text-xs font-bold text-slate-500">
+            <th className="w-[140px] px-2 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#999999]">
               Kho xuất
             </th>
-            <th className="w-[100px] px-2 py-2.5 text-left text-xs font-bold text-slate-500">
+            <th className="w-[100px] px-2 py-2.5 text-left text-xs font-bold text-slate-500 dark:text-[#999999]">
               Vi tri
             </th>
-            <th className="w-[90px] px-2 py-2.5 text-center text-xs font-bold text-slate-500">
+            <th className="w-[90px] px-2 py-2.5 text-center text-xs font-bold text-slate-500 dark:text-[#999999]">
               DVT
             </th>
-            <th className="w-[100px] px-2 py-2.5 text-right text-xs font-bold text-slate-500">
+            <th className="w-[100px] px-2 py-2.5 text-right text-xs font-bold text-slate-500 dark:text-[#999999]">
               Số lượng <span className="text-red-400">*</span>
             </th>
-            <th className="w-[120px] px-2 py-2.5 text-right text-xs font-bold text-slate-500">
+            <th className="w-[120px] px-2 py-2.5 text-right text-xs font-bold text-slate-500 dark:text-[#999999]">
               Đơn giá
             </th>
-            <th className="w-[130px] px-2 py-2.5 text-right text-xs font-bold text-slate-500">
+            <th className="w-[130px] px-2 py-2.5 text-right text-xs font-bold text-slate-500 dark:text-[#999999]">
               Thành tiền
             </th>
-            <th className="w-[48px] px-2 py-2.5 text-center text-xs font-bold text-slate-500"></th>
+            <th className="w-[48px] px-2 py-2.5 text-center text-xs font-bold text-slate-500 dark:text-[#999999]"></th>
           </tr>
         </thead>
 
         {/* Body */}
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
           {lines.map((line, idx) => (
-            <tr key={line.id} className="transition-colors hover:bg-blue-50/30">
+            <tr key={line.id} className="transition-colors hover:bg-blue-50/30 dark:hover:bg-[#333333]">
               {/* STT */}
-              <td className="px-2 py-1.5 text-center text-xs text-slate-400">{idx + 1}</td>
+              <td className="px-2 py-1.5 text-center text-xs text-slate-400 dark:text-[#808080]">{idx + 1}</td>
 
               {/* Mã hàng hóa - Autocomplete */}
               <td className="px-2 py-1.5">
                 {barcodemode ? (
                   <input
                     type="text"
-                    className="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm outline-none focus:border-blue-500"
+                    className="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm outline-none focus:border-blue-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                     placeholder="Quét mã vạch..."
                     autoFocus
                   />
@@ -121,7 +121,7 @@ const GoodsIssueLineTable = ({
                 )}
                 {!barcodemode && !autocomplete.isOpen && (
                   <div
-                    className="mt-0.5 cursor-pointer text-[10px] text-slate-400 hover:text-blue-600"
+                    className="mt-0.5 cursor-pointer text-[10px] text-slate-400 hover:text-blue-600 dark:text-[#808080] dark:hover:text-blue-400"
                     onClick={() => autocomplete.openSearch(line.id, line.productCode)}
                   >
                     Bam de Tìm kiếm (F3)
@@ -133,7 +133,7 @@ const GoodsIssueLineTable = ({
               <td className="px-2 py-1.5">
                 <input
                   type="text"
-                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-blue-200"
+                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-blue-200 dark:text-[#b3b3b3]"
                   value={line.productName}
                   onChange={(e) => onLineChange(line.id, 'productName', e.target.value)}
                   readOnly={!!line.productId}
@@ -144,7 +144,7 @@ const GoodsIssueLineTable = ({
               <td className="px-2 py-1.5">
                 <input
                   type="text"
-                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200"
+                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200 dark:text-[#b3b3b3]"
                   value={line.lotNumber}
                   onChange={(e) => onLineChange(line.id, 'lotNumber', e.target.value)}
                   placeholder="..."
@@ -155,7 +155,7 @@ const GoodsIssueLineTable = ({
               <td className="px-2 py-1.5">
                 <input
                   type="date"
-                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200"
+                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200 dark:text-[#b3b3b3]"
                   value={line.expiryDate}
                   onChange={(e) => onLineChange(line.id, 'expiryDate', e.target.value)}
                 />
@@ -164,7 +164,7 @@ const GoodsIssueLineTable = ({
               {/* Kho xuất */}
               <td className="px-2 py-1.5">
                 <select
-                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200"
+                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200 dark:text-[#b3b3b3]"
                   value={line.warehouseId}
                   onChange={(e) => {
                     const wh = warehouseList.find((w) => w.id === e.target.value);
@@ -184,7 +184,7 @@ const GoodsIssueLineTable = ({
               <td className="px-2 py-1.5">
                 <input
                   type="text"
-                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200"
+                  className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none focus:border-blue-200 dark:text-[#b3b3b3]"
                   value={line.location}
                   onChange={(e) => onLineChange(line.id, 'location', e.target.value)}
                   placeholder="..."
@@ -193,14 +193,14 @@ const GoodsIssueLineTable = ({
 
               {/* ĐVT */}
               <td className="px-2 py-1.5 text-center">
-                <span className="text-sm text-slate-600">{line.unit || '-'}</span>
+                <span className="text-sm text-slate-600 dark:text-[#999999]">{line.unit || '-'}</span>
               </td>
 
               {/* Số lượng */}
               <td className="px-2 py-1.5">
                 <input
                   type="number"
-                  className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                   value={line.quantity}
                   min={0}
                   onChange={(e) => onQuantityChange(line.id, e.target.value)}
@@ -211,7 +211,7 @@ const GoodsIssueLineTable = ({
               <td className="px-2 py-1.5">
                 <input
                   type="number"
-                  className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                   value={line.unitPrice || ''}
                   min={0}
                   onChange={(e) => onPriceChange(line.id, e.target.value)}
@@ -220,7 +220,7 @@ const GoodsIssueLineTable = ({
 
               {/* Thành tiền */}
               <td className="px-2 py-1.5 text-right">
-                <span className="text-sm font-semibold text-slate-800">
+                <span className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
                   {formatMoney(line.totalAmount)}
                 </span>
               </td>
@@ -229,7 +229,7 @@ const GoodsIssueLineTable = ({
               <td className="px-2 py-1.5 text-center">
                 <button
                   type="button"
-                  className="rounded p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                  className="rounded p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-[#808080] dark:hover:bg-red-900/30 dark:hover:text-red-400"
                   onClick={() => onRemoveLine(line.id)}
                   disabled={lines.length <= 1}
                   title="Xóa dòng"
@@ -243,10 +243,10 @@ const GoodsIssueLineTable = ({
       </table>
 
       {/* Empty state: nút thêm dòng */}
-      <div className="border-t border-dashed border-slate-200 px-4 py-2">
+      <div className="border-t border-dashed border-slate-200 px-4 py-2 dark:border-[#333333]">
         <button
           type="button"
-          className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 transition-colors hover:text-blue-900"
+          className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 transition-colors hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
           onClick={onAddLine}
         >
           <span className="text-lg leading-none">+</span>

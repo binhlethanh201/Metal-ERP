@@ -4,11 +4,11 @@ import { Button } from '../../../../shared/components/Button';
 import Drawer from '../../../../shared/components/Drawer';
 
 const inputClass =
-  'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50';
+  'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] dark:disabled:bg-[#1a1a1a]';
 
 const FilterField = ({ label, children }) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-slate-700">{label}</label>
+    <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{label}</label>
     {children}
   </div>
 );
@@ -46,11 +46,11 @@ export const InventoryFilterBar = ({
   if (filters.branchId) activeFilterCount++;
 
   return (
-    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition-all">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition-all dark:border-[#333333] dark:bg-[#1a1a1a]/60">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Bộ lọc trạng thái (Truy cập nhanh) */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             <Filter size={14} /> Lọc trạng thái:
           </span>
           {[

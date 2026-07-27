@@ -1,0 +1,266 @@
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Modal } from '../../../../shared/components/Modal';
+import { ImportItemsTable } from './ImportItemsTable';
+import { ImportTicketForm } from './ImportTicketForm';
+import { createInwardInventory, confirmInwardInventory, getProducts } from '../../services/inventoryService';
+import { getSuppliers } from '../../services/supplierService';
+import { createProduct } from '../../services/productService';
+import { EditProductModal } from '../product/EditProductModal';
+
+const fallbackProducts = [
+  { id: 'prod-001', productCode: 'SP-001', productName: 'Thép tấm 10mm', unitName: 'Tấm', costPrice: 50000 },
+  { id: 'prod-002', productCode: 'SP-002', productName: 'Inox 304 tấm 1.5mm', unitName: 'Tấm', costPrice: 76000 },
+];
+
+const fallbackSuppliers = [
+  { id: 'sup-001', name: 'Công ty Hòa Phát', phone: '0901234567' },
+  { id: 'sup-002', name: 'Công ty Nam Kim', phone: '0912345678' },
+];
+
+const formatCurrency = (val) => {
+  const num = Number(val || 0);
+  if (!Number.isFinite(num) || num > 1e15) return '---';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+};
+
+const extractList = (res) => {
+  const data = res?.data ?? res;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+};
+
+const getItemKey = (item) => item?.branchProductId || item?.productId || item?.productCode || item?.id || '';
+
+export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
+  const [products, setProducts] = useState(fallbackProducts);
+  const [suppliers, setSuppliers] = useState(fallbackSuppliers);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [items, setItems] = useState([]);
+  const [inwardType, setInwardType] = useState(1);
+  const [note, setNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [status, setStatus] = useState({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setItems([]);
+    setSelectedSupplier(null);
+    setNote('');
+    setInwardType(1);
+    setStatus({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
+
+    const loadInitData = async () => {
+      try {
+        const [prodRes, supRes] = await Promise.all([
+          getProducts({ pageNumber: 1, pageSize: 50 }),
+          getSuppliers({ pageNumber: 1, pageSize: 50 }),
+        ]);
+        const pList = extractList(prodRes);
+        const sList = extractList(supRes);
+        if (pList.length > 0) setProducts(pList);
+        if (sList.length > 0) setSuppliers(sList);
+      } catch {
+        // keep fallback data
+      }
+    };
+    loadInitData();
+  }, [isOpen]);
+
+  const addProductToTicket = useCallback((product) => {
+    setItems((current) => {
+      const key = getItemKey(product);
+      if (!key) return current;
+      const existing = current.find((i) => getItemKey(i) === key);
+      if (existing) {
+        return current.map((i) =>
+          getItemKey(i) === key ? { ...i, quantity: Number(i.quantity) + 1 } : i
+        );
+      }
+      return [...current, { ...product, id: key, quantity: 1, costPrice: product.costPrice || 0 }];
+    });
+  }, []);
+
+  const updateItem = (id, field, value) => {
+    setItems((curr) =>
+      curr.map((item) =>
+        getItemKey(item) === id
+          ? { ...item, [field]: field === 'quantity' || field === 'costPrice' ? Number(value || 0) : value }
+          : item
+      )
+    );
+  };
+
+  const removeItem = (id) => {
+    setItems((curr) => curr.filter((i) => getItemKey(i) !== id));
+  };
+
+  const handleImportRows = useCallback((rows) => {
+    if (!rows || rows.length === 0) return;
+    setItems((current) => {
+      const updated = [...current];
+      for (const row of rows) {
+        if (!row) continue;
+        const matched = row.matchedProduct;
+        let key, importItem;
+        if (matched) {
+          key = getItemKey(matched);
+          importItem = { ...matched, id: key, quantity: Number(row.quantity || 0), costPrice: Number(row.costPrice || 0) };
+        } else {
+          key = row.productCode || `new-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+          importItem = {
+            id: key, productCode: row.productCode || '', productName: row.productName || '',
+            unitName: row.unitName || row.unit || '', unit: row.unitName || row.unit || '',
+            quantity: Number(row.quantity || 0), costPrice: Number(row.costPrice || 0),
+          };
+        }
+        const existingIdx = updated.findIndex((i) => key ? getItemKey(i) === key : false);
+        if (existingIdx >= 0) {
+          updated[existingIdx] = { ...updated[existingIdx], quantity: Number(row.quantity || 0), costPrice: Number(row.costPrice || 0) };
+        } else {
+          updated.push(importItem);
+        }
+      }
+      return updated;
+    });
+  }, []);
+
+  const totals = useMemo(() => ({
+    totalLines: items.length,
+    totalQuantity: items.reduce((sum, i) => sum + Number(i.quantity || 0), 0),
+    totalAmount: items.reduce((sum, i) => {
+      const qty = Number(i.quantity || 0);
+      const price = Number(i.costPrice || 0);
+      if (qty > 999999 || price > 999999999) return sum;
+      const lineTotal = qty * price;
+      return sum + (lineTotal > 1e15 ? 0 : lineTotal);
+    }, 0),
+  }), [items]);
+
+  const handleFinish = async (isDraft = false) => {
+    if (!items.length) {
+      setStatus({ type: 'error', message: 'Vui lòng chọn ít nhất 1 sản phẩm trước khi hoàn tất' });
+      return;
+    }
+
+    const parseId = (val) => (val != null && String(val).trim() ? String(val).trim() : null);
+
+    const payload = {
+      inwardType,
+      supplierId: parseId(selectedSupplier?.id),
+      reason: note || 'Nhập kho',
+      note,
+      items: items.map((i) => {
+        const systemId = parseId(i.branchProductId || i.productId);
+        const item = { quantity: Number(i.quantity || 0), costPrice: Number(i.costPrice || 0), note: '' };
+        if (systemId) {
+          item.id = systemId;
+        } else {
+          item.productCode = i.productCode || i.id || '';
+          item.productName = i.productName || '';
+        }
+        return item;
+      }),
+    };
+
+    setIsSubmitting(true);
+    setStatus({ type: 'info', message: isDraft ? 'Đang tạo phiếu nháp...' : 'Đang tạo và duyệt phiếu kho...' });
+
+    try {
+      const res = await createInwardInventory(payload);
+      const ticketId = res?.data?.ticketId || res?.data?.stockTicketId;
+
+      if (!isDraft && ticketId) {
+        setStatus({ type: 'info', message: 'Đang xác nhận cộng tồn kho thực tế...' });
+        await confirmInwardInventory(ticketId);
+      }
+
+      setItems([]);
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      const errors = error?.data?.errors;
+      let msg;
+      if (errors) {
+        if (Array.isArray(errors)) msg = errors.join(' | ');
+        else if (typeof errors === 'object')
+          msg = Object.entries(errors).map(([f, ms]) => `${f}: ${Array.isArray(ms) ? ms.join(', ') : ms}`).join(' | ');
+        else msg = String(errors);
+      } else {
+        msg = error?.message || 'Lỗi khi tạo phiếu';
+      }
+      setStatus({ type: 'error', message: msg });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <Modal isOpen={isOpen} onClose={() => !isSubmitting && onClose()} title="Tạo phiếu nhập kho" size="7xl">
+        <div className="flex flex-col gap-6 xl:flex-row">
+          <div className="min-w-0 flex-1">
+            <ImportItemsTable
+              items={items}
+              products={products}
+              onAddProduct={addProductToTicket}
+              onUpdateItem={updateItem}
+              onRemoveItem={removeItem}
+              onAddNewProduct={() => setIsProductModalOpen(true)}
+              onImportRows={handleImportRows}
+              formatCurrency={formatCurrency}
+            />
+          </div>
+          <div className="w-full shrink-0 xl:w-[300px]">
+            <ImportTicketForm
+              inwardType={inwardType}
+              onChangeInwardType={setInwardType}
+              suppliers={suppliers}
+              selectedSupplier={selectedSupplier}
+              onSelectSupplier={setSelectedSupplier}
+              note={note}
+              onChangeNote={setNote}
+              totals={totals}
+              status={status}
+              isSubmitting={isSubmitting}
+              onSubmit={handleFinish}
+              formatCurrency={formatCurrency}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {isProductModalOpen && (
+        <EditProductModal
+          open={isProductModalOpen}
+          product={null}
+          initialTab="info"
+          onClose={() => setIsProductModalOpen(false)}
+          onSave={async (form) => {
+            try {
+              const res = await createProduct(form);
+              if (res?.success || res?.data) {
+                const newProduct = res.data || form;
+                addProductToTicket({
+                  id: newProduct.productId || newProduct.id || form.id,
+                  productCode: newProduct.productCode || form.productCode,
+                  productName: newProduct.productName || form.name,
+                  unitName: newProduct.baseUnit?.name || newProduct.unit || form.unit || 'Cái',
+                  costPrice: newProduct.costPrice || form.costPrice || 0,
+                });
+                setIsProductModalOpen(false);
+              }
+            } catch (err) {
+              // ignore
+            }
+          }}
+          productList={products}
+          title="Thêm hàng hóa"
+        />
+      )}
+    </>
+  );
+};
+
+export default ImportTicketModal;

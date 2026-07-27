@@ -18,7 +18,7 @@ const ProgressCircle = ({ percent = 0, label = 'Hoàn thiện', className = '' }
       <div className="relative mb-3 flex items-center justify-center">
         <svg className="h-28 w-28 -rotate-90 transform" viewBox={`0 0 ${SIZE} ${SIZE}`}>
           <circle
-            className="text-slate-100"
+            className="text-slate-100 dark:text-[#e5e5e5]"
             cx={CENTER}
             cy={CENTER}
             r={RADIUS}
@@ -40,8 +40,8 @@ const ProgressCircle = ({ percent = 0, label = 'Hoàn thiện', className = '' }
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-black text-slate-800">{Math.round(percent)}%</span>
-          <span className="mt-0.5 text-[9px] font-black uppercase tracking-wider text-slate-400">
+          <span className="text-xl font-black text-slate-800 dark:text-[#d4d4d4]">{Math.round(percent)}%</span>
+          <span className="mt-0.5 text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-[#808080]">
             {label}
           </span>
         </div>

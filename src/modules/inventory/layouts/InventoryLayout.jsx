@@ -8,11 +8,11 @@ const InventoryLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 antialiased">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 antialiased dark:bg-[#0a0a0a] dark:text-[#e5e5e5]">
       <InventoryHeader />
       <div className="flex flex-1 gap-3 overflow-hidden p-3">
         <InventorySidebar open={sidebarOpen} onToggle={() => setSidebarOpen((v) => !v)} />
-        <main className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <main className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#0f0f0f]">
           <Suspense
             fallback={
               <div className="flex h-full items-center justify-center">

@@ -5,6 +5,7 @@ const staticIconMap = {
   // --- Icon hệ thống cốt lõi ---
   dashboard: 'LayoutDashboard',
   tune: 'SlidersHorizontal',
+  category: 'Tags',
   filter_list: 'Filter',
   chevron_left: 'ChevronLeft',
   chevron_right: 'ChevronRight',
@@ -124,6 +125,8 @@ const staticIconMap = {
   receipt_long: 'FileText',
   access_time: 'Clock',
   note: 'FileText',
+  light_mode: 'Sun',
+  dark_mode: 'Moon',
 };
 
 const toPascalCase = (str) => {

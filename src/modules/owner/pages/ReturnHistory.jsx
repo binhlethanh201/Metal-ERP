@@ -65,10 +65,10 @@ const ReturnHistory = () => {
   if (filters.dateTo) activeFilterCount++;
 
   return (
-    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+    <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* ==================== PAGE HEADER ==================== */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Lịch sử Đổi/Trả hàng</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Lịch sử Đổi/Trả hàng</h1>
       </div>
 
       {/* ==================== POLICY SETTINGS ==================== */}
@@ -84,10 +84,10 @@ const ReturnHistory = () => {
       )}
 
       {/* ==================== FILTERS (Tích hợp Drawer) ==================== */}
-      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-semibold text-slate-600">Danh sách phiếu đổi/trả</span>
+            <span className="text-sm font-semibold text-slate-600 dark:text-[#999999]">Danh sách phiếu đổi/trả</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -146,11 +146,11 @@ const ReturnHistory = () => {
         >
           <div className="space-y-5">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Trạng thái</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Trạng thái</label>
               <select
                 value={filters.status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               >
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -160,18 +160,18 @@ const ReturnHistory = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Từ ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Từ ngày</label>
               <input
                 type="date"
                 value={filters.dateFrom ? filters.dateFrom.slice(0, 10) : ''}
                 onChange={(e) =>
                   setDateRange(e.target.value ? `${e.target.value}T00:00:00Z` : '', filters.dateTo)
                 }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Đến ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Đến ngày</label>
               <input
                 type="date"
                 value={filters.dateTo ? filters.dateTo.slice(0, 10) : ''}
@@ -181,7 +181,7 @@ const ReturnHistory = () => {
                     e.target.value ? `${e.target.value}T23:59:59Z` : ''
                   )
                 }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />
             </div>
           </div>
@@ -193,14 +193,14 @@ const ReturnHistory = () => {
 
       {/* ==================== PHÂN TRANG ==================== */}
       {!loading && totalPages > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
               <select
                 value={filters.pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               >
                 <option value={20}>20 dòng</option>
                 <option value={50}>50 dòng</option>
@@ -214,18 +214,18 @@ const ReturnHistory = () => {
               type="button"
               onClick={() => setPage(filters.page - 1)}
               disabled={filters.page <= 1}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
             >
               <Icon name="chevron_left" className="text-[18px]" />
             </button>
-            <div className="px-3 text-sm text-slate-700">
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
               Trang {filters.page} / {totalPages}
             </div>
             <button
               type="button"
               onClick={() => setPage(filters.page + 1)}
               disabled={filters.page >= totalPages}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
             >
               <Icon name="chevron_right" className="text-[18px]" />
             </button>

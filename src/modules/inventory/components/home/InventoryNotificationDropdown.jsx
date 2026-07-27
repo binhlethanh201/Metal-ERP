@@ -137,7 +137,7 @@ const InventoryNotificationDropdown = () => {
       <button
         type="button"
         onClick={handleToggle}
-        className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 active:scale-95"
+        className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 active:scale-95 dark:text-[#999999] dark:hover:bg-[#272727]"
       >
         <Icon name="notifications" size={20} />
         {unreadCount > 0 && (
@@ -148,14 +148,14 @@ const InventoryNotificationDropdown = () => {
       </button>
 
       {isOpen && (
-        <div className="animate-fadeIn absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:w-96">
+        <div className="animate-fadeIn absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f] sm:w-96">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
-            <h3 className="text-sm font-bold text-slate-800">Thông báo</h3>
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-b-[#333333] dark:bg-[#1a1a1a]">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">Thông báo</h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
               >
                 Đánh dấu đã đọc tất cả
               </button>
@@ -165,24 +165,24 @@ const InventoryNotificationDropdown = () => {
           {/* List */}
           <div className="max-h-[400px] overflow-y-auto">
             {loading && notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+              <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-[#808080]">
                 <Icon name="sync" className="mb-2 animate-spin text-3xl" />
                 <p className="text-xs font-semibold">Đang tải...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+              <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-[#808080]">
                 <Icon name="notifications_off" size={40} className="mb-2 opacity-50" />
                 <p className="text-xs font-semibold">Bạn không có thông báo nào</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100 dark:divide-[#333333]">
                 {notifications.map((notif) => {
                   const iconInfo = getIconForType(notif.type);
                   return (
                     <div
                       key={notif.notificationId}
                       onClick={() => handleNotificationClick(notif)}
-                      className={`flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-slate-50 ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
+                      className={`flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] ${!notif.isRead ? 'bg-blue-50/30 dark:bg-blue-900/30' : ''}`}
                     >
                       <div
                         className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconInfo.bg}`}
@@ -191,11 +191,11 @@ const InventoryNotificationDropdown = () => {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p
-                          className={`text-sm ${!notif.isRead ? 'font-bold text-slate-900' : 'text-slate-700'}`}
+                          className={`text-sm ${!notif.isRead ? 'font-bold text-slate-900 dark:text-[#e5e5e5]' : 'text-slate-700 dark:text-[#b3b3b3]'}`}
                         >
                           {notif.message}
                         </p>
-                        <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+                        <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold text-slate-400 dark:text-[#808080]">
                           <span className="truncate">{notif.typeDisplay}</span>
                           <span>•</span>
                           <span>{formatTimeAgo(notif.createdAt)}</span>
@@ -213,10 +213,10 @@ const InventoryNotificationDropdown = () => {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="border-t border-slate-100 bg-slate-50 p-2 text-center">
+            <div className="border-t border-slate-100 bg-slate-50 p-2 text-center dark:border-t-[#333333] dark:bg-[#1a1a1a]">
               <button
                 onClick={() => navigate('/inventory/inventory-check')}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-[#999999] dark:hover:text-[#e5e5e5]"
               >
                 Tới trang quản lý Kiểm kê
               </button>

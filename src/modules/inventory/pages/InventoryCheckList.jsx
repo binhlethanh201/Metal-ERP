@@ -13,10 +13,8 @@ import {
   Filter,
   RefreshCw,
   AlertCircle,
-  X,
   CheckCircle2,
   Clock,
-  FileEdit,
   XCircle,
   Layers,
   RotateCcw,
@@ -26,9 +24,7 @@ import {
 import Button from '../../../shared/components/Button';
 import Input from '../../../shared/components/Input';
 import Table from '../../../shared/components/Table';
-import Badge from '../../../shared/components/Badge';
 import Drawer from '../../../shared/components/Drawer';
-import IconButton from '../../../shared/components/IconButton';
 
 // ==================== FORMAT DATE ====================
 const formatDateTime = (dateString) => {
@@ -53,6 +49,24 @@ const formatUserName = (name) => {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(' ');
 };
+
+export const getStatusLabel = (item) => {
+  if (!item) return '';
+  const status = item.status || item.Status;
+  const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
+
+  if (status === 'Draft') {
+    return recountNumber > 0 ? 'Yêu cầu đếm lại' : 'Nháp';
+  }
+
+  switch (status) {
+    case 'WaitingForApproval': return 'Chờ duyệt';
+    case 'Completed': return 'Đã hoàn thành';
+    case 'Cancelled': return 'Đã hủy';
+    default: return status;
+  }
+};
+
 const InventoryCheckList = () => {
   // ---- Trạng thái danh sách ----
   const [checks, setChecks] = useState([]);
@@ -88,40 +102,58 @@ const InventoryCheckList = () => {
   // ---- Modal sửa phiếu ----
   const [editTicketData, setEditTicketData] = useState(null);
 
-  // ==================== LỌC STATUS BADGE BẰNG SHARED COMPONENT ====================
-  const renderStatusBadge = (status) => {
-    switch (status) {
-      case 'Draft':
-        return (
-          <Badge variant="secondary" size="sm" className="inline-flex items-center gap-1">
-            <FileEdit size={12} /> Nháp
-          </Badge>
-        );
-      case 'WaitingForApproval':
-        return (
-          <Badge variant="warning" size="sm" className="inline-flex items-center gap-1">
-            <Clock size={12} className="animate-pulse" /> Chờ duyệt
-          </Badge>
-        );
-      case 'Completed':
-        return (
-          <Badge variant="success" size="sm" className="inline-flex items-center gap-1">
-            <CheckCircle2 size={12} /> Hoàn tất
-          </Badge>
-        );
-      case 'Cancelled':
-        return (
-          <Badge variant="danger" size="sm" className="inline-flex items-center gap-1">
-            <XCircle size={12} /> Đã hủy
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary" size="sm" className="inline-flex items-center gap-1">
-            {status}
-          </Badge>
-        );
+  // ==================== LỌC STATUS BADGE ====================
+  const renderStatusBadge = (item) => {
+    if (!item) return null;
+
+    const status = item.status || item.Status;
+    const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
+
+    if (status === 'Draft' && recountNumber > 0) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800">
+          <RotateCcw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          Yêu cầu đếm lại {recountNumber > 1 ? `(Lần ${recountNumber})` : ''}
+        </span>
+      );
     }
+
+    if (status === 'Draft') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-[#272727] text-slate-600 dark:text-[#b3b3b3] border border-slate-200 dark:border-[#333333]">
+          Yêu Cầu Đếm
+        </span>
+      );
+    }
+
+    if (status === 'WaitingForApproval') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-800">
+          <Clock className="w-3.5 h-3.5 text-orange-500 dark:text-orange-400" />
+          Chờ duyệt
+        </span>
+      );
+    }
+
+    if (status === 'Completed') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          Hoàn tất
+        </span>
+      );
+    }
+
+    if (status === 'Cancelled') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-800">
+          <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+          Đã hủy
+        </span>
+      );
+    }
+
+    return <span className="text-xs text-gray-500">{status}</span>;
   };
 
   // ==================== FETCH LIST ====================
@@ -192,7 +224,7 @@ const InventoryCheckList = () => {
 
   // ==================== SUMMARY STATS ====================
   const summary = useMemo(() => {
-    const totalItems = checks.reduce((sum, c) => sum + Number(c.detailCount || 0), 0);
+    const totalItems = checks.reduce((sum, c) => sum + Number(c.totalProducts ?? 0), 0);
     const drafts = checks.filter((c) => c.status === 'Draft').length;
     const waiting = checks.filter((c) => c.status === 'WaitingForApproval').length;
     return {
@@ -217,17 +249,12 @@ const InventoryCheckList = () => {
       header: 'Mã phiếu',
       render: (_, row) => (
         <div className="flex flex-col items-start gap-1">
-          <button
-            type="button"
-            onClick={() => setSelectedCheckId(row.ticketId || row.id || row.inventoryCheckId)}
-            className="text-left font-bold text-[#004785] transition-colors hover:underline"
-            title="Click để xem chi tiết"
-          >
+          <span className="font-bold text-[#004785] dark:text-blue-300">
             {row.ticketCode}
-          </button>
+          </span>
           {row.recountNumber > 0 && (
-            <span className="w-fit rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
-              Đếm lại (Lần {row.recountNumber})
+            <span className="w-fit rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700 dark:bg-orange-950/30 dark:text-orange-300">
+              Đếm lại (Lần {row.recountNumber ?? row.RecountNumber})
             </span>
           )}
         </div>
@@ -237,7 +264,7 @@ const InventoryCheckList = () => {
       key: 'createdAt',
       header: 'Ngày tạo',
       render: (_, row) => (
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-slate-600 dark:text-[#b3b3b3]">
           {row.createdAt ? formatDateTime(row.createdAt) : '---'}
         </span>
       ),
@@ -246,7 +273,7 @@ const InventoryCheckList = () => {
       key: 'createdByUserName',
       header: 'Người tạo',
       render: (_, row) => (
-        <span className="text-sm text-slate-700">
+        <span className="text-sm text-slate-700 dark:text-[#b3b3b3]">
           {formatUserName(row.createdByUserName) || '---'}
         </span>
       ),
@@ -256,36 +283,36 @@ const InventoryCheckList = () => {
       header: 'Người phụ trách',
       render: (_, row) => (
         <span
-          className={`text-sm ${!row.assigneeUserName ? 'italic text-slate-400' : 'text-slate-700'}`}
+          className={`text-sm ${!row.assigneeUserName ? 'italic text-slate-400' : 'text-slate-700 dark:text-[#b3b3b3]'}`}
         >
           {formatUserName(row.assigneeUserName) || 'Chưa gán'}
         </span>
       ),
     },
     {
-      key: 'detailCount',
+      key: 'totalProducts',
       header: 'Số lượng',
       render: (_, row) => (
-        <span className="text-sm font-semibold text-slate-700">{row.detailCount ?? '---'}</span>
+        <span className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">{row.totalProducts ?? '---'}</span>
       ),
     },
     {
       key: 'status',
       header: 'Trạng thái',
       render: (_, row) => (
-        <span className="inline-flex items-center">{renderStatusBadge(row.status)}</span>
+        <span className="inline-flex items-center">{renderStatusBadge(row)}</span>
       ),
     },
   ];
 
   // ==================== RENDER ====================
   return (
-    <div className="animate-fade-in w-full space-y-4 text-slate-800">
+    <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* ==================== PAGE HEADER ==================== */}
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Kiểm kê kho</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Kiểm kê kho</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">
             Theo dõi, tạo mới và xử lý các phiếu kiểm đếm tồn kho
           </p>
         </div>
@@ -293,10 +320,10 @@ const InventoryCheckList = () => {
           <div
             className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold shadow-sm ${
               loading
-                ? 'border-slate-200 bg-slate-50 text-slate-600'
+                ? 'border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] text-slate-600 dark:text-[#b3b3b3]'
                 : globalError
-                  ? 'border-red-200 bg-red-50 text-red-700'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  ? 'border-red-200 bg-red-50 text-red-700 dark:text-red-400'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
             }`}
           >
             {loading ? 'Đang tải dữ liệu...' : globalError ? '⚠ Đã xảy ra lỗi' : 'Sẵn sàng'}
@@ -314,13 +341,19 @@ const InventoryCheckList = () => {
 
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
       {globalError && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-950/30">
           <AlertCircle className="mt-0.5 flex-shrink-0 text-red-500" size={20} />
           <div className="flex-1">
-            <p className="font-semibold text-red-800">Đã xảy ra lỗi</p>
-            <p className="mt-1 text-sm text-red-700">{globalError}</p>
+            <p className="font-semibold text-red-800 dark:text-red-300">Đã xảy ra lỗi</p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-400">{globalError}</p>
           </div>
-          <IconButton icon={X} variant="ghost" size="sm" onClick={() => setGlobalError('')} />
+          <button
+            type="button"
+            onClick={() => setGlobalError('')}
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-[#333333] hover:text-slate-600 dark:text-[#b3b3b3]"
+          >
+            <Icon name="close" size={18} />
+          </button>
         </div>
       )}
 
@@ -328,41 +361,41 @@ const InventoryCheckList = () => {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-[#004785]">{summary.totalCount}</div>
-            <p className="mt-1 text-sm text-gray-600">Tổng phiếu</p>
+            <div className="text-3xl font-bold text-blue-600">{summary.totalCount}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-slate-600">{summary.totalItems}</div>
-            <p className="mt-1 text-sm text-gray-600">Sản phẩm kiểm</p>
+            <div className="text-3xl font-bold text-green-600">{summary.totalItems}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Sản phẩm kiểm</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-amber-500">{summary.drafts}</div>
-            <p className="mt-1 text-sm text-gray-600">Phiếu nháp</p>
+            <div className="text-3xl font-bold text-amber-500">{summary.drafts}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Phiếu nháp</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-orange-500">{summary.waiting}</div>
-            <p className="mt-1 text-sm text-gray-600">Chờ duyệt</p>
+            <div className="text-3xl font-bold text-orange-500">{summary.waiting}</div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Chờ duyệt</p>
           </div>
         </Card>
       </div>
 
       {/* ==================== FILTERS (Tích hợp Shared Button & Drawer) ==================== */}
-      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a]/60 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           {/* Lọc trạng thái (Truy cập nhanh) */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
               <Filter size={14} /> Trạng thái:
             </span>
             {[
               { value: '', label: 'Tất cả' },
-              { value: 'Draft', label: 'Nháp' },
+              { value: 'Draft', label: 'yêu cầu đếm' },
               { value: 'WaitingForApproval', label: 'Chờ duyệt' },
               { value: 'Completed', label: 'Hoàn thành' },
               { value: 'Cancelled', label: 'Đã hủy' },
@@ -483,18 +516,19 @@ const InventoryCheckList = () => {
         data={checks}
         loading={loading}
         emptyMessage="Không tìm thấy phiếu kiểm kê nào."
+        onClickRow={(row) => setSelectedCheckId(row.ticketId || row.id || row.inventoryCheckId)}
       />
 
       {/* ==================== PHÂN TRANG ==================== */}
-      {!loading && paginationMeta.totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+      {!loading && paginationMeta.totalCount > 0 && (
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                className="rounded border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] px-2 py-1 text-xs outline-none focus:border-primary"
               >
                 <option value={20}>20 dòng</option>
                 <option value={50}>50 dòng</option>
@@ -512,18 +546,18 @@ const InventoryCheckList = () => {
               type="button"
               onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
               disabled={pageNumber <= 1}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333] disabled:opacity-50"
             >
               <Icon name="chevron_left" className="text-[18px]" />
             </button>
-            <div className="px-3 text-sm text-slate-700">
-              Trang {pageNumber} / {paginationMeta.totalPages}
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+              Trang {pageNumber} / {paginationMeta.totalPages || 1}
             </div>
             <button
               type="button"
               onClick={() => setPageNumber((p) => p + 1)}
               disabled={pageNumber >= paginationMeta.totalPages}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 dark:border-[#404040] dark:bg-[#1a1a1a] px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#333333] disabled:opacity-50"
             >
               <Icon name="chevron_right" className="text-[18px]" />
             </button>

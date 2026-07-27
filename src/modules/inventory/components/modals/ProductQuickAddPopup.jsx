@@ -43,13 +43,13 @@ const ProductQuickAddPopup = ({ isOpen, onClose, onSave }) => {
           if (e.target === overlayRef.current) onClose?.();
         }}
       />
-      <div className="relative z-10 flex max-h-[95vh] w-full max-w-[1300px] flex-col rounded-xl bg-white shadow-2xl">
+      <div className="relative z-10 flex max-h-[95vh] w-full max-w-[1300px] flex-col rounded-xl bg-white shadow-2xl dark:bg-[#0f0f0f]">
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between rounded-t-xl border-b-2 border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-900">Thêm mới hàng hóa</h2>
+        <div className="flex shrink-0 items-center justify-between rounded-t-xl border-b-2 border-slate-200 px-6 py-4 dark:border-[#333333]">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Thêm mới hàng hóa</h2>
           <button
             type="button"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
             onClick={onClose}
           >
             <Icon name="close" size={22} />
@@ -57,12 +57,12 @@ const ProductQuickAddPopup = ({ isOpen, onClose, onSave }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex shrink-0 gap-0 border-b border-slate-200 bg-slate-50 px-6">
+        <div className="flex shrink-0 gap-0 border-b border-slate-200 bg-slate-50 px-6 dark:border-[#333333] dark:bg-[#1a1a1a]">
           {TABS.map((tab) => (
             <button
               key={tab.key}
               type="button"
-              className={`border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${p.activeTab === tab.key ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+              className={`border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${p.activeTab === tab.key ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-[#999999] dark:hover:text-[#b3b3b3]'}`}
               onClick={() => p.setActiveTab(tab.key)}
             >
               {tab.label}

@@ -141,6 +141,7 @@ export const createProductPayload = (form) => ({
     price: Number(u.price) || 0,
     directSale: u.directSale !== false,
   })),
+  isActive: form.productStatus !== 'inactive' && form.status !== 'inactive' && form.isActive !== false,
 });
 
 // Chuẩn hóa Payload UPDATE (Backend yêu cầu ProductCode)
