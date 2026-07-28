@@ -18,6 +18,7 @@ import ServerError from './pages/errors/ServerError';
 
 // Auth Pages
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 
 
 // Account settings
@@ -109,6 +110,7 @@ function App() {
           {/* PUBLIC ROUTE */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* PRIVATE & PROTECTED ROUTES */}
           {/* ACCOUNT SETTINGS ROUTE */}

@@ -197,6 +197,14 @@ export const registerVerifyRequest = async (payload) => {
   return authRequest(ENDPOINTS.AUTH.REGISTER_VERIFY, payload);
 };
 
+export const forgotPasswordStartRequest = async (payload) => {
+  return authRequest(ENDPOINTS.AUTH.FORGOT_PASSWORD_START, payload);
+};
+
+export const forgotPasswordVerifyRequest = async (payload) => {
+  return authRequest(ENDPOINTS.AUTH.FORGOT_PASSWORD_VERIFY, payload);
+};
+
 const authService = {
   loginRequest,
   registerStartRequest,
