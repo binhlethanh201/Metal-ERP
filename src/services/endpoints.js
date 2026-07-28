@@ -74,6 +74,7 @@ export const ENDPOINTS = {
     GET_SUPPLIER: (id) => `/api/suppliers/${id}`,
     UPDATE_SUPPLIER: (id) => `/api/suppliers/${id}`,
     DELETE_SUPPLIER: (id) => `/api/suppliers/${id}`,
+    TOGGLE_SUPPLIER_STATUS: (id) => `/api/suppliers/${id}/status`,
 
     // ================= Supplier Debt =================
     GET_SUPPLIER_DEBTS: '/api/supplierdebt',
@@ -264,6 +265,8 @@ export const ENDPOINTS = {
     LOGOUT: '/logout',
     REGISTER_START: '/register/start',
     REGISTER_VERIFY: '/register/verify',
+    FORGOT_PASSWORD_START: '/forgot-password/start',
+    FORGOT_PASSWORD_VERIFY: '/forgot-password/verify',
     REFRESH_TOKEN: '/refresh',
     GET_PROFILE: '/profile',
     UPDATE_PROFILE: '/profile',

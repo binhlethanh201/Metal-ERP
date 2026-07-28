@@ -72,7 +72,7 @@ const AdminUserManagement = () => {
       <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
         <thead>
           <tr className="border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
-            <th className="px-4 py-3">User ID & Email</th>
+            <th className="px-4 py-3">ID & Email người dùng</th>
             <th className="px-4 py-3">Họ Tên</th>
             <th className="px-4 py-3">Vai trò (Roles)</th>
             <th className="px-4 py-3 text-center">Trạng thái</th>
@@ -115,8 +115,8 @@ const AdminUserManagement = () => {
                     {user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
                       ? 'ĐÃ XÓA'
                       : isActive
-                        ? 'ACTIVE'
-                        : 'LOCKED'}
+                        ? 'ĐANG HOẠT ĐỘNG'
+                        : 'ĐÃ KHÓA'}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">

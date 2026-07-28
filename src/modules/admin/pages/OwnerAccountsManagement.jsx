@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
 import ConfirmActionModal from '../components/ConfirmActionModal';
 import CreateAccountModal from '../components/account/CreateAccountModal';
@@ -58,11 +58,11 @@ const OwnerAccountsManagement = () => {
       isOpen: true,
       type: 'freeze',
       data: {
-        title: 'KhÃ³a toÃ n bá»™ Tenant (Master Account)',
-        message: `Báº¡n Ä‘ang thá»±c hiá»‡n khÃ³a luá»“ng truy cáº­p cá»§a Tenant: ${owner.fullName || owner.email}.`,
+        title: 'Khóa toàn bộ gian hàng',
+        message: `Bạn đang thực hiện khóa luồng truy cập của: ${owner.fullName || owner.email}.`,
         warningNote:
-          'BR-45: Khi Master Partner bá»‹ khÃ³a, tráº¡ng thÃ¡i nÃ y sáº½ cascade tá»›i TOÃ€N Bá»˜ chi nhÃ¡nh, kho hÃ ng vÃ  token cá»§a nhÃ¢n viÃªn trá»±c thuá»™c láº­p tá»©c.',
-        confirmText: 'Thá»±c thi KhÃ³a',
+          'BR-45: Khi chủ gian hàng bị khóa, trạng thái này sẽ áp dụng tới TOÀN BỘ chi nhánh, kho hàng và token của nhân viên trực thuộc ngay lập tức.',
+        confirmText: 'Thực thi Khóa',
         target: owner,
       },
     });
@@ -85,10 +85,10 @@ const OwnerAccountsManagement = () => {
       <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
         <thead>
           <tr className="border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
-            <th className="px-4 py-3">Tenant / Corporate ID</th>
-            <th className="px-4 py-3">Subscription Tier</th>
-            <th className="px-4 py-3 text-center">Master Status</th>
-            <th className="px-4 py-3 text-right">Thao tÃ¡c</th>
+            <th className="px-4 py-3">Gian hàng / Mã doanh nghiệp</th>
+            <th className="px-4 py-3">Gói dịch vụ</th>
+            <th className="px-4 py-3 text-center">Trạng thái</th>
+            <th className="px-4 py-3 text-right">Thao tác</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200 dark:divide-[#333333]">
@@ -111,14 +111,14 @@ const OwnerAccountsManagement = () => {
                       : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-500'
                   }`}
                 >
-                  {owner.status === 1 ? 'ACTIVE' : owner.status?.toUpperCase() || 'â€”'}
+                  {owner.status === 1 ? 'Đang hoạt động' : owner.status === 'Active' || owner.status === 'active' ? 'Đang hoạt động' : 'Đã khóa'}
                 </span>
               </td>
               <td className="px-4 py-3 text-right">
                 <button
                   onClick={() => triggerFreezeOwner(owner)}
                   className="p-1 text-slate-400 dark:text-[#666666] hover:text-red-600 dark:text-red-500"
-                  title="Freeze Tenant"
+                  title="Khóa gian hàng"
                 >
                   <Icon name="lock" size={16} />
                 </button>

@@ -8,12 +8,14 @@ import Logo from '../../../../shared/components/Logo';
 import ShiftBadge from '../../../../shared/components/ShiftBadge';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { useTheme } from '../../../../shared/contexts/ThemeContext';
+import StorePolicyModal from '../StorePolicyModal';
 
 const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showPolicyModal, setShowPolicyModal] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -58,6 +60,14 @@ const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
         >
           <Icon name="history" className="text-base" />
           <span>Lịch sử</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowPolicyModal(true)}
+          className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-[#555555] dark:hover:bg-[#333333]"
+        >
+          <Icon name="policy" className="text-base" />
+          <span>Chính sách</span>
         </button>
 
         <ShiftBadge />
@@ -119,6 +129,8 @@ const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
           )}
         </div>
       </div>
+
+      <StorePolicyModal isOpen={showPolicyModal} onClose={() => setShowPolicyModal(false)} />
     </header>
   );
 };

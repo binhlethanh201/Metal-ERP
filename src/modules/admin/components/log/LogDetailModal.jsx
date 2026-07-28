@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const LogDetailModal = ({ log, onClose }) => {
@@ -7,13 +7,13 @@ const LogDetailModal = ({ log, onClose }) => {
   const handleCopyAll = () => {
     const text = [
       `ID: ${log.logId}`,
-      `Time: ${log.timestamp}`,
-      `Level: ${log.level}`,
-      `Source: ${log.source}`,
-      `Action: ${log.action}`,
-      `Message: ${log.description}`,
+      `Thời gian: ${log.timestamp}`,
+      `Mức độ: ${log.level}`,
+      `Nguồn: ${log.source}`,
+      `Hành động: ${log.action}`,
+      `Mô tả: ${log.description}`,
       log.ipAddress ? `IP: ${log.ipAddress}` : '',
-      log.userAgent ? `UserAgent: ${log.userAgent}` : '',
+      log.userAgent ? `Trình duyệt: ${log.userAgent}` : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -48,19 +48,19 @@ const LogDetailModal = ({ log, onClose }) => {
           {/* Section 1: Metadata */}
           <div>
             <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
-              Metadata
+              Thông tin
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                 <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Timestamp
+                  Thời gian
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
                   {formatTimestamp(log.timestamp)}
                 </p>
               </div>
               <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
-                <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">Level</p>
+                <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">Mức độ</p>
                 <span
                   className={`mt-1 inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold ${
                     log.level === 'ERROR'
@@ -75,13 +75,13 @@ const LogDetailModal = ({ log, onClose }) => {
               </div>
               <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                 <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Source
+                  Nguồn
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-[#004785] dark:text-blue-400">{log.source || 'â€”'}</p>
               </div>
               <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                 <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Action
+                  Hành động
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{log.action}</p>
               </div>
@@ -91,7 +91,7 @@ const LogDetailModal = ({ log, onClose }) => {
           {/* Section 2: Description (Message) */}
           <div>
             <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
-              Description
+              Mô tả
             </h4>
             <div className="rounded-md border border-slate-200 dark:border-[#333333] bg-slate-900 dark:bg-black p-4">
               <p className="break-words font-mono text-sm leading-relaxed text-slate-100 dark:text-white">
@@ -104,20 +104,20 @@ const LogDetailModal = ({ log, onClose }) => {
           {(log.userName || log.ipAddress || log.userAgent) && (
             <div>
               <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
-                Environment
+                Môi trường
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                   <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                    User
+                    Người dùng
                   </p>
                   <p className="mt-1 font-mono text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
-                    {log.userName || 'system'}
+                    {log.userName || 'hệ thống'}
                   </p>
                 </div>
                 <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                   <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                    IP Address
+                    Địa chỉ IP
                   </p>
                   <p className="mt-1 font-mono text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
                     {log.ipAddress || 'N/A'}
@@ -126,7 +126,7 @@ const LogDetailModal = ({ log, onClose }) => {
                 {log.userAgent && (
                   <div className="col-span-2 rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                     <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                      User Agent
+                      Trình duyệt
                     </p>
                     <p className="mt-1 truncate font-mono text-[11px] text-slate-900 dark:text-[#e5e5e5]">
                       {log.userAgent}
@@ -144,7 +144,7 @@ const LogDetailModal = ({ log, onClose }) => {
             onClick={handleCopyAll}
             className="flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-[#333333] px-4 py-2 text-xs font-bold text-slate-500 dark:text-[#999999] hover:bg-slate-100 dark:bg-[#272727]"
           >
-            <Icon name="copy" size={14} /> Copy to clipboard
+            <Icon name="copy" size={14} /> Sao chép
           </button>
           <button
             onClick={onClose}

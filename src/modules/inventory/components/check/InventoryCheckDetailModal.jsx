@@ -10,6 +10,7 @@ import {
   updateDiscrepancyReasons,
 } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 // Import Shared Components
 import Modal from '../../../../shared/components/Modal';
@@ -64,7 +65,7 @@ const getStatusLabel = (item) => {
 
 const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess, onEditClick }) => {
   const { user } = useAuth();
-  const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
+  const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
   const currentUserId = user?.userId || user?.id;
 
   const [detailData, setDetailData] = useState(null);
@@ -303,24 +304,33 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
       header: 'Tên sản phẩm',
     },
     {
-      key: 'systemQuantity',
+      key: 'currentActualStock',
       header: (
-        <div className="text-center" title="Tồn kho được chốt từ DB tại thời điểm Fill.">
+        <div className="text-center" title="Tồn kho thực tế hiện tại trong hệ thống.">
           Tồn Hệ Thống{' '}
           <Icon name="info" size={14} className="inline align-text-bottom text-slate-400 dark:text-[#808080]" />
         </div>
       ),
-      render: (_, item) => (
-        <div className="text-center font-bold text-slate-500 dark:text-[#b3b3b3]">
-          {isDraft ? (
-            <span className="italic text-slate-400 dark:text-[#808080]" title="Sẽ được chốt khi bấm Gửi duyệt">
-              Chốt lúc fill
-            </span>
-          ) : (
-            item.systemQuantity
-          )}
-        </div>
-      ),
+
+      render: (_, item) => {
+        // Ưu tiên hiển thị CurrentActualStock nếu có (tồn kho thực tế hiện tại)
+        // Fallback về systemQuantity nếu không có currentActualStock
+        const displayValue = isDraft
+          ? (item.currentActualStock ?? item.systemQuantity)
+          : item.systemQuantity;
+
+        return (
+          <div className="text-center font-bold text-slate-700">
+            {displayValue ?? '-'}
+            {isDraft && item.currentActualStock !== item.systemQuantity && (
+              <div className="text-[10px] font-normal text-slate-400">
+                (Lúc tạo: {item.systemQuantity})
+              </div>
+            )}
+          </div>
+        );
+      },
+
     },
     {
       key: 'actualQuantity',
@@ -337,11 +347,10 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                 type="number"
                 min="0"
                 placeholder="Nhập..."
-                className={`w-24 rounded border px-2 py-1.5 text-center font-bold shadow-inner focus:outline-none focus:ring-2 focus:ring-[#004785] ${
-                  !hasValue
-                    ? 'border-orange-300 bg-orange-50 text-orange-700 dark:text-orange-400 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-300'
-                    : 'border-slate-300 text-[#004785] dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                }`}
+                className={`w-24 rounded border px-2 py-1.5 text-center font-bold shadow-inner focus:outline-none focus:ring-2 focus:ring-[#004785] ${!hasValue
+                  ? 'border-orange-300 bg-orange-50 text-orange-700 dark:text-orange-400 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-300'
+                  : 'border-slate-300 text-[#004785] dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                  }`}
                 value={currentActualRaw}
                 onChange={(e) =>
                   setActualValues((prev) => ({
@@ -368,29 +377,31 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
         const hasValue =
           currentActualRaw !== '' && currentActualRaw !== undefined && currentActualRaw !== null;
         const currentActual = hasValue ? Number(currentActualRaw) : 0;
-        const displayDiscrepancy = isDraft
-          ? currentActual - (item.systemQuantity || 0)
-          : item.discrepancy;
+        // Khi Draft: tính chênh lệch với tồn kho thực tế hiện tại (CurrentActualStock)
+        // Khi đã duyệt/kết thúc: hiển thị chênh lệch đã được lưu
+        const systemStock = isDraft
+          ? (item.currentActualStock ?? item.systemQuantity)
+          : item.systemQuantity;
+        const displayDiscrepancy = isDraft ? currentActual - (systemStock || 0) : item.discrepancy;
 
         return (
           <div
-            className={`text-center font-bold ${
-              isDraft
-                ? !hasValue
-                  ? 'text-slate-300 dark:text-[#666666]'
-                  : displayDiscrepancy === 0
-                    ? 'text-slate-400 dark:text-[#808080]'
-                    : displayDiscrepancy > 0
-                      ? 'text-emerald-600'
-                      : 'text-red-600'
-                : !item.isCounted
-                  ? 'text-slate-300 dark:text-[#666666]'
-                  : item.discrepancy === 0
-                    ? 'text-slate-400 dark:text-[#808080]'
-                    : item.discrepancy > 0
-                      ? 'text-emerald-600'
-                      : 'text-red-600'
-            }`}
+            className={`text-center font-bold ${isDraft
+              ? !hasValue
+                ? 'text-slate-300 dark:text-[#666666]'
+                : displayDiscrepancy === 0
+                  ? 'text-slate-400 dark:text-[#808080]'
+                  : displayDiscrepancy > 0
+                    ? 'text-emerald-600'
+                    : 'text-red-600'
+              : !item.isCounted
+                ? 'text-slate-300 dark:text-[#666666]'
+                : item.discrepancy === 0
+                  ? 'text-slate-400 dark:text-[#808080]'
+                  : item.discrepancy > 0
+                    ? 'text-emerald-600'
+                    : 'text-red-600'
+              }`}
           >
             {isDraft
               ? !hasValue
@@ -679,9 +690,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
               emptyMessage="Không có sản phẩm nào trong phiếu."
             />
             {isDraft && (
-              <div className="border-t border-blue-100 bg-blue-50 p-3 text-center text-xs italic text-blue-600 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400">
-                * Cột "Tồn Hệ Thống" và "Chênh Lệch" sẽ được hệ thống chốt chính xác từ DB tại thời
-                điểm bấm "Gửi duyệt".
+
+              <div className="border-t border-blue-100 bg-blue-50 p-3 text-center text-xs italic text-blue-600">
+                * Cột "Tồn Hệ Thống" hiển thị tồn kho thực tế hiện tại. "Chênh Lệch" được tính với
+                tồn kho này và sẽ được chốt tại thời điểm bấm "Gửi duyệt".
+
               </div>
             )}
           </div>

@@ -28,6 +28,9 @@ export const useAuth = () => {
   const [loading] = useState(false);
 
   const login = (userData, authToken) => {
+    // Clear POS active shift của user cũ (nếu có) TRƯỚC khi set user mới
+    // để tránh shift cũ "carry-over" sang user mới (vd: admin tạo nhân viên rồi login lại)
+    localStorage.removeItem('pos_active_shift');
     localStorage.setItem('authToken', authToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -37,6 +40,9 @@ export const useAuth = () => {
   const logout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+    // Clear POS-related state (shift from previous user) để tránh shift cũ
+    // "carry-over" sang user mới
+    localStorage.removeItem('pos_active_shift');
     setUser(null);
     setToken(null);
   };

@@ -281,7 +281,7 @@ export const ImportItemsTable = ({
           </label>
           <button
             type="button"
-            onClick={downloadExcelTemplate}
+            onClick={() => downloadExcelTemplate().catch((err) => setImportError(err.message || 'Lỗi tải file mẫu.'))}
             className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
           >
             <Download size={16} />

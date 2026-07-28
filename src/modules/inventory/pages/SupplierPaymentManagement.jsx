@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import Icon from '../../../shared/components/Icon';
+import { Button } from '../../../shared/components/Button';
 import { useSupplierPayment } from '../hooks/useSupplierPayment';
 
 const formatCurrency = (value) =>
@@ -24,6 +26,7 @@ const getMethodLabel = (method) => {
 };
 
 const SupplierPaymentManagement = () => {
+  const navigate = useNavigate();
   const {
     payments,
     suppliers,
@@ -49,14 +52,14 @@ const SupplierPaymentManagement = () => {
   const onCancelClick = async (payment) => {
     if (
       window.confirm(
-        `Bạn có chắc muốn HỦY phiếu chi ${formatCurrency(payment.amount)} cho ${payment.supplierName} không? (Sẽ khôi phục dư nợ)`
+        `Bạn có chắc muốn HỦY phiếu thanh toán NCC ${formatCurrency(payment.amount)} cho ${payment.supplierName} không? (Sẽ khôi phục dư nợ)`
       )
     ) {
       try {
         await handleCancel(payment.paymentId);
-        alert('Đã hủy phiếu chi thành công');
+        alert('Đã hủy phiếu thanh toán NCC thành công');
       } catch (err) {
-        alert(err.message || 'Lỗi khi hủy phiếu chi');
+        alert(err.message || 'Lỗi khi hủy phiếu thanh toán NCC');
       }
     }
   };
@@ -77,11 +80,19 @@ const SupplierPaymentManagement = () => {
     <div className="animate-fade-in mt-2 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Lịch sử Thanh toán & Phiếu Chi</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Phiếu thanh toán NCC</h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-[#b3b3b3]">
-            Quản lý các giao dịch chi tiền cho nhà cung cấp, hủy phiếu nếu sai sót.
+            Quản lý các phiếu thanh toán công nợ cho nhà cung cấp, hủy phiếu nếu sai sót.
           </p>
         </div>
+        <Button
+          onClick={() => navigate('/inventory/supplier-debt')}
+          variant="secondary"
+          size="sm"
+          className="flex items-center gap-1.5"
+        >
+          <Icon name="chevron_left" size={16} /> Công nợ NCC
+        </Button>
       </div>
 
       {error && (
@@ -119,7 +130,7 @@ const SupplierPaymentManagement = () => {
           <table className="w-full text-left text-sm text-slate-600 dark:text-[#b3b3b3]">
             <thead className="border-b border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-xs uppercase text-slate-500 dark:text-[#999999]">
               <tr>
-                <th className="px-4 py-3 font-bold">Ngày chi</th>
+                <th className="px-4 py-3 font-bold">Ngày thanh toán</th>
                 <th className="px-4 py-3 font-bold">Nhà cung cấp</th>
                 <th className="px-4 py-3 font-bold">Hình thức</th>
                 <th className="px-4 py-3 font-bold">Tham chiếu</th>
@@ -183,7 +194,7 @@ const SupplierPaymentManagement = () => {
                           <button
                             onClick={() => onCancelClick(p)}
                             className="rounded p-1.5 text-red-600 hover:bg-red-100"
-                            title="Hủy phiếu chi"
+                            title="Hủy phiếu thanh toán"
                           >
                             <Icon name="X" size={18} />
                           </button>

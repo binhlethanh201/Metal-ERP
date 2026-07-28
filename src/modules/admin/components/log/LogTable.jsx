@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 const LogTable = ({ logs, onRowClick }) => {
   return (
@@ -7,10 +7,10 @@ const LogTable = ({ logs, onRowClick }) => {
         <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
-              <th className="px-4 py-3 font-bold">Thời gian </th>
-              <th className="px-4 py-3 font-bold">Mức độ </th>
-              <th className="px-4 py-3 font-bold">Người thực hiện </th>
-              <th className="px-4 py-3 font-bold">Hành động </th>
+              <th className="px-4 py-3 font-bold">Thời gian</th>
+              <th className="px-4 py-3 font-bold">Mức độ</th>
+              <th className="px-4 py-3 font-bold">Người thực hiện</th>
+              <th className="px-4 py-3 font-bold">Hành động</th>
             </tr>
           </thead>
 

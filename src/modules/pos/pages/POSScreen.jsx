@@ -5,6 +5,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasRole } from '../../../shared/utils/roleRedirect';
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
@@ -16,9 +17,11 @@ import ReceiptModal from '../components/order/ReceiptModal';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
 import Icon from '../../../shared/components/Icon';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
+import StorePolicyModal from '../components/StorePolicyModal';
 import { usePosCart } from '../hooks/usePosCart';
 import { usePosProducts } from '../hooks/usePosProducts';
 import { usePosProductList } from '../hooks/usePosProductList';
+import { useActiveShift } from '../hooks/useActiveShift';
 import {
   createInvoice,
   addInvoiceItem,
@@ -110,6 +113,7 @@ const POSScreen = () => {
   // UOM: Unit selector modal
   const [showUnitSelector, setShowUnitSelector] = useState(false);
   const [selectedProductForUnit, setSelectedProductForUnit] = useState(null);
+  const [showStorePolicy, setShowStorePolicy] = useState(false);
 
   // Discount tiers
   const [discountTiers, setDiscountTiers] = useState([]);
@@ -147,6 +151,9 @@ const POSScreen = () => {
 
   const cart = usePosCart([]);
 
+  // Đồng bộ ca đang mở từ BE về localStorage để tránh MSG-76 khi sang máy khác / clear cache
+  const { refresh: refreshActiveShift } = useActiveShift({ enabled: !!user });
+
   // Tự động revalidate giá/tồn kho của các sản phẩm đang nằm trong giỏ hàng hiện tại khi danh sách posProducts thay đổi
   useEffect(() => {
     if (cart.cart.length > 0 && posProducts.length > 0) {
@@ -155,7 +162,7 @@ const POSScreen = () => {
   }, [posProducts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+  const isOwner = hasRole(userRoles, 'Owner');
   const hasSaleCreate = user?.permissions?.includes('SALE_CREATE') || isOwner;
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
@@ -334,13 +341,20 @@ const POSScreen = () => {
   const remaining = Math.max(0, finalTotal - totalPaid);
   const isPaymentValid = Math.abs(totalPaid - finalTotal) <= 1 && totalPaid > 0;
 
+  // Lấy active shift: ưu tiên localStorage, nếu thiếu thì refresh từ BE
+  const resolveActiveShift = async () => {
+    const cached = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+    if (cached?.id) return cached;
+    return await refreshActiveShift();
+  };
+
   const processOrder = async (lines, totalPaidAmount) => {
     // Guard: prevent double-click
     if (paying) return;
     setPaying(true);
     try {
       // 1. Tạo hóa đơn — kèm shiftId nếu có ca đang mở
-      const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+      const activeShift = await resolveActiveShift();
       const invoice = await createInvoice({
         customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
         customerName: selectedCustomer?.name || null,
@@ -459,7 +473,7 @@ const POSScreen = () => {
 
       // Cập nhật realtime cho ca đang mở (cộng dồn vào sessionStorage)
       try {
-        const shiftData = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+        const shiftData = await resolveActiveShift();
         if (shiftData) {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
           shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
@@ -496,34 +510,7 @@ const POSScreen = () => {
     } catch (err) {
       console.error('Lỗi tạo đơn:', err);
       showNotice('Lỗi: ' + (err.message || 'Không thể tạo đơn hàng'));
-      // Fallback: vẫn hiển thị mock nếu API lỗi
-      const order = {
-        id:
-          'POS-' +
-          new Date().toISOString().slice(0, 10).replace(/-/g, '') +
-          '-' +
-          String(orderCounter).padStart(3, '0'),
-        date: new Date().toISOString(),
-        items: [...cart.cart],
-        subtotal: cart.subtotal,
-        discount: discountInfo?.discountAmount || 0,
-
-        total: finalTotal,
-        payLines: lines.map((l) => ({
-          method: PAYMENT_LABELS[l.method.toLowerCase()] || l.method,
-          amount: l.amount,
-        })),
-        totalPaid: totalPaidAmount,
-        change: Math.max(0, totalPaidAmount - finalTotal),
-        customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
-      };
-      setLastOrder(order);
-      setOrderCounter((c) => c + 1);
       setShowPayModal(false);
-      setShowSuccess(true);
-      cart.clearCart();
-      setSelectedCustomer(null);
-      refetchProducts();
     } finally {
       setPaying(false);
     }
@@ -539,7 +526,7 @@ const POSScreen = () => {
     }
 
     // Kiểm tra ca bán hàng đã mở chưa
-    const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+    const activeShift = await resolveActiveShift();
     if (!activeShift) {
       showNotice('Vui lòng mở ca bán hàng trước khi thanh toán.', 'error');
       return;
@@ -549,7 +536,6 @@ const POSScreen = () => {
     if (cart.paymentMethod === 'Chuyển khoản' || cart.paymentMethod === 'Transfer') {
       setPaying(true);
       try {
-        const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         const invoice = await createInvoice({
           customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
           customerName: selectedCustomer?.name || null,
@@ -642,7 +628,7 @@ const POSScreen = () => {
     if (!isPaymentValid) return;
 
     // Kiểm tra ca bán hàng đã mở chưa
-    const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+    const activeShift = await resolveActiveShift();
     if (!activeShift) {
       showNotice('Vui lòng mở ca bán hàng trước khi thanh toán.', 'error');
       setShowPayModal(false);
@@ -658,7 +644,6 @@ const POSScreen = () => {
       // Combined: Tiền mặt + Chuyển khoản
       setPaying(true);
       try {
-        const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         const invoice = await createInvoice({
           customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
           customerName: selectedCustomer?.name || null,
@@ -756,7 +741,6 @@ const POSScreen = () => {
       // Chỉ có Transfer (không có Cash)
       setPaying(true);
       try {
-        const activeShift = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
         const invoice = await createInvoice({
           customerId: selectedCustomer?.customerId || selectedCustomer?.id || null,
           customerName: selectedCustomer?.name || null,
@@ -845,7 +829,7 @@ const POSScreen = () => {
       await finalizeInvoice(pendingInvoice.invoiceId);
       // 3. Cập nhật realtime ca
       try {
-        const shiftData = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
+        const shiftData = await resolveActiveShift();
         if (shiftData) {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
           shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
@@ -1065,6 +1049,14 @@ const POSScreen = () => {
               {productsLoading && posProducts.length > 0 && (
                 <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
               )}
+              <button
+                type="button"
+                onClick={() => setShowStorePolicy(true)}
+                title="Chính sách cửa hàng"
+                className="ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 hover:border-[#004785] hover:text-[#004785] dark:border-[#444] dark:bg-[#272727] dark:text-[#999] dark:hover:border-blue-400 dark:hover:text-blue-400"
+              >
+                <Icon name="policy" size={14} />
+              </button>
             </div>
           </div>
           <div className="custom-scrollbar relative flex-1 overflow-y-auto px-2 py-2">
@@ -1172,6 +1164,11 @@ const POSScreen = () => {
         isOpen={showQuickAddCust}
         onClose={() => setShowQuickAddCust(false)}
         onAdd={handleQuickAddCustomer}
+      />
+
+      <StorePolicyModal
+        isOpen={showStorePolicy}
+        onClose={() => setShowStorePolicy(false)}
       />
     </>
   );

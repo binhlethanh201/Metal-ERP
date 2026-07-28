@@ -18,7 +18,10 @@ const PrivateRoute = ({ allowedRoles = [] }) => {
 
     // Kiểm tra xem User có sở hữu BẤT KỲ Role nào nằm trong danh sách cho phép không
     const hasPermission = userRoles.some((role) =>
-      allowedRoles.some((allowedRole) => allowedRole.toLowerCase() === role.toLowerCase())
+      allowedRoles.some(
+        (allowedRole) =>
+          allowedRole.replace(/\s+/g, '').toLowerCase() === role.replace(/\s+/g, '').toLowerCase()
+      )
     );
 
     // Có token nhưng Không đủ quyền -> Đá ra trang 403 Access Denied

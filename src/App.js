@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './shared/hooks/useAuth';
+import { hasRole } from './shared/utils/roleRedirect';
 import { ThemeProvider } from './shared/contexts/ThemeContext';
 
 // Layouts
@@ -17,6 +18,7 @@ import ServerError from './pages/errors/ServerError';
 
 // Auth Pages
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 
 
 // Account settings
@@ -73,6 +75,8 @@ const OwnerAuditLog = lazy(() => import('./modules/owner/pages/OwnerAuditLog'));
 const OwnerDashboard = lazy(() => import('./modules/owner/pages/Dashboard'));
 const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManagement'));
 const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement'));
+const OwnerAuditLogsPage = lazy(() => import('./modules/owner/pages/OwnerAuditLogsPage'));
+const OwnerOutwardExcelPage = lazy(() => import('./modules/owner/pages/OwnerOutwardExcelPage'));
 const ShiftHistory = lazy(() => import('./modules/owner/pages/ShiftHistory'));
 const ReturnHistory = lazy(() => import('./modules/owner/pages/ReturnHistory'));
 const StoreSettings = lazy(() => import('./modules/owner/pages/StoreSettings'));
@@ -83,7 +87,7 @@ const OwnerReports = lazy(() => import('./modules/report/pages/OwnerReports'));
 const InventoryRedirect = () => {
   const { user } = useAuth();
   const roles = Array.isArray(user?.roles) ? user.roles : user?.role ? [user.role] : [];
-  const isOwner = roles.some((r) => r?.toLowerCase() === 'owner');
+  const isOwner = hasRole(roles, 'Owner');
   return <Navigate to={isOwner ? 'owner-dashboard' : 'dashboard'} replace />;
 };
 
@@ -106,6 +110,7 @@ function App() {
           {/* PUBLIC ROUTE */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* PRIVATE & PROTECTED ROUTES */}
           {/* ACCOUNT SETTINGS ROUTE */}
@@ -155,6 +160,8 @@ function App() {
                 <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
                 <Route path="expenses" element={<ExpenseManagement />} />
                 <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
+                <Route path="audit-logs" element={<OwnerAuditLogsPage />} />
+                <Route path="outward-excel" element={<OwnerOutwardExcelPage />} />
                 <Route path="transactions" element={<InventoryTransactionManagement />} />
                 <Route path="audit-logs" element={<OwnerAuditLog />} />
               </Route>

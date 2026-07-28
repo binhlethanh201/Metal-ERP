@@ -55,13 +55,16 @@ const extractList = (res) => {
 const normalizeInwardRow = (item, index) => {
   const itemsList = Array.isArray(item?.items) ? item.items : [];
   const totalQty = itemsList.reduce((acc, curr) => acc + Number(curr?.quantity || 0), 0);
-  const firstProduct = itemsList[0]?.productName || 'Hàng hóa nhập kho';
+  const productNames = itemsList.map((i) => i.productName || '').filter(Boolean);
+  const quantities = itemsList.map((i) => Number(i.quantity || 0));
   return {
     id: item?.stockTicketId || item?.id || `IMP-${index + 1}`,
     stockTicketId: item?.stockTicketId || item?.id,
     ticketCode: item?.ticketCode || `PN-${index + 1}`,
-    productName:
-      itemsList.length > 1 ? `${firstProduct} (...và ${itemsList.length - 1} khác)` : firstProduct,
+    productName: productNames.length > 0 ? productNames.join('\n') : 'Hàng hóa nhập kho',
+    quantityDisplay: quantities.length > 0
+      ? quantities.map((q) => q.toLocaleString('vi-VN')).join('\n')
+      : String(item?.quantity || 0),
     quantity: totalQty || item?.quantity || 0,
     date: item?.createdAt || item?.Date || '',
     reason: item?.reason || item?.note || '',

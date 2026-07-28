@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const STATUS_META = {
@@ -18,7 +18,7 @@ const CopyChip = ({ value, label }) => {
   return (
     <button
       onClick={handleCopy}
-      title="Click Ä‘á»ƒ copy"
+      title="Nhấn để sao chép"
       className="group inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] px-2 py-1 font-mono text-[11px] font-semibold text-slate-500 dark:text-[#999999] transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
     >
       <span>{label || value}</span>
@@ -180,7 +180,7 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                   <Field label="Há» vÃ  tÃªn" value={data.ownerName} />
                   <Field label="Email" value={data.ownerEmail} />
                   <Field
-                    label="User ID"
+                    label="ID người dùng"
                     value={data.userId ? `#${String(data.userId).slice(0, 8)}` : null}
                     mono
                     fullWidth
@@ -198,8 +198,8 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                   <Field label="NgÃ y gá»­i há»“ sÆ¡" value={formatDateTime(data.createdAt)} />
                   <Field label="NgÃ y review" value={formatDateTime(data.reviewedAt) || 'â€”'} />
                   <Field
-                    label="Reviewed by (User ID)"
-                    value={data.reviewedBy ? `#${String(data.reviewedBy).slice(0, 8)}` : 'â€”'}
+                    label="Người đánh giá (ID)"
+                    value={data.reviewedBy ? `#${String(data.reviewedBy).slice(0, 8)}` : '—'}
                     mono
                   />
                   <Field label="TÃªn reviewer" value={data.reviewerName} />

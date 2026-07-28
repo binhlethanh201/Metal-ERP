@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useExpenseCategory } from '../hooks/useExpenseCategory';
 import Icon from '../../../shared/components/Icon';
-import { Filter, RefreshCw, RotateCcw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '../../../shared/components/Button';
 
 // Import Các Components đã tách
@@ -24,14 +24,10 @@ const ExpenseCategoryManagement = () => {
   // Detail modal
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // Filter
-  const [statusFilter, setStatusFilter] = useState('ALL');
-
-  const filteredCategories = useMemo(() => {
-    if (statusFilter === 'ALL') return categories;
-    const isActive = statusFilter === 'ACTIVE';
-    return categories.filter((c) => Number(c.isActive) === (isActive ? 1 : 0));
-  }, [categories, statusFilter]);
+  // Filter - chỉ giữ "Tất cả" (xóa cứng nên không còn nhóm ẩn)
+  // Backward-compatible: nếu BE trả isActive=0 thì vẫn hiển thị (không crash),
+  // nhưng UI không expose filter vì "Ẩn" đã bị bỏ theo yêu cầu người dùng.
+  const filteredCategories = categories;
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -125,53 +121,16 @@ const ExpenseCategoryManagement = () => {
 
       {/* ==================== BẢNG DANH SÁCH ==================== */}
       <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a]/60 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
-              <Filter size={14} /> Trạng thái:
-            </span>
-            {[
-              { value: 'ALL', label: 'Tất cả' },
-              { value: 'ACTIVE', label: 'Hoạt động' },
-              { value: 'INACTIVE', label: 'Đã ẩn' },
-            ].map((item) => {
-              const isActive = statusFilter === item.value;
-              return (
-                <Button
-                  key={item.value}
-                  variant={isActive ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => { setStatusFilter(item.value); setCurrentPage(1); }}
-                >
-                  {item.label}
-                </Button>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refetch}
-              disabled={loading}
-              className="flex items-center gap-1.5"
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
-            </Button>
-
-            {statusFilter !== 'ALL' && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => { setStatusFilter('ALL'); setCurrentPage(1); }}
-                className="flex items-center gap-1"
-                title="Xóa bộ lọc"
-              >
-                <RotateCcw size={13} /> Đặt lại
-              </Button>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refetch}
+            disabled={loading}
+            className="flex items-center gap-1.5"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
+          </Button>
         </div>
       </div>
 

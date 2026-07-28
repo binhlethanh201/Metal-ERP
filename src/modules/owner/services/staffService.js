@@ -5,11 +5,14 @@ import ENDPOINTS from '../../../services/endpoints';
  * Lấy danh sách nhân viên do Owner hiện tại tạo (CreatedBy == ownerId)
  * @param {Object} params - { page = 1, pageSize = 20, search }
  */
-export const getStaffs = ({ page = 1, pageSize = 20, search = '', isActive, isDeleted } = {}) => {
+export const getStaffs = ({ page = 1, pageSize = 20, search = '', view, isActive, isDeleted } = {}) => {
   const queryParams = new URLSearchParams();
   if (page) queryParams.set('page', page);
   if (pageSize) queryParams.set('pageSize', pageSize);
   if (search && search.trim() !== '') queryParams.set('search', search.trim());
+  // view: 'active' | 'hidden' | 'deleted' (ưu tiên dùng tham số này)
+  if (view) queryParams.set('view', view);
+  // Legacy: vẫn gửi isActive/isDeleted nếu BE cũ yêu cầu
   if (isActive !== undefined && isActive !== null) queryParams.set('isActive', isActive);
   if (isDeleted !== undefined && isDeleted !== null) queryParams.set('isDeleted', isDeleted);
 

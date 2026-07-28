@@ -4,7 +4,7 @@
 import { Card } from '../../../../shared/components/Card';
 import Toggle from '../../../../shared/components/Toggle';
 
-const MOCK_PRINTERS = [
+const PRINTERS = [
   'EPSON TM-T82',
   'EPSON TM-T82 Receipt',
   'EPSON TM-T82 (Copy 1)',
@@ -27,7 +27,7 @@ const PrinterSettings = ({ data, onChange, disabled }) => {
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none disabled:bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:disabled:bg-[#1a1a1a]"
           >
             <option value="">-- Chọn máy in --</option>
-            {MOCK_PRINTERS.map((p) => (
+            {PRINTERS.map((p) => (
               <option key={p} value={p}>
                 {p}
               </option>
