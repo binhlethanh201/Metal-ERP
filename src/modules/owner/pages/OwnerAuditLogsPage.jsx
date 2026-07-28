@@ -90,7 +90,7 @@ const OwnerAuditLogsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [appliedFilters, page, pageSize]);
+  }, [appliedFilters, page, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchLogs();
@@ -165,7 +165,6 @@ const OwnerAuditLogsPage = () => {
   DISCOUNT: 'Giảm giá',
   SETTINGS: 'Cài đặt',
   REPORT: 'Báo cáo',
-  PERMISSION: 'Quyền',
   PERMISSION: 'Quyền',
   PERMISSIONS: 'Quyền',
   ROLE: 'Vai trò',

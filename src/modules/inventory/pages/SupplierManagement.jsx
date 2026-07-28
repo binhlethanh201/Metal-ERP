@@ -144,7 +144,7 @@ const SupplierManagement = () => {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card padding="p-4" className="border border-slate-200 dark:border-[#333333]">
           <p className="text-sm font-semibold text-slate-500 dark:text-[#999999]">Tổng nhà cung cấp</p>
           <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">{suppliers.length}</p>
@@ -158,13 +158,6 @@ const SupplierManagement = () => {
             {formatCurrency(summary.totalDebt)}
           </p>
           <p className="mt-1 text-sm font-medium text-slate-500 dark:text-[#999999]">Tổng số tiền cần thanh toán</p>
-        </Card>
-        <Card padding="p-4" className="border border-red-100 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20">
-          <p className="text-sm font-semibold text-red-600 dark:text-red-400">Nợ cần ưu tiên</p>
-          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
-            {formatCurrency(summary.overdueDebt)}
-          </p>
-          <p className="mt-1 text-sm font-medium text-red-500 dark:text-red-400">Đã đến hạn hoặc sắp đến hạn</p>
         </Card>
       </div>
 

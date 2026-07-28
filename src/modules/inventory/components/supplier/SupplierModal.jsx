@@ -114,7 +114,6 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
   };
 
   const isReadOnly = mode === 'detail';
-  const err = (name) => fieldErrors[name] ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : '';
 
   const footer = (
     <div className="flex items-center justify-between gap-3 w-full">

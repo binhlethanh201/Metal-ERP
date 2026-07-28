@@ -80,9 +80,17 @@ const SupplierTable = ({ suppliers, loading, onDetail, onToggleStatus }) => {
     );
 
   const handleToggle = (e, supplier) => {
-    e.stopPropagation(); // không trigger onDetail
+    e.stopPropagation();
     if (!onToggleStatus) return;
     const inactive = isInactive(supplier.status);
+    // Kiểm tra nợ: không cho ngừng hợp tác nếu còn nợ
+    if (!inactive) {
+      const debt = Number(supplier.currentDebt || 0);
+      if (debt > 0) {
+        alert(`Không thể ngừng hợp tác với "${supplier.name}" vì vẫn còn dư nợ ${formatCurrency(debt)}. Vui lòng thanh toán hết công nợ trước.`);
+        return;
+      }
+    }
     const target = inactive ? 'active' : 'inactive';
     const verb = inactive ? 'kích hoạt lại' : 'ngừng hợp tác';
     if (!window.confirm(`Bạn có chắc muốn ${verb} nhà cung cấp "${supplier.name}"?`)) return;
