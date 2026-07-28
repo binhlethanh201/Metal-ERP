@@ -16,6 +16,7 @@ import ReceiptModal from '../components/order/ReceiptModal';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
 import Icon from '../../../shared/components/Icon';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
+import StorePolicyModal from '../components/StorePolicyModal';
 import { usePosCart } from '../hooks/usePosCart';
 import { usePosProducts } from '../hooks/usePosProducts';
 import { usePosProductList } from '../hooks/usePosProductList';
@@ -111,6 +112,7 @@ const POSScreen = () => {
   // UOM: Unit selector modal
   const [showUnitSelector, setShowUnitSelector] = useState(false);
   const [selectedProductForUnit, setSelectedProductForUnit] = useState(null);
+  const [showStorePolicy, setShowStorePolicy] = useState(false);
 
   // Discount tiers
   const [discountTiers, setDiscountTiers] = useState([]);
@@ -1073,6 +1075,14 @@ const POSScreen = () => {
               {productsLoading && posProducts.length > 0 && (
                 <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
               )}
+              <button
+                type="button"
+                onClick={() => setShowStorePolicy(true)}
+                title="Chính sách cửa hàng"
+                className="ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 hover:border-[#004785] hover:text-[#004785] dark:border-[#444] dark:bg-[#272727] dark:text-[#999] dark:hover:border-blue-400 dark:hover:text-blue-400"
+              >
+                <Icon name="policy" size={14} />
+              </button>
             </div>
           </div>
           <div className="custom-scrollbar relative flex-1 overflow-y-auto px-2 py-2">
@@ -1180,6 +1190,11 @@ const POSScreen = () => {
         isOpen={showQuickAddCust}
         onClose={() => setShowQuickAddCust(false)}
         onAdd={handleQuickAddCustomer}
+      />
+
+      <StorePolicyModal
+        isOpen={showStorePolicy}
+        onClose={() => setShowStorePolicy(false)}
       />
     </>
   );
