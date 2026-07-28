@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import Button from '../../../../shared/components/Button';
+import Modal from '../../../../shared/components/Modal';
+import Input from '../../../../shared/components/Input';
 
 const emptyForm = {
   supplierName: '',
@@ -16,10 +19,41 @@ const emptyForm = {
   status: 1,
 };
 
+const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidTaxCode = (code) => /^[0-9]{10,14}$/.test(code);
+
+const validateForm = (data) => {
+  const errors = {};
+  if (!data.supplierName.trim()) errors.supplierName = 'Tên nhà cung cấp là bắt buộc';
+  if (!data.contactPerson.trim()) errors.contactPerson = 'Người liên hệ là bắt buộc';
+  if (!data.contactPhone.trim())
+    errors.contactPhone = 'Số điện thoại là bắt buộc';
+  else if (!isValidPhone(data.contactPhone))
+    errors.contactPhone = 'Số điện thoại không đúng định dạng (10 số, bắt đầu 0)';
+  if (!data.contactEmail.trim())
+    errors.contactEmail = 'Email là bắt buộc';
+  else if (!isValidEmail(data.contactEmail))
+    errors.contactEmail = 'Email không đúng định dạng';
+  if (!data.taxCode.trim())
+    errors.taxCode = 'Mã số thuế là bắt buộc';
+  else if (!isValidTaxCode(data.taxCode))
+    errors.taxCode = 'Mã số thuế phải từ 10-14 chữ số';
+  if (!data.bankAccount.trim())
+    errors.bankAccount = 'Số tài khoản là bắt buộc';
+  else if (!/^[0-9]+$/.test(data.bankAccount))
+    errors.bankAccount = 'Số tài khoản chỉ được chứa chữ số';
+  if (!data.bankName.trim()) errors.bankName = 'Ngân hàng là bắt buộc';
+  if (data.website && !/^https?:\/\/.+\..+/.test(data.website))
+    errors.website = 'Website phải bắt đầu bằng http:// hoặc https://';
+  if (!data.address.trim()) errors.address = 'Địa chỉ là bắt buộc';
+  return errors;
+};
+
 const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDelete }) => {
   const [formData, setFormData] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -41,7 +75,7 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
       } else {
         setFormData(emptyForm);
       }
-      setError('');
+      setFieldErrors({});
     }
   }, [isOpen, supplier]);
 
@@ -50,244 +84,222 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (mode === 'detail') return;
 
+    const errors = validateForm(formData);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     try {
       setSubmitting(true);
-      setError('');
       const payload = {
         ...formData,
         supplierName: formData.supplierName.trim(),
         status: Number(formData.status),
       };
-
-      if (!payload.supplierName) throw new Error('Tên nhà cung cấp là bắt buộc');
-
       await onSave(payload);
       onClose();
     } catch (err) {
-      setError(err.message || 'Lỗi khi lưu dữ liệu');
+      setFieldErrors({ submit: err.message || 'Lỗi khi lưu dữ liệu' });
     } finally {
       setSubmitting(false);
     }
   };
 
   const isReadOnly = mode === 'detail';
+  const err = (name) => fieldErrors[name] ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : '';
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1a1a1a]">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50 p-6 dark:border-[#333333] dark:bg-[#1a1a1a]">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-[#e5e5e5]">
-              {mode === 'create'
-                ? 'Thêm nhà cung cấp'
-                : mode === 'edit'
-                  ? 'Cập nhật nhà cung cấp'
-                  : 'Chi tiết nhà cung cấp'}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#333333] dark:hover:text-[#b3b3b3]"
+  const footer = (
+    <div className="flex items-center justify-between gap-3 w-full">
+      <div>
+        {supplier && (
+          <Button
+            variant="danger"
+            onClick={() => { onDelete?.(supplier); onClose(); }}
+            className="flex items-center gap-1"
           >
-            <Icon name="close" size={20} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500 dark:text-[#999999]">Đang tải chi tiết...</div>
-          ) : (
-            <form id="supplierForm" onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-400">
-                  {error}
-                </div>
-              )}
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">
-                    Tên nhà cung cấp <span className="text-red-500">*</span>
-                  </span>
-                  <input
-                    name="supplierName"
-                    value={formData.supplierName}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    required
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5] dark:disabled:bg-slate-700"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Người liên hệ</span>
-                  <input
-                    name="contactPerson"
-                    value={formData.contactPerson}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Số điện thoại</span>
-                  <input
-                    name="contactPhone"
-                    value={formData.contactPhone}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Email</span>
-                  <input
-                    name="contactEmail"
-                    type="email"
-                    value={formData.contactEmail}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Mã số thuế</span>
-                  <input
-                    name="taxCode"
-                    value={formData.taxCode}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Nhóm NCC</span>
-                  <input
-                    name="groupName"
-                    value={formData.groupName}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Số tài khoản</span>
-                  <input
-                    name="bankAccount"
-                    value={formData.bankAccount}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Ngân hàng</span>
-                  <input
-                    name="bankName"
-                    value={formData.bankName}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Website</span>
-                  <input
-                    name="website"
-                    value={formData.website}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  />
-                </label>
-                <label className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  <span className="mb-1 block">Trạng thái</span>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  >
-                    <option value={1}>Đang hợp tác</option>
-                    <option value={0}>Ngừng hợp tác</option>
-                  </select>
-                </label>
-              </div>
-
-              <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                <span className="mb-1 block">Địa chỉ</span>
-                <input
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  disabled={isReadOnly}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                />
-              </label>
-
-              <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                <span className="mb-1 block">Ghi chú</span>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  disabled={isReadOnly}
-                  rows="3"
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                />
-              </label>
-            </form>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 p-6 dark:border-[#333333] dark:bg-[#1a1a1a]">
-          <div>
-            {supplier && (
-              <button
-                type="button"
-                onClick={() => { onDelete?.(supplier); onClose(); }}
-                className="flex items-center gap-1 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
-              >
-                <Icon name="delete" size={18} />
-                Xóa
-              </button>
+            <Icon name="delete" size={18} />
+            Xóa
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        <Button variant="secondary" onClick={onClose}>
+          {mode === 'detail' ? 'Đóng' : 'Hủy bỏ'}
+        </Button>
+        {mode !== 'detail' && (
+          <Button
+            type="submit"
+            form="supplierForm"
+            variant="primary"
+            disabled={submitting}
+            className="flex items-center gap-2"
+          >
+            {submitting ? (
+              'Đang lưu...'
+            ) : (
+              <>
+                <Icon name="save" size={18} />
+                {mode === 'edit' ? 'Lưu cập nhật' : 'Tạo mới'}
+              </>
             )}
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
-            >
-              {mode === 'detail' ? 'Đóng' : 'Hủy bỏ'}
-            </button>
-            {mode !== 'detail' && (
-              <button
-                type="submit"
-                form="supplierForm"
-                disabled={submitting}
-                className="flex items-center gap-2 rounded-xl bg-[#0f4c81] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-black disabled:opacity-60"
-              >
-                {submitting ? (
-                  'Đang lưu...'
-                ) : (
-                  <>
-                    <Icon name="save" size={18} />
-                    {mode === 'edit' ? 'Lưu cập nhật' : 'Tạo mới'}
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
+          </Button>
+        )}
       </div>
     </div>
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="3xl"
+      title={
+        mode === 'create'
+          ? 'Thêm nhà cung cấp'
+          : mode === 'edit'
+            ? 'Cập nhật nhà cung cấp'
+            : 'Chi tiết nhà cung cấp'
+      }
+      footer={footer}
+    >
+      {loading ? (
+        <div className="py-10 text-center text-sm text-slate-500 dark:text-[#999999]">Đang tải chi tiết...</div>
+      ) : (
+        <form id="supplierForm" onSubmit={handleSubmit} className="space-y-4">
+          {fieldErrors.submit && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-950/30 dark:text-red-400">
+              {fieldErrors.submit}
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Tên nhà cung cấp"
+              required
+              name="supplierName"
+              value={formData.supplierName}
+              onChange={handleChange}
+              disabled={isReadOnly}
+              error={fieldErrors.supplierName}
+            />
+            <Input
+              label="Người liên hệ"
+              required
+              name="contactPerson"
+              value={formData.contactPerson}
+              onChange={handleChange}
+              disabled={isReadOnly}
+            />
+            <Input
+              label="Số điện thoại"
+              required
+              name="contactPhone"
+              value={formData.contactPhone}
+              onChange={handleChange}
+              disabled={isReadOnly}
+              error={fieldErrors.contactPhone}
+            />
+            <Input
+              label="Email"
+              type="email"
+              required
+              name="contactEmail"
+              value={formData.contactEmail}
+              onChange={handleChange}
+              disabled={isReadOnly}
+              error={fieldErrors.contactEmail}
+            />
+            <Input
+              label="Mã số thuế"
+              required
+              name="taxCode"
+              value={formData.taxCode}
+              onChange={handleChange}
+              disabled={isReadOnly}
+              error={fieldErrors.taxCode}
+            />
+            <Input
+              label="Nhóm NCC"
+              name="groupName"
+              value={formData.groupName}
+              onChange={handleChange}
+              disabled={isReadOnly}
+            />
+            <Input
+              label="Số tài khoản"
+              required
+              name="bankAccount"
+              value={formData.bankAccount}
+              onChange={handleChange}
+              disabled={isReadOnly}
+              error={fieldErrors.bankAccount}
+            />
+            <Input
+              label="Ngân hàng"
+              required
+              name="bankName"
+              value={formData.bankName}
+              onChange={handleChange}
+              disabled={isReadOnly}
+            />
+            <Input
+              label="Website"
+              name="website"
+              placeholder="https://..."
+              value={formData.website}
+              onChange={handleChange}
+              disabled={isReadOnly}
+              error={fieldErrors.website}
+            />
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+                Trạng thái
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                disabled={isReadOnly}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+              >
+                <option value={1}>Đang hợp tác</option>
+                <option value={0}>Ngừng hợp tác</option>
+              </select>
+            </div>
+          </div>
+
+          <Input
+            label="Địa chỉ"
+            required
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            disabled={isReadOnly}
+          />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+              Ghi chú
+            </label>
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              disabled={isReadOnly}
+              rows={3}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2.5 outline-none focus:border-[#004785] disabled:bg-slate-100 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+            />
+          </div>
+        </form>
+      )}
+    </Modal>
   );
 };
 
