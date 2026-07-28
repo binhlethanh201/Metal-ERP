@@ -357,8 +357,7 @@ const AdminRoleManagement = () => {
               </p>
 
               <p className="text-xs">
-                Hãy chọn một chức vụ ở cột bên trái để
-                bắt đầu phân quyền.
+                Hãy chọn một chức vụ ở cột bên trái để bắt đầu phân quyền.
               </p>
             </div>
           ) : (
@@ -373,8 +372,7 @@ const AdminRoleManagement = () => {
                   </h2>
 
                   <p className="mt-0.5 text-[11px] text-slate-500 dark:text-[#999999]">
-                    Tích chọn các ô bên dưới để bật hoặc
-                    tắt quyền truy cập của từng module.
+                    Tích chọn các ô bên dưới để bật hoặc tắt quyền truy cập của từng module.
                   </p>
                 </div>
               </div>
@@ -384,8 +382,7 @@ const AdminRoleManagement = () => {
                   <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-600 dark:border-red-800/30 dark:bg-red-900/20 dark:text-red-500">
                     <Icon name="info" size={16} />
 
-                    Super Admin được mặc định toàn quyền
-                    và không thể chỉnh sửa từ giao diện.
+                    Super Admin được mặc định toàn quyền và không thể chỉnh sửa từ giao diện.
                   </div>
                 )}
 

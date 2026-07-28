@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const STATUS_META = {
-  PENDING: { label: 'Chờ duyệt', bg: 'bg-secondary-container', fg: 'text-on-secondary-container' },
-  APPROVED: { label: 'Đã duyệt', bg: 'bg-tertiary-container', fg: 'text-on-tertiary-container' },
-  REJECTED: { label: 'Bị từ chối', bg: 'bg-error-container', fg: 'text-error' },
+  PENDING: { label: 'Chá» duyá»‡t', bg: 'bg-secondary-container', fg: 'text-on-secondary-container' },
+  APPROVED: { label: 'ÄÃ£ duyá»‡t', bg: 'bg-tertiary-container', fg: 'text-on-tertiary-container' },
+  REJECTED: { label: 'Bá»‹ tá»« chá»‘i', bg: 'bg-red-50 dark:bg-red-900/30', fg: 'text-red-600 dark:text-red-500' },
 };
 
 const CopyChip = ({ value, label }) => {
@@ -18,8 +18,8 @@ const CopyChip = ({ value, label }) => {
   return (
     <button
       onClick={handleCopy}
-      title="Click để copy"
-      className="group inline-flex items-center gap-1.5 rounded-md border border-outline-variant bg-surface-container-lowest px-2 py-1 font-mono text-[11px] font-semibold text-on-surface-variant transition-all hover:border-primary hover:text-primary"
+      title="Click Ä‘á»ƒ copy"
+      className="group inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] px-2 py-1 font-mono text-[11px] font-semibold text-slate-500 dark:text-[#999999] transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
     >
       <span>{label || value}</span>
       <Icon
@@ -32,14 +32,14 @@ const CopyChip = ({ value, label }) => {
 };
 
 const Field = ({ label, value, mono = false, fullWidth = false }) => (
-  <div className={`rounded-md bg-surface-container-low p-3 ${fullWidth ? 'col-span-2' : ''}`}>
-    <p className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">
+  <div className={`rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3 ${fullWidth ? 'col-span-2' : ''}`}>
+    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
       {label}
     </p>
     <p
-      className={`mt-1 text-sm font-bold text-on-surface ${mono ? 'font-mono text-[13px]' : ''} break-words`}
+      className={`mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5] ${mono ? 'font-mono text-[13px]' : ''} break-words`}
     >
-      {value || '—'}
+      {value || 'â€”'}
     </p>
   </div>
 );
@@ -84,28 +84,28 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
   const isPending = data.status === 'PENDING';
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
-        className="flex h-[85vh] w-full max-w-4xl flex-col rounded-lg border border-outline-variant bg-surface-container-lowest shadow-xl"
+        className="flex h-[85vh] w-full max-w-4xl flex-col rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-outline-variant px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#333333] px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-container text-on-primary-container">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#004785] dark:bg-blue-600-container text-white-container">
               <Icon name="store" size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-on-surface">{data.storeName}</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">{data.storeName}</h3>
                 <span
                   className={`rounded-sm px-2 py-0.5 text-[10px] font-bold ${statusMeta.bg} ${statusMeta.fg}`}
                 >
                   {statusMeta.label}
                 </span>
               </div>
-              <div className="mt-1 flex items-center gap-2 text-[11px] text-on-surface-variant">
-                <span>Hồ sơ:</span>
+              <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500 dark:text-[#999999]">
+                <span>Há»“ sÆ¡:</span>
                 <CopyChip
                   value={data.approvalId}
                   label={`#${String(data.approvalId).slice(0, 8)}`}
@@ -114,35 +114,35 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                   <span
                     className={`rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${
                       daysWaiting > 3
-                        ? 'bg-error-container text-error'
+                        ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-500'
                         : 'bg-secondary-container text-on-secondary-container'
                     }`}
                   >
-                    Chờ duyệt {daysWaiting} ngày {daysWaiting > 3 && '· QUÁ HẠN'}
+                    Chá» duyá»‡t {daysWaiting} ngÃ y {daysWaiting > 3 && 'Â· QUÃ Háº N'}
                   </span>
                 )}
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-outline hover:text-on-surface">
+          <button onClick={onClose} className="text-slate-400 dark:text-[#666666] hover:text-slate-900 dark:text-[#e5e5e5]">
             <Icon name="x" size={18} />
           </button>
         </div>
 
         {/* TAB BAR */}
-        <div className="flex border-b border-outline-variant bg-surface-container-low px-6">
+        <div className="flex border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-6">
           {[
-            { key: 'info', label: 'Thông tin', icon: 'info' },
-            { key: 'documents', label: `Tài liệu (${docs.length})`, icon: 'file-text' },
-            { key: 'audit', label: 'Lịch sử', icon: 'activity' },
+            { key: 'info', label: 'ThÃ´ng tin', icon: 'info' },
+            { key: 'documents', label: `TÃ i liá»‡u (${docs.length})`, icon: 'file-text' },
+            { key: 'audit', label: 'Lá»‹ch sá»­', icon: 'activity' },
           ].map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-1.5 border-b-2 px-4 py-3 text-xs font-bold transition-all ${
                 tab === t.key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                  ? 'border-primary text-[#004785] dark:text-blue-400'
+                  : 'border-transparent text-slate-500 dark:text-[#999999] hover:text-slate-900 dark:text-[#e5e5e5]'
               }`}
             >
               <Icon name={t.icon} size={13} />
@@ -156,28 +156,28 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
           {/* TAB: INFO */}
           {tab === 'info' && (
             <div className="space-y-5">
-              {/* Section: Cửa hàng */}
+              {/* Section: Cá»­a hÃ ng */}
               <div>
-                <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                   <Icon name="store" size={13} />
-                  Thông tin Cửa hàng
+                  ThÃ´ng tin Cá»­a hÃ ng
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Tên cửa hàng" value={data.storeName} />
-                  <Field label="Địa chỉ" value={data.storeAddress} fullWidth />
-                  <Field label="Mã số thuế (MST)" value={data.taxCode} mono />
-                  <Field label="Giấy phép kinh doanh" value={data.businessLicense} mono />
+                  <Field label="TÃªn cá»­a hÃ ng" value={data.storeName} />
+                  <Field label="Äá»‹a chá»‰" value={data.storeAddress} fullWidth />
+                  <Field label="MÃ£ sá»‘ thuáº¿ (MST)" value={data.taxCode} mono />
+                  <Field label="Giáº¥y phÃ©p kinh doanh" value={data.businessLicense} mono />
                 </div>
               </div>
 
-              {/* Section: Chủ sở hữu */}
+              {/* Section: Chá»§ sá»Ÿ há»¯u */}
               <div>
-                <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                   <Icon name="user" size={13} />
-                  Chủ sở hữu (Owner)
+                  Chá»§ sá»Ÿ há»¯u (Owner)
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Họ và tên" value={data.ownerName} />
+                  <Field label="Há» vÃ  tÃªn" value={data.ownerName} />
                   <Field label="Email" value={data.ownerEmail} />
                   <Field
                     label="User ID"
@@ -188,32 +188,32 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                 </div>
               </div>
 
-              {/* Section: Trạng thái & thời gian */}
+              {/* Section: Tráº¡ng thÃ¡i & thá»i gian */}
               <div>
-                <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                   <Icon name="clock" size={13} />
-                  Trạng thái & Thời gian
+                  Tráº¡ng thÃ¡i & Thá»i gian
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Ngày gửi hồ sơ" value={formatDateTime(data.createdAt)} />
-                  <Field label="Ngày review" value={formatDateTime(data.reviewedAt) || '—'} />
+                  <Field label="NgÃ y gá»­i há»“ sÆ¡" value={formatDateTime(data.createdAt)} />
+                  <Field label="NgÃ y review" value={formatDateTime(data.reviewedAt) || 'â€”'} />
                   <Field
                     label="Reviewed by (User ID)"
-                    value={data.reviewedBy ? `#${String(data.reviewedBy).slice(0, 8)}` : '—'}
+                    value={data.reviewedBy ? `#${String(data.reviewedBy).slice(0, 8)}` : 'â€”'}
                     mono
                   />
-                  <Field label="Tên reviewer" value={data.reviewerName} />
+                  <Field label="TÃªn reviewer" value={data.reviewerName} />
                 </div>
               </div>
 
               {/* Section: REJECTED */}
               {data.status === 'REJECTED' && data.rejectReason && (
-                <div className="rounded-md border border-error-container bg-error-container/20 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-error">
+                <div className="rounded-md border border-error-container bg-red-50 dark:bg-red-900/30/20 p-4">
+                  <div className="mb-2 flex items-center gap-2 text-red-600 dark:text-red-500">
                     <Icon name="x-circle" size={16} />
-                    <h4 className="text-xs font-bold uppercase tracking-wider">Lý do Từ chối</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-wider">LÃ½ do Tá»« chá»‘i</h4>
                   </div>
-                  <p className="text-sm leading-relaxed text-on-surface">{data.rejectReason}</p>
+                  <p className="text-sm leading-relaxed text-slate-900 dark:text-[#e5e5e5]">{data.rejectReason}</p>
                 </div>
               )}
 
@@ -223,15 +223,15 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                   <div className="mb-3 flex items-center gap-2 text-tertiary">
                     <Icon name="check-circle" size={16} />
                     <h4 className="text-xs font-bold uppercase tracking-wider">
-                      Tác dụng phụ khi duyệt
+                      TÃ¡c dá»¥ng phá»¥ khi duyá»‡t
                     </h4>
                   </div>
-                  <ul className="space-y-1.5 text-xs leading-relaxed text-on-surface">
+                  <ul className="space-y-1.5 text-xs leading-relaxed text-slate-900 dark:text-[#e5e5e5]">
                     <li className="flex items-start gap-2">
                       <Icon name="check" size={12} className="mt-0.5 text-tertiary" />
                       <span>
                         Set{' '}
-                        <code className="rounded bg-surface-container-low px-1 py-0.5 font-mono">
+                        <code className="rounded bg-slate-50 dark:bg-[#1a1a1a] px-1 py-0.5 font-mono">
                           User.IsVerified = true
                         </code>{' '}
                         cho Owner
@@ -240,28 +240,28 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                     <li className="flex items-start gap-2">
                       <Icon name="check" size={12} className="mt-0.5 text-tertiary" />
                       <span>
-                        Tự động tạo{' '}
-                        <code className="rounded bg-surface-container-low px-1 py-0.5 font-mono">
+                        Tá»± Ä‘á»™ng táº¡o{' '}
+                        <code className="rounded bg-slate-50 dark:bg-[#1a1a1a] px-1 py-0.5 font-mono">
                           Branch
                         </code>{' '}
-                        mới với tên = StoreName
+                        má»›i vá»›i tÃªn = StoreName
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Icon name="check" size={12} className="mt-0.5 text-tertiary" />
                       <span>
-                        Tạo{' '}
-                        <code className="rounded bg-surface-container-low px-1 py-0.5 font-mono">
+                        Táº¡o{' '}
+                        <code className="rounded bg-slate-50 dark:bg-[#1a1a1a] px-1 py-0.5 font-mono">
                           StaffAssignment
                         </code>{' '}
-                        gán Owner → Branch
+                        gÃ¡n Owner â†’ Branch
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Icon name="check" size={12} className="mt-0.5 text-tertiary" />
                       <span>
-                        Gửi notification tới Owner qua{' '}
-                        <code className="rounded bg-surface-container-low px-1 py-0.5 font-mono">
+                        Gá»­i notification tá»›i Owner qua{' '}
+                        <code className="rounded bg-slate-50 dark:bg-[#1a1a1a] px-1 py-0.5 font-mono">
                           NotifyOwnerApprovalDecision
                         </code>
                       </span>
@@ -276,55 +276,55 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
           {tab === 'documents' && (
             <div>
               {docs.length === 0 ? (
-                <div className="rounded-md border border-dashed border-outline-variant bg-surface-container-low p-10 text-center">
-                  <Icon name="file-x" size={32} className="mx-auto mb-2 text-outline" />
-                  <p className="text-sm font-semibold text-on-surface-variant">
-                    Owner chưa upload tài liệu nào.
+                <div className="rounded-md border border-dashed border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] p-10 text-center">
+                  <Icon name="file-x" size={32} className="mx-auto mb-2 text-slate-400 dark:text-[#666666]" />
+                  <p className="text-sm font-semibold text-slate-500 dark:text-[#999999]">
+                    Owner chÆ°a upload tÃ i liá»‡u nÃ o.
                   </p>
-                  <p className="mt-1 text-[11px] text-outline">
-                    Nếu cần bổ sung, liên hệ Owner qua email {data.ownerEmail}
+                  <p className="mt-1 text-[11px] text-slate-400 dark:text-[#666666]">
+                    Náº¿u cáº§n bá»• sung, liÃªn há»‡ Owner qua email {data.ownerEmail}
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   <div className="mb-3 flex items-center justify-between">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                      Danh sách tài liệu ({docs.length})
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
+                      Danh sÃ¡ch tÃ i liá»‡u ({docs.length})
                     </h4>
-                    <span className="text-[10px] text-outline">Click để mở trong tab mới</span>
+                    <span className="text-[10px] text-slate-400 dark:text-[#666666]">Click Ä‘á»ƒ má»Ÿ trong tab má»›i</span>
                   </div>
                   {docs.map((doc, idx) => {
                     const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(doc.url || doc);
                     const isPdf = /\.pdf$/i.test(doc.url || doc);
                     const displayUrl = doc.url || doc;
                     const displayName =
-                      doc.name || displayUrl.split('/').pop() || `Tài liệu ${idx + 1}`;
+                      doc.name || displayUrl.split('/').pop() || `TÃ i liá»‡u ${idx + 1}`;
                     return (
                       <a
                         key={idx}
                         href={displayUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 rounded-md border border-outline-variant bg-surface-container-low p-3 transition-all hover:border-primary hover:bg-surface-container-high"
+                        className="flex items-center gap-3 rounded-md border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] p-3 transition-all hover:border-primary hover:bg-slate-100 dark:bg-[#272727]"
                       >
                         <div
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
                             isImage
                               ? 'bg-tertiary-container text-on-tertiary-container'
                               : isPdf
-                                ? 'bg-error-container text-error'
-                                : 'bg-primary-container text-on-primary-container'
+                                ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-500'
+                                : 'bg-[#004785] dark:bg-blue-600-container text-white-container'
                           }`}
                         >
                           <Icon name={isImage ? 'image' : isPdf ? 'file-text' : 'file'} size={18} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold text-on-surface">
+                          <p className="truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
                             {displayName}
                           </p>
-                          <p className="truncate text-[10px] text-outline">{displayUrl}</p>
+                          <p className="truncate text-[10px] text-slate-400 dark:text-[#666666]">{displayUrl}</p>
                         </div>
-                        <Icon name="external-link" size={14} className="text-outline" />
+                        <Icon name="external-link" size={14} className="text-slate-400 dark:text-[#666666]" />
                       </a>
                     );
                   })}
@@ -336,20 +336,20 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
           {/* TAB: AUDIT */}
           {tab === 'audit' && (
             <div className="space-y-3">
-              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                 Audit Trail
               </h4>
-              <div className="relative space-y-3 border-l-2 border-outline-variant pl-5">
+              <div className="relative space-y-3 border-l-2 border-slate-200 dark:border-[#333333] pl-5">
                 <div className="relative">
-                  <div className="absolute -left-[27px] flex h-5 w-5 items-center justify-center rounded-full bg-primary-container">
-                    <Icon name="send" size={11} className="text-on-primary-container" />
+                  <div className="absolute -left-[27px] flex h-5 w-5 items-center justify-center rounded-full bg-[#004785] dark:bg-blue-600-container">
+                    <Icon name="send" size={11} className="text-white-container" />
                   </div>
-                  <p className="text-xs font-semibold text-on-surface">Hồ sơ được gửi</p>
-                  <p className="text-[11px] text-on-surface-variant">
-                    {formatDateTime(data.createdAt)} · bởi{' '}
+                  <p className="text-xs font-semibold text-slate-900 dark:text-[#e5e5e5]">Há»“ sÆ¡ Ä‘Æ°á»£c gá»­i</p>
+                  <p className="text-[11px] text-slate-500 dark:text-[#999999]">
+                    {formatDateTime(data.createdAt)} Â· bá»Ÿi{' '}
                     <span className="font-semibold">{data.ownerName}</span>
                   </p>
-                  <p className="mt-0.5 font-mono text-[10px] text-outline">
+                  <p className="mt-0.5 font-mono text-[10px] text-slate-400 dark:text-[#666666]">
                     userId = {data.userId}
                   </p>
                 </div>
@@ -360,23 +360,23 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                       className={`absolute -left-[27px] flex h-5 w-5 items-center justify-center rounded-full ${
                         data.status === 'APPROVED'
                           ? 'bg-tertiary-container text-on-tertiary-container'
-                          : 'bg-error-container text-error'
+                          : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-500'
                       }`}
                     >
                       <Icon name={data.status === 'APPROVED' ? 'check' : 'x'} size={11} />
                     </div>
-                    <p className="text-xs font-semibold text-on-surface">
-                      Hồ sơ {data.status === 'APPROVED' ? 'ĐÃ DUYỆT' : 'BỊ TỪ CHỐI'}
+                    <p className="text-xs font-semibold text-slate-900 dark:text-[#e5e5e5]">
+                      Há»“ sÆ¡ {data.status === 'APPROVED' ? 'ÄÃƒ DUYá»†T' : 'Bá»Š Tá»ª CHá»I'}
                     </p>
-                    <p className="text-[11px] text-on-surface-variant">
-                      {formatDateTime(data.reviewedAt)} · bởi{' '}
+                    <p className="text-[11px] text-slate-500 dark:text-[#999999]">
+                      {formatDateTime(data.reviewedAt)} Â· bá»Ÿi{' '}
                       <span className="font-semibold">
                         {data.reviewerName || `#${String(data.reviewedBy).slice(0, 8)}`}
                       </span>
                     </p>
                     {data.rejectReason && (
-                      <div className="mt-1.5 rounded-md bg-error-container/30 px-3 py-2 text-[11px] leading-relaxed text-on-surface">
-                        <strong className="text-error">Lý do: </strong>
+                      <div className="mt-1.5 rounded-md bg-red-50 dark:bg-red-900/30/30 px-3 py-2 text-[11px] leading-relaxed text-slate-900 dark:text-[#e5e5e5]">
+                        <strong className="text-red-600 dark:text-red-500">LÃ½ do: </strong>
                         {data.rejectReason}
                       </div>
                     )}
@@ -385,11 +385,11 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
               </div>
 
               {/* Raw JSON */}
-              <details className="mt-4 rounded-md border border-outline-variant bg-surface-container-low p-3">
-                <summary className="cursor-pointer text-[11px] font-bold uppercase text-on-surface-variant">
+              <details className="mt-4 rounded-md border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] p-3">
+                <summary className="cursor-pointer text-[11px] font-bold uppercase text-slate-500 dark:text-[#999999]">
                   Raw DTO (debug)
                 </summary>
-                <pre className="mt-2 max-h-64 overflow-auto rounded bg-surface-container-lowest p-2 text-[10px] leading-relaxed text-on-surface-variant">
+                <pre className="mt-2 max-h-64 overflow-auto rounded bg-white dark:bg-[#0f0f0f] p-2 text-[10px] leading-relaxed text-slate-500 dark:text-[#999999]">
                   {JSON.stringify(data, null, 2)}
                 </pre>
               </details>
@@ -398,8 +398,8 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
         </div>
 
         {/* FOOTER */}
-        <div className="flex items-center justify-between border-t border-outline-variant px-6 py-4">
-          <div className="flex items-center gap-2 text-[11px] text-on-surface-variant">
+        <div className="flex items-center justify-between border-t border-slate-200 dark:border-[#333333] px-6 py-4">
+          <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-[#999999]">
             <Icon name="info" size={12} />
             <span>
               Approval ID: <span className="font-mono">{data.approvalId}</span>
@@ -407,9 +407,9 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="rounded-md border border-outline-variant px-5 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container-high"
+            className="rounded-md border border-slate-200 dark:border-[#333333] px-5 py-2 text-sm font-bold text-slate-500 dark:text-[#999999] hover:bg-slate-100 dark:bg-[#272727]"
           >
-            Đóng
+            ÄÃ³ng
           </button>
         </div>
       </div>
@@ -418,3 +418,4 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
 };
 
 export default StoreApprovalDetailModal;
+

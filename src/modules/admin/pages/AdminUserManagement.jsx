@@ -96,7 +96,7 @@ const AdminUserManagement = () => {
                     {(user.roles || []).map((r) => (
                       <span
                         key={r.roleId}
-                        className="rounded bg-[#004785] dark:bg-blue-600-container px-2 py-0.5 text-[10px] font-bold text-white-container"
+                        className="rounded bg-[#004785] dark:bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
                       >
                         {r.roleName}
                       </span>
@@ -105,13 +105,12 @@ const AdminUserManagement = () => {
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span
-                    className={`rounded-sm px-2 py-1 text-[10px] font-bold ${
-                      user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
+                    className={`rounded-sm px-2 py-1 text-[10px] font-bold ${user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
                         ? 'bg-gray-200 text-gray-800'
                         : isActive
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                    }`}
+                      }`}
                   >
                     {user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
                       ? 'ĐÃ XÓA'
@@ -155,11 +154,12 @@ const AdminUserManagement = () => {
         </button>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-md flex-1">
+      <div className="flex items-center justify-between rounded-md border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-2 shadow-sm">
+        {/* SEARCH BAR */}
+        <div className="relative w-80">
           <Icon
             name="search"
-            size={16}
+            size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#666666]"
           />
           <input
@@ -167,20 +167,29 @@ const AdminUserManagement = () => {
             placeholder="Tìm kiếm theo tên hoặc email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] py-2 pl-9 pr-3 text-xs font-semibold text-slate-900 dark:text-[#e5e5e5] placeholder:text-slate-400 dark:text-[#666666] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-md border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-3 py-2 pl-9 text-xs font-semibold outline-none transition-colors focus:border-[#004785] focus:bg-white dark:bg-[#0f0f0f] text-slate-900 dark:text-[#e5e5e5] placeholder:text-slate-400"
           />
         </div>
-        <div className="w-48">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] py-2 px-3 text-xs font-semibold text-slate-900 dark:text-[#e5e5e5] outline-none focus:border-primary"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="suspended">Đã khóa</option>
-            <option value="deleted">Đã xóa (Lưu trữ)</option>
-          </select>
+
+        {/* TABS */}
+        <div className="flex gap-1">
+          {[
+            { value: '', label: 'Tất cả trạng thái' },
+            { value: 'active', label: 'Đang hoạt động' },
+            { value: 'suspended', label: 'Đã khóa' },
+            { value: 'deleted', label: 'Đã xóa' },
+          ].map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setStatusFilter(tab.value)}
+              className={`rounded-md px-4 py-2 text-xs font-bold transition-all ${statusFilter === tab.value
+                  ? 'bg-[#004785] text-white shadow-sm'
+                  : 'text-slate-500 dark:text-[#999999] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] hover:text-slate-900 dark:hover:text-[#e5e5e5]'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
