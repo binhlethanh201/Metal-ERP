@@ -45,7 +45,7 @@ const GoodsIssueToolbar = ({
           type="button"
           className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#333333] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
           onClick={onRefresh}
-          title="Tai lai"
+          title="Tải lại"
         >
           <Icon name="cached" className="text-base" />
         </button>

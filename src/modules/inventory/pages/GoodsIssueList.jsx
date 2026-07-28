@@ -106,7 +106,7 @@ const GoodsIssueList = () => {
   };
 
   const handleExport = () => {
-    alert('Dang Xuất file Excel... (demo)');
+    alert('Đang Xuất file Excel...');
   };
 
   return (

@@ -7,13 +7,13 @@ const LogDetailModal = ({ log, onClose }) => {
   const handleCopyAll = () => {
     const text = [
       `ID: ${log.logId}`,
-      `Time: ${log.timestamp}`,
-      `Level: ${log.level}`,
-      `Source: ${log.source}`,
-      `Action: ${log.action}`,
-      `Message: ${log.description}`,
+      `Thời gian: ${log.timestamp}`,
+      `Mức độ: ${log.level}`,
+      `Nguồn: ${log.source}`,
+      `Hành động: ${log.action}`,
+      `Mô tả: ${log.description}`,
       log.ipAddress ? `IP: ${log.ipAddress}` : '',
-      log.userAgent ? `UserAgent: ${log.userAgent}` : '',
+      log.userAgent ? `Trình duyệt: ${log.userAgent}` : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -48,19 +48,19 @@ const LogDetailModal = ({ log, onClose }) => {
           {/* Section 1: Metadata */}
           <div>
             <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-              Metadata
+              Thông tin
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-md bg-surface-container-low p-3">
                 <p className="text-[10px] font-semibold uppercase text-on-surface-variant">
-                  Timestamp
+                  Thời gian
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-on-surface">
                   {formatTimestamp(log.timestamp)}
                 </p>
               </div>
               <div className="rounded-md bg-surface-container-low p-3">
-                <p className="text-[10px] font-semibold uppercase text-on-surface-variant">Level</p>
+                <p className="text-[10px] font-semibold uppercase text-on-surface-variant">Mức độ</p>
                 <span
                   className={`mt-1 inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold ${
                     log.level === 'ERROR'
@@ -75,13 +75,13 @@ const LogDetailModal = ({ log, onClose }) => {
               </div>
               <div className="rounded-md bg-surface-container-low p-3">
                 <p className="text-[10px] font-semibold uppercase text-on-surface-variant">
-                  Source
+                  Nguồn
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-primary">{log.source || '—'}</p>
               </div>
               <div className="rounded-md bg-surface-container-low p-3">
                 <p className="text-[10px] font-semibold uppercase text-on-surface-variant">
-                  Action
+                  Hành động
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-on-surface">{log.action}</p>
               </div>
@@ -91,7 +91,7 @@ const LogDetailModal = ({ log, onClose }) => {
           {/* Section 2: Description (Message) */}
           <div>
             <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-              Description
+              Mô tả
             </h4>
             <div className="rounded-md border border-outline-variant bg-inverse-surface p-4">
               <p className="break-words font-mono text-sm leading-relaxed text-inverse-on-surface">
@@ -104,20 +104,20 @@ const LogDetailModal = ({ log, onClose }) => {
           {(log.userName || log.ipAddress || log.userAgent) && (
             <div>
               <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                Environment
+                Môi trường
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-md bg-surface-container-low p-3">
                   <p className="text-[10px] font-semibold uppercase text-on-surface-variant">
-                    User
+                    Người dùng
                   </p>
                   <p className="mt-1 font-mono text-sm font-bold text-on-surface">
-                    {log.userName || 'system'}
+                    {log.userName || 'hệ thống'}
                   </p>
                 </div>
                 <div className="rounded-md bg-surface-container-low p-3">
                   <p className="text-[10px] font-semibold uppercase text-on-surface-variant">
-                    IP Address
+                    Địa chỉ IP
                   </p>
                   <p className="mt-1 font-mono text-sm font-bold text-on-surface">
                     {log.ipAddress || 'N/A'}
@@ -126,7 +126,7 @@ const LogDetailModal = ({ log, onClose }) => {
                 {log.userAgent && (
                   <div className="col-span-2 rounded-md bg-surface-container-low p-3">
                     <p className="text-[10px] font-semibold uppercase text-on-surface-variant">
-                      User Agent
+                      Trình duyệt
                     </p>
                     <p className="mt-1 truncate font-mono text-[11px] text-on-surface">
                       {log.userAgent}
@@ -144,7 +144,7 @@ const LogDetailModal = ({ log, onClose }) => {
             onClick={handleCopyAll}
             className="flex items-center gap-1.5 rounded-md border border-outline-variant px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high"
           >
-            <Icon name="copy" size={14} /> Copy to clipboard
+            <Icon name="copy" size={14} /> Sao chép
           </button>
           <button
             onClick={onClose}

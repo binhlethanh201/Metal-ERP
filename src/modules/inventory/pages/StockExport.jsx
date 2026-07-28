@@ -24,32 +24,36 @@ const extractList = (response) => {
   return [];
 };
 
-const normalizeExportRow = (item, index) => {
+const normalizeExportRows = (item, index) => {
   const itemsList = Array.isArray(item?.items) ? item.items : [];
   const totalQuantity = itemsList.reduce((acc, curr) => acc + Number(curr?.quantity || 0), 0);
-  const productNames = itemsList.map((i) => i.productName).filter(Boolean);
-  const label =
-    productNames.length > 1
-      ? `${productNames[0]} (+${productNames.length - 1} SP khác)`
-      : productNames[0] || 'Sản phẩm xuất kho';
+  const productNames = itemsList.map((i) => i.productName || '').filter(Boolean);
+  const quantities = itemsList.map((i) => Number(i.quantity || 0));
+  const productName = productNames.length > 0
+    ? productNames.join('\n')
+    : 'Sản phẩm xuất kho';
+  const quantityDisplay = quantities.length > 0
+    ? quantities.map((q) => q.toLocaleString('vi-VN')).join('\n')
+    : String(item?.quantity || 0);
   const ticketCode = item?.ticketCode || `EX-${index + 1}`;
   let partyName = '';
   try {
     partyName = localStorage.getItem(`outward_party_${ticketCode}`) || '';
   } catch {}
 
-  return {
+  return [{
     id: item?.stockTicketId || item?.id || `EXP-${index + 1}`,
     stockTicketId: item?.stockTicketId || item?.id,
     ticketCode,
-    productName: label,
+    productName,
     quantity: totalQuantity || item?.quantity || 0,
+    quantityDisplay,
     date: item?.createdAt || item?.Date || '',
     reason: item?.reason || item?.Reason || '',
     status: item?.status || item?.Status || 'COMPLETED',
     cancelReason: item?.cancelReason || '',
     partyName,
-  };
+  }];
 };
 
 const getItemKey = (item) => item.branchProductId || item.productId || item.id || item.Id;
@@ -137,7 +141,7 @@ export const StockExport = () => {
 
       try {
         const exportsResponse = await getOutwardInventories(queryParams);
-        const exportItems = extractList(exportsResponse).map(normalizeExportRow).filter(Boolean);
+        const exportItems = extractList(exportsResponse).flatMap(normalizeExportRows).filter(Boolean);
         setExports(exportItems);
       } catch {
         setExports([]);

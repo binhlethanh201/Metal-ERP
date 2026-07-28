@@ -129,21 +129,21 @@ const ConfirmCloseDialog = ({ isOpen, onCancel, onDiscard, onSave }) => {
             className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             onClick={onCancel}
           >
-            Huy
+            Hủy
           </button>
           <button
             type="button"
             className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-red-900/30 dark:hover:text-red-400"
             onClick={onDiscard}
           >
-            Khong luu
+            Không lưu
           </button>
           <button
             type="button"
             className="rounded-lg bg-[#004785] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#003566] active:scale-95"
             onClick={onSave}
           >
-            Luu
+            Lưu
           </button>
         </div>
       </div>
@@ -223,7 +223,7 @@ const QuickAddCustomerPopup = ({ isOpen, onClose, onSave }) => {
             className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             onClick={onClose}
           >
-            Huy
+            Hủy
           </button>
           <button
             type="button"
@@ -231,7 +231,7 @@ const QuickAddCustomerPopup = ({ isOpen, onClose, onSave }) => {
             disabled={!form.name.trim()}
             onClick={() => onSave(form)}
           >
-            Luu
+            Lưu
           </button>
         </div>
       </div>
@@ -466,7 +466,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                     ref={popup.barcodeInputRef}
                     type="text"
                     className="flex-1 rounded-lg border border-blue-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-blue-700 dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-                    placeholder="Quét mã vạch hoac Nhập Mã hàng hóa..."
+                    placeholder="Quét mã vạch hoặc Nhập Mã hàng hóa..."
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -760,7 +760,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                 className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
                 onClick={() => popup.requestClose('cancelBtn')}
               >
-                Huy
+                Hủy
               </button>
               <button
                 type="button"
@@ -774,7 +774,7 @@ const GoodsIssuePopup = ({ isOpen, onClose, editData = null }) => {
                     Đang lưu...
                   </span>
                 ) : (
-                  'Luu'
+                  'Lưu'
                 )}
               </button>
             </div>

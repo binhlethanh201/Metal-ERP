@@ -18,7 +18,7 @@ const CopyChip = ({ value, label }) => {
   return (
     <button
       onClick={handleCopy}
-      title="Click để copy"
+      title="Nhấn để sao chép"
       className="group inline-flex items-center gap-1.5 rounded-md border border-outline-variant bg-surface-container-lowest px-2 py-1 font-mono text-[11px] font-semibold text-on-surface-variant transition-all hover:border-primary hover:text-primary"
     >
       <span>{label || value}</span>
@@ -180,7 +180,7 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                   <Field label="Họ và tên" value={data.ownerName} />
                   <Field label="Email" value={data.ownerEmail} />
                   <Field
-                    label="User ID"
+                    label="ID người dùng"
                     value={data.userId ? `#${String(data.userId).slice(0, 8)}` : null}
                     mono
                     fullWidth
@@ -198,7 +198,7 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                   <Field label="Ngày gửi hồ sơ" value={formatDateTime(data.createdAt)} />
                   <Field label="Ngày review" value={formatDateTime(data.reviewedAt) || '—'} />
                   <Field
-                    label="Reviewed by (User ID)"
+                    label="Người đánh giá (ID)"
                     value={data.reviewedBy ? `#${String(data.reviewedBy).slice(0, 8)}` : '—'}
                     mono
                   />

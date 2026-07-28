@@ -433,13 +433,13 @@ const OrderHistory = () => {
     const d = new Date(normalized);
     if (isNaN(d.getTime())) return '';
     // Convert sang múi giờ Việt Nam (UTC+7) bằng cách dùng Intl với timeZone, không phụ thuộc browser TZ
-    const fmt = new Intl.DateTimeFormat('en-CA', {
+    const fmt = new Intl.DateTimeFormat('vi-VN', {
       timeZone: 'Asia/Ho_Chi_Minh',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
     });
-    return fmt.format(d); // en-CA trả về "YYYY-MM-DD"
+    return fmt.format(d);
   };
 
   const todayStr = getVNDateStr(new Date());

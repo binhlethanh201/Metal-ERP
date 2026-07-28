@@ -29,21 +29,21 @@ const ConfirmUnsavedModal = ({ isOpen, onCancel, onDiscard, onSave }) => {
             className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             onClick={onCancel}
           >
-            Huy
+            Hủy
           </button>
           <button
             type="button"
             className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#404040] dark:bg-[#272727] dark:text-[#b3b3b3] dark:hover:bg-[#404040]"
             onClick={onDiscard}
           >
-            Khong
+            Không
           </button>
           <button
             type="button"
             className="rounded-lg bg-[#004785] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#003566] active:scale-95"
             onClick={onSave}
           >
-            Co
+            Có
           </button>
         </div>
       </div>

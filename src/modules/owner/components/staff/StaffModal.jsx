@@ -251,9 +251,9 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               onChange={handleRoleChange}
               disabled={!!staff}
             >
-              <option value="SalesStaff">Sales Staff (Nhân viên Bán hàng)</option>
-              <option value="InventoryStaff">Inventory Staff (Nhân viên Kho)</option>
-              <option value="Staff">Staff (Nhân viên)</option>
+              <option value="SalesStaff">Nhân viên Bán hàng</option>
+              <option value="InventoryStaff">Nhân viên Kho</option>
+              <option value="Staff">Nhân viên</option>
               {!staff && <option value="">-- Không gán vai trò (Tuỳ chỉnh) --</option>}
             </select>
             {staff && (

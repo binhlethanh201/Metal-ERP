@@ -238,27 +238,45 @@ export const InventoryHistoryCard = ({
       key: 'productName',
       header: 'Sản phẩm',
       width: '1fr',
-      render: (_, row) => (
-        <div>
-          <span className="font-medium text-slate-700 dark:text-[#b3b3b3]">
-            {row.productName || row.reason || 'Không có ghi chú'}
-          </span>
-          {row.cancelReason && (
-            <div className="mt-0.5 text-xs italic text-rose-600 dark:text-rose-400">Lý do hủy: {row.cancelReason}</div>
-          )}
-        </div>
-      ),
+      render: (_, row) => {
+        const text = row.productName || row.reason || 'Không có ghi chú';
+        const lines = text.split('\n').filter(Boolean);
+        return (
+          <div>
+            {lines.length > 0 ? (
+              lines.map((line, i) => (
+                <div key={i} className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+                  {line}
+                </div>
+              ))
+            ) : (
+              <span className="font-medium text-slate-700 dark:text-[#b3b3b3]">{text}</span>
+            )}
+            {row.cancelReason && (
+              <div className="mt-0.5 text-xs italic text-rose-600 dark:text-rose-400">Lý do hủy: {row.cancelReason}</div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'quantity',
       header: 'Số lượng',
       width: '100px',
       align: 'right',
-      render: (val) => (
-        <span className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
-          {val != null ? Number(val).toLocaleString('vi-VN') : '---'}
-        </span>
-      ),
+      render: (_, row) => {
+        const text = row.quantityDisplay || (row.quantity != null ? Number(row.quantity).toLocaleString('vi-VN') : '---');
+        const lines = String(text).split('\n').filter(Boolean);
+        return (
+          <div>
+            {lines.map((line, i) => (
+              <div key={i} className="text-sm font-semibold text-slate-900 dark:text-[#e5e5e5]">
+                {line}
+              </div>
+            ))}
+          </div>
+        );
+      },
     },
     {
       key: 'status',
