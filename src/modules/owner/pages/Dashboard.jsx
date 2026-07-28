@@ -87,24 +87,11 @@ const InventoryDashboard = () => {
 
   /* ── Thanh toán 30 ngày ── */
   const pb = data?.paymentBreakdownLast30Days;
-  const paymentRows = pb
-    ? [
-        { label: 'Tiền mặt', amount: pb.cashAmount, count: pb.cashCount, color: 'bg-green-500' },
-        {
-          label: 'Chuyển khoản',
-          amount: pb.transferAmount,
-          count: pb.transferCount,
-          color: 'bg-blue-500',
-        },
-        {
-          label: 'Kết hợp',
-          amount: pb.combinedAmount,
-          count: pb.combinedCount,
-          color: 'bg-purple-500',
-        },
-        { label: 'Công nợ', amount: pb.debtAmount, count: pb.debtCount, color: 'bg-orange-500' },
-      ]
-    : [];
+  const paymentRows = [
+    { label: 'Tiền mặt', amount: pb?.cashAmount ?? 0, count: pb?.cashCount ?? 0, color: 'bg-green-500' },
+    { label: 'Chuyển khoản', amount: pb?.transferAmount ?? 0, count: pb?.transferCount ?? 0, color: 'bg-blue-500' },
+    { label: 'Công nợ', amount: pb?.debtAmount ?? 0, count: pb?.debtCount ?? 0, color: 'bg-orange-500' },
+  ];
   const totalPbAmount = paymentRows.reduce((s, r) => s + r.amount, 0);
 
   /* ════════════════════════════ RENDER ════════════════════════════ */
@@ -261,10 +248,10 @@ const InventoryDashboard = () => {
                 return (
                   <div key={row.label}>
                     <div className="mb-1 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${row.color}`} />
-                        <span className="text-xs font-semibold text-slate-700 dark:text-[#b3b3b3]">{row.label}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-[#808080]">
+                      <div className="flex items-center gap-3">
+                        <span className={`inline-flex h-4 w-4 rounded-full ${row.color}`} />
+                        <span className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">{row.label}</span>
+                        <span className="text-xs text-slate-500 dark:text-[#a3a3a3]">
                           ({fmtInt(row.count)} đơn)
                         </span>
                       </div>
@@ -377,23 +364,15 @@ const InventoryDashboard = () => {
                 {[
                   {
                     label: 'Tổng công nợ',
-                    value: fmtVND(data?.customerDebtSummary?.totalDebt, true),
-                    sub: `${fmtInt(data?.customerDebtSummary?.customerCount)} khách`,
+                    value: fmtVND(data?.customerDebtSummary?.totalDebt ?? 0, true),
+                    sub: `${fmtInt(data?.customerDebtSummary?.customerCount ?? 0)} khách`,
                     color: 'text-blue-900',
                     bg: 'bg-blue-50',
                     icon: 'CircleDollarSign',
                   },
                   {
-                    label: 'Nợ quá hạn',
-                    value: fmtVND(data?.customerDebtSummary?.overdueDebt, true),
-                    sub: `${fmtInt(data?.customerDebtSummary?.overdueCustomerCount)} khách`,
-                    color: 'text-red-600',
-                    bg: 'bg-red-50',
-                    icon: 'warning',
-                  },
-                  {
                     label: 'Đơn chờ xử lý',
-                    value: fmtInt(data?.pendingOrderCount),
+                    value: fmtInt(data?.pendingOrderCount ?? 0),
                     sub: 'đơn đang chờ',
                     color: 'text-orange-600',
                     bg: 'bg-orange-50',
@@ -401,8 +380,8 @@ const InventoryDashboard = () => {
                   },
                   {
                     label: 'Chi phí chờ duyệt',
-                    value: fmtVND(data?.pendingExpenseAmount, true),
-                    sub: `${fmtInt(data?.pendingExpenseCount)} phiếu`,
+                    value: fmtVND(data?.pendingExpenseAmount ?? 0, true),
+                    sub: `${fmtInt(data?.pendingExpenseCount ?? 0)} phiếu`,
                     color: 'text-slate-700',
                     bg: 'bg-slate-50',
                     icon: 'receipt',
@@ -445,10 +424,10 @@ const InventoryDashboard = () => {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-[#333333]">
-                    {['Sản phẩm', 'Tồn', 'Tối thiểu', 'Thiếu'].map((h) => (
+                    {['Sản phẩm', 'Tối thiểu', 'Tồn'].map((h, index) => (
                       <th
                         key={h}
-                        className="pb-2 pr-3 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080] last:text-right"
+                        className={`pb-2 pr-3 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080] ${index > 0 ? 'text-right' : ''}`}
                       >
                         {h}
                       </th>
@@ -464,12 +443,9 @@ const InventoryDashboard = () => {
                         </p>
                         <p className="text-[10px] text-slate-400 dark:text-[#808080]">{p.categoryName}</p>
                       </td>
-                      <td className="py-2 pr-3 font-semibold text-orange-600">
+                      <td className="py-2 pr-3 text-right text-slate-500 dark:text-[#999999]">{fmtInt(p.minimumStock)}</td>
+                      <td className="py-2 text-right font-semibold text-orange-600">
                         {fmtInt(p.availableStock)}
-                      </td>
-                      <td className="py-2 pr-3 text-slate-500 dark:text-[#999999]">{fmtInt(p.minimumStock)}</td>
-                      <td className="py-2 text-right font-black text-red-600">
-                        -{fmtInt(p.shortage)}
                       </td>
                     </tr>
                   ))}
@@ -538,44 +514,6 @@ const InventoryDashboard = () => {
         </Section>
       </div>
 
-      {/* ── Tóm tắt nhanh cuối trang ── */}
-      {!loading && data && (
-        <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-          {[
-            { icon: 'store', label: 'Chi nhánh hoạt động', value: fmtInt(data.activeBranches) },
-            { icon: 'inventory_2', label: 'Sản phẩm đang bán', value: fmtInt(data.activeProducts) },
-            {
-              icon: 'group',
-              label: 'Khách hàng tích cực',
-              value: fmtInt(data.activeCustomerCount),
-            },
-            {
-              icon: 'trending_up',
-              label: 'DT tb 7 ngày/ngày',
-              value: fmtVND(data.averageDailyRevenueLast7Days, true),
-            },
-            {
-              icon: 'shopping_bag',
-              label: 'Giá trị đơn tb 30 ngày',
-              value: fmtVND(data.averageOrderValueLast30Days, true),
-            },
-            {
-              icon: 'UserPlus',
-              label: 'KH mới 30 ngày',
-              value: fmtInt(data.newCustomersLast30Days),
-            },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-xl border border-slate-200 bg-white p-4 text-center dark:border-[#333333] dark:bg-[#0f0f0f]"
-            >
-              <Icon name={item.icon} className="mb-1 text-xl text-slate-400 dark:text-[#808080]" />
-              <p className="text-[10px] font-bold uppercase text-slate-400 dark:text-[#808080]">{item.label}</p>
-              <p className="mt-1 text-base font-extrabold text-blue-900">{item.value}</p>
-            </div>
-          ))}
-        </section>
-      )}
     </div>
   );
 };

@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
+import { Button } from '../../../../shared/components/Button';
+import Icon from '../../../../shared/components/Icon';
 import { ImportItemsTable } from './ImportItemsTable';
 import { ImportTicketForm } from './ImportTicketForm';
 import { createInwardInventory, confirmInwardInventory, getProducts } from '../../services/inventoryService';
@@ -42,6 +44,10 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [status, setStatus] = useState({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
+
+  // Excel import
+  const fileInputRef = useRef(null);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -196,9 +202,80 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch('http://localhost:5100/api/inwardinventoryexcel/template', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Tải template thất bại');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Template_NhapKho_Excel.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setStatus({ type: 'error', message: 'Không thể tải template' });
+    }
+  };
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const formData = new FormData();
+      formData.append('File', file);
+      const res = await fetch('http://localhost:5100/api/inwardinventoryexcel/parse', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data?.success) {
+        const { validRows, errors } = data.data;
+        const count = validRows?.length || 0;
+        if (count > 0) {
+          const mapped = validRows.map((row) => ({
+            productCode: row.maSanPham || '',
+            productName: row.tenSanPham || '',
+            quantity: Number(row.soLuong || 0),
+            costPrice: Number(row.donGiaNhap || 0),
+            note: row.ghiChu || '',
+          }));
+          handleImportRows(mapped);
+        }
+        if (errors?.length > 0) {
+          setStatus({ type: 'error', message: `${errors.length} dòng lỗi. ${count} dòng hợp lệ đã được nạp.` });
+        } else {
+          setStatus({ type: 'success', message: `Đã nạp ${count} sản phẩm từ Excel.` });
+        }
+      } else {
+        setStatus({ type: 'error', message: data?.message || 'Parse thất bại' });
+      }
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message || 'Lỗi import file' });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <>
       <Modal isOpen={isOpen} onClose={() => !isSubmitting && onClose()} title="Tạo phiếu nhập kho" size="7xl">
+        <div className="mb-4 flex items-center gap-2">
+          <input type="file" ref={fileInputRef} accept=".xlsx,.xls" onChange={handleImportExcel} className="hidden" />
+          <Button variant="secondary" size="sm" onClick={handleDownloadTemplate} disabled={importing} className="flex items-center gap-1.5">
+            <Icon name="download" size={16} /> Tải file Excel mẫu
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} className="flex items-center gap-1.5">
+            <Icon name="upload_file" size={16} /> {importing ? 'Đang import...' : 'Nhập từ Excel'}
+          </Button>
+        </div>
         <div className="flex flex-col gap-6 xl:flex-row">
           <div className="min-w-0 flex-1">
             <ImportItemsTable
