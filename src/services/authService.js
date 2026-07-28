@@ -113,10 +113,20 @@ const normalizeLoginResponse = (response) => {
   finalUser = stripSensitiveFields(finalUser);
 
   if (finalUser) {
+    if (Array.isArray(finalUser.roles)) {
+      finalUser.roles = finalUser.roles.map((r) =>
+        typeof r === 'string' ? r.replace(/\s+/g, '') : r
+      );
+    }
     if (finalUser.phoneNumber && !finalUser.phone) finalUser.phone = finalUser.phoneNumber;
     if (finalUser.PhoneNumber && !finalUser.phone) finalUser.phone = finalUser.PhoneNumber;
     if (!finalUser.email) finalUser.email = finalUser.phone || finalUser.username || '';
-    if (!finalUser.role) finalUser.role = finalUser.roleId || finalUser.role || 'store_owner';
+    if (!finalUser.role) {
+      finalUser.role =
+        (Array.isArray(finalUser.roles) && finalUser.roles[0]) ||
+        finalUser.roleId ||
+        'Owner';
+    }
     if (response?.data?.permissions || response?.result?.permissions || response?.permissions) {
       finalUser.permissions = response?.data?.permissions || response?.result?.permissions || response?.permissions;
     }

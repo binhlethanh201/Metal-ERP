@@ -3,6 +3,7 @@ import Icon from '../../../../shared/components/Icon';
 import { getProducts } from '../../services/inventoryService';
 import { getStaffs } from '../../../owner/services/staffService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 // Import Shared Components
 import Modal from '../../../../shared/components/Modal';
@@ -20,7 +21,7 @@ import Table from '../../../../shared/components/Table';
  */
 const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
   const { user } = useAuth();
-  const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
+  const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
   const currentUserId = user?.userId || user?.id;
 
   const [products, setProducts] = useState([]);
@@ -78,8 +79,8 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
             const qualified = allStaff.filter((staff) => {
               const isSameBranch = !branchId || !staff.branchId || staff.branchId === branchId;
               const hasInventoryRole =
-                staff.roles?.includes('InventoryStaff') ||
-                staff.roles?.includes('Owner') ||
+                hasRole(staff.roles, 'InventoryStaff') ||
+                hasRole(staff.roles, 'Owner') ||
                 staff.role === 'Owner';
               const hasPermission =
                 staff.permissionCodes?.includes('STOCK_CHECK_CREATE') ||

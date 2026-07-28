@@ -10,6 +10,7 @@ import {
   updateDiscrepancyReasons,
 } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 // Import Shared Components
 import Modal from '../../../../shared/components/Modal';
@@ -64,7 +65,7 @@ const getStatusLabel = (item) => {
 
 const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess, onEditClick }) => {
   const { user } = useAuth();
-  const isOwner = user?.roles?.includes('Owner') || user?.role === 'Owner';
+  const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
   const currentUserId = user?.userId || user?.id;
 
   const [detailData, setDetailData] = useState(null);

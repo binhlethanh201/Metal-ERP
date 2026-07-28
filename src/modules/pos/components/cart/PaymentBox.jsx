@@ -6,7 +6,12 @@ import { useState } from 'react';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { mockPaymentMethods } from '../../data/posMockData';
+
+const PAYMENT_METHODS = [
+  { id: 'cash', name: 'Tiền mặt', icon: '💵' },
+  { id: 'transfer', name: 'Chuyển khoản', icon: '🏦' },
+  { id: 'card', name: 'Thẻ', icon: '💳' },
+];
 
 export const PaymentBox = ({ total, onPaymentComplete }) => {
   const [selectedMethod, setSelectedMethod] = useState('cash');
@@ -39,7 +44,7 @@ export const PaymentBox = ({ total, onPaymentComplete }) => {
 
       {/* Payment Methods */}
       <div className="grid grid-cols-3 gap-2">
-        {mockPaymentMethods.map((method) => (
+        {PAYMENT_METHODS.map((method) => (
           <button
             key={method.id}
             onClick={() => setSelectedMethod(method.id)}

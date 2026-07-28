@@ -5,6 +5,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasRole } from '../../../shared/utils/roleRedirect';
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
@@ -159,7 +160,7 @@ const POSScreen = () => {
   }, [posProducts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+  const isOwner = hasRole(userRoles, 'Owner');
   const hasSaleCreate = user?.permissions?.includes('SALE_CREATE') || isOwner;
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
@@ -507,34 +508,7 @@ const POSScreen = () => {
     } catch (err) {
       console.error('Lỗi tạo đơn:', err);
       showNotice('Lỗi: ' + (err.message || 'Không thể tạo đơn hàng'));
-      // Fallback: vẫn hiển thị mock nếu API lỗi
-      const order = {
-        id:
-          'POS-' +
-          new Date().toISOString().slice(0, 10).replace(/-/g, '') +
-          '-' +
-          String(orderCounter).padStart(3, '0'),
-        date: new Date().toISOString(),
-        items: [...cart.cart],
-        subtotal: cart.subtotal,
-        discount: discountInfo?.discountAmount || 0,
-
-        total: finalTotal,
-        payLines: lines.map((l) => ({
-          method: PAYMENT_LABELS[l.method.toLowerCase()] || l.method,
-          amount: l.amount,
-        })),
-        totalPaid: totalPaidAmount,
-        change: Math.max(0, totalPaidAmount - finalTotal),
-        customer: selectedCustomer ? selectedCustomer.name : 'Khách lẻ',
-      };
-      setLastOrder(order);
-      setOrderCounter((c) => c + 1);
       setShowPayModal(false);
-      setShowSuccess(true);
-      cart.clearCart();
-      setSelectedCustomer(null);
-      refetchProducts();
     } finally {
       setPaying(false);
     }
