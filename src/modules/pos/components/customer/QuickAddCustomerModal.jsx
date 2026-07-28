@@ -92,7 +92,7 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
       <div className="space-y-4">
         <Input
           label="Tên khách hàng"
-          placeholder="Nháp ten"
+          placeholder="Nhập tên"
           value={form.name}
           onChange={(e) => {
             setForm((f) => ({ ...f, name: e.target.value }));

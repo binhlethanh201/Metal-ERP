@@ -3,6 +3,7 @@ import Icon from '../../../../shared/components/Icon';
 import Modal from '../../../../shared/components/Modal';
 import Button from '../../../../shared/components/Button';
 import Input from '../../../../shared/components/Input';
+import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 const initialFormState = {
   username: '',
@@ -72,11 +73,11 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
         setForm({
           ...staff,
           password: '',
-          defaultRoleType: staff.roles?.includes('InventoryStaff')
+          defaultRoleType: hasRole(staff.roles, 'InventoryStaff')
             ? 'InventoryStaff'
-            : staff.roles?.includes('Staff')
+            : hasRole(staff.roles, 'Staff')
               ? 'Staff'
-              : staff.roles?.includes('SalesStaff')
+              : hasRole(staff.roles, 'SalesStaff')
                 ? 'SalesStaff'
                 : '',
           isActive: staff.isActive !== undefined ? staff.isActive : 1,
@@ -118,8 +119,12 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
     }
 
     const submitData = { ...form };
-    if (!staff && !isCustomizing && form.defaultRoleType) {
-      submitData.permissionCodes = [];
+    if (!staff) {
+      submitData.customPermissionCodes = submitData.permissionCodes;
+      delete submitData.permissionCodes;
+      if (!isCustomizing && form.defaultRoleType) {
+        submitData.customPermissionCodes = [];
+      }
     }
     onSave(submitData);
   };
@@ -246,9 +251,9 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               onChange={handleRoleChange}
               disabled={!!staff}
             >
-              <option value="SalesStaff">Sales Staff (Nhân viên Bán hàng)</option>
-              <option value="InventoryStaff">Inventory Staff (Nhân viên Kho)</option>
-              <option value="Staff">Staff (Nhân viên)</option>
+              <option value="SalesStaff">Nhân viên Bán hàng</option>
+              <option value="InventoryStaff">Nhân viên Kho</option>
+              <option value="Staff">Nhân viên</option>
               {!staff && <option value="">-- Không gán vai trò (Tuỳ chỉnh) --</option>}
             </select>
             {staff && (

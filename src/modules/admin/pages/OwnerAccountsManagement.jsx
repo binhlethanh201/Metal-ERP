@@ -58,10 +58,10 @@ const OwnerAccountsManagement = () => {
       isOpen: true,
       type: 'freeze',
       data: {
-        title: 'Khóa toàn bộ Tenant (Master Account)',
-        message: `Bạn đang thực hiện khóa luồng truy cập của Tenant: ${owner.fullName || owner.email}.`,
+        title: 'Khóa toàn bộ gian hàng',
+        message: `Bạn đang thực hiện khóa luồng truy cập của: ${owner.fullName || owner.email}.`,
         warningNote:
-          'BR-45: Khi Master Partner bị khóa, trạng thái này sẽ cascade tới TOÀN BỘ chi nhánh, kho hàng và token của nhân viên trực thuộc lập tức.',
+          'BR-45: Khi chủ gian hàng bị khóa, trạng thái này sẽ áp dụng tới TOÀN BỘ chi nhánh, kho hàng và token của nhân viên trực thuộc ngay lập tức.',
         confirmText: 'Thực thi Khóa',
         target: owner,
       },
@@ -85,9 +85,9 @@ const OwnerAccountsManagement = () => {
       <table className="w-full text-left text-xs text-on-surface">
         <thead>
           <tr className="border-b border-outline-variant bg-surface-container-low text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-            <th className="px-4 py-3">Tenant / Corporate ID</th>
-            <th className="px-4 py-3">Subscription Tier</th>
-            <th className="px-4 py-3 text-center">Master Status</th>
+            <th className="px-4 py-3">Gian hàng / Mã doanh nghiệp</th>
+            <th className="px-4 py-3">Gói dịch vụ</th>
+            <th className="px-4 py-3 text-center">Trạng thái</th>
             <th className="px-4 py-3 text-right">Thao tác</th>
           </tr>
         </thead>
@@ -111,14 +111,14 @@ const OwnerAccountsManagement = () => {
                       : 'bg-error-container text-error'
                   }`}
                 >
-                  {owner.status === 1 ? 'ACTIVE' : owner.status?.toUpperCase() || '—'}
+                  {owner.status === 1 ? 'Đang hoạt động' : owner.status === 'Active' || owner.status === 'active' ? 'Đang hoạt động' : 'Đã khóa'}
                 </span>
               </td>
               <td className="px-4 py-3 text-right">
                 <button
                   onClick={() => triggerFreezeOwner(owner)}
                   className="p-1 text-outline hover:text-error"
-                  title="Freeze Tenant"
+                  title="Khóa gian hàng"
                 >
                   <Icon name="lock" size={16} />
                 </button>

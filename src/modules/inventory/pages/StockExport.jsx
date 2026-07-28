@@ -24,32 +24,36 @@ const extractList = (response) => {
   return [];
 };
 
-const normalizeExportRow = (item, index) => {
+const normalizeExportRows = (item, index) => {
   const itemsList = Array.isArray(item?.items) ? item.items : [];
   const totalQuantity = itemsList.reduce((acc, curr) => acc + Number(curr?.quantity || 0), 0);
-  const productNames = itemsList.map((i) => i.productName).filter(Boolean);
-  const label =
-    productNames.length > 1
-      ? `${productNames[0]} (+${productNames.length - 1} SP khác)`
-      : productNames[0] || 'Sản phẩm xuất kho';
+  const productNames = itemsList.map((i) => i.productName || '').filter(Boolean);
+  const quantities = itemsList.map((i) => Number(i.quantity || 0));
+  const productName = productNames.length > 0
+    ? productNames.join('\n')
+    : 'Sản phẩm xuất kho';
+  const quantityDisplay = quantities.length > 0
+    ? quantities.map((q) => q.toLocaleString('vi-VN')).join('\n')
+    : String(item?.quantity || 0);
   const ticketCode = item?.ticketCode || `EX-${index + 1}`;
   let partyName = '';
   try {
     partyName = localStorage.getItem(`outward_party_${ticketCode}`) || '';
   } catch {}
 
-  return {
+  return [{
     id: item?.stockTicketId || item?.id || `EXP-${index + 1}`,
     stockTicketId: item?.stockTicketId || item?.id,
     ticketCode,
-    productName: label,
+    productName,
     quantity: totalQuantity || item?.quantity || 0,
+    quantityDisplay,
     date: item?.createdAt || item?.Date || '',
     reason: item?.reason || item?.Reason || '',
     status: item?.status || item?.Status || 'COMPLETED',
     cancelReason: item?.cancelReason || '',
     partyName,
-  };
+  }];
 };
 
 const getItemKey = (item) => item.branchProductId || item.productId || item.id || item.Id;
@@ -95,6 +99,11 @@ export const StockExport = () => {
   const [globalError, setGlobalError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Excel import
+  const fileInputRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+
   const [ticketCode, setTicketCode] = useState('');
   const [exportDate, setExportDate] = useState(today.date);
   const [exportTime, setExportTime] = useState(today.time);
@@ -127,7 +136,7 @@ export const StockExport = () => {
       const queryParams = { pageNumber: 1, pageSize: 100, ...filterParams };
 
       try {
-        const productsResponse = await getProducts({ pageNumber: 1, pageSize: 100 });
+        const productsResponse = await getProducts({ pageNumber: 1, pageSize: 500 });
         const productItems = extractList(productsResponse);
         setProducts(productItems);
       } catch {
@@ -137,7 +146,7 @@ export const StockExport = () => {
 
       try {
         const exportsResponse = await getOutwardInventories(queryParams);
-        const exportItems = extractList(exportsResponse).map(normalizeExportRow).filter(Boolean);
+        const exportItems = extractList(exportsResponse).flatMap(normalizeExportRows).filter(Boolean);
         setExports(exportItems);
       } catch {
         setExports([]);
@@ -283,6 +292,116 @@ export const StockExport = () => {
         getItemKey(i) === key ? { ...i, unitPrice: cleaned ? Number(cleaned) : 0 } : i
       )
     );
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch('http://localhost:5100/api/outwardinventoryexcel/template', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Tải template thất bại');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Template_XuatKho_Excel.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setGlobalError(err.message || 'Không thể tải template');
+    }
+  };
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    setGlobalError('');
+    try {
+      const token = localStorage.getItem('authToken');
+      const formData = new FormData();
+      formData.append('File', file);
+      const res = await fetch('http://localhost:5100/api/outwardinventoryexcel/parse', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data?.success) {
+        const { validRows, errors, groups } = data.data;
+        if (errors && errors.length > 0) {
+          // Có lỗi -> hiện preview trong modal để user xem
+          setImportResult(data.data);
+        }
+        // Đổ dữ liệu valid vào form items
+        if (validRows && validRows.length > 0) {
+          // Đảm bảo có đủ dữ liệu sản phẩm để tra cứu tồn kho
+          const existingIds = new Set(products.map((p) => String(getItemKey(p))));
+          const missingIds = validRows
+            .map((row) => String(row.productId || row.resolvedProductId || ''))
+            .filter((id) => id && !existingIds.has(id));
+          if (missingIds.length > 0) {
+            try {
+              const allRes = await getProducts({ pageNumber: 1, pageSize: 2000 });
+              const allItems = extractList(allRes);
+              if (allItems.length > products.length) setProducts(allItems);
+            } catch {}
+          }
+
+          const mappedItems = validRows.map((row) => {
+            const pid = row.productId || row.resolvedProductId || '';
+            const matchedProduct = products.find(
+              (p) => String(getItemKey(p)) === String(pid)
+            );
+            const stock = matchedProduct ? getProductStock(matchedProduct) : 0;
+            const unit = matchedProduct ? getUnit(matchedProduct) : '';
+            return {
+              branchProductId: pid,
+              productId: pid,
+              productCode: row.maSanPham || '',
+              productName: row.tenSanPham || '',
+              unit,
+              quantity: Number(row.soLuong || 0),
+              unitPrice: Number(row.donGiaXuat || 0),
+              maxStock: stock,
+            };
+          });
+          setItems(mappedItems);
+          if (mappedItems.length === 0 && errors && errors.length > 0) {
+            setStatusMessage('File có lỗi, không có dòng nào hợp lệ để nạp. Vui lòng sửa file Excel và thử lại.');
+          } else if (mappedItems.length > 0 && errors && errors.length > 0) {
+            setStatusMessage(`Đã nạp ${mappedItems.length} dòng hợp lệ. ${errors.length} dòng lỗi bị bỏ qua.`);
+          } else if (mappedItems.length > 0) {
+            setStatusMessage(`Đã nạp ${mappedItems.length} sản phẩm từ Excel. Kiểm tra và xác nhận xuất kho.`);
+          }
+          if (groups && groups.length === 1) {
+            const lyDo = groups[0].lyDo;
+            if (lyDo === 'Trả NCC' || lyDo === 'Tra NCC') {
+              setTargetType('Nhà cung cấp');
+              setReasonType('Trả hàng nhà cung cấp');
+            } else if (lyDo === 'Xuất hủy' || lyDo === 'Xuat huy') {
+              setReasonType('__other__');
+              setReasonOther('Xuất hủy');
+            } else if (lyDo === 'Điều chuyển' || lyDo === 'Dieu chuyen') {
+              setReasonType('Xuất nội bộ / Điều chuyển');
+            }
+          }
+          if (!data.data.hasErrors) {
+            setImportResult(null);
+            setStatusMessage(`Đã nạp ${mappedItems.length} sản phẩm từ Excel. Kiểm tra và xác nhận xuất kho.`);
+          }
+        }
+      } else {
+        setStatusMessage('Lỗi: ' + (data?.message || 'Parse thất bại'));
+      }
+    } catch (err) {
+      setStatusMessage('Lỗi: ' + (err.message || 'Lỗi import file'));
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const isSale = reasonType === 'Xuất bán hàng';
@@ -515,6 +634,32 @@ export const StockExport = () => {
 
       {/* ==================== MODAL TẠO PHIẾU XUẤT ==================== */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Tạo phiếu xuất kho" size="5xl">
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".xlsx,.xls"
+            onChange={handleImportExcel}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            disabled={importing}
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Icon name="download" size={16} /> Tải file Excel mẫu
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+          >
+            <Icon name="upload_file" size={16} /> {importing ? 'Đang import...' : 'Nhập từ Excel'}
+          </button>
+          {importing && <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>}
+        </div>
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* Error / Status Banner */}
           {statusMessage && (
@@ -545,6 +690,38 @@ export const StockExport = () => {
             </div>
               );
             })()
+          )}
+
+          {importResult && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-amber-800 dark:text-amber-300">
+                  Kết quả import: {importResult.validRows?.length || 0} dòng hợp lệ, {importResult.errors?.length || 0} lỗi
+                </h3>
+                <Button variant="secondary" size="sm" onClick={() => setImportResult(null)}>Đóng</Button>
+              </div>
+              {importResult.errors?.length > 0 && (
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {importResult.errors.map((err, i) => (
+                    <p key={i} className="text-sm text-red-600 dark:text-red-400">
+                      Dòng {err.rowNumber}: {err.errorMessage}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {importResult.groups?.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {importResult.groups.map((g, i) => (
+                    <span key={i} className="rounded bg-white px-2 py-1 text-xs text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]">
+                      {g.lyDo}: {g.itemCount} SP - {g.totalValue?.toLocaleString('vi-VN')} VNĐ
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                Các dòng hợp lệ đã được nạp vào form bên dưới. Kiểm tra lại và bấm Xác nhận xuất kho.
+              </p>
+            </div>
           )}
 
           {/* --- THÔNG TIN CHỨNG TỪ --- */}

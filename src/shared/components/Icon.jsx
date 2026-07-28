@@ -31,6 +31,13 @@ const staticIconMap = {
   output: 'ArrowUpRight',
   push_pin: 'Pin',
   delete: 'Trash2',
+  sync: 'RefreshCw',
+  'user-check': 'UserCheck',
+  'eye-off': 'EyeOff',
+  'trash-2': 'Trash2',
+  save: 'Save',
+  upload: 'Upload',
+  settings: 'Settings',
   shopping_cart: 'ShoppingCart',
   add_shopping_cart: 'ShoppingBasket',
   shopping_bag: 'ShoppingBag',
@@ -132,7 +139,7 @@ const staticIconMap = {
 const toPascalCase = (str) => {
   if (!str) return '';
   return str
-    .split('_')
+    .split(/[_-]/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join('');
 };

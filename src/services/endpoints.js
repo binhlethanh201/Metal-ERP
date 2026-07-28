@@ -265,6 +265,8 @@ export const ENDPOINTS = {
     LOGOUT: '/logout',
     REGISTER_START: '/register/start',
     REGISTER_VERIFY: '/register/verify',
+    FORGOT_PASSWORD_START: '/forgot-password/start',
+    FORGOT_PASSWORD_VERIFY: '/forgot-password/verify',
     REFRESH_TOKEN: '/refresh',
     GET_PROFILE: '/profile',
     UPDATE_PROFILE: '/profile',

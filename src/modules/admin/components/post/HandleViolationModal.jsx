@@ -30,7 +30,7 @@ const HandleViolationModal = ({ isOpen, onClose, reportData, onConfirm }) => {
             <p className="font-semibold text-on-surface">
               Đối tượng phạt: <span className="text-error">{reportData.targetName}</span>
             </p>
-            <p className="mt-1 text-xs text-on-surface-variant">Log ID: {reportData.id}</p>
+            <p className="mt-1 text-xs text-on-surface-variant">ID bản ghi: {reportData.id}</p>
           </div>
 
           <div>

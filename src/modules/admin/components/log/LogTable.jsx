@@ -7,10 +7,10 @@ const LogTable = ({ logs, onRowClick }) => {
         <table className="w-full text-left text-xs text-on-surface">
           <thead>
             <tr className="border-b border-outline-variant bg-surface-container-low text-[10px] uppercase tracking-wider text-on-surface-variant">
-              <th className="px-4 py-3 font-bold">Thời gian (Timestamp)</th>
-              <th className="px-4 py-3 font-bold">Mức độ (Level)</th>
-              <th className="px-4 py-3 font-bold">Nguồn (Source)</th>
-              <th className="px-4 py-3 font-bold">Hành động (Action)</th>
+              <th className="px-4 py-3 font-bold">Thời gian</th>
+              <th className="px-4 py-3 font-bold">Mức độ</th>
+              <th className="px-4 py-3 font-bold">Nguồn</th>
+              <th className="px-4 py-3 font-bold">Hành động</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant">
