@@ -87,9 +87,6 @@ const AdminDashboard = () => {
           <h1 className="text-xl font-bold tracking-tight text-on-surface">
             Hệ thống Phân tích Chỉ số &amp; Vận hành Lõi
           </h1>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Giám sát thời gian thực trạng phân hệ cửa hàng và luồng thông tin B2B
-          </p>
         </div>
         <button
           onClick={handleExport}
@@ -110,14 +107,11 @@ const AdminDashboard = () => {
           <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
             <div>
               <div className="text-sm font-semibold text-on-surface-variant">
-                Shop Đang Hoạt Động
+                Tài Khoản Đang Hoạt Động
               </div>
               <div className="mt-2 text-3xl font-black text-on-surface">
                 {formatCurrency(stats.activeTenants)}
               </div>
-            </div>
-            <div className="mt-4 w-fit rounded-md bg-tertiary-fixed px-2 py-1 text-xs font-bold text-on-tertiary-fixed-variant">
-              Owner có IsActive = 1
             </div>
           </div>
 
@@ -133,9 +127,6 @@ const AdminDashboard = () => {
                 <span className="text-sm font-bold text-on-surface-variant">VNĐ</span>
               </div>
             </div>
-            <div className="mt-4 w-fit rounded-md bg-tertiary-fixed px-2 py-1 text-xs font-bold text-on-tertiary-fixed-variant">
-              Invoice COMPLETED 30d
-            </div>
           </div>
 
           <div className="flex flex-col justify-between rounded-lg border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
@@ -147,9 +138,6 @@ const AdminDashboard = () => {
                 {formatCurrency(stats.b2bCommission)}
               </div>
             </div>
-            <div className="mt-4 w-fit rounded-md bg-surface-container-highest px-2 py-1 text-xs font-bold text-on-surface-variant">
-              Tính trên Order TRANSFER
-            </div>
           </div>
 
           <div className="flex flex-col justify-between rounded-lg border-l-4 border-outline-variant border-l-error bg-error-container/20 p-5 shadow-sm">
@@ -158,9 +146,6 @@ const AdminDashboard = () => {
               <div className="mt-2 text-3xl font-black text-error">
                 {formatCurrency(stats.overdueAlerts)}
               </div>
-            </div>
-            <div className="mt-4 w-fit rounded-md bg-error-container px-2 py-1 text-xs font-bold text-on-error-container">
-              Khách vượt DebtLimit
             </div>
           </div>
         </div>
