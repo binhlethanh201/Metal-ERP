@@ -21,7 +21,8 @@ import {
   getOrders,
   getCustomerOrders,
 } from '../services/posService';
-import { CUSTOMER_GROUPS } from '../data/posMockData';
+
+const CUSTOMER_GROUPS = ['Tất cả', 'Cá nhân', 'Doanh nghiệp', 'Đại lý', 'Nhà thầu'];
 
 const VN_TZ = 'Asia/Ho_Chi_Minh';
 const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
@@ -52,84 +53,6 @@ const mapCustomer = (c) => ({
 });
 
 const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
-
-const MOCK_CUSTOMERS = [
-  {
-    id: 1,
-    customerId: '1',
-    name: 'Nguyễn Văn A',
-    phone: '0903123456',
-    email: '',
-    address: 'Hà Nội',
-    group: 'Cá nhân',
-    notes: '',
-    totalSpent: 5000000,
-    orderCount: 12,
-    returnCount: 2,
-    lastVisit: '2026-06-28',
-    createdAt: '01/01/2026',
-  },
-  {
-    id: 2,
-    customerId: '2',
-    name: 'Công ty TNHH XD Minh Phát',
-    phone: '02839998888',
-    email: 'info@minhphat.vn',
-    address: 'TP.HCM',
-    group: 'Doanh nghiệp',
-    notes: '',
-    totalSpent: 85000000,
-    orderCount: 45,
-    returnCount: 5,
-    lastVisit: '2026-06-29',
-    createdAt: '01/01/2026',
-  },
-  {
-    id: 3,
-    customerId: '3',
-    name: 'Trần Thị B',
-    phone: '0903123457',
-    email: '',
-    address: 'Hà Nội',
-    group: 'Cá nhân',
-    notes: '',
-    totalSpent: 1200000,
-    orderCount: 3,
-    returnCount: 0,
-    lastVisit: '2026-06-25',
-    createdAt: '15/03/2026',
-  },
-  {
-    id: 4,
-    customerId: '4',
-    name: 'Đại lý Tuấn Kiệt',
-    phone: '0908123456',
-    email: '',
-    address: 'Bình Dương',
-    group: 'Đại lý',
-    notes: '',
-    totalSpent: 25000000,
-    orderCount: 18,
-    returnCount: 3,
-    lastVisit: '2026-06-27',
-    createdAt: '01/02/2026',
-  },
-  {
-    id: 5,
-    customerId: '5',
-    name: 'Nhà thầu Quang Vinh',
-    phone: '0905123456',
-    email: '',
-    address: 'Đồng Nai',
-    group: 'Nhà thầu',
-    notes: '',
-    totalSpent: 120000000,
-    orderCount: 8,
-    returnCount: 1,
-    lastVisit: '2026-06-20',
-    createdAt: '01/01/2026',
-  },
-];
 
 export const CustomerManagement = () => {
   const navigate = useNavigate();
@@ -238,7 +161,7 @@ export const CustomerManagement = () => {
     } catch (err) {
       console.error('Lỗi lấy khách hàng:', err);
       setError(err.message);
-      setCustomers(MOCK_CUSTOMERS);
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
@@ -661,8 +584,8 @@ export const CustomerManagement = () => {
         </div>
 
         {error && (
-          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-            <strong>Lưu ý:</strong> {error}. Đang hiển thị dữ liệu mẫu.
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+            <strong>Lỗi:</strong> {error}
           </div>
         )}
 
