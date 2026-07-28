@@ -68,15 +68,15 @@ const AdminNotificationDropdown = () => {
   const getIconForTarget = (target) => {
     switch (target?.toUpperCase()) {
       case 'ALL':
-        return { name: 'public', color: 'text-blue-500', bg: 'bg-blue-100' };
+        return { name: 'public', color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' };
       case 'OWNER':
-        return { name: 'storefront', color: 'text-amber-500', bg: 'bg-amber-100' };
+        return { name: 'storefront', color: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' };
       case 'STAFF':
-        return { name: 'badge', color: 'text-purple-500', bg: 'bg-purple-100' };
+        return { name: 'badge', color: 'text-purple-500 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' };
       case 'COMMUNITY':
-        return { name: 'groups', color: 'text-emerald-500', bg: 'bg-emerald-100' };
+        return { name: 'groups', color: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' };
       default:
-        return { name: 'notifications', color: 'text-slate-500', bg: 'bg-slate-100' };
+        return { name: 'notifications', color: 'text-slate-500 dark:text-[#999999]', bg: 'bg-slate-100 dark:bg-[#272727]' };
     }
   };
 
@@ -152,7 +152,7 @@ const AdminNotificationDropdown = () => {
                   setIsOpen(false);
                   navigate('/admin/notifications');
                 }}
-                className="text-xs font-bold text-[#004785] dark:text-blue-400 hover:text-[#004785] dark:text-blue-400/80"
+                className="text-xs font-bold text-[#004785] dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 Xem tất cả thông báo
               </button>
