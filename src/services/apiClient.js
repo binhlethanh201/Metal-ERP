@@ -28,12 +28,18 @@ const translateErrorMessage = (msg) => {
   if (!msg || typeof msg !== 'string') return msg;
 
   const translations = [
-    [/[Pp]roduct\/?[Bb]ranch[Pp]roduct\s+with\s+(?:ID\/Code|ID|Code)\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
-      "Không tìm thấy sản phẩm có mã '$1' trong hệ thống."],
-    [/[Pp]roduct\s+with\s+(?:ID|Code)\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
-      "Không tìm thấy sản phẩm có mã '$1'."],
-    [/[Ss]upplier\s+with\s+ID\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
-      "Không tìm thấy nhà cung cấp có mã '$1'."],
+    [
+      /[Pp]roduct\/?[Bb]ranch[Pp]roduct\s+with\s+(?:ID\/Code|ID|Code)\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
+      "Không tìm thấy sản phẩm có mã '$1' trong hệ thống.",
+    ],
+    [
+      /[Pp]roduct\s+with\s+(?:ID|Code)\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
+      "Không tìm thấy sản phẩm có mã '$1'.",
+    ],
+    [
+      /[Ss]upplier\s+with\s+ID\s+['"]([^'"]+)['"]\s+was\s+not\s+found/i,
+      "Không tìm thấy nhà cung cấp có mã '$1'.",
+    ],
     [/not found/i, 'Không tìm thấy.'],
     [/invalid/i, 'Dữ liệu không hợp lệ.'],
     [/unauthorized/i, 'Không có quyền truy cập.'],
@@ -41,6 +47,10 @@ const translateErrorMessage = (msg) => {
     [/bad request/i, 'Yêu cầu không hợp lệ.'],
     [/conflict/i, 'Dữ liệu bị trùng lặp.'],
     [/forbidden/i, 'Không có quyền thực hiện thao tác này.'],
+    [
+      /an item with the same key has already been added/i,
+      'Dữ liệu bị trùng lặp, vui lòng tải lại trang.',
+    ],
   ];
 
   for (const [pattern, replacement] of translations) {
@@ -64,7 +74,11 @@ export const apiClient = async (endpoint, options = {}) => {
   if (options.params) {
     const searchParams = new URLSearchParams();
     Object.keys(options.params).forEach((key) => {
-      if (options.params[key] !== undefined && options.params[key] !== null && options.params[key] !== '') {
+      if (
+        options.params[key] !== undefined &&
+        options.params[key] !== null &&
+        options.params[key] !== ''
+      ) {
         searchParams.append(key, options.params[key]);
       }
     });

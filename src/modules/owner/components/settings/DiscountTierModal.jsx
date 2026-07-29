@@ -76,7 +76,13 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
     try {
       await onSave(payload);
     } catch (err) {
-      // Error đã được handle trong hook
+      // Hiển thị lỗi BE inline dưới trường MinOrderValue
+      const beMessage =
+        err?.data?.error?.message ||
+        err?.data?.message ||
+        err?.message ||
+        'Có lỗi xảy ra, vui lòng thử lại.';
+      setErrors({ minOrderValue: beMessage });
     }
   };
 
@@ -93,7 +99,10 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
               <Button
                 variant="outline"
                 className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
-                onClick={() => { onDelete?.(tier); onClose(); }}
+                onClick={() => {
+                  onDelete?.(tier);
+                  onClose();
+                }}
                 disabled={loading}
               >
                 Xóa
