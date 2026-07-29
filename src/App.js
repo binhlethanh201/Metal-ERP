@@ -80,6 +80,7 @@ const OwnerOutwardExcelPage = lazy(() => import('./modules/owner/pages/OwnerOutw
 const ShiftHistory = lazy(() => import('./modules/owner/pages/ShiftHistory'));
 const ReturnHistory = lazy(() => import('./modules/owner/pages/ReturnHistory'));
 const StoreSettings = lazy(() => import('./modules/owner/pages/StoreSettings'));
+const PrintTemplateSettings = lazy(() => import('./modules/owner/pages/PrintTemplateSettings'));
 
 // Report Module
 const OwnerReports = lazy(() => import('./modules/report/pages/OwnerReports'));
@@ -151,6 +152,7 @@ function App() {
                 <Route path="owner-dashboard" element={<OwnerDashboard />} />
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="store-settings" element={<StoreSettings />} />
+                <Route path="print-templates" element={<PrintTemplateSettings />} />
                 <Route path="employees" element={<StaffManagement />} />
                 <Route path="owner-reports" element={<OwnerReports />} />
                 <Route path="shift-history" element={<ShiftHistory />} />

@@ -5,6 +5,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const formatStartTime = (startedAt) => {
+  if (!startedAt) return '---';
+  const d = new Date(startedAt);
+  if (Number.isNaN(d.getTime())) return '---';
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+};
+
+const formatElapsed = (startedAt) => {
+  if (!startedAt) return '';
+  const d = new Date(startedAt);
+  if (Number.isNaN(d.getTime())) return '';
+  const diffMs = Date.now() - d.getTime();
+  if (diffMs < 0) return '';
+  const totalMin = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0) return `đã mở ${h} giờ ${m} phút`;
+  return `đã mở ${m} phút`;
+};
+
 const ShiftBadge = () => {
   const navigate = useNavigate();
   const [shiftInfo, setShiftInfo] = useState(() => {
@@ -15,6 +37,7 @@ const ShiftBadge = () => {
       return null;
     }
   });
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     const readShift = () => {
@@ -32,6 +55,12 @@ const ShiftBadge = () => {
       window.removeEventListener('storage', readShift);
     };
   }, []);
+
+  useEffect(() => {
+    if (!shiftInfo?.startedAt) return undefined;
+    const t = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => clearInterval(t);
+  }, [shiftInfo?.startedAt]);
 
   if (shiftInfo) {
     return (
@@ -57,11 +86,12 @@ const ShiftBadge = () => {
                 />
               </svg>
               <span className="text-sm font-bold text-green-800 dark:text-green-300">
-                Ca: {shiftInfo.startTime || '---'}
+                Ca: {formatStartTime(shiftInfo.startedAt)}
               </span>
             </div>
             <span className="text-[10px] font-semibold tracking-wide text-green-600 dark:text-green-400">
-              {shiftInfo.cashier || 'Thu ngân'} · {shiftInfo.orderCount ?? 0} đơn
+              {shiftInfo.userName || shiftInfo.cashier || 'Thu ngân'} ·{' '}
+              {formatElapsed(shiftInfo.startedAt) || `${shiftInfo.orderCount ?? 0} đơn`}
             </span>
           </div>
         </div>

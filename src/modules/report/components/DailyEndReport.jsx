@@ -75,6 +75,31 @@ export const DailyEndReport = ({ data }) => {
           </div>
         </div>
       </Card>
+      {(data.refundCount > 0 || data.refundCashAmount > 0 || data.refundTransferAmount > 0) && (
+        <Card header={<h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Hoàn tiền (phiếu trả hàng)</h4>}>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">Hoàn tiền mặt</p>
+              <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
+                {formatCurrency(data.refundCashAmount || 0)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">Hoàn chuyển khoản</p>
+              <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
+                {formatCurrency(data.refundTransferAmount || 0)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Số phiếu trả</p>
+              <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
+                {data.refundCount || 0}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-[#999999]">Đổi hàng ngang giá không tính ở đây</p>
+            </div>
+          </div>
+        </Card>
+      )}
       <Card header={<h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Phiếu kho trong ngày</h4>}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-900/50 dark:bg-emerald-900/20">

@@ -9,7 +9,8 @@ const INITIAL = { name: '', phone: '' };
 const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
   const [form, setForm] = useState(INITIAL);
   const [errors, setErrors] = useState({});
-  const [, setSaving] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const handleAdd = async () => {
     const errs = {};
@@ -22,14 +23,19 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
     }
 
     setSaving(true);
+    setApiError('');
     try {
       const result = await createCustomer({
         customerName: form.name.trim(),
         phoneNumber: form.phone.trim(),
       });
+      const newCustomerId = result.customerId || result.id;
+      if (!newCustomerId) {
+        throw new Error('Server không trả về customerId.');
+      }
       onAdd({
-        id: result.customerId || result.id || Date.now(),
-        customerId: result.customerId,
+        id: newCustomerId,
+        customerId: newCustomerId,
         name: result.customerName || form.name.trim(),
         phone: result.phoneNumber || form.phone.trim(),
         email: result.email || '',
@@ -43,26 +49,15 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
           ? new Date(result.createdAt).toLocaleDateString('vi-VN')
           : new Date().toLocaleDateString('vi-VN'),
       });
-    } catch (err) {
-      // Fallback: dùng local nếu API lỗi
-      onAdd({
-        id: Date.now(),
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: '',
-        address: '',
-        group: 'Cá nhân',
-        notes: '',
-        totalSpent: 0,
-        orderCount: 0,
-        lastVisit: '-',
-        createdAt: new Date().toLocaleDateString('vi-VN'),
-      });
-    } finally {
-      setSaving(false);
       setForm(INITIAL);
       setErrors({});
       onClose();
+    } catch (err) {
+      // KHÔNG fallback local với id=Date.now() — sẽ gây bug F5 mất khách
+      // (id giả không tồn tại trong DB, lần sau BE không tìm thấy).
+      setApiError(err?.message || 'Không thể tạo khách hàng. Vui lòng thử lại.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -83,13 +78,18 @@ const QuickAddCustomerModal = ({ isOpen, onClose, onAdd }) => {
           <Button variant="secondary" onClick={handleClose}>
             Hủy
           </Button>
-          <Button variant="primary" onClick={handleAdd} disabled={!form.name || !form.phone}>
-            Thêm khách
+          <Button variant="primary" onClick={handleAdd} disabled={!form.name || !form.phone || saving}>
+            {saving ? 'Đang thêm...' : 'Thêm khách'}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
+        {apiError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {apiError}
+          </div>
+        )}
         <Input
           label="Tên khách hàng"
           placeholder="Nhập tên"
