@@ -98,7 +98,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
     } else {
       setAssigneeUserId(currentUserId);
     }
-  }, [isOpen, detailData, branchId, isOwner, currentUserId]);
+  }, [isOpen, detailData, branchId, isOwner, currentUserId, canCreate, canApprove]);
 
   if (!isOpen || !detailData) return null;
 

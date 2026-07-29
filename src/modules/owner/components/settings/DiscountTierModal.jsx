@@ -3,47 +3,53 @@ import Modal from '../../../../shared/components/Modal';
 import Input from '../../../../shared/components/Input';
 import Button from '../../../../shared/components/Button';
 
-/**
- * Modal thêm/sửa mức chiết khấu
- */
+const formatNumber = (val) => {
+  if (!val && val !== 0) return '';
+  return String(val).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+const toRawNumber = (val) => {
+  if (!val) return '';
+  return String(val).replace(/\./g, '');
+};
+
 const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete }) => {
   const isEdit = !!tier;
   const [formData, setFormData] = useState({
     minOrderValue: '',
     discountPercent: '',
   });
+  const [displayMinValue, setDisplayMinValue] = useState('');
   const [errors, setErrors] = useState({});
 
-  // Reset form khi mở modal hoặc tier thay đổi
   useEffect(() => {
     if (isOpen) {
       if (tier) {
-        setFormData({
-          minOrderValue: tier.minOrderValue?.toString() || '',
-          discountPercent: tier.discountPercent?.toString() || '',
-        });
+        const raw = tier.minOrderValue?.toString() || '';
+        setFormData({ minOrderValue: raw, discountPercent: tier.discountPercent?.toString() || '' });
+        setDisplayMinValue(formatNumber(raw));
       } else {
-        setFormData({
-          minOrderValue: '',
-          discountPercent: '',
-        });
+        setFormData({ minOrderValue: '', discountPercent: '' });
+        setDisplayMinValue('');
       }
       setErrors({});
     }
   }, [isOpen, tier]);
 
+  const handleMinValueChange = (value) => {
+    const raw = toRawNumber(value);
+    setFormData((prev) => ({ ...prev, minOrderValue: raw }));
+    setDisplayMinValue(formatNumber(raw));
+    if (errors.minOrderValue) setErrors((prev) => ({ ...prev, minOrderValue: '' }));
+  };
+
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Xóa lỗi khi user sửa
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const validate = () => {
     const newErrors = {};
-
-    // Validate minOrderValue
     const minValue = parseFloat(formData.minOrderValue);
     if (!formData.minOrderValue || isNaN(minValue)) {
       newErrors.minOrderValue = 'Vui lòng nhập giá trị hợp lệ';
@@ -51,7 +57,6 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
       newErrors.minOrderValue = 'Giá trị không được âm';
     }
 
-    // Validate discountPercent
     const discount = parseFloat(formData.discountPercent);
     if (!formData.discountPercent || isNaN(discount)) {
       newErrors.discountPercent = 'Vui lòng nhập phần trăm chiết khấu hợp lệ';
@@ -76,12 +81,7 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
     try {
       await onSave(payload);
     } catch (err) {
-      // Hiển thị lỗi BE inline dưới trường MinOrderValue
-      const beMessage =
-        err?.data?.error?.message ||
-        err?.data?.message ||
-        err?.message ||
-        'Có lỗi xảy ra, vui lòng thử lại.';
+      const beMessage = err?.data?.error?.message || err?.data?.message || err?.message || 'Có lỗi xảy ra, vui lòng thử lại.';
       setErrors({ minOrderValue: beMessage });
     }
   };
@@ -99,10 +99,7 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
               <Button
                 variant="outline"
                 className="flex items-center gap-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30"
-                onClick={() => {
-                  onDelete?.(tier);
-                  onClose();
-                }}
+                onClick={() => { onDelete?.(tier); onClose(); }}
                 disabled={loading}
               >
                 Xóa
@@ -122,7 +119,7 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-          <p className="font-medium">💡 Quy tắc chiết khấu:</p>
+          <p className="font-medium">Quy tắc chiết khấu:</p>
           <ul className="mt-1 list-inside list-disc space-y-0.5">
             <li>Khi tổng giá trị đơn hàng đạt ngưỡng, chiết khấu tương ứng sẽ được áp dụng</li>
             <li>Có thể tạo nhiều mức chiết khấu cho các ngưỡng giá trị khác nhau</li>
@@ -131,10 +128,11 @@ const DiscountTierModal = ({ isOpen, onClose, tier, onSave, loading, onDelete })
 
         <Input
           label="Tổng giá trị đơn hàng tối thiểu"
-          placeholder="Ví dụ: 1000000"
-          type="number"
-          value={formData.minOrderValue}
-          onChange={(e) => handleChange('minOrderValue', e.target.value)}
+          placeholder="Ví dụ: 1.000.000"
+          type="text"
+          inputMode="numeric"
+          value={displayMinValue}
+          onChange={(e) => handleMinValueChange(e.target.value)}
           error={errors.minOrderValue}
           required
           hint="Đơn hàng từ giá trị này trở lên sẽ được áp dụng chiết khấu"

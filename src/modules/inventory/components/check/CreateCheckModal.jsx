@@ -104,7 +104,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         setStaffList([]);
       })
       .finally(() => setLoadingStaff(false));
-  }, [isOpen, isOwner]);
+  }, [isOpen, isOwner, canCreate, canApprove]);
 
   // Staff luôn tự gán cho chính mình
   useEffect(() => {
