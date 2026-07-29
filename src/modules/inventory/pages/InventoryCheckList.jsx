@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Icon from '../../../shared/components/Icon';
 import { Card } from '../../../shared/components/Card';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../shared/utils/permissions';
 import CreateCheckModal from '../components/check/CreateCheckModal';
 import InventoryCheckDetailModal from '../components/check/InventoryCheckDetailModal';
 import EditCheckModal from '../components/check/EditCheckModal';
@@ -68,6 +70,12 @@ export const getStatusLabel = (item) => {
 };
 
 const InventoryCheckList = () => {
+  const { user } = useAuth();
+  const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
+  const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
+  const canCancel = hasPermission(user, 'STOCK_CHECK_CANCEL');
+  const canView = hasPermission(user, 'STOCK_CHECK_VIEW');
+
   // ---- Trạng thái danh sách ----
   const [checks, setChecks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -328,14 +336,17 @@ const InventoryCheckList = () => {
           >
             {loading ? 'Đang tải dữ liệu...' : globalError ? '⚠ Đã xảy ra lỗi' : 'Sẵn sàng'}
           </div>
-          <Button
-            variant="primary"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Icon name="add" size={20} />
-            Tạo phiếu kiểm kê
-          </Button>
+          {(canCreate || canApprove || canCancel || canView) && (
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2"
+              disabled={!canCreate && !canApprove}
+            >
+              <Icon name="add" size={20} />
+              Tạo phiếu kiểm kê
+            </Button>
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { getProducts } from '../../services/inventoryService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
 import { getStaffs } from '../../../owner/services/staffService';
 
@@ -21,6 +22,8 @@ import Table from '../../../../shared/components/Table';
 const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
   const { user } = useAuth();
   const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
+  const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
+  const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const currentUserId = user?.userId || user?.id;
 
   const [products, setProducts] = useState([]);
@@ -73,7 +76,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
 
   // Fetch staff - chỉ Owner mới cần; filter theo permission có STOCK_CHECK_CREATE
   useEffect(() => {
-    if (!isOpen || !isOwner) return;
+    if (!isOpen || (!isOwner && !canCreate && !canApprove)) return;
 
     setLoadingStaff(true);
     getStaffs({ pageSize: 100 })
@@ -146,7 +149,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
     try {
       // Staff: assigneeUserId = currentUserId (đã set từ useEffect)
       // Owner: assigneeUserId = giá trị chọn từ dropdown, hoặc null nếu để trống
-      await onSave(selectedIds, notes, isOwner ? assigneeUserId || null : currentUserId);
+      await onSave(selectedIds, notes, isOwner || canApprove ? assigneeUserId || null : currentUserId);
     } catch {
       // Error được xử lý bởi parent
     } finally {
