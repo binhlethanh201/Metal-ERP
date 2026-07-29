@@ -39,6 +39,7 @@ const OwnerAuditLogsPage = () => {
     action: '',
     level: '',
     userName: '',
+    userId: '',
     fromDate: '',
     toDate: '',
   });
@@ -53,6 +54,22 @@ const OwnerAuditLogsPage = () => {
   const [items, setItems] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
 
+  const [branchUsers, setBranchUsers] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    apiGet('/api/owner/audit-logs/users')
+      .then((res) => {
+        if (mounted) setBranchUsers(res?.data || res || []);
+      })
+      .catch(() => {
+        if (mounted) setBranchUsers([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -60,29 +77,18 @@ const OwnerAuditLogsPage = () => {
       const params = new URLSearchParams();
       if (appliedFilters.action) params.set('action', toEnglishAction(appliedFilters.action));
       if (appliedFilters.level) params.set('level', appliedFilters.level);
+      if (appliedFilters.userId) params.set('userId', appliedFilters.userId);
+      else if (appliedFilters.userName) params.set('userName', appliedFilters.userName);
       if (appliedFilters.fromDate) params.set('fromDate', appliedFilters.fromDate);
       if (appliedFilters.toDate) params.set('toDate', appliedFilters.toDate);
       params.set('page', String(page));
-      params.set('pageSize', String(9999)); // Lấy toàn bộ về lọc client-side
+      params.set('pageSize', String(pageSize));
 
       const data = await apiGet(`/api/owner/audit-logs?${params.toString()}`);
-      let allItems = data?.items || [];
+      const items = data?.items || [];
       const total = data?.totalCount || 0;
-
-      // Lọc theo tên người dùng ở client
-      if (appliedFilters.userName) {
-        const keyword = appliedFilters.userName.toLowerCase();
-        allItems = allItems.filter(
-          (row) =>
-            (row.userName || '').toLowerCase().includes(keyword) ||
-            (row.userEmail || '').toLowerCase().includes(keyword)
-        );
-      }
-
-      // Phân trang thủ công sau khi lọc
-      const start = (page - 1) * pageSize;
-      setItems(allItems.slice(start, start + pageSize));
-      setTotalCount(appliedFilters.userName ? allItems.length : total);
+      setItems(items);
+      setTotalCount(total);
     } catch (err) {
       setError(err?.message || 'Không thể tải nhật ký hoạt động.');
       setItems([]);
@@ -113,13 +119,13 @@ const OwnerAuditLogsPage = () => {
   };
 
   const handleReset = () => {
-    const reset = { action: '', level: '', userName: '', fromDate: '', toDate: '' };
+    const reset = { action: '', level: '', userName: '', userId: '', fromDate: '', toDate: '' };
     setFilters(reset);
     setAppliedFilters(reset);
     setPage(1);
   };
 
-  const activeFilterCount = [filters.action, filters.level, filters.userName, filters.fromDate, filters.toDate].filter(Boolean).length;
+  const activeFilterCount = [filters.action, filters.level, filters.userName, filters.userId, filters.fromDate, filters.toDate].filter(Boolean).length;
 
   const ACTION_WORDS = {
   CREATE: 'Tạo',
@@ -322,6 +328,23 @@ const actionLabel = (val) => {
               value={filters.userName}
               onChange={(e) => handleFilterChange('userName', e.target.value)}
             />
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+                Hoặc chọn người dùng (kể cả chưa có log)
+              </label>
+              <select
+                value={filters.userId}
+                onChange={(e) => handleFilterChange('userId', e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+              >
+                <option value="">-- Tất cả --</option>
+                {branchUsers.map((u) => (
+                  <option key={u.userId} value={u.userId}>
+                    {u.fullName} {u.email ? `(${u.email})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
                 Mức độ
