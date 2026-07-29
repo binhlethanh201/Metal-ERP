@@ -10,7 +10,7 @@ import {
   updateDiscrepancyReasons,
 } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
-import { hasRole } from '../../../../shared/utils/roleRedirect';
+import { hasPermission } from '../../../../shared/utils/permissions';
 
 // Import Shared Components
 import Modal from '../../../../shared/components/Modal';
@@ -65,7 +65,6 @@ const getStatusLabel = (item) => {
 
 const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess, onEditClick }) => {
   const { user } = useAuth();
-  const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
   const currentUserId = user?.userId || user?.id;
 
   const [detailData, setDetailData] = useState(null);
@@ -141,11 +140,15 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   const isWaiting = detailData?.status === 'WaitingForApproval';
   const isCompleted = detailData?.status === 'Completed';
 
-  const canFill = isDraft && (isOwner || currentUserId === detailData?.assigneeUserId);
-  const canModify = isDraft && (isOwner || currentUserId === detailData?.createdByUserId);
-  const canApproveReject = isOwner && isWaiting;
-  const canCancel = isOwner && (isDraft || isWaiting);
-  const canEditReasons = isOwner && (isWaiting || isCompleted);
+  const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
+  const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
+  const canCancelPermission = hasPermission(user, 'STOCK_CHECK_CANCEL');
+
+  const canFill = isDraft && (canCreate || currentUserId === detailData?.assigneeUserId);
+  const canModify = isDraft && (canCreate || currentUserId === detailData?.createdByUserId);
+  const canApproveReject = canApprove && isWaiting;
+  const canCancel = canCancelPermission && (isDraft || isWaiting);
+  const canEditReasons = canApprove && (isWaiting || isCompleted);
 
   // ==================== ACTION HANDLERS ====================
   const handleFill = async () => {

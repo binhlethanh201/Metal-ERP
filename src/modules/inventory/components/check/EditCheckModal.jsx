@@ -3,6 +3,7 @@ import Icon from '../../../../shared/components/Icon';
 import { getProducts } from '../../services/inventoryService';
 import { getStaffs } from '../../../owner/services/staffService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 // Import Shared Components
@@ -22,6 +23,8 @@ import Table from '../../../../shared/components/Table';
 const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
   const { user } = useAuth();
   const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
+  const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
+  const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const currentUserId = user?.userId || user?.id;
 
   const [products, setProducts] = useState([]);
@@ -70,7 +73,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
       .finally(() => setLoadingProducts(false));
 
     // Fetch staff chỉ cho Owner
-    if (isOwner) {
+    if (isOwner || canCreate || canApprove) {
       setLoadingStaff(true);
       getStaffs({ pageSize: 100 })
         .then((res) => {
@@ -137,7 +140,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
 
     const payload = {
       notes,
-      assigneeUserId: isOwner ? assigneeUserId || null : currentUserId,
+      assigneeUserId: isOwner || canApprove ? assigneeUserId || null : currentUserId,
       addProductIds,
       removeProductIds,
     };
