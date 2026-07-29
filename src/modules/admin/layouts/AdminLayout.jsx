@@ -5,6 +5,7 @@ import { useAuth } from '../../../shared/hooks/useAuth';
 import Icon from '../../../shared/components/Icon';
 import Logo from '../../../shared/components/Logo';
 import AdminNotificationDropdown from '../components/AdminNotificationDropdown';
+import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5100';
 const HUB_URL = `${API_BASE}/r/mepHub`;
@@ -13,6 +14,7 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [currentTime, setCurrentTime] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -141,7 +143,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-surface-container-low font-sans text-on-surface antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900 antialiased dark:bg-[#0f0f0f] dark:text-[#e5e5e5]">
       {/* Toast notifications */}
       <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-2">
         {toasts.map((t) => (
@@ -156,15 +158,15 @@ const AdminLayout = () => {
       </div>
 
       {/* LEFT SIDEBAR */}
-      <aside className="z-50 flex w-64 shrink-0 flex-col border-r border-outline-variant bg-surface-container-lowest">
-        <div className="flex h-14 items-center gap-2.5 border-b border-outline-variant bg-surface-container-lowest px-4">
+      <aside className="z-50 flex w-64 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-[#333333] dark:bg-[#0f0f0f]">
+        <div className="flex h-14 items-center gap-2.5 border-b border-slate-200 bg-white px-4 dark:border-[#333333] dark:bg-[#0f0f0f]">
           <Logo moduleName="Administrator" />
         </div>
 
         <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto py-4">
           {MENU_SECTIONS.map((section, idx) => (
             <div key={idx}>
-              <h3 className="mb-2 px-4 font-sans text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
+              <h3 className="mb-2 px-4 font-sans text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                 {section.title}
               </h3>
               <ul className="space-y-0.5 px-2">
@@ -176,14 +178,14 @@ const AdminLayout = () => {
                         onClick={() => navigate(item.path)}
                         className={`group flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-bold transition-all ${
                           isActive
-                            ? 'bg-primary text-on-primary shadow-sm'
-                            : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                            ? 'bg-[#004785] text-white shadow-sm dark:bg-blue-600'
+                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-[#999999] dark:hover:bg-[#1a1a1a] dark:hover:text-[#e5e5e5]'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <span
                             className={
-                              isActive ? 'text-on-primary' : 'text-outline group-hover:text-primary'
+                              isActive ? 'text-white' : 'text-slate-400 group-hover:text-[#004785] dark:text-[#666666] dark:group-hover:text-blue-400'
                             }
                           >
                             <Icon name={item.icon} size={16} />
@@ -191,7 +193,7 @@ const AdminLayout = () => {
                           <span>{item.label}</span>
                         </div>
                         {item.badge && (
-                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-sm bg-error px-1 text-[9px] font-black text-on-error">
+                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-sm bg-red-500 px-1 text-[9px] font-black text-white dark:bg-red-600">
                             {item.badge}
                           </span>
                         )}
@@ -207,59 +209,71 @@ const AdminLayout = () => {
 
       {/* TOPBAR */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center justify-end border-b border-outline-variant bg-surface-container-lowest px-6">
+        <header className="flex h-14 shrink-0 items-center justify-end border-b border-slate-200 bg-white px-6 dark:border-[#333333] dark:bg-[#0f0f0f]">
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 rounded-md border border-outline-variant bg-surface-container-lowest px-2.5 py-1 text-xs font-bold text-on-surface-variant">
+            <span className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-500 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]">
               <Icon name="clock" size={14} /> {currentTime || '00:00:00'}
             </span>
 
             {/* ADMIN NOTIFICATION DROPDOWN */}
             <AdminNotificationDropdown />
 
-            <div className="h-6 w-px bg-outline-variant" />
+            <div className="h-6 w-px bg-slate-200 dark:bg-[#333333]" />
 
             {/* PROFILE DROPDOWN */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest p-1 pr-2 transition-colors hover:bg-surface-container-high"
+                className="flex items-center gap-2 rounded-md border border-slate-200 bg-white p-1 pr-2 transition-colors hover:bg-slate-50 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:bg-[#1a1a1a]"
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded bg-primary-container text-xs font-bold text-on-primary-container">
+                <div className="flex h-6 w-6 items-center justify-center rounded bg-[#004785] text-xs font-bold text-white dark:bg-blue-600">
                   {(user?.name || user?.fullName || 'A').charAt(0).toUpperCase()}
                 </div>
-                <span className="text-xs font-bold text-on-surface">
+                <span className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">
                   {user?.name || user?.fullName || 'Admin'}
                 </span>
-                <span className="text-outline">
+                <span className="text-slate-400 dark:text-[#666666]">
                   <Icon name="chevron_down" size={14} />
                 </span>
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-md border border-outline-variant bg-surface-container-lowest shadow-lg">
-                  <div className="border-b border-surface-container-high px-4 py-3">
-                    <p className="text-xs font-bold text-on-surface">
+                <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f]">
+                  <div className="border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                    <p className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">
                       {user?.name || user?.fullName || 'Admin'}
                     </p>
-                    <p className="truncate text-[10px] font-semibold text-on-surface-variant">
+                    <p className="truncate text-[10px] font-semibold text-slate-500 dark:text-[#999999]">
                       {user?.email || 'admin@mep.system'}
                     </p>
                   </div>
                   <div className="p-1">
+                    {/* Dark mode toggle */}
+                    <button
+                      onClick={toggleTheme}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-[#b3b3b3] dark:hover:bg-[#272727]"
+                    >
+                      <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} size={16} className="text-slate-500 dark:text-[#999999]" />
+                      {theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
+                    </button>
+
                     <button
                       onClick={() => {
-                        navigate('/change-password');
+                        navigate('/account-settings');
                         setIsProfileOpen(false);
                       }}
-                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-container-low"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-[#b3b3b3] dark:hover:bg-[#272727]"
                     >
-                      <Icon name="lock" size={14} /> Đổi mật khẩu
+                      <Icon name="lock" size={16} className="text-slate-500 dark:text-[#999999]" /> Đổi mật khẩu
                     </button>
+                    
+                    <div className="my-1 border-t border-slate-100 dark:border-[#333333]" />
+                    
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-bold text-error hover:bg-error-container/50"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
-                      <Icon name="log_out" size={14} /> Đăng xuất
+                      <Icon name="logout" size={16} /> Đăng xuất
                     </button>
                   </div>
                 </div>
@@ -268,7 +282,7 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-surface-container-low p-6">
+        <main className="flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-[#1a1a1a]">
           <Outlet />
         </main>
       </div>

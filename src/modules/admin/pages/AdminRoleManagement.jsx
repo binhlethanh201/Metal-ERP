@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import Icon from '../../../shared/components/Icon';
 import {
   getPermissionList,
@@ -16,72 +21,107 @@ const AdminRoleManagement = () => {
   const [editedPermissions, setEditedPermissions] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const fetchData = useCallback(() => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    Promise.all([getPermissionMatrix(), getPermissionList()])
-      .then(([matrixData, permData]) => {
-        setMatrix(Array.isArray(matrixData) ? matrixData : []);
-        setAllPermissions(Array.isArray(permData) ? permData : []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('API error:', err);
-        setError(err.message || 'Không tải được dữ liệu phân quyền');
-        setLoading(false);
-      });
+    try {
+      const [matrixData, permissionData] = await Promise.all([
+        getPermissionMatrix(),
+        getPermissionList(),
+      ]);
+
+      setMatrix(Array.isArray(matrixData) ? matrixData : []);
+      setAllPermissions(
+        Array.isArray(permissionData) ? permissionData : []
+      );
+    } catch (err) {
+      console.error('API error:', err);
+      setError(
+        err.message || 'Không tải được dữ liệu phân quyền'
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Handle role selection
+  // Xử lý khi chọn một vai trò
   const handleSelectRole = (role) => {
     setSelectedRoleId(role.roleId);
-    // Extract array of permission IDs that this role currently has
-    const currentPermIds = (role.permissions || []).map((p) => p.permissionId);
-    setEditedPermissions(currentPermIds);
+
+    // Lấy danh sách ID quyền hiện tại của vai trò
+    const currentPermissionIds = (role.permissions || []).map(
+      (permission) => permission.permissionId
+    );
+
+    setEditedPermissions(currentPermissionIds);
   };
 
+  // Bật hoặc tắt một quyền
   const handleTogglePermission = (permissionId) => {
-    setEditedPermissions((prev) =>
-      prev.includes(permissionId)
-        ? prev.filter((id) => id !== permissionId)
-        : [...prev, permissionId]
+    setEditedPermissions((previousPermissions) =>
+      previousPermissions.includes(permissionId)
+        ? previousPermissions.filter(
+            (id) => id !== permissionId
+          )
+        : [...previousPermissions, permissionId]
     );
   };
 
-  const handleToggleGroup = (groupPermIds, isAllChecked) => {
+  // Chọn hoặc bỏ chọn toàn bộ quyền trong một nhóm
+  const handleToggleGroup = (
+    groupPermissionIds,
+    isAllChecked
+  ) => {
     if (isAllChecked) {
-      // Bỏ check toàn bộ group
-      setEditedPermissions((prev) => prev.filter((id) => !groupPermIds.includes(id)));
+      // Bỏ chọn toàn bộ quyền trong nhóm
+      setEditedPermissions((previousPermissions) =>
+        previousPermissions.filter(
+          (id) => !groupPermissionIds.includes(id)
+        )
+      );
     } else {
-      // Check toàn bộ group
-      setEditedPermissions((prev) => {
-        const newSet = new Set([...prev, ...groupPermIds]);
-        return Array.from(newSet);
+      // Chọn toàn bộ quyền trong nhóm
+      setEditedPermissions((previousPermissions) => {
+        const permissionSet = new Set([
+          ...previousPermissions,
+          ...groupPermissionIds,
+        ]);
+
+        return Array.from(permissionSet);
       });
     }
   };
 
+  // Lưu quyền của vai trò
   const handleSavePermissions = async () => {
     if (!selectedRoleId) return;
+
     setIsSaving(true);
+
     try {
-      await updateRolePermissions(selectedRoleId, editedPermissions);
+      await updateRolePermissions(
+        selectedRoleId,
+        editedPermissions
+      );
+
       alert('Cập nhật quyền thành công!');
-      await fetchData(); // Reload to get fresh matrix
+
+      // Tải lại dữ liệu mới nhất
+      await fetchData();
     } catch (err) {
       console.error('Save error:', err);
-      alert(err.message || 'Cập nhật thất bại');
+      alert(err.message || 'Cập nhật quyền thất bại');
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Nhóm các quyền thành 5 Modules lớn cho dễ nhìn
+  // Nhóm các quyền thành những module lớn
   const groupedPermissions = useMemo(() => {
     const MODULE_MAP = {
       SALE: 'Bán hàng & Thu ngân',
@@ -89,129 +129,212 @@ const AdminRoleManagement = () => {
       SHIFT: 'Bán hàng & Thu ngân',
       PRINT: 'Bán hàng & Thu ngân',
 
-      STOCK: 'Quản lý Kho bãi & Sản phẩm',
-      PRODUCT: 'Quản lý Kho bãi & Sản phẩm',
-      SUPPLIER: 'Quản lý Kho bãi & Sản phẩm',
+      STOCK: 'Quản lý kho bãi & Sản phẩm',
+      PRODUCT: 'Quản lý kho bãi & Sản phẩm',
+      SUPPLIER: 'Quản lý kho bãi & Sản phẩm',
 
-      CUSTOMER: 'Chăm sóc Khách hàng',
-      LOYALTY: 'Chăm sóc Khách hàng',
-      PROMOTION: 'Chăm sóc Khách hàng',
+      CUSTOMER: 'Chăm sóc khách hàng',
+      LOYALTY: 'Chăm sóc khách hàng',
+      PROMOTION: 'Chăm sóc khách hàng',
 
-      STAFF: 'Nhân sự & Chủ cửa hàng',
-      OWNER: 'Nhân sự & Chủ cửa hàng',
+      STAFF: 'Quản lý nhân sự',
 
       REPORT: 'Báo cáo & Hệ thống',
       SYSTEM: 'Báo cáo & Hệ thống',
     };
 
     const groups = {};
-    allPermissions.forEach((p) => {
-      const parts = p.permissionCode.split('_');
-      const prefix = parts.length > 1 ? parts[0].toUpperCase() : 'OTHER';
 
-      const moduleName = MODULE_MAP[prefix] || 'Các quyền hạn khác';
+    allPermissions.forEach((permission) => {
+      const permissionCode =
+        permission.permissionCode || '';
 
-      if (!groups[moduleName]) groups[moduleName] = [];
-      groups[moduleName].push(p);
+      const parts = permissionCode.split('_');
+      const prefix =
+        parts.length > 1
+          ? parts[0].toUpperCase()
+          : 'OTHER';
+
+      // Bỏ toàn bộ quyền thuộc Owner
+      if (prefix === 'OWNER') {
+        return;
+      }
+
+      const moduleName =
+        MODULE_MAP[prefix] || 'Các quyền hạn khác';
+
+      if (!groups[moduleName]) {
+        groups[moduleName] = [];
+      }
+
+      groups[moduleName].push(permission);
     });
 
-    // Sort quyền theo alphabet bên trong từng nhóm cho gọn
-    Object.values(groups).forEach((list) => {
-      list.sort((a, b) => a.permissionCode.localeCompare(b.permissionCode));
+    // Sắp xếp quyền theo bảng chữ cái trong từng nhóm
+    Object.values(groups).forEach((permissionList) => {
+      permissionList.sort((permissionA, permissionB) =>
+        permissionA.permissionCode.localeCompare(
+          permissionB.permissionCode
+        )
+      );
     });
 
     return groups;
   }, [allPermissions]);
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="p-8 text-center text-xs font-bold text-on-surface-variant">
+      <div className="p-8 text-center text-xs font-bold text-slate-500 dark:text-[#999999]">
         Đang tải dữ liệu hệ thống...
       </div>
     );
-  if (error) return <div className="p-8 text-center font-bold text-error">{error}</div>;
+  }
 
-  const selectedRole = matrix.find((r) => r.roleId === selectedRoleId);
-  const isSuperAdmin = selectedRole?.roleName?.toUpperCase() === 'ADMIN';
+  if (error) {
+    return (
+      <div className="p-8 text-center font-bold text-red-600 dark:text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  const selectedRole = matrix.find(
+    (role) => role.roleId === selectedRoleId
+  );
+
+  const isSuperAdmin =
+    selectedRole?.roleName?.toUpperCase() === 'ADMIN';
 
   return (
     <div className="flex h-[calc(100vh-100px)] flex-col">
-      <div className="mb-6 flex shrink-0 items-center justify-between border-b border-outline-variant pb-3">
+      {/* Phần tiêu đề */}
+      <div className="mb-6 flex shrink-0 items-center justify-between border-b border-slate-200 pb-3 dark:border-[#333333]">
         <div>
-          <h1 className="text-xl font-bold uppercase tracking-tight text-on-surface">
-            Cấu hình Vai Trò & Phân Quyền
+          <h1 className="text-xl font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
+            Cấu hình vai trò & Phân quyền
           </h1>
-          <p className="mt-1 text-sm font-semibold uppercase tracking-tight text-on-surface-variant">
-            KIỂM SOÁT BẢO MẬT VÀ PHÂN QUYỀN TRUY CẬP
+
+          <p className="mt-1 text-sm font-semibold uppercase tracking-tight text-slate-500 dark:text-[#999999]">
+            Kiểm soát bảo mật và phân quyền truy cập
           </p>
         </div>
+
         {selectedRoleId && !isSuperAdmin && (
           <div className="flex gap-3">
             <button
-              onClick={() => handleSelectRole(selectedRole)}
+              type="button"
+              onClick={() =>
+                handleSelectRole(selectedRole)
+              }
               disabled={isSaving}
-              className="rounded bg-surface-container-high px-4 py-2 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container-highest disabled:opacity-50"
+              className="rounded bg-slate-100 px-4 py-2 text-xs font-bold text-slate-900 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-[#272727] dark:text-[#e5e5e5] dark:hover:bg-[#333333]"
             >
               Hủy thay đổi
             </button>
+
             <button
+              type="button"
               onClick={handleSavePermissions}
               disabled={isSaving}
-              className="flex items-center gap-2 rounded bg-primary px-4 py-2 text-xs font-bold text-on-primary shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="flex items-center gap-2 rounded bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#003663] disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700"
             >
-              <Icon name={isSaving ? 'hourglass_empty' : 'save'} size={16} />
-              {isSaving ? 'Đang lưu...' : 'Lưu Quyền Hạn'}
+              <Icon
+                name={
+                  isSaving
+                    ? 'hourglass_empty'
+                    : 'save'
+                }
+                size={16}
+              />
+
+              {isSaving
+                ? 'Đang lưu...'
+                : 'Lưu quyền hạn'}
             </button>
           </div>
         )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row">
-        {/* CỘT TRÁI: DANH SÁCH ROLE */}
-        <div className="flex h-[40vh] w-full shrink-0 flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm lg:h-auto lg:w-80">
-          <div className="shrink-0 border-b border-outline-variant bg-surface-container-low px-4 py-3">
-            <h2 className="text-sm font-bold uppercase tracking-tight text-on-surface">
-              Chọn Chức Vụ (Role)
+        {/* Cột trái: Danh sách vai trò */}
+        <div className="flex h-[40vh] w-full shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f] lg:h-auto lg:w-80">
+          <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+            <h2 className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
+              Chọn chức vụ
             </h2>
           </div>
+
           <div className="no-scrollbar flex-1 space-y-1 overflow-y-auto p-2">
             {matrix
-              .filter((r) =>
-                ['owner', 'staff', 'salesstaff', 'inventorystaff'].includes(
-                  r.roleName.toLowerCase()
-                )
-              )
+              .filter((role) => {
+                const roleName =
+                  role.roleName?.toLowerCase() || '';
+
+                // Không hiển thị Owner
+                return [
+                  'staff',
+                  'salesstaff',
+                  'inventorystaff',
+                ].includes(roleName);
+              })
               .map((role) => {
-                const isSelected = role.roleId === selectedRoleId;
-                const permCount = (role.permissions || []).length;
+                const isSelected =
+                  role.roleId === selectedRoleId;
+
+                const permissionCount = (
+                  role.permissions || []
+                ).filter((permission) => {
+                  const permissionCode =
+                    permission.permissionCode || '';
+
+                  return !permissionCode
+                    .toUpperCase()
+                    .startsWith('OWNER_');
+                }).length;
+
                 return (
                   <button
+                    type="button"
                     key={role.roleId}
-                    onClick={() => handleSelectRole(role)}
-                    className={`w-full rounded-lg px-4 py-3 text-left transition-all ${
+                    onClick={() =>
+                      handleSelectRole(role)
+                    }
+                    className={`w-full rounded-lg border px-4 py-3 text-left transition-all ${
                       isSelected
-                        ? 'border-primary-container bg-primary-container shadow-sm'
-                        : 'border-transparent hover:bg-surface-container-low'
-                    } border`}
+                        ? 'border-[#004785] bg-[#004785] shadow-sm dark:border-blue-600 dark:bg-blue-600'
+                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-[#1a1a1a]'
+                    }`}
                   >
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-sm font-bold ${isSelected ? 'text-on-primary-container' : 'text-on-surface'}`}
+                        className={`text-sm font-bold ${
+                          isSelected
+                            ? 'text-white'
+                            : 'text-slate-900 dark:text-[#e5e5e5]'
+                        }`}
                       >
                         {role.roleName}
                       </span>
+
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelected ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant'}`}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
+                        }`}
                       >
-                        {permCount} quyền
+                        {permissionCount} quyền
                       </span>
                     </div>
+
                     <div
-                      className={`mt-1 text-[11px] ${isSelected ? 'text-on-primary-container/80' : 'text-on-surface-variant'}`}
+                      className={`mt-1 text-[11px] ${
+                        isSelected
+                          ? 'text-white/80'
+                          : 'text-slate-500 dark:text-[#999999]'
+                      }`}
                     >
-                      {role.roleName === 'Admin'
-                        ? 'Toàn quyền hệ thống (Không thể sửa)'
-                        : 'Nhấp để xem và cấu hình'}
+                      Nhấp để xem và cấu hình quyền
                     </div>
                   </button>
                 );
@@ -219,99 +342,174 @@ const AdminRoleManagement = () => {
           </div>
         </div>
 
-        {/* CỘT PHẢI: MA TRẬN QUYỀN HẠN */}
-        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+        {/* Cột phải: Ma trận quyền hạn */}
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
           {!selectedRoleId ? (
-            <div className="flex flex-1 flex-col items-center justify-center text-outline">
-              <Icon name="admin_panel_settings" size={48} className="mb-4 opacity-50" />
-              <p className="text-sm font-bold text-on-surface-variant">Chưa chọn chức vụ nào.</p>
-              <p className="text-xs">Hãy chọn một chức vụ ở cột bên trái để bắt đầu phân quyền.</p>
+            <div className="flex flex-1 flex-col items-center justify-center text-slate-400 dark:text-[#666666]">
+              <Icon
+                name="admin_panel_settings"
+                size={48}
+                className="mb-4 opacity-50"
+              />
+
+              <p className="text-sm font-bold text-slate-500 dark:text-[#999999]">
+                Chưa chọn chức vụ nào.
+              </p>
+
+              <p className="text-xs">
+                Hãy chọn một chức vụ ở cột bên trái để bắt đầu phân quyền.
+              </p>
             </div>
           ) : (
             <>
-              <div className="flex shrink-0 items-center justify-between border-b border-outline-variant bg-surface-container-low px-5 py-4">
+              <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
                 <div>
-                  <h2 className="text-sm font-bold uppercase tracking-tight text-on-surface">
-                    Quyền hạn của: <span className="text-primary">{selectedRole?.roleName}</span>
+                  <h2 className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
+                    Quyền hạn của:{' '}
+                    <span className="text-[#004785] dark:text-blue-400">
+                      {selectedRole?.roleName}
+                    </span>
                   </h2>
-                  <p className="mt-0.5 text-[11px] text-on-surface-variant">
-                    Tích chọn các ô bên dưới để bật/tắt quyền truy cập từng Module.
+
+                  <p className="mt-0.5 text-[11px] text-slate-500 dark:text-[#999999]">
+                    Tích chọn các ô bên dưới để bật hoặc tắt quyền truy cập của từng module.
                   </p>
                 </div>
               </div>
 
               <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto p-5">
                 {isSuperAdmin && (
-                  <div className="flex items-center gap-2 rounded-lg border border-error-container bg-error-container/20 px-4 py-3 text-xs font-bold text-error">
-                    <Icon name="info" size={16} /> Super Admin được mặc định toàn quyền và bị chặn
-                    chỉnh sửa từ Server.
+                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-600 dark:border-red-800/30 dark:bg-red-900/20 dark:text-red-500">
+                    <Icon name="info" size={16} />
+
+                    Super Admin được mặc định toàn quyền và không thể chỉnh sửa từ giao diện.
                   </div>
                 )}
 
-                {Object.entries(groupedPermissions).map(([groupName, perms]) => {
-                  const groupPermIds = perms.map((p) => p.permissionId);
-                  const isAllChecked = groupPermIds.every((id) => editedPermissions.includes(id));
-                  const isIndeterminate =
-                    !isAllChecked && groupPermIds.some((id) => editedPermissions.includes(id));
+                {Object.entries(groupedPermissions).map(
+                  ([groupName, permissions]) => {
+                    const groupPermissionIds =
+                      permissions.map(
+                        (permission) =>
+                          permission.permissionId
+                      );
 
-                  return (
-                    <div key={groupName} className="mb-6">
-                      <div className="mb-3 flex items-center justify-between border-b border-outline-variant pb-2">
-                        <h3 className="flex items-center gap-2 text-sm font-bold text-on-surface">
-                          <Icon name="folder" size={18} className="text-primary" /> {groupName}
-                        </h3>
-                        <label className="group flex cursor-pointer items-center gap-2">
-                          <span className="text-[11px] font-bold text-on-surface-variant group-hover:text-primary">
-                            Chọn hết nhóm này
-                          </span>
-                          <input
-                            type="checkbox"
-                            disabled={isSuperAdmin}
-                            checked={isAllChecked}
-                            ref={(input) => {
-                              if (input) input.indeterminate = isIndeterminate;
-                            }}
-                            onChange={() => handleToggleGroup(groupPermIds, isAllChecked)}
-                            className="h-4 w-4 rounded text-primary focus:ring-primary disabled:opacity-50"
-                          />
-                        </label>
-                      </div>
+                    const isAllChecked =
+                      groupPermissionIds.every((id) =>
+                        editedPermissions.includes(id)
+                      );
 
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-3">
-                        {perms.map((p) => {
-                          const isChecked = editedPermissions.includes(p.permissionId);
-                          return (
-                            <label
-                              key={p.permissionId}
-                              className={`group flex cursor-pointer items-start gap-2 ${isSuperAdmin ? 'cursor-not-allowed opacity-60' : ''}`}
-                            >
-                              <input
-                                type="checkbox"
-                                disabled={isSuperAdmin}
-                                checked={isChecked}
-                                onChange={() => handleTogglePermission(p.permissionId)}
-                                className="mt-0.5 h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary"
-                              />
-                              <div>
-                                <div
-                                  className={`text-xs font-bold transition-colors ${isChecked ? 'text-primary' : 'text-on-surface group-hover:text-primary'}`}
+                    const isIndeterminate =
+                      !isAllChecked &&
+                      groupPermissionIds.some((id) =>
+                        editedPermissions.includes(id)
+                      );
+
+                    return (
+                      <div
+                        key={groupName}
+                        className="mb-6"
+                      >
+                        <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2 dark:border-[#333333]">
+                          <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                            <Icon
+                              name="folder"
+                              size={18}
+                              className="text-[#004785] dark:text-blue-400"
+                            />
+
+                            {groupName}
+                          </h3>
+
+                          <label className="group flex cursor-pointer items-center gap-2">
+                            <span className="text-[11px] font-bold text-slate-500 group-hover:text-[#004785] dark:text-[#999999] dark:group-hover:text-blue-400">
+                              Chọn hết nhóm này
+                            </span>
+
+                            <input
+                              type="checkbox"
+                              disabled={isSuperAdmin}
+                              checked={isAllChecked}
+                              ref={(input) => {
+                                if (input) {
+                                  input.indeterminate =
+                                    isIndeterminate;
+                                }
+                              }}
+                              onChange={() =>
+                                handleToggleGroup(
+                                  groupPermissionIds,
+                                  isAllChecked
+                                )
+                              }
+                              className="h-4 w-4 rounded text-[#004785] focus:ring-[#004785] disabled:opacity-50 dark:text-blue-400"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-3">
+                          {permissions.map(
+                            (permission) => {
+                              const isChecked =
+                                editedPermissions.includes(
+                                  permission.permissionId
+                                );
+
+                              return (
+                                <label
+                                  key={
+                                    permission.permissionId
+                                  }
+                                  className={`group flex items-start gap-2 ${
+                                    isSuperAdmin
+                                      ? 'cursor-not-allowed opacity-60'
+                                      : 'cursor-pointer'
+                                  }`}
                                 >
-                                  {p.permissionCode}
-                                </div>
-                                <div
-                                  className="w-32 truncate text-[10px] leading-tight text-on-surface-variant md:w-48"
-                                  title={p.permissionName}
-                                >
-                                  {p.permissionName || 'Cấp quyền truy cập'}
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
+                                  <input
+                                    type="checkbox"
+                                    disabled={isSuperAdmin}
+                                    checked={isChecked}
+                                    onChange={() =>
+                                      handleTogglePermission(
+                                        permission.permissionId
+                                      )
+                                    }
+                                    className="mt-0.5 h-4 w-4 rounded border-slate-200 text-[#004785] focus:ring-[#004785] dark:border-[#333333] dark:text-blue-400"
+                                  />
+
+                                  <div>
+                                    <div
+                                      className={`text-xs font-bold transition-colors ${
+                                        isChecked
+                                          ? 'text-[#004785] dark:text-blue-400'
+                                          : 'text-slate-900 group-hover:text-[#004785] dark:text-[#e5e5e5] dark:group-hover:text-blue-400'
+                                      }`}
+                                    >
+                                      {
+                                        permission.permissionCode
+                                      }
+                                    </div>
+
+                                    <div
+                                      className="w-32 truncate text-[10px] leading-tight text-slate-500 dark:text-[#999999] md:w-48"
+                                      title={
+                                        permission.permissionName
+                                      }
+                                    >
+                                      {permission.permissionName ||
+                                        'Cấp quyền truy cập'}
+                                    </div>
+                                  </div>
+                                </label>
+                              );
+                            }
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
             </>
           )}

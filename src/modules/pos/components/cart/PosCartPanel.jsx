@@ -174,7 +174,7 @@ const PosCartPanel = ({
                 : 'bg-[#004785] text-white hover:opacity-90'
             }`}
           >
-            {disabled ? 'ĐANG XỬ LÝ...' : 'THANH TOÁN (F9)'}
+            {disabled ? 'ĐANG XỬ LÝ...' : 'THANH TOÁN'}
           </button>
           <button
             onClick={onSaveDraft}

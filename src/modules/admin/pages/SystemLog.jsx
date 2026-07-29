@@ -55,7 +55,8 @@ const SystemLog = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `system-logs-${new Date().toISOString().split('T')[0]}.${format}`;
+      const ext = format === 'excel' ? 'xlsx' : format;
+      a.download = `system-logs-${new Date().toISOString().split('T')[0]}.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -74,28 +75,22 @@ const SystemLog = () => {
   };
 
   return (
-    <div className="space-y-6 text-on-surface">
-      <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+    <div className="space-y-6 text-slate-900 dark:text-[#e5e5e5]">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#333333] pb-3">
         <div>
-          <h1 className="text-xl font-bold uppercase tracking-tight text-on-surface">
-            Nhật Ký Hệ Thống (System Logs)
+          <h1 className="text-xl font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
+            Nhật Ký Hệ Thống
           </h1>
-          <p className="mt-1 text-sm font-semibold uppercase tracking-tight text-on-surface-variant">
-            Theo dõi sự kiện máy chủ, cảnh báo bảo mật và truy vết lỗi API
+          <p className="mt-1 text-sm font-semibold uppercase tracking-tight text-slate-500 dark:text-[#999999]">
+            Theo dõi sự kiện hoạt động, cảnh báo bảo mật
           </p>
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => handleExportData('csv')}
-            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container-high"
+            onClick={() => handleExportData('excel')}
+            className="flex items-center gap-2 rounded-md border border-[#004785] bg-[#004785] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-800"
           >
-            <Icon name="download" size={16} /> XUẤT CSV
-          </button>
-          <button
-            onClick={() => handleExportData('txt')}
-            className="flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container-high"
-          >
-            <Icon name="download" size={16} /> XUẤT TXT
+            <Icon name="download" size={16} /> XUẤT EXCEL
           </button>
         </div>
       </div>
@@ -108,12 +103,12 @@ const SystemLog = () => {
       />
 
       {loading && (
-        <div className="rounded-md bg-surface-container-lowest p-8 text-center text-xs text-on-surface-variant">
+        <div className="rounded-md bg-white dark:bg-[#0f0f0f] p-8 text-center text-xs text-slate-500 dark:text-[#999999]">
           Đang tải...
         </div>
       )}
       {error && (
-        <div className="rounded-md bg-error-container p-3 text-xs font-semibold text-error">
+        <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-3 text-xs font-semibold text-red-600 dark:text-red-500">
           {error}
         </div>
       )}
@@ -125,3 +120,4 @@ const SystemLog = () => {
 };
 
 export default SystemLog;
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import {
@@ -126,7 +126,7 @@ const AdminUserDetail = () => {
 
   if (loading || !user)
     return (
-      <div className="p-8 text-center font-bold text-on-surface-variant">
+      <div className="p-8 text-center font-bold text-slate-500 dark:text-[#999999]">
         Đang tải chi tiết người dùng...
       </div>
     );
@@ -138,31 +138,30 @@ const AdminUserDetail = () => {
       {/* Nút quay lại */}
       <button
         onClick={() => navigate('/admin/users')}
-        className="hover:text-primary-variant flex items-center gap-2 text-sm font-bold text-primary transition-colors"
+        className="hover:text-[#004785] dark:text-blue-400-variant flex items-center gap-2 text-sm font-bold text-[#004785] dark:text-blue-400 transition-colors"
       >
         <Icon name="arrow_back" size={18} /> QUAY LẠI DANH SÁCH
       </button>
 
       {/* HEADER CHI TIẾT */}
-      <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-sm md:flex-row md:items-center">
+      <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-6 shadow-sm md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-container text-2xl font-bold uppercase text-on-primary-container shadow-inner">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#004785] dark:bg-blue-600-container text-2xl font-bold uppercase text-white-container shadow-inner">
             {(user.fullName || user.email).charAt(0)}
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-on-surface">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-[#e5e5e5]">
               {user.fullName || 'Chưa cập nhật tên'}
             </h1>
-            <p className="mt-1 text-sm font-semibold text-on-surface-variant">{user.email}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-[#999999]">{user.email}</p>
             <div className="mt-2 flex items-center gap-2">
               <span
-                className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider ${
-                  user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
-                    ? 'border border-gray-400 bg-gray-200 text-gray-800'
-                    : isActive
-                      ? 'border border-green-200 bg-green-100 text-green-800'
-                      : 'border border-red-200 bg-red-100 text-red-800'
-                }`}
+                className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider ${user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
+                  ? 'border border-gray-400 bg-gray-200 text-gray-800'
+                  : isActive
+                    ? 'border border-green-200 bg-green-100 text-green-800'
+                    : 'border border-red-200 bg-red-100 text-red-800'
+                  }`}
               >
                 {user.status === 'DELETED' || user.status === 'PERMANENT_DELETED'
                   ? 'ĐÃ XÓA'
@@ -188,21 +187,21 @@ const AdminUserDetail = () => {
             <>
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
                 <Icon name="edit" size={18} /> Sửa Thông Tin
               </button>
 
               <button
                 onClick={() => setIsAssignModalOpen(true)}
-                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
                 <Icon name="manage_accounts" size={18} /> Phân Quyền
               </button>
 
               <button
                 onClick={handleResetPassword}
-                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-surface-container-low px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-primary"
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
                 <Icon name="key" size={18} /> Cấp Lại Mật Khẩu
               </button>
@@ -216,11 +215,10 @@ const AdminUserDetail = () => {
                     message: `Bạn có chắc chắn muốn ${isActive ? 'khóa' : 'mở khóa'} tài khoản này?`,
                   })
                 }
-                className={`flex items-center gap-2 rounded-lg border-2 px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all ${
-                  isActive
-                    ? 'border-error text-error hover:bg-error-container/30'
-                    : 'border-green-600 text-green-600 hover:bg-green-100/50'
-                }`}
+                className={`flex items-center gap-2 rounded-lg border-2 px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all ${isActive
+                  ? 'border-error text-red-600 dark:text-red-500 hover:bg-red-50 dark:bg-red-900/30/30'
+                  : 'border-green-600 text-green-600 hover:bg-green-100/50'
+                  }`}
               >
                 <Icon name={isActive ? 'lock' : 'lock_open'} size={18} />{' '}
                 {isActive ? 'Khóa Tài Khoản' : 'Mở Khóa'}
@@ -237,7 +235,7 @@ const AdminUserDetail = () => {
                 }
                 className="flex items-center gap-2 rounded-lg border-2 border-error bg-error text-on-error px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-error/90"
               >
-                <Icon name="delete" size={18} /> Xóa (Lưu trữ)
+                <Icon name="delete" size={18} /> Xóa
               </button>
             </>
           )}
@@ -277,27 +275,27 @@ const AdminUserDetail = () => {
       </div>
 
       {/* LỊCH SỬ HOẠT ĐỘNG */}
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
-        <div className="border-b border-outline-variant bg-surface-container-low px-6 py-4">
-          <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-on-surface">
-            <Icon name="history" size={20} className="text-primary" /> Lịch sử hoạt động gần đây
+      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] shadow-sm">
+        <div className="border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-6 py-4">
+          <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-900 dark:text-[#e5e5e5]">
+            <Icon name="history" size={20} className="text-[#004785] dark:text-blue-400" /> Lịch sử hoạt động gần đây
           </h2>
         </div>
         <div className="p-6">
           {activities.length === 0 ? (
-            <div className="py-10 text-center font-bold text-on-surface-variant">
+            <div className="py-10 text-center font-bold text-slate-500 dark:text-[#999999]">
               Chưa có lịch sử hoạt động nào được ghi nhận.
             </div>
           ) : (
-            <div className="relative ml-4 space-y-8 border-l-2 border-outline-variant pb-4">
+            <div className="relative ml-4 space-y-8 border-l-2 border-slate-200 dark:border-[#333333] pb-4">
               {activities.map((log, idx) => (
                 <div key={idx} className="relative pl-6">
-                  <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-primary ring-4 ring-surface-container-lowest"></div>
-                  <div className="text-sm font-black uppercase text-on-surface">{log.action}</div>
-                  <div className="mt-1 text-xs font-bold text-primary">
+                  <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-[#004785] dark:bg-blue-600 ring-4 ring-white dark:ring-[#0f0f0f]"></div>
+                  <div className="text-sm font-black uppercase text-slate-900 dark:text-[#e5e5e5]">{log.action}</div>
+                  <div className="mt-1 text-xs font-bold text-[#004785] dark:text-blue-400">
                     {new Date(log.createdAt).toLocaleString('vi-VN')}
                   </div>
-                  <div className="mt-2 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 text-sm font-medium text-on-surface-variant shadow-sm">
+                  <div className="mt-2 rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-3 text-sm font-medium text-slate-500 dark:text-[#999999] shadow-sm">
                     {log.description}
                   </div>
                 </div>
@@ -326,24 +324,24 @@ const AdminUserDetail = () => {
 
       {/* Sửa thông tin Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-lg border border-outline-variant bg-surface-container-lowest p-6 shadow-xl">
-            <h3 className="mb-4 text-base font-bold text-on-surface">Cập Nhật Thông Tin</h3>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-6 shadow-xl">
+            <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Cập Nhật Thông Tin</h3>
             <form onSubmit={handleUpdateUser} className="space-y-4">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
+                <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
                   Họ và Tên
                 </label>
                 <input
                   type="text"
                   value={editFormData.fullName}
                   onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
-                  className="w-full rounded border border-outline-variant p-2 text-xs outline-none focus:border-primary"
+                  className="w-full rounded border border-slate-200 dark:border-[#333333] p-2 text-xs outline-none focus:border-primary"
                   required
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
+                <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
                   Số Điện Thoại
                 </label>
                 <input
@@ -352,20 +350,20 @@ const AdminUserDetail = () => {
                   onChange={(e) =>
                     setEditFormData({ ...editFormData, phoneNumber: e.target.value })
                   }
-                  className="w-full rounded border border-outline-variant p-2 text-xs outline-none focus:border-primary"
+                  className="w-full rounded border border-slate-200 dark:border-[#333333] p-2 text-xs outline-none focus:border-primary"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="rounded px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high"
+                  className="rounded px-4 py-2 text-xs font-bold text-slate-500 dark:text-[#999999] hover:bg-slate-100 dark:bg-[#272727]"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-primary px-4 py-2 text-xs font-bold text-on-primary hover:bg-primary/90"
+                  className="rounded bg-[#004785] dark:bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-[#004785] dark:bg-blue-600/90"
                 >
                   Lưu
                 </button>
