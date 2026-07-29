@@ -39,7 +39,10 @@ const PosCartPanel = ({
         <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-[#808080]">
           Giỏ hàng hiện tại
         </h3>
-        <button onClick={onClearCart} className="text-slate-400 hover:text-red-600 active:scale-95 dark:text-[#808080]">
+        <button
+          onClick={onClearCart}
+          className="text-slate-400 hover:text-red-600 active:scale-95 dark:text-[#808080]"
+        >
           <Icon name="delete" />
         </button>
       </div>
@@ -58,7 +61,9 @@ const PosCartPanel = ({
               )}
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
-              <h5 className="truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{item.name}</h5>
+              <h5 className="truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                {item.name}
+              </h5>
               <div className="mt-0.5 whitespace-nowrap text-base font-black text-[#004785]">
                 {formatCurrency(item.price)}
                 <span className="ml-1 text-xs font-medium text-slate-500 dark:text-[#999999]">
@@ -86,19 +91,20 @@ const PosCartPanel = ({
                 min="1"
                 max={item.stock || 999999}
                 step="1"
-                value={item.quantity}
-                onChange={(e) => {
+                defaultValue={item.quantity}
+                key={`qty-${item.id}-${item.quantity}`}
+                onBlur={(e) => {
                   const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val) && val >= 1) {
-                    const maxQty = item.stock || Infinity;
-                    const clamped = Math.min(val, maxQty);
-                    onQtyChange(item.id, clamped - item.quantity);
-                  }
+                  const maxQty = item.stock || 999999;
+                  const safe = isNaN(val) || val < 1 ? 1 : Math.min(val, maxQty);
+                  if (safe !== item.quantity) onQtyChange(item.id, safe - item.quantity);
+                  else e.target.value = String(item.quantity);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === '-' || e.key === 'e' || e.key === '.') e.preventDefault();
+                  if (e.key === 'Enter') e.target.blur();
                 }}
-                className="w-8 text-center text-sm font-bold outline-none dark:bg-transparent dark:text-[#e5e5e5] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="w-8 text-center text-sm font-bold outline-none [appearance:textfield] dark:bg-transparent dark:text-[#e5e5e5] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
               <button
                 onClick={() => onQtyChange(item.id, 1)}
@@ -137,7 +143,9 @@ const PosCartPanel = ({
           )}
           <div className="my-1 h-px bg-slate-200 dark:bg-[#272727]" />
           <div className="flex items-end justify-between">
-            <span className="text-xs font-bold uppercase text-slate-900 dark:text-[#e5e5e5]">Tổng cộng</span>
+            <span className="text-xs font-bold uppercase text-slate-900 dark:text-[#e5e5e5]">
+              Tổng cộng
+            </span>
             <span className="text-2xl font-black text-[#004785]">
               {formatCurrency(subtotal - (discountInfo?.discountAmount || 0))}
             </span>
@@ -158,8 +166,15 @@ const PosCartPanel = ({
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:border-[#404040]'
               }`}
             >
-              <Icon name={icon} className={`text-lg ${!isSplitPay && payMethod === method ? 'dark:text-blue-300' : ''}`} />
-              <span className={`text-[10px] font-bold ${!isSplitPay && payMethod === method ? 'text-slate-600 dark:text-blue-300' : 'text-slate-600 dark:text-[#999999]'}`}>{method}</span>
+              <Icon
+                name={icon}
+                className={`text-lg ${!isSplitPay && payMethod === method ? 'dark:text-blue-300' : ''}`}
+              />
+              <span
+                className={`text-[10px] font-bold ${!isSplitPay && payMethod === method ? 'text-slate-600 dark:text-blue-300' : 'text-slate-600 dark:text-[#999999]'}`}
+              >
+                {method}
+              </span>
             </button>
           ))}
         </div>
