@@ -30,8 +30,6 @@ const formatCurrency = (value) => {
   return n.toLocaleString('vi-VN');
 };
 
-const formatMonth = (m) => new Date(2000, m - 1, 1).toLocaleDateString('vi-VN', { month: 'short' });
-
 const formatDateTime = (value) => {
   if (!value) return '—';
   const d = new Date(value);
@@ -161,8 +159,6 @@ const AdminDashboard = () => {
       console.error('Export error:', err);
     }
   };
-
-  const maxRevenue = chart.reduce((max, p) => (p && p.revenue > max ? p.revenue : max), 0);
 
   /* ── Dữ liệu biểu đồ 12 tháng Owner ── */
   const trendChart = (overview?.revenueTrendLast12Months ?? []).map((r, i) => ({
