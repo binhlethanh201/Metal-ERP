@@ -10,6 +10,8 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
     roleIds: [],
   });
 
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -19,26 +21,56 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
         phoneNumber: '',
         roleName: '', // 'Owner', 'Sales Staff', 'Inventory Staff', 'Staff'
       });
+      setErrors({});
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear error when typing
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: null });
+    }
+  };
 
   const handleRoleChange = (roleName) => {
     setFormData((prev) => ({
       ...prev,
       roleName,
     }));
+    if (errors.roleName) {
+      setErrors({ ...errors, roleName: null });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.fullName.trim()) newErrors.fullName = 'Vui lòng nhập họ và tên.';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Vui lòng nhập email.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email không hợp lệ.';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Vui lòng nhập mật khẩu.';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự.';
+    }
+    if (formData.phoneNumber && !/^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = 'Số điện thoại không hợp lệ.';
+    }
+    if (!formData.roleName) newErrors.roleName = 'Vui lòng chọn loại tài khoản.';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.email || !formData.password || !formData.roleName) {
-      alert('Vui lòng nhập đầy đủ Tên, Email, Mật khẩu và chọn Role.');
-      return;
-    }
+    if (!validateForm()) return;
+    
     // Set username = email
     let mappedRoleName = formData.roleName;
     if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
@@ -54,11 +86,11 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
   );
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-lg border border-outline-variant bg-surface-container-lowest p-6 shadow-xl">
-        <div className="flex items-center justify-between border-b border-surface-container-high pb-3">
-          <h3 className="text-base font-bold text-on-surface">Thêm Người Dùng Mới</h3>
-          <button onClick={onClose} className="text-outline hover:text-on-surface">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-6 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#333333] pb-3">
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Thêm Người Dùng Mới</h3>
+          <button onClick={onClose} className="text-slate-400 dark:text-[#666666] hover:text-slate-900 dark:text-[#e5e5e5]">
             <Icon name="x" size={18} />
           </button>
         </div>
@@ -66,49 +98,52 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
-                Họ và Tên <span className="text-error">*</span>
+              <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                Họ và Tên <span className="text-red-600 dark:text-red-500">*</span>
               </label>
               <input
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
                 type="text"
-                className="w-full rounded border border-outline-variant p-2 text-xs outline-none focus:border-primary"
+                className={`w-full rounded border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${errors.fullName ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-[#333333] focus:border-[#004785]'}`}
                 placeholder="VD: Nguyễn Văn A"
               />
+              {errors.fullName && <p className="mt-1 text-[10px] text-red-500">{errors.fullName}</p>}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
-                Email đăng nhập <span className="text-error">*</span>
+              <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                Email đăng nhập <span className="text-red-600 dark:text-red-500">*</span>
               </label>
               <input
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 type="email"
-                className="w-full rounded border border-outline-variant p-2 text-xs outline-none focus:border-primary"
+                className={`w-full rounded border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-[#333333] focus:border-[#004785]'}`}
                 placeholder="email@mep.vn"
               />
+              {errors.email && <p className="mt-1 text-[10px] text-red-500">{errors.email}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
-                Mật khẩu (Tối thiểu 6 ký tự) <span className="text-error">*</span>
+              <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                Mật khẩu (Tối thiểu 6 ký tự) <span className="text-red-600 dark:text-red-500">*</span>
               </label>
               <input
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 type="password"
-                className="w-full rounded border border-outline-variant p-2 text-xs outline-none focus:border-primary"
+                className={`w-full rounded border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-[#333333] focus:border-[#004785]'}`}
                 placeholder="••••••••"
               />
+              {errors.password && <p className="mt-1 text-[10px] text-red-500">{errors.password}</p>}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-on-surface-variant">
+              <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
                 Số điện thoại
               </label>
               <input
@@ -116,15 +151,16 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 type="tel"
-                className="w-full rounded border border-outline-variant p-2 text-xs outline-none focus:border-primary"
+                className={`w-full rounded border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${errors.phoneNumber ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-[#333333] focus:border-[#004785]'}`}
                 placeholder="09..."
               />
+              {errors.phoneNumber && <p className="mt-1 text-[10px] text-red-500">{errors.phoneNumber}</p>}
             </div>
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-semibold text-on-surface-variant">
-              Chọn Loại Tài Khoản <span className="text-error">*</span>
+            <label className="mb-2 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+              Chọn Loại Tài Khoản <span className="text-red-600 dark:text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               {assignableRoles.map((role) => (
@@ -132,8 +168,8 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
                   key={role.roleId}
                   className={`flex cursor-pointer items-center gap-2 rounded border p-2 transition-colors ${
                     formData.roleName === role.roleName
-                      ? 'border-primary bg-primary-container/20'
-                      : 'border-outline-variant hover:bg-surface-container-low'
+                      ? 'border-[#004785] bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-slate-200 dark:border-[#333333] hover:bg-slate-50 dark:hover:bg-[#1a1a1a]'
                   }`}
                 >
                   <input
@@ -142,27 +178,28 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
                     value={role.roleName}
                     checked={formData.roleName === role.roleName}
                     onChange={() => handleRoleChange(role.roleName)}
-                    className="h-4 w-4 text-primary focus:ring-primary"
+                    className="h-4 w-4 text-[#004785] focus:ring-[#004785]"
                   />
                   <div>
-                    <div className="text-xs font-bold text-on-surface">{role.roleName}</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">{role.roleName}</div>
                   </div>
                 </label>
               ))}
             </div>
+            {errors.roleName && <p className="mt-1 text-[10px] text-red-500">{errors.roleName}</p>}
           </div>
 
-          <div className="mt-4 flex justify-end gap-3 border-t border-surface-container-high pt-4">
+          <div className="mt-4 flex justify-end gap-3 border-t border-slate-200 dark:border-[#333333] pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="rounded px-4 py-2 text-xs font-bold text-on-surface-variant transition-colors hover:bg-surface-container-high"
+              className="rounded px-4 py-2 text-xs font-bold text-slate-500 dark:text-[#999999] transition-colors hover:bg-slate-100 dark:hover:bg-[#272727]"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              className="rounded bg-primary px-4 py-2 text-xs font-bold text-on-primary shadow-sm transition-colors hover:bg-primary/90"
+              className="rounded bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-800"
             >
               Lưu Người Dùng
             </button>
@@ -174,3 +211,4 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
 };
 
 export default CreateAccountModal;
+

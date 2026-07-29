@@ -8,6 +8,7 @@ import { ProductTable } from '../components/product/ProductTable';
 import { CategoryBrandManagerModal } from '../components/product/CategoryBrandManagerModal';
 import { LocationAttributeModal } from '../components/product/LocationAttributeModal';
 import { EditProductModal } from '../components/product/EditProductModal';
+import { ProductImportModal } from '../components/product/ProductImportModal';
 
 export const ProductManagement = () => {
   const [expandedId, setExpandedId] = useState('');
@@ -15,6 +16,7 @@ export const ProductManagement = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [locationAttrModalOpen, setLocationAttrModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [initialEditTab, setInitialEditTab] = useState('info');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -230,6 +232,13 @@ export const ProductManagement = () => {
             </button>
             <button
               type="button"
+              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#1a1a1a] dark:text-emerald-400 dark:hover:bg-[#333333]"
+              onClick={() => setImportModalOpen(true)}
+            >
+              <Icon name="file_upload" className="text-sm" /> Nhập từ Excel
+            </button>
+            <button
+              type="button"
               className="flex items-center gap-1 rounded-lg bg-[#004785] px-4 py-2 text-sm font-bold text-white hover:bg-black"
               onClick={() => {
                 setProductToEdit(null);
@@ -332,6 +341,15 @@ export const ProductManagement = () => {
         open={locationAttrModalOpen}
         onClose={() => setLocationAttrModalOpen(false)}
         onSuccess={() => refetch()}
+      />
+
+      <ProductImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onSuccess={(msg) => {
+          setSuccessMsg(msg);
+          refetch();
+        }}
       />
     </div>
   );

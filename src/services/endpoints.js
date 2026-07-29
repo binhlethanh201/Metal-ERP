@@ -225,7 +225,7 @@ export const ENDPOINTS = {
     ACCOUNT_CHECK_RELATIONS: (id) => `/api/admin/accounts/${id}/check-relations`,
     
     // Legacy Users (Keep for compatibility)
-    USER_ACTIVITIES: (id) => `/api/admin/users/${id}/activities`,
+    USER_ACTIVITIES: (id) => `/api/admin/accounts/${id}/activities`,
 
     // Roles & Permissions (Quản lý Quyền)
     ROLE_LIST: '/api/admin/roles',
@@ -265,6 +265,8 @@ export const ENDPOINTS = {
     LOGOUT: '/logout',
     REGISTER_START: '/register/start',
     REGISTER_VERIFY: '/register/verify',
+    FORGOT_PASSWORD_START: '/forgot-password/start',
+    FORGOT_PASSWORD_VERIFY: '/forgot-password/verify',
     REFRESH_TOKEN: '/refresh',
     GET_PROFILE: '/profile',
     UPDATE_PROFILE: '/profile',

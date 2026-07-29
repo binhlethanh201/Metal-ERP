@@ -34,7 +34,7 @@ const getVNDateStr = (dateStr) => {
   }
   const d = new Date(normalized);
   if (isNaN(d.getTime())) return '';
-  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: VN_TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const fmt = new Intl.DateTimeFormat('vi-VN', { timeZone: VN_TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
   return fmt.format(d);
 };
 

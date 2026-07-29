@@ -73,18 +73,6 @@ export const DailyEndReport = ({ data }) => {
               {data.paymentBreakdown?.debtCount || 0} đơn
             </p>
           </div>
-
-          <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 dark:border-purple-900/50 dark:bg-purple-900/20">
-            <p className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400">
-              Thanh toán kết hợp
-            </p>
-            <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
-              {formatCurrency(data.paymentBreakdown?.combinedAmount || 0)}
-            </p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
-              {data.paymentBreakdown?.combinedCount || 0} đơn
-            </p>
-          </div>
         </div>
       </Card>
       <Card header={<h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Phiếu kho trong ngày</h4>}>

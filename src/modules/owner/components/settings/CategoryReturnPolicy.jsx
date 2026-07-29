@@ -53,9 +53,9 @@ const DurationInput = ({ label, value, onChange, hint }) => {
   };
 
   return (
-    <div>
+    <div className="min-w-0">
       <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{label}</label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <input
           type="text"
           inputMode="numeric"

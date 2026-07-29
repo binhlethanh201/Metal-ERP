@@ -86,7 +86,7 @@ const OwnerOutwardExcelPage = () => {
       return;
     }
     if (!branchId.trim()) {
-      setCommitError('Vui lòng nhập Branch ID.');
+      setCommitError('Vui lòng nhập ID chi nhánh.');
       return;
     }
     setCommitLoading(true);
@@ -282,7 +282,7 @@ const OwnerOutwardExcelPage = () => {
           <div className="flex flex-col gap-3 md:flex-row md:items-end">
             <div className="flex-1">
               <Input
-                label="Branch ID"
+                label="ID chi nhánh"
                 placeholder="Nhập UUID chi nhánh"
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}

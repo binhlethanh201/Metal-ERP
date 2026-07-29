@@ -42,7 +42,7 @@ export const Button = ({
       {loading ? (
         <span className="flex items-center gap-2">
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          Loading...
+          Đang tải...
         </span>
       ) : (
         children

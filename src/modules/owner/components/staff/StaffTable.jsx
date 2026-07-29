@@ -71,15 +71,7 @@ const StaffTable = ({
         </div>
       ),
     },
-    {
-      key: 'branch',
-      header: 'Chi nhánh',
-      render: (_, staff) => (
-        <div className="font-medium text-slate-700 dark:text-[#b3b3b3]">
-          {staff.branchName || '---'}
-        </div>
-      ),
-    },
+   
     {
       key: 'status',
       header: 'Trạng thái',

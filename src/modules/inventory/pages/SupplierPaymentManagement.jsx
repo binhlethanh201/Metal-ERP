@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import Icon from '../../../shared/components/Icon';
+import { Button } from '../../../shared/components/Button';
 import { useSupplierPayment } from '../hooks/useSupplierPayment';
 
 const formatCurrency = (value) =>
@@ -24,6 +26,7 @@ const getMethodLabel = (method) => {
 };
 
 const SupplierPaymentManagement = () => {
+  const navigate = useNavigate();
   const {
     payments,
     suppliers,
@@ -82,6 +85,14 @@ const SupplierPaymentManagement = () => {
             Quản lý các phiếu thanh toán công nợ cho nhà cung cấp, hủy phiếu nếu sai sót.
           </p>
         </div>
+        <Button
+          onClick={() => navigate('/inventory/supplier-debt')}
+          variant="secondary"
+          size="sm"
+          className="flex items-center gap-1.5"
+        >
+          <Icon name="chevron_left" size={16} /> Công nợ NCC
+        </Button>
       </div>
 
       {error && (

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import Icon from '../../../shared/components/Icon';
+import Button from '../../../shared/components/Button';
 import { useSupplierManager } from '../hooks/useSupplierManager';
 import SupplierTable from '../components/supplier/SupplierTable';
 import SupplierModal from '../components/supplier/SupplierModal';
@@ -118,20 +119,22 @@ const SupplierManagement = () => {
 
         {/* THAY ĐỔI CỤM NÚT Ở ĐÂY: Thêm nút nhảy sang trang Công nợ */}
         <div className="flex gap-3">
-          <button
+          <Button
+            variant="secondary"
             onClick={() => navigate('/inventory/supplier-debt')}
-            className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-[#b3b3b3] shadow-sm transition hover:bg-slate-50 dark:hover:bg-[#333333]"
+            className="flex items-center gap-2"
           >
             <Icon name="account_balance_wallet" size={18} />
             Sổ Công Nợ
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={() => openModal('create')}
-            className="flex items-center gap-2 rounded-xl bg-[#0f4c81] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black"
+            className="flex items-center gap-2"
           >
-            <Icon name="add" size={18} />
+            <Icon name="add" size={20} />
             Thêm nhà cung cấp
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -141,7 +144,7 @@ const SupplierManagement = () => {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card padding="p-4" className="border border-slate-200 dark:border-[#333333]">
           <p className="text-sm font-semibold text-slate-500 dark:text-[#999999]">Tổng nhà cung cấp</p>
           <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">{suppliers.length}</p>
@@ -156,31 +159,25 @@ const SupplierManagement = () => {
           </p>
           <p className="mt-1 text-sm font-medium text-slate-500 dark:text-[#999999]">Tổng số tiền cần thanh toán</p>
         </Card>
-        <Card padding="p-4" className="border border-red-100 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20">
-          <p className="text-sm font-semibold text-red-600 dark:text-red-400">Nợ cần ưu tiên</p>
-          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
-            {formatCurrency(summary.overdueDebt)}
-          </p>
-          <p className="mt-1 text-sm font-medium text-red-500 dark:text-red-400">Đã đến hạn hoặc sắp đến hạn</p>
-        </Card>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
         <Card header="Danh sách đối tác">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="relative w-full md:max-w-sm">
+              <Icon name="search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#808080]" />
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                placeholder="Tìm theo tên, nhóm, số điện thoại..."
-                className="w-full rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                placeholder="Tìm theo tên, mã, số điện thoại..."
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] py-2 pl-10 pr-3 text-sm outline-none focus:border-[#004785] focus:bg-white dark:text-[#e5e5e5] dark:focus:bg-[#1a1a1a]"
               />
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <select
                 value={groupFilter}
                 onChange={(e) => { setGroupFilter(e.target.value); setCurrentPage(1); }}
-                className="rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-[#b3b3b3] outline-none focus:border-blue-500"
+                className="rounded-lg border border-slate-200 bg-white dark:border-[#404040] dark:bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-slate-700 dark:text-[#b3b3b3] outline-none focus:border-[#004785]"
               >
                 <option value="all">Tất cả nhóm</option>
                 {groupOptions.map((group) => (
@@ -192,7 +189,7 @@ const SupplierManagement = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="rounded-xl border border-slate-300 dark:border-[#404040] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-[#b3b3b3] outline-none focus:border-blue-500"
+                className="rounded-lg border border-slate-200 bg-white dark:border-[#404040] dark:bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-slate-700 dark:text-[#b3b3b3] outline-none focus:border-[#004785]"
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="active">Đang hợp tác</option>

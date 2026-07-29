@@ -95,7 +95,7 @@ export const Table = ({
                   return (
                     <td
                       key={`${rowIdx}-${col.key}`}
-                      className={`px-4 py-2.5 text-sm text-slate-600 dark:text-[#b3b3b3] ${alignClass}`}
+                      className={`px-4 py-2.5 text-sm text-slate-600 dark:text-[#b3b3b3] overflow-hidden break-all ${alignClass}`}
                     >
                       {col.render ? col.render(row[col.key], row) : row[col.key]}
                     </td>

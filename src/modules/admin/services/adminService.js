@@ -3,12 +3,13 @@ import ENDPOINTS from '../../../services/endpoints';
 
 // ============ Dashboard ============
 export const getDashboardStats = () => apiGet(ENDPOINTS.ADMIN.DASHBOARD_STATS);
+export const getOverview = () => apiGet('/api/admin/dashboard/overview');
 export const getRevenueChart = (year) =>
   apiGet(`${ENDPOINTS.ADMIN.DASHBOARD_REVENUE}?year=${year}`);
 export const getRecentEvents = (limit) =>
   apiGet(`${ENDPOINTS.ADMIN.DASHBOARD_EVENTS}?limit=${limit || 20}`);
-export const exportDashboard = () =>
-  apiGet(ENDPOINTS.ADMIN.DASHBOARD_EXPORT, { responseType: 'blob' });
+export const exportDashboard = (format = 'excel') =>
+  apiGet(`${ENDPOINTS.ADMIN.DASHBOARD_EXPORT}?format=${format}`, { responseType: 'blob' });
 
 // ============ User Accounts (Unified) ============
 export const getUserList = (params = {}) => apiGet(ENDPOINTS.ADMIN.ACCOUNT_LIST, { params });

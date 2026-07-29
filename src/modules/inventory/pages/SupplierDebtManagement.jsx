@@ -18,9 +18,8 @@ const formatCurrency = (value) =>
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Tất cả' },
-  { value: 'normal', label: 'Bình thường' },
-  { value: 'overdue', label: 'Quá hạn' },
-  { value: 'paid', label: 'Đã trả hết' },
+  { value: 'Còn nợ', label: 'Còn nợ' },
+  { value: 'Hết nợ', label: 'Hết nợ' },
 ];
 
 const SupplierDebtManagement = () => {
@@ -95,6 +94,14 @@ const SupplierDebtManagement = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate('/inventory/suppliers')}
+            variant="secondary"
+            size="sm"
+            className="flex items-center gap-1.5"
+          >
+            <Icon name="chevron_left" size={16} /> Quản lý NCC
+          </Button>
           <Button
             onClick={() => navigate('/inventory/supplier-payments')}
             variant="outline"
@@ -250,17 +257,21 @@ const SupplierDebtManagement = () => {
                       {formatCurrency(d.closingDebt)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {d.status === 'overdue' ? (
+                      {d.status === 'Quá hạn' ? (
                         <span className="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-300">
-                          Quá Hạn
+                          Quá hạn
                         </span>
-                      ) : d.status === 'paid' ? (
+                      ) : d.status === 'Hết nợ' ? (
                         <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
-                          Đã Trả Hết
+                          Hết nợ
+                        </span>
+                      ) : d.status === 'Trả thừa' ? (
+                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
+                          Trả thừa
                         </span>
                       ) : (
-                        <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-[#272727] dark:text-[#b3b3b3]">
-                          Bình Thường
+                        <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+                          {d.status || 'Còn nợ'}
                         </span>
                       )}
                     </td>
@@ -332,6 +343,7 @@ const SupplierDebtManagement = () => {
         onClose={() => setPaymentModalOpen(false)}
         onSave={onConfirmPayment}
         suppliers={activeSuppliers}
+        debts={debts}
       />
     </div>
   );

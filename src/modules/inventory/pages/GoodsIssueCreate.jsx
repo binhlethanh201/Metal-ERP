@@ -76,7 +76,7 @@ const GoodsIssueCreate = () => {
     input.onchange = (e) => {
       const files = e.target.files;
       if (files && files.length > 0) {
-        alert(`Da chon ${files.length} file (demo)`);
+        alert(`Đã chọn ${files.length} file`);
       }
     };
     input.click();
@@ -89,7 +89,7 @@ const GoodsIssueCreate = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e5e5e5]">Tạo phiếu xuất kho</h1>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-[#999999]">
-            Nhập thong tin phiếu xuất va Chi tiết hàng hóa
+            Nhập thông tin phiếu xuất và Chi tiết hàng hóa
           </p>
         </div>
         <button
@@ -98,7 +98,7 @@ const GoodsIssueCreate = () => {
           onClick={handleClose}
         >
           <Icon name="chevron_left" className="text-base" />
-          <span>Tro ve</span>
+          <span>Trở về</span>
         </button>
       </div>
 
@@ -147,8 +147,8 @@ const GoodsIssueCreate = () => {
           onPriceChange={form.handleLinePriceChange}
           onAddLine={form.addLine}
           onRemoveLine={form.removeLine}
-          onQuickAdd={() => alert('Them hang hoa moi (F9) - demo')}
-          onAdvancedSearch={() => alert('Tìm nhanh hang hoa (F3) - demo')}
+          onQuickAdd={() => alert('Thêm hàng hóa mới (F9)')}
+          onAdvancedSearch={() => alert('Tìm nhanh hàng hóa (F3)')}
         />
       </div>
 
@@ -165,7 +165,7 @@ const GoodsIssueCreate = () => {
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <span className="text-xs text-slate-500 dark:text-[#999999]">Tong Thành tiền: </span>
+            <span className="text-xs text-slate-500 dark:text-[#999999]">Tổng Thành tiền: </span>
             <span className="ml-1 text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
               {formatMoney(form.totalAmount)}
             </span>
@@ -176,7 +176,7 @@ const GoodsIssueCreate = () => {
               className="rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] px-6 py-2.5 text-sm font-semibold text-slate-600 dark:text-[#b3b3b3] transition-colors hover:bg-slate-50 dark:hover:bg-[#333333]"
               onClick={handleCancel}
             >
-              Huy
+              Hủy
             </button>
             <button
               type="button"
@@ -184,7 +184,7 @@ const GoodsIssueCreate = () => {
               onClick={handleSave}
               disabled={!form.isValid || form.saving}
             >
-              {form.saving ? 'Đang lưu...' : 'Luu'}
+              {form.saving ? 'Đang lưu...' : 'Lưu'}
             </button>
           </div>
         </div>
