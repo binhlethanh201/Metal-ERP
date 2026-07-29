@@ -90,7 +90,8 @@ const ShiftBadge = () => {
               </span>
             </div>
             <span className="text-[10px] font-semibold tracking-wide text-green-600 dark:text-green-400">
-              {shiftInfo.userName || shiftInfo.cashier || 'Thu ngân'} · {formatElapsed(shiftInfo.startedAt) || `${shiftInfo.orderCount ?? 0} đơn`}
+              {shiftInfo.userName || shiftInfo.cashier || 'Thu ngân'} ·{' '}
+              {formatElapsed(shiftInfo.startedAt) || `${shiftInfo.orderCount ?? 0} đơn`}
             </span>
           </div>
         </div>
