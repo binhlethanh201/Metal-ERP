@@ -57,7 +57,7 @@ export const useDiscountTiers = (branchId) => {
         onSuccess?.();
       }
     } catch (err) {
-      alert(err?.data?.message || err.message || 'Lỗi khi tạo mức chiết khấu.');
+      // Surface error via thrown err only — modal handles UX (inline form error).
       throw err;
     }
   };
@@ -75,7 +75,6 @@ export const useDiscountTiers = (branchId) => {
         onSuccess?.();
       }
     } catch (err) {
-      alert(err?.data?.message || err.message || 'Lỗi khi cập nhật mức chiết khấu.');
       throw err;
     }
   };
@@ -88,7 +87,6 @@ export const useDiscountTiers = (branchId) => {
       fetchTiers();
       onSuccess?.();
     } catch (err) {
-      alert(err?.data?.message || err.message || 'Lỗi khi xóa mức chiết khấu.');
       throw err;
     }
   };
