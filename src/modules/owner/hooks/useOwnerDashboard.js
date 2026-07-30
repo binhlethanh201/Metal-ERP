@@ -12,7 +12,8 @@ const useOwnerDashboard = () => {
     try {
       // apiGet đã tự động cấu hình Base URL và gắn Header Authorization
       const json = await apiGet('/api/owner/dashboard/overview');
-      setData(json);
+      // Backend có thể trả về { success: true, data: {...} } hoặc {...} trực tiếp
+      setData(json?.data ?? json);
     } catch (err) {
       // Bắt lỗi theo chuẩn mà apiClient.js đã ném ra
       setError(err.message || 'Lỗi không xác định');
