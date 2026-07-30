@@ -22,7 +22,7 @@ import Table from '../../../../shared/components/Table';
  */
 const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
   const { user } = useAuth();
-  const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
+  const isOwner = hasRole(user?.roles, 'Owner');
   const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const currentUserId = user?.userId || user?.id;
@@ -81,10 +81,13 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
             const allStaff = res.data.items || [];
             const qualified = allStaff.filter((staff) => {
               const isSameBranch = !branchId || !staff.branchId || staff.branchId === branchId;
+              const staffRoles = Array.isArray(staff.roles)
+                ? staff.roles
+                : staff.role
+                  ? [staff.role]
+                  : [];
               const hasInventoryRole =
-                hasRole(staff.roles, 'InventoryStaff') ||
-                hasRole(staff.roles, 'Owner') ||
-                staff.role === 'Owner';
+                hasRole(staffRoles, 'InventoryStaff') || hasRole(staffRoles, 'Owner');
               const hasPermission =
                 staff.permissionCodes?.includes('STOCK_CHECK_CREATE') ||
                 staff.permissionCodes?.includes('STOCK_CHECK_APPROVE');

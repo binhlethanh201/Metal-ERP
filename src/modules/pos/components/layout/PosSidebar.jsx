@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onToggle }) => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
   const { user } = useAuth();
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+  const isOwner = hasRole(userRoles, 'Owner');
 
   const MENU_ROUTES = {
     'Máy bán hàng': '/pos',
@@ -54,7 +55,9 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
               <div className="absolute inset-0 animate-spin rounded-full border-4 border-slate-100 border-t-primary dark:border-[#333333]" />
               <Icon name="factory" className="animate-pulse text-primary" size={22} />
             </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Đang đồng bộ dữ liệu kho</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">
+              Đang đồng bộ dữ liệu kho
+            </h3>
             <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-[#999999]">
               Đang thống kê lại nhật ký bán hàng và cập nhật biểu đồ tồn kho real-time...
             </p>
