@@ -465,7 +465,7 @@ const OwnerDashboard = () => {
                         <div className="flex items-center gap-2">
                           <span className={`h-2.5 w-2.5 rounded-full ${catColors[i % catColors.length]}`} />
                           <span className="text-xs font-semibold text-slate-700 dark:text-[#b3b3b3]">
-                            {cat.categoryName}
+                            {cat.categoryName || 'Sản phẩm chưa phân định danh mục'}
                           </span>
                           <span className="text-[10px] text-slate-400 dark:text-[#808080]">
                             ({fmtInt(cat.quantitySold)} sp)
