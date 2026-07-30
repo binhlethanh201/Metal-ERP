@@ -10,13 +10,13 @@ const handleDownloadTemplate = () => {
     {
       'Mã hàng': 'SP001',
       'Tên hàng': 'Sản phẩm mẫu 1',
-      'ĐVT': 'Cái',
+      ĐVT: 'Cái',
       'Nhóm hàng': 'Nhóm A',
       'Thương hiệu': 'Brand X',
       'Giá vốn': 100000,
       'Giá bán': 150000,
       'Tồn kho': 10,
-    }
+    },
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Products');
@@ -62,7 +62,7 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
-        
+
         setPreviewData(data);
       } catch (err) {
         setError('Không thể đọc file. File có thể bị hỏng hoặc sai định dạng.');
@@ -83,6 +83,7 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
       SalePrice: parseFloat(row['Giá bán']) || 0,
       AvailableStock: parseFloat(row['Tồn kho']) || 0,
       ActualStock: parseFloat(row['Tồn kho']) || 0,
+      IsActive: true,
     }));
   };
 
@@ -97,15 +98,15 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       const productsToImport = mapDataToDto(previewData);
-      
+
       const payload = {
         Products: productsToImport,
         AutoCreateMissingCategories: true,
-        AutoCreateMissingBrands: true
+        AutoCreateMissingBrands: true,
       };
 
       const res = await apiPost('/api/products/bulk-import', payload);
-      
+
       if (res.success) {
         onSuccess(res.message);
         handleClose();
@@ -174,7 +175,7 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
                 <span className="text-xs text-slate-500">Hiển thị 5 dòng đầu</span>
               )}
             </div>
-            
+
             <div className="overflow-x-auto rounded-lg border border-slate-200">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase text-slate-500">
@@ -224,7 +225,7 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
             className={`flex items-center gap-2 rounded-lg px-6 py-2 text-sm font-bold text-white transition-all ${
               loading || previewData.length === 0
                 ? 'cursor-not-allowed bg-slate-400'
-                : 'bg-emerald-600 hover:bg-emerald-700 shadow-sm active:scale-95'
+                : 'bg-emerald-600 shadow-sm hover:bg-emerald-700 active:scale-95'
             }`}
           >
             {loading ? (
