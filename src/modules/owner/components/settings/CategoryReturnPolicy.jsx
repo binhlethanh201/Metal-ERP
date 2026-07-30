@@ -55,7 +55,7 @@ const DurationInput = ({ label, value, onChange, hint }) => {
   return (
     <div className="min-w-0">
       <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{label}</label>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2">
         <input
           type="text"
           inputMode="numeric"
@@ -63,12 +63,12 @@ const DurationInput = ({ label, value, onChange, hint }) => {
           value={value.value}
           onChange={(e) => handleValueChange(e.target.value)}
           placeholder="0"
-          className="w-24 rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+          className="w-20 min-w-[5rem] rounded-lg border border-slate-300 px-3 py-2.5 text-center text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
         />
         <select
           value={value.unit}
           onChange={(e) => handleUnitChange(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+          className="w-28 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
         >
           {UNIT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>

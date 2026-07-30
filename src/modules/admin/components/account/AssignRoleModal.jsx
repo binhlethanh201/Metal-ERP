@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {

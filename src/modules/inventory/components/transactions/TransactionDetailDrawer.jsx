@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, Package, User, FileText, Printer } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 import { TransactionTypeBadge } from './TransactionTypeBadge';
+import { getStockTemplate } from '../../../owner/services/printTemplateService';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', {
@@ -24,6 +25,8 @@ const formatDate = (dateString) => {
 
 export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading = false }) => {
   const drawerRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
+  const [printLoading, setPrintLoading] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -70,11 +73,40 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
       return sum + qty * price;
     }, 0) || 0;
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!transaction) return;
+    setPrintLoading(true);
+
+    // Xác định loại phiếu để lấy template tương ứng
+    const ticketType = transaction.type === 'INWARD' ? 'PURCHASE' : 'SALE';
+
+    let tpl = {};
+    try {
+      const res = await getStockTemplate(ticketType);
+      tpl = res?.data || res || {};
+      console.log(`[Print] Template for ${ticketType}:`, JSON.stringify(tpl, null, 2));
+    } catch (err) {
+      console.warn(`[Print] Failed to fetch template for ${ticketType}:`, err);
+    }
+
+    // Dùng nullish coalescing để giữ giá trị rỗng nếu user cố tình để trống
+    const shopName = tpl.branchName ?? tpl.BranchName ?? 'MEP SYSTEM';
+    const shopAddress = tpl.branchAddress ?? tpl.BranchAddress ?? '12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM';
+    const shopPhone = tpl.phone ?? tpl.Phone ?? '028.3999.8888';
+    const shopTaxCode = tpl.taxCode ?? tpl.TaxCode ?? '0312345678';
+    const headerExtra = tpl.headerText || '';
+    const footerExtra = tpl.footerText || '';
+    const fontFamily = tpl.fontFamily || 'Times New Roman, Times, serif';
+    const fontSize = tpl.fontSize || 14;
+    const paperSize = tpl.paperSize || 'A4';
+    const showSignature = tpl.showSignature !== false;
+    const showBranchInfo = tpl.showBranchInfo !== false;
+    const showSupplier = tpl.showSupplier !== false;
+    const showLogo = tpl.showLogo && tpl.logoUrl;
+    const logoUrl = tpl.logoUrl || '';
 
     const printWindow = window.open('', '_blank', 'width=800,height=800');
-    if (!printWindow) return;
+    if (!printWindow) { setPrintLoading(false); return; }
 
     const typeLabel = transaction.type === 'INWARD' ? 'PHIẾU NHẬP KHO' : 'PHIẾU XUẤT KHO';
 
@@ -97,11 +129,11 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
 <html>
 <head><meta charset="utf-8"><title>In ${typeLabel.toLowerCase()} ${transaction.ticketCode}</title>
 <style>
-  @page { size: A4; margin: 20mm; }
+  @page { size: ${paperSize}; margin: 20mm; }
   *{margin:0;padding:0;box-sizing:border-box}
   body{
-    font-family:'Times New Roman', Times, serif;
-    font-size:14px;
+    font-family:${fontFamily};
+    font-size:${fontSize}px;
     color:#000;
     background:#fff;
     max-width:800px;
@@ -133,8 +165,10 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
 <body>
   <div class="header">
     <div class="header-left">
-      <h1>CÔNG TY TNHH ABC</h1>
-      <p>Địa chỉ: 12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM</p>
+      ${showLogo ? `<img src="${logoUrl}" alt="logo" style="max-height:60px;margin-bottom:4px" />` : ''}
+      ${showBranchInfo ? `<h1>${shopName}</h1>
+      <p>${shopAddress}</p>
+      <p>ĐT: ${shopPhone} • MST: ${shopTaxCode}</p>` : `<h1>${shopName}</h1>`}
     </div>
     <div class="header-right">
       <p class="bold">Mã phiếu: ${transaction.ticketCode || '-'}</p>
@@ -144,11 +178,12 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
 
   <div class="title">
     <h2>${typeLabel}</h2>
+    ${headerExtra ? `<p>${headerExtra}</p>` : ''}
     <p>Ngày tạo: ${formatDate(transaction.createdAt)}</p>
   </div>
 
   <div class="info">
-    <div class="info-full"><span class="bold">Đối tượng:</span> ${(transaction.partyName || '-').replace(/^.*?:\s*/g, '')}</div>
+      ${showSupplier ? `<div class="info-full"><span class="bold">Đối tượng:</span> ${(transaction.partyName || '-').replace(/^.*?:\s*/g, '')}</div>` : ''}
     <div class="info-full"><span class="bold">Lý do / Ghi chú:</span> ${transaction.reason || transaction.note || '-'}</div>
   </div>
 
@@ -177,6 +212,8 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
     </tfoot>
   </table>
 
+  ${footerExtra ? `<div style="text-align:center;margin-top:10px;font-style:italic">${footerExtra}</div>` : ''}
+  ${showSignature ? `
   <div class="footer">
     <div class="signature">
       <p class="bold">Người lập phiếu</p>
@@ -192,11 +229,12 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
       <p class="bold">Thủ kho</p>
       <p><i>(Ký, ghi rõ họ tên)</i></p>
     </div>
-  </div>
+  </div>` : ''}
   <script>window.onload=function(){window.print();}</script>
 </body>
 </html>`);
     printWindow.document.close();
+    setPrintLoading(false);
   };
 
   return (
@@ -227,10 +265,11 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+              disabled={printLoading}
+              className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
               <Printer className="h-4 w-4" />
-              In phiếu
+              {printLoading ? 'Đang tải...' : 'In phiếu'}
             </button>
             <button
               onClick={onClose}

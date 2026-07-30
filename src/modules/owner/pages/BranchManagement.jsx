@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icon from '../../../shared/components/Icon';
+import Button from '../../../shared/components/Button';
 import { useBranchManager } from '../hooks/useBranchManager';
 import BranchTable from '../components/branch/BranchTable';
 import BranchModal from '../components/branch/BranchModal';
@@ -47,13 +48,14 @@ const BranchManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Quản lý Chi nhánh</h1>
           <p className="mt-1 text-gray-600 dark:text-[#999999]">Quản lý danh sách cơ sở, kho hàng và cửa hàng</p>
         </div>
-        <button
+        <Button
+          variant="primary"
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 rounded-lg bg-[#004785] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-black"
+          className="flex items-center gap-2"
         >
           <Icon name="add" size={20} />
-          <span>Tạo chi nhánh mới</span>
-        </button>
+          Tạo chi nhánh mới
+        </Button>
       </div>
 
       {/* Báo lỗi API nếu có */}
