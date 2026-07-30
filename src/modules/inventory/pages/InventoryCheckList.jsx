@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import { Card } from '../../../shared/components/Card';
 import { useAuth } from '../../../shared/hooks/useAuth';
@@ -71,6 +72,7 @@ export const getStatusLabel = (item) => {
 
 const InventoryCheckList = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const canCancel = hasPermission(user, 'STOCK_CHECK_CANCEL');
@@ -204,6 +206,15 @@ const InventoryCheckList = () => {
   useEffect(() => {
     setPageNumber(1);
   }, [searchCode, statusFilter, startDate, endDate]);
+
+  // Tự động mở phiếu kiểm kê khi có ticketId từ URL (từ thông báo)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ticketId = params.get('ticketId');
+    if (ticketId) {
+      setSelectedCheckId(ticketId);
+    }
+  }, [location.search]);
 
   // ==================== ACTION HANDLERS ====================
   const handleCreate = async (productIds, notes, assigneeUserId) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { RefreshCw, RotateCcw, Package, Filter } from 'lucide-react';
 import Icon from '../../../shared/components/Icon';
 import { Card } from '../../../shared/components/Card';
@@ -142,6 +143,7 @@ const normalizeItem = (item) => ({
 
 // Main component
 export const InventoryTransactionManagement = () => {
+  const location = useLocation();
 
   // State
   const [activeTab, setActiveTab] = useState('ALL');
@@ -257,6 +259,46 @@ export const InventoryTransactionManagement = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Tự động mở phiếu nhập/xuất khi có ticketId từ URL (từ thông báo)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ticketId = params.get('ticketId');
+    const type = params.get('type');
+    const search = params.get('search');
+
+    if (type) setActiveTab(type);
+    if (search) setSearchTerm(search);
+
+    if (!ticketId) return;
+
+    const openTicketFromUrl = async () => {
+      setDetailLoading(true);
+      setIsDetailOpen(true);
+      try {
+        const res =
+          type === 'INWARD'
+            ? await getInwardInventory(ticketId)
+            : await getOutwardInventory(ticketId);
+        const rawData = res?.data || res;
+        if (rawData && (rawData.stockTicketId || rawData.ticketCode || rawData.items)) {
+          const normalized =
+            type === 'INWARD'
+              ? normalizeInwardInventory(rawData)
+              : normalizeOutwardInventory(rawData);
+          setSelectedTransaction(normalized);
+        }
+        if (type) setActiveTab(type);
+      } catch (error) {
+        console.error('Failed to open ticket from URL:', error);
+        setIsDetailOpen(false);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    openTicketFromUrl();
+  }, [location.search]);
 
   // Filter data based on tab and search
   const filteredData = useMemo(() => {
