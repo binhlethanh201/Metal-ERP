@@ -28,8 +28,8 @@ export const LOW_STOCK_COLUMNS = [
   { key: 'productName', header: 'Tên sản phẩm' },
   { key: 'categoryName', header: 'Nhóm' },
   { key: 'currentStock', header: 'Tồn hiện tại' },
-  { key: 'minimumStock', header: 'Tồn tối thiểu' },
   { key: 'shortage', header: 'Chênh lệch' },
+  { key: 'minimumStock', header: 'Tồn tối thiểu' },
   {
     key: 'severity',
     header: 'Mức độ',
