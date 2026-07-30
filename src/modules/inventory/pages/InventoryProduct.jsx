@@ -235,7 +235,7 @@ export const ProductManagement = () => {
               className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#1a1a1a] dark:text-emerald-400 dark:hover:bg-[#333333]"
               onClick={() => setImportModalOpen(true)}
             >
-              <Icon name="file_upload" className="text-sm" /> Nhập từ Excel
+              <Icon name="upload_file" className="text-sm" /> Nhập từ Excel
             </button>
             <button
               type="button"

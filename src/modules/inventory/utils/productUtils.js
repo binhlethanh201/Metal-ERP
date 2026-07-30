@@ -30,14 +30,36 @@ export const buildDimensionText = (product = {}) => {
  * KHÔNG dùng field `status` ("Sẵn hàng"/"Sắp hết"/"Hết hàng") để suy ra trạng thái này,
  * vì đó là trạng thái TỒN KHO, khác hoàn toàn với trạng thái KINH DOANH.
  */
+const isInactiveValue = (value) => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  return (
+    value === false ||
+    value === 0 ||
+    value === -1 ||
+    normalized === '0' ||
+    normalized === '-1' ||
+    normalized === 'inactive' ||
+    normalized === 'false'
+  );
+};
+
 export const isProductActive = (row = {}) => row.productStatus !== 'inactive';
 
 export const normalizeProduct = (product = {}, index = 0) => {
   const id = product.id || product.productId || `API-${index + 1}`;
   const actualStock = Number(product.actualStock ?? 0);
   const availableStock = Number(product.availableStock ?? actualStock);
-  const productStatus =
-    product.productStatus || (product.status === 'inactive' ? 'inactive' : 'active');
+  const productStatus = isInactiveValue(product.productStatus)
+    ? 'inactive'
+    : isInactiveValue(product.isActive)
+      ? 'inactive'
+      : isInactiveValue(product.IsActive)
+        ? 'inactive'
+        : isInactiveValue(product.status)
+          ? 'inactive'
+          : isInactiveValue(product.Status)
+            ? 'inactive'
+            : 'active';
 
   return {
     id,
