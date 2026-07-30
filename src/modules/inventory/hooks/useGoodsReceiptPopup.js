@@ -3,6 +3,7 @@
  * 2 chế độ: Mua hàng (PURCHASE) / Khác (OTHER).
  */
 import { useState, useCallback, useMemo, useRef } from 'react';
+import { getLocalDateTimeString } from '../../../shared/utils/formatDate';
 import { useAuth } from '../../../shared/hooks/useAuth';
 
 const genNumber = (() => {
@@ -46,7 +47,7 @@ export const useGoodsReceiptPopup = (onClose) => {
     partnerName: '',
     description: '',
     receiptNumber: genNumber(),
-    date: new Date().toISOString().slice(0, 16),
+    date: getLocalDateTimeString(),
     createdBy: user?.name || '',
     paymentStatus: 'unpaid',
     paymentMethod: 'Tiền mặt',
