@@ -34,7 +34,7 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
         <span
           className={v > 0 ? 'font-medium text-green-600' : v < 0 ? 'font-medium text-red-600' : ''}
         >
-          {v > 0 ? `+${v}%` : `${v}%`}
+          {v > 0 ? `+${(v ?? 0).toFixed(2)}%` : `${(v ?? 0).toFixed(2)}%`}
         </span>
       ),
     },
