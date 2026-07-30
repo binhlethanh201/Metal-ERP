@@ -150,17 +150,25 @@ export const useInventoryTransactions = () => {
           totalInward: inRes?.data?.totalCount || 0,
           totalOutward: outRes?.data?.totalCount || 0,
           todayInwardValue:
-            inRes?.data?.items?.reduce(
-              (s, i) =>
-                s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
-              0
-            ) || 0,
+            (inRes?.data?.items || [])
+              .filter((ticket) => ticket.status === 'COMPLETED')
+              .filter((ticket) => {
+                const type = ticket.ticketType || ticket.TicketType;
+                return type !== 'CUSTOMER_RETURN';
+              })
+              .reduce(
+                (s, i) =>
+                  s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
+                0
+              ) || 0,
           todayOutwardValue:
-            outRes?.data?.items?.reduce(
-              (s, i) =>
-                s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
-              0
-            ) || 0,
+            (outRes?.data?.items || [])
+              .filter((ticket) => ticket.status === 'COMPLETED')
+              .reduce(
+                (s, i) =>
+                  s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
+                0
+              ) || 0,
           pendingCount: 0,
           totalStockValue: 1540000000, // Số giả lập hoặc lấy từ API Dashboard tổng chung
         });

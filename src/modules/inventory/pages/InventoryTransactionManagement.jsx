@@ -87,7 +87,9 @@ const normalizeInwardInventory = (item) => ({
   status: mapStatus(item?.status),
   branchName: item?.branchName || '-',
   branchId: item?.branchId,
-  reason: item?.reason || item?.note || '-',
+  reason: item?.ticketType === 'CUSTOMER_RETURN' && (!item?.reason || item?.reason === 'Nhập kho')
+    ? 'Khách hàng trả'
+    : (item?.reason || item?.note || '-'),
   note: item?.note || '',
   ticketType: item?.ticketType || 'PURCHASE',
   items: (item?.items || []).map(normalizeItem),
@@ -696,9 +698,11 @@ export const InventoryTransactionManagement = () => {
                     <td className="px-4 py-3 text-right text-slate-600 dark:text-[#b3b3b3]">{row.itemCount}</td>
                     <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">{(row.totalQuantity || 0).toLocaleString('vi-VN')}</td>
                     <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
-                      {row.type === 'OUTWARD' && row.totalAmount === 0
-                        ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">{row.reason || row.ticketType || '-'}</span>
-                        : formatCurrency(row.totalAmount)}
+                      {row.ticketType === 'CUSTOMER_RETURN'
+                        ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">Khách hàng trả</span>
+                        : row.type === 'OUTWARD' && row.totalAmount === 0
+                          ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">{row.reason || row.ticketType || '-'}</span>
+                          : formatCurrency(row.totalAmount)}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">{row.createdByName}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.status} size="sm" /></td>

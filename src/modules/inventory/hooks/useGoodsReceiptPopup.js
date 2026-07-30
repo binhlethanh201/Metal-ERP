@@ -37,6 +37,7 @@ export const useGoodsReceiptPopup = (onClose) => {
   // --- Header ---
   const [receiptType, setReceiptType] = useState('purchase');
   const isPurchase = receiptType === 'purchase';
+  const isCustomerReturn = receiptType === 'customer_return';
 
   const [header, setHeader] = useState({
     supplierId: '',
@@ -363,11 +364,11 @@ export const useGoodsReceiptPopup = (onClose) => {
   const isValid = useMemo(() => {
     if (isPurchase) {
       if (!header.supplierId && !header.supplierName) return false;
-    } else {
+    } else if (!isCustomerReturn) {
       if (!header.partnerId && !header.partnerName) return false;
     }
     return dirtyLines.some((l) => l.productId && l.quantity > 0);
-  }, [isPurchase, header, dirtyLines]);
+  }, [isPurchase, isCustomerReturn, header, dirtyLines]);
 
   // --- Close ---
   const requestClose = useCallback(() => {
@@ -384,7 +385,7 @@ export const useGoodsReceiptPopup = (onClose) => {
     setSaving(true);
     try {
       const payload = {
-        receiptType: isPurchase ? 'PURCHASE' : 'OTHER',
+        receiptType: isPurchase ? 'PURCHASE' : isCustomerReturn ? 'CUSTOMER_RETURN' : 'OTHER',
         ...(isPurchase
           ? {
               supplierId: header.supplierId,
@@ -395,7 +396,9 @@ export const useGoodsReceiptPopup = (onClose) => {
               invoiceNumber: header.invoiceNumber,
               invoiceDate: header.invoiceDate,
             }
-          : { partnerId: header.partnerId, partnerName: header.partnerName }),
+          : isCustomerReturn
+            ? {}
+            : { partnerId: header.partnerId, partnerName: header.partnerName }),
         description: header.description,
         receiptNumber: header.receiptNumber,
         date: header.date,
@@ -432,6 +435,7 @@ export const useGoodsReceiptPopup = (onClose) => {
     receiptType,
     setReceiptType,
     isPurchase,
+    isCustomerReturn,
     header,
     handleHeader,
     lines,

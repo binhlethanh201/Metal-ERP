@@ -40,7 +40,12 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [items, setItems] = useState([]);
   const [inwardType, setInwardType] = useState(1);
+  const isCustomerReturn = inwardType === 2;
   const [note, setNote] = useState('');
+
+  useEffect(() => {
+    if (isCustomerReturn && !note.trim()) setNote('Khách hàng trả');
+  }, [inwardType]); // eslint-disable-line react-hooks/exhaustive-deps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [status, setStatus] = useState({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
@@ -298,6 +303,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               onAddNewProduct={() => setIsProductModalOpen(true)}
               onImportRows={handleImportRows}
               formatCurrency={formatCurrency}
+              isCustomerReturn={isCustomerReturn}
             />
           </div>
           <div className="w-full shrink-0 xl:w-[300px]">
@@ -314,6 +320,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               isSubmitting={isSubmitting}
               onSubmit={handleFinish}
               formatCurrency={formatCurrency}
+              isCustomerReturn={isCustomerReturn}
             />
           </div>
         </div>
