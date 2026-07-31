@@ -3,7 +3,7 @@ import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { Badge } from '../../../../shared/components/Badge';
 import { Textarea } from '../../../../shared/components/Textarea';
-import { CheckCircle2, Clock, XCircle, RefreshCw, Check, Ban } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, RefreshCw, Check, Ban, Receipt, FileText } from 'lucide-react';
 import { getExpenseDetail } from '../../services/expenseService';
 
 const formatCurrency = (value) =>
@@ -12,8 +12,6 @@ const formatCurrency = (value) =>
     currency: 'VND',
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
-
-const formatDateTime = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '---');
 
 const renderStatusBadge = (val) => {
   switch (val) {
@@ -105,12 +103,17 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
   };
 
   const detailTitle = detailVoucher ? (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
-        Chi tiết phiếu: <span className="text-[#004785]">{detailVoucher.voucherCode}</span>
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 font-bold text-rose-600 dark:bg-rose-900/50">
+        <Receipt size={20} />
       </div>
-      <div className="text-sm font-normal text-slate-500 dark:text-[#999999]">
-        Chi nhánh: <strong className="text-slate-700 dark:text-[#b3b3b3]">{detailVoucher.branchName}</strong>
+      <div className="flex items-center gap-2">
+        <span className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
+          Chi tiết phiếu chi
+        </span>
+        <span className="rounded-md bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-[#272727] dark:text-[#b3b3b3]">
+          {detailVoucher.voucherCode}
+        </span>
       </div>
     </div>
   ) : (
@@ -177,11 +180,11 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
           {error}
         </div>
       ) : detailVoucher ? (
-        <div className="space-y-5">
+        <div className="space-y-6">
           {cancelMode && (
-            <div className="animate-fade-in rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-950/30">
-              <p className="mb-2 text-sm font-semibold text-red-800 dark:text-red-300">
-                Nhập lý do hủy cho phiếu {detailVoucher.voucherCode} (
+            <div className="animate-fade-in rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-950/30">
+              <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-red-800 dark:text-red-300">
+                <FileText size={16} /> Nhập lý do hủy cho phiếu {detailVoucher.voucherCode} (
                 {formatCurrency(detailVoucher.amount)})
               </p>
               <Textarea
@@ -194,70 +197,71 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
             </div>
           )}
 
-          <div className="flex items-center gap-4 border-b border-slate-100 pb-4 dark:border-[#333333]">
-            {renderStatusBadge(detailVoucher.status)}
-            <div className="flex-1 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm text-slate-700 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-[#b3b3b3]">
-              <strong>Lý do chi:</strong> {detailVoucher.reason}
+          <div className="grid grid-cols-3 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
+            <div>
+              <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">Trạng thái</span>
+              <div className="mt-1">{renderStatusBadge(detailVoucher.status)}</div>
+            </div>
+            <div>
+              <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">Người tạo</span>
+              <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">{detailVoucher.createdByName || '---'}</div>
+            </div>
+            <div>
+              <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">Ngày tạo</span>
+              <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                {detailVoucher.createdAt ? new Date(detailVoucher.createdAt).toLocaleString('vi-VN') : '---'}
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 p-4 sm:grid-cols-2 dark:border-[#333333]">
-            <div>
-              <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Nhóm chi phí</div>
-              <div className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
-                {detailVoucher.categoryName || '(Nhóm đã xóa)'}
-              </div>
+          <div className="space-y-3 rounded-2xl border border-slate-200 p-4 dark:border-[#333333]">
+            <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 text-sm font-bold text-slate-800 dark:border-[#333333] dark:text-[#d4d4d4]">
+              <FileText size={16} className="text-slate-500 dark:text-[#999999]" /> Thông tin phiếu chi
             </div>
-            <div>
-              <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Nhà cung cấp</div>
-              <div className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
-                {detailVoucher.supplierName || '---'}
+            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Nhóm chi phí</span>
+                <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                  {detailVoucher.categoryName || '(Nhóm đã xóa)'}
+                </p>
               </div>
+              <div>
+                <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Số tiền</span>
+                <p className="mt-0.5 text-base font-bold text-emerald-600">{formatCurrency(detailVoucher.amount)}</p>
+              </div>
+              <div>
+                <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Lý do chi</span>
+                <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">{detailVoucher.reason}</p>
+              </div>
+              {detailVoucher.note && (
+                <div>
+                  <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Ghi chú</span>
+                  <p className="mt-0.5 text-slate-600 dark:text-[#999999]">{detailVoucher.note}</p>
+                </div>
+              )}
             </div>
-            <div>
-              <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Số tiền</div>
-              <div className="mt-0.5 text-base font-bold text-emerald-600">
-                {formatCurrency(detailVoucher.amount)}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Người tạo</div>
-              <div className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
-                {detailVoucher.createdByName || '---'}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Ngày tạo</div>
-              <div className="mt-0.5 text-sm text-slate-800 dark:text-[#e5e5e5]">
-                {formatDateTime(detailVoucher.createdAt)}
-              </div>
-            </div>
-            {detailVoucher.note && (
-              <div className="border-t border-slate-100 pt-3 sm:col-span-2 dark:border-[#333333]">
-                <div className="text-xs font-medium uppercase text-slate-400 dark:text-[#808080]">Ghi chú</div>
-                <div className="mt-0.5 text-sm text-slate-600 dark:text-[#999999]">{detailVoucher.note}</div>
-              </div>
-            )}
           </div>
 
           {detailVoucher.status === 'COMPLETED' && (
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
-              <div className="text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">
-                Thông tin xác nhận
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+              <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 size={16} /> Thông tin xác nhận
               </div>
               <div className="mt-1 text-sm text-emerald-800 dark:text-emerald-400">
                 Bởi <strong>{detailVoucher.confirmedByName || '---'}</strong> lúc{' '}
-                {formatDateTime(detailVoucher.completedAt)}
+                {detailVoucher.completedAt ? new Date(detailVoucher.completedAt).toLocaleString('vi-VN') : '---'}
               </div>
             </div>
           )}
 
           {detailVoucher.status === 'CANCELLED' && (
-            <div className="rounded-lg border border-rose-100 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-950/30">
-              <div className="text-xs font-semibold uppercase text-rose-700 dark:text-rose-300">Thông tin hủy</div>
+            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-950/30">
+              <div className="flex items-center gap-1.5 text-sm font-bold text-rose-700 dark:text-rose-300">
+                <XCircle size={16} /> Thông tin hủy
+              </div>
               <div className="mt-1 text-sm text-rose-800 dark:text-rose-400">
                 Bởi <strong>{detailVoucher.cancelledByName || '---'}</strong> lúc{' '}
-                {formatDateTime(detailVoucher.cancelledAt)}
+                {detailVoucher.cancelledAt ? new Date(detailVoucher.cancelledAt).toLocaleString('vi-VN') : '---'}
               </div>
               {detailVoucher.cancelReason && (
                 <div className="mt-2 text-sm text-rose-700 dark:text-rose-400">

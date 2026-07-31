@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 // Import service và các Enum hệ thống vừa cập nhật
 import inventoryService, { INVENTORY_STATUS } from '../services/inventoryService';
+import { getLocalDateString } from '../../../shared/utils/formatDate';
 
 const normalizeTransaction = (item, type) => {
   const isInward = type === 'INWARD';
@@ -55,7 +56,7 @@ const normalizeTransaction = (item, type) => {
 };
 
 export const useInventoryTransactions = () => {
-  const todayString = new Date().toISOString().split('T')[0];
+  const todayString = getLocalDateString();
 
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -140,7 +141,7 @@ export const useInventoryTransactions = () => {
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateString();
         const [inRes, outRes] = await Promise.all([
           inventoryService.getInwardInventories({ fromDate: today, toDate: today }),
           inventoryService.getOutwardInventories({ fromDate: today, toDate: today }),
@@ -150,17 +151,25 @@ export const useInventoryTransactions = () => {
           totalInward: inRes?.data?.totalCount || 0,
           totalOutward: outRes?.data?.totalCount || 0,
           todayInwardValue:
-            inRes?.data?.items?.reduce(
-              (s, i) =>
-                s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
-              0
-            ) || 0,
+            (inRes?.data?.items || [])
+              .filter((ticket) => ticket.status === 'COMPLETED')
+              .filter((ticket) => {
+                const type = ticket.ticketType || ticket.TicketType;
+                return type !== 'CUSTOMER_RETURN';
+              })
+              .reduce(
+                (s, i) =>
+                  s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
+                0
+              ) || 0,
           todayOutwardValue:
-            outRes?.data?.items?.reduce(
-              (s, i) =>
-                s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
-              0
-            ) || 0,
+            (outRes?.data?.items || [])
+              .filter((ticket) => ticket.status === 'COMPLETED')
+              .reduce(
+                (s, i) =>
+                  s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
+                0
+              ) || 0,
           pendingCount: 0,
           totalStockValue: 1540000000, // Số giả lập hoặc lấy từ API Dashboard tổng chung
         });

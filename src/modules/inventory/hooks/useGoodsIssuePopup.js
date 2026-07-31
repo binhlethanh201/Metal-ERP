@@ -9,6 +9,7 @@
  */
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import { getLocalDateTimeString } from '../../../shared/utils/formatDate';
 import {
   productListForExport,
   warehouseList,
@@ -59,8 +60,8 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
         description: editData.description || '',
         reference: editData.reference || '',
         date: editData.date
-          ? new Date(editData.date).toISOString().slice(0, 16)
-          : new Date().toISOString().slice(0, 16),
+          ? getLocalDateTimeString(new Date(editData.date))
+          : getLocalDateTimeString(),
         createdBy: editData.createdBy || user?.name || user?.email || 'Người dùng hiện tại',
       };
     }
@@ -71,7 +72,7 @@ export const useGoodsIssuePopup = (onClose, editData = null) => {
       customerName: '',
       description: '',
       reference: '',
-      date: new Date().toISOString().slice(0, 16),
+      date: getLocalDateTimeString(),
       createdBy: user?.name || user?.email || 'Người dùng hiện tại',
     };
   });

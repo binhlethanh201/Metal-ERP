@@ -84,11 +84,30 @@ const InventoryNotificationDropdown = () => {
     }
 
     setIsOpen(false);
-    // Điều hướng tới trang kiểm kê
-    if (notif.inventoryCheckId) {
-      // You can store the selected ticket ID in localStorage or context to auto-open the detail modal,
-      // but for simplicity, we just navigate to the inventory check page.
-      navigate('/inventory/inventory-check');
+    // Điều hướng tới trang tương ứng dựa trên loại thông báo
+    const refType = notif.referenceType || (notif.inventoryCheckId ? 'InventoryCheck' : null);
+    const refId = notif.referenceId || notif.inventoryCheckId;
+
+    if (refType === 'InwardInventory' && refId) {
+      navigate(`/inventory/transactions?ticketId=${refId}&type=INWARD`);
+    } else if (refType === 'OutwardInventory' && refId) {
+      navigate(`/inventory/transactions?ticketId=${refId}&type=OUTWARD`);
+    } else if (refType === 'InventoryCheck' && refId) {
+      navigate(`/inventory/inventory-check?ticketId=${refId}`);
+    } else if (notif.inventoryCheckId) {
+      navigate(`/inventory/inventory-check?ticketId=${notif.inventoryCheckId}`);
+    } else {
+      // Fallback: parse message để đoán loại và mã phiếu
+      const msg = (notif.message || '').toLowerCase();
+      const ticketCodeMatch = (notif.message || '').match(/(PUR|CRN|OUT|BAL|RET|WRF|TRF)-[A-Za-z0-9]+/);
+      const ticketCode = ticketCodeMatch ? ticketCodeMatch[0] : '';
+      if (msg.includes('nhập kho')) {
+        navigate(`/inventory/transactions?type=INWARD${ticketCode ? `&search=${ticketCode}` : ''}`);
+      } else if (msg.includes('xuất kho')) {
+        navigate(`/inventory/transactions?type=OUTWARD${ticketCode ? `&search=${ticketCode}` : ''}`);
+      } else if (msg.includes('kiểm kê')) {
+        navigate('/inventory/inventory-check');
+      }
     }
   };
 
@@ -152,14 +171,6 @@ const InventoryNotificationDropdown = () => {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-b-[#333333] dark:bg-[#1a1a1a]">
             <h3 className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">Thông báo</h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                Đánh dấu đã đọc tất cả
-              </button>
-            )}
           </div>
 
           {/* List */}
@@ -215,10 +226,11 @@ const InventoryNotificationDropdown = () => {
           {notifications.length > 0 && (
             <div className="border-t border-slate-100 bg-slate-50 p-2 text-center dark:border-t-[#333333] dark:bg-[#1a1a1a]">
               <button
-                onClick={() => navigate('/inventory/inventory-check')}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-[#999999] dark:hover:text-[#e5e5e5]"
+                onClick={handleMarkAllAsRead}
+                disabled={unreadCount === 0}
+                className={`text-xs font-bold ${unreadCount === 0 ? 'cursor-not-allowed text-slate-400 dark:text-[#666666]' : 'text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300'}`}
               >
-                Tới trang quản lý Kiểm kê
+                Đánh dấu đọc tất cả
               </button>
             </div>
           )}

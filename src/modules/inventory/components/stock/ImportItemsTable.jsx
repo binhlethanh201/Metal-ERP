@@ -15,6 +15,7 @@ export const ImportItemsTable = ({
   onAddNewProduct,
   onImportRows,
   formatCurrency,
+  isCustomerReturn = false,
 }) => {
   const fileInputRef = useRef(null);
   const [importError, setImportError] = useState('');
@@ -237,6 +238,10 @@ export const ImportItemsTable = ({
     },
   ];
 
+  const displayColumns = isCustomerReturn
+    ? columns.filter((c) => c.key !== 'costPrice' && c.key !== 'total')
+    : columns;
+
   return (
     <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -336,7 +341,7 @@ export const ImportItemsTable = ({
         )}
 
       <Table
-        columns={columns}
+        columns={displayColumns}
         data={items}
         emptyMessage='Chưa có sản phẩm nào. Hãy tìm kiếm ở ô trên hoặc bấm "Thêm sản phẩm".'
       />

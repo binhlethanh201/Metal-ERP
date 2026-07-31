@@ -26,7 +26,7 @@ const FinanceMetric = ({ label, value, unit, progress, subtitle, tone = 'navy' }
           <div className={`h-full ${barClass}`} style={{ width: `${progress}%` }} />
         </div>
       ) : (
-        <p className="mt-2 text-xs leading-[1.4] text-blue-600">{subtitle}</p>
+        <p className="mt-2 text-xs leading-[1.4] text-slate-500 dark:text-[#999999]">{subtitle}</p>
       )}
     </div>
   );

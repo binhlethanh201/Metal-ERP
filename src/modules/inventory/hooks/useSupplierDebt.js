@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSupplierDebts, getSupplierDebtDetail } from '../services/supplierService';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import { getLocalDateString } from '../../../shared/utils/formatDate';
 
 export const useSupplierDebt = () => {
   const { token } = useAuth();
@@ -99,7 +100,7 @@ export const useSupplierDebt = () => {
 
       const a = document.createElement('a');
       a.href = objectUrl;
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const dateStr = getLocalDateString().replace(/-/g, '');
       a.download = `cong-no-ncc-${dateStr}.csv`;
 
       document.body.appendChild(a);

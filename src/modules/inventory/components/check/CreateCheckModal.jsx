@@ -21,7 +21,7 @@ import Table from '../../../../shared/components/Table';
  */
 const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
   const { user } = useAuth();
-  const isOwner = hasRole(user?.roles, 'Owner') || user?.role === 'Owner';
+  const isOwner = hasRole(user?.roles, 'Owner');
   const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const currentUserId = user?.userId || user?.id;
@@ -85,10 +85,13 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
           const allStaff = res.data.items || [];
           // Chỉ hiển thị staff có quyền fill phiếu (STOCK_CHECK_CREATE) hoặc Owner
           const qualified = allStaff.filter((staff) => {
+            const staffRoles = Array.isArray(staff.roles)
+              ? staff.roles
+              : staff.role
+                ? [staff.role]
+                : [];
             const hasInventoryRole =
-              hasRole(staff.roles, 'InventoryStaff') ||
-              hasRole(staff.roles, 'Owner') ||
-              staff.role === 'Owner';
+              hasRole(staffRoles, 'InventoryStaff') || hasRole(staffRoles, 'Owner');
             const hasPermission =
               staff.permissionCodes?.includes('STOCK_CHECK_CREATE') ||
               staff.permissionCodes?.includes('STOCK_CHECK_APPROVE');
@@ -104,7 +107,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         setStaffList([]);
       })
       .finally(() => setLoadingStaff(false));
-  }, [isOpen, isOwner]);
+  }, [isOpen, isOwner, canCreate, canApprove]);
 
   // Staff luôn tự gán cho chính mình
   useEffect(() => {
@@ -149,7 +152,11 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
     try {
       // Staff: assigneeUserId = currentUserId (đã set từ useEffect)
       // Owner: assigneeUserId = giá trị chọn từ dropdown, hoặc null nếu để trống
-      await onSave(selectedIds, notes, isOwner || canApprove ? assigneeUserId || null : currentUserId);
+      await onSave(
+        selectedIds,
+        notes,
+        isOwner || canApprove ? assigneeUserId || null : currentUserId
+      );
     } catch {
       // Error được xử lý bởi parent
     } finally {
@@ -254,7 +261,9 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         {/* Người phụ trách - Chỉ Owner */}
         {isOwner && (
           <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Người phụ trách</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+              Người phụ trách
+            </label>
             <select
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:disabled:bg-[#1a1a1a]"
               value={assigneeUserId}
@@ -282,7 +291,9 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         {/* Staff: hiển thị thông tin assignee */}
         {!isOwner && (
           <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Người phụ trách</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+              Người phụ trách
+            </label>
             <div className="w-full rounded-lg border border-slate-200 bg-gray-50 px-3 py-2 text-sm text-slate-600 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999]">
               {user?.fullName || user?.email || 'Bạn'} (tự gán)
             </div>

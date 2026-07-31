@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
 
 import Icon from '../../../shared/components/Icon';
@@ -56,11 +55,23 @@ const ChartTooltip = ({ active, payload, label }) => {
   );
 };
 
+/* ─── Mini metric card (dùng trong các section công nợ, thanh toán) ─── */
+const MiniMetric = ({ icon, label, value, sub, color = 'text-slate-800', bg = 'bg-slate-50' }) => (
+  <div className={`rounded-lg p-4 ${bg}`}>
+    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-[#999999]">
+      <Icon name={icon} className="text-sm" />
+      {label}
+    </div>
+    <p className={`text-lg font-extrabold ${color}`}>{value}</p>
+    {sub && <p className="mt-0.5 text-[10px] text-slate-500 dark:text-[#999999]">{sub}</p>}
+  </div>
+);
+
 /* ════════════════════════════════════════════════════════ */
-const InventoryDashboard = () => {
+const OwnerDashboard = () => {
   const { data, loading, error, refetch } = useOwnerDashboard();
 
-  /* ── Trạng thái lỗi ── */
+  /* ── Error state ── */
   if (error) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
@@ -78,26 +89,34 @@ const InventoryDashboard = () => {
     );
   }
 
-  /* ── Dữ liệu cho biểu đồ 12 tháng ── */
-  const trendChart = (data?.revenueTrendLast12Months ?? []).map((r, i) => ({
-    period: fmtPeriod(r.period),
+  /* ── Dữ liệu biểu đồ: ưu tiên 30 ngày, fallback về 12 tháng ── */
+  const has30DayTrend = (data?.revenueTrendLast30Days ?? []).length > 0;
+  const trendRaw = has30DayTrend
+    ? data.revenueTrendLast30Days
+    : (data?.revenueTrendLast12Months ?? []);
+  const trendChart = trendRaw.map((r) => ({
+    period: has30DayTrend ? r.period : fmtPeriod(r.period),
     doanhThu: r.amount,
-    chiPhi: data?.expenseTrendLast12Months?.[i]?.amount ?? 0,
   }));
+  const chartTitle = has30DayTrend
+    ? 'Doanh thu 30 ngày gần nhất'
+    : 'Doanh thu & Chi phí 12 tháng gần nhất';
 
-  /* ── Thanh toán 30 ngày ── */
+  /* ── Phân tích thanh toán 30 ngày ── */
   const pb = data?.paymentBreakdownLast30Days;
   const paymentRows = [
-    { label: 'Tiền mặt', amount: pb?.cashAmount ?? 0, count: pb?.cashCount ?? 0, color: 'bg-green-500' },
+    { label: 'Tiền mặt', amount: pb?.cashAmount ?? 0, count: pb?.cashCount ?? 0, color: 'bg-emerald-500' },
     { label: 'Chuyển khoản', amount: pb?.transferAmount ?? 0, count: pb?.transferCount ?? 0, color: 'bg-blue-500' },
-    { label: 'Công nợ', amount: pb?.debtAmount ?? 0, count: pb?.debtCount ?? 0, color: 'bg-orange-500' },
-  ];
+    { label: 'Kết hợp', amount: pb?.combinedAmount ?? 0, count: pb?.combinedCount ?? 0, color: 'bg-violet-500' },
+    { label: 'Trả nợ', amount: pb?.debtAmount ?? 0, count: pb?.debtCount ?? 0, color: 'bg-amber-500' },
+  ].filter((r) => r.amount > 0 || r.count > 0);
   const totalPbAmount = paymentRows.reduce((s, r) => s + r.amount, 0);
+  const showSupplierDebtPaid = (data?.supplierDebtPaidLast30Days ?? 0) > 0;
 
   /* ════════════════════════════ RENDER ════════════════════════════ */
   return (
     <div className="mx-auto max-w-[1600px] space-y-6 pb-10">
-      {/* ── 1. KPI Cards ── */}
+      {/* ── Row 1: 4 KPI Cards (Hôm nay) ── */}
       <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32" />)
@@ -119,7 +138,7 @@ const InventoryDashboard = () => {
             />
             <KPICard
               icon="group"
-              label="Khách hàng mới hôm nay"
+              label="Khách mới hôm nay"
               value={fmtInt(data?.newCustomersToday)}
               unit="khách"
               tone="orange"
@@ -135,55 +154,57 @@ const InventoryDashboard = () => {
         )}
       </section>
 
-      {/* ── 2. Finance Metrics (7 ngày & 30 ngày) ── */}
-      <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      {/* ── Row 2: 3 Finance KPI (30 ngày) ── */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)
+          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28" />)
         ) : (
           <>
             <FinanceMetric
               label="Doanh thu 30 ngày"
               value={fmtVND(data?.totalRevenueLast30Days, true)}
-              subtitle={`7 ngày: ${fmtVND(data?.totalRevenueLast7Days, true)}`}
+              subtitle={
+                data?.totalOrdersLast30Days > 0
+                  ? `${fmtInt(data?.totalOrdersLast30Days)} đơn · TB ${fmtVND(data?.averageDailyRevenueLast30Days, true)}/ngày`
+                  : `7 ngày: ${fmtVND(data?.totalRevenueLast7Days, true)}`
+              }
               tone="navy"
             />
             <FinanceMetric
               label="Lợi nhuận 30 ngày"
               value={fmtVND(data?.totalProfitLast30Days, true)}
-              subtitle={`7 ngày: ${fmtVND(data?.totalProfitLast7Days, true)}`}
+              subtitle={
+                data?.grossMarginPercentLast30Days > 0
+                  ? `Biên gộp: ${fmtPct(data?.grossMarginPercentLast30Days)}`
+                  : `7 ngày: ${fmtVND(data?.totalProfitLast7Days, true)}`
+              }
               tone="green"
-            />
-            <FinanceMetric
-              label="Biên lợi nhuận 30 ngày"
-              value={fmtPct(data?.grossMarginPercentLast30Days)}
-              progress={Math.min(data?.grossMarginPercentLast30Days ?? 0, 100)}
-              tone="navy"
             />
             <FinanceMetric
               label="Chi phí 30 ngày"
               value={fmtVND(data?.totalExpenseLast30Days, true)}
-              subtitle={`7 ngày: ${fmtVND(data?.totalExpenseLast7Days, true)}`}
+              subtitle={
+                data?.totalRefundAmountLast30Days > 0
+                  ? `Hoàn trả: ${fmtVND(data?.totalRefundAmountLast30Days, true)}`
+                  : `7 ngày: ${fmtVND(data?.totalExpenseLast7Days, true)}`
+              }
               tone="slate"
             />
           </>
         )}
       </section>
 
-      {/* ── 3. Biểu đồ Doanh thu & Chi phí 12 tháng ── */}
-      <Section title="Doanh thu & Chi phí 12 tháng gần nhất" icon="bar_chart">
+      {/* ── Row 3: Biểu đồ doanh thu ── */}
+      <Section title={chartTitle} icon="bar_chart">
         {loading ? (
-          <Skeleton className="h-56 w-full" />
+          <Skeleton className="h-60 w-full" />
         ) : (
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={trendChart} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gDoanhThu" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#004785" stopOpacity={0.18} />
+                  <stop offset="5%" stopColor="#004785" stopOpacity={0.22} />
                   <stop offset="95%" stopColor="#004785" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gChiPhi" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.18} />
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -192,6 +213,7 @@ const InventoryDashboard = () => {
                 tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }}
                 axisLine={false}
                 tickLine={false}
+                interval={Math.max(Math.floor(trendChart.length / 7), 0)}
               />
               <YAxis
                 tick={{ fontSize: 10, fill: '#94a3b8' }}
@@ -201,11 +223,6 @@ const InventoryDashboard = () => {
                 width={68}
               />
               <Tooltip content={<ChartTooltip />} />
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                wrapperStyle={{ fontSize: 11, fontWeight: 700 }}
-              />
               <Area
                 type="monotone"
                 dataKey="doanhThu"
@@ -214,45 +231,37 @@ const InventoryDashboard = () => {
                 strokeWidth={2}
                 fill="url(#gDoanhThu)"
                 dot={false}
-                activeDot={{ r: 4 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="chiPhi"
-                name="Chi phí"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                fill="url(#gChiPhi)"
-                dot={false}
-                activeDot={{ r: 4 }}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }}
               />
             </AreaChart>
           </ResponsiveContainer>
         )}
       </Section>
 
-      {/* ── 4 + 5. Thanh toán 30 ngày & Top sản phẩm ── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Phân tích thanh toán */}
-        <Section title="Phân tích thanh toán (30 ngày)" icon="credit_card">
-          {loading ? (
+      {/* ── Row 4: Phân tích thanh toán 30 ngày ── */}
+      <Section title="Phân tích thanh toán (30 ngày)" icon="credit_card">
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+          </div>
+        ) : (
+          <>
             <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-10" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {paymentRows.map((row) => {
+              {paymentRows.length === 0 ? (
+                <p className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu thanh toán</p>
+              ) : (
+                paymentRows.map((row) => {
                 const pct = totalPbAmount > 0 ? (row.amount / totalPbAmount) * 100 : 0;
                 return (
                   <div key={row.label}>
                     <div className="mb-1 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className={`inline-flex h-4 w-4 rounded-full ${row.color}`} />
-                        <span className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">{row.label}</span>
-                        <span className="text-xs text-slate-500 dark:text-[#a3a3a3]">
-                          ({fmtInt(row.count)} đơn)
+                        <span className={`inline-flex h-3 w-3 rounded-full ${row.color}`} />
+                        <span className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
+                          {row.label}
+                        </span>
+                        <span className="text-xs text-slate-400 dark:text-[#a3a3a3]">
+                          ({fmtInt(row.count)} giao dịch)
                         </span>
                       </div>
                       <span className="text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">
@@ -262,75 +271,92 @@ const InventoryDashboard = () => {
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#272727]">
                       <div
                         className={`h-full rounded-full transition-all ${row.color}`}
-                        style={{ width: `${pct}%` }}
+                        style={{ width: `${Math.max(pct, 1)}%` }}
                       />
                     </div>
                   </div>
                 );
-              })}
-              <p className="pt-1 text-right text-[10px] font-bold uppercase text-slate-400 dark:text-[#808080]">
-                Tổng: {fmtVND(totalPbAmount, true)}
-              </p>
+              })
+              )}
             </div>
-          )}
-        </Section>
+            {/* Đã trả Nhà Cung Cấp */}
+            {showSupplierDebtPaid && (
+              <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                <div className="flex items-center gap-2">
+                  <Icon name="local_shipping" className="text-base text-slate-500" />
+                  <span className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                    Đã trả Nhà Cung Cấp (30 ngày)
+                  </span>
+                </div>
+                <span className="text-sm font-extrabold text-blue-900 dark:text-blue-400">
+                  {fmtVND(data?.supplierDebtPaidLast30Days, true)}
+                </span>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
 
+      {/* ── Row 5: Top sản phẩm bán chạy + Top khách hàng ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Top sản phẩm theo doanh thu */}
         <Section title="Top sản phẩm theo doanh thu (30 ngày)" icon="trending_up">
           {loading ? (
             <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-10" />
-              ))}
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
             </div>
+          ) : (data?.topProductsByRevenue ?? []).length === 0 ? (
+            <p className="py-10 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu</p>
           ) : (
             <div className="divide-y divide-slate-50 dark:divide-[#333333]">
               {(data?.topProductsByRevenue ?? []).map((p, idx) => (
-                <div key={p.productId} className="flex items-center gap-3 py-2.5">
+                <div key={p.productId} className="flex items-center gap-3 py-3">
                   <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-black text-primary dark:bg-blue-900/30">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">{p.productName}</p>
+                    <p className="truncate text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">
+                      {p.productName}
+                    </p>
                     <p className="text-[10px] text-slate-400 dark:text-[#808080]">
-                      {p.categoryName} · {fmtInt(p.quantitySold)} bán
+                      {p.categoryName} &middot; SL: {fmtInt(p.quantitySold)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-black text-blue-900">{fmtVND(p.revenue, true)}</p>
-                    <p className="text-[10px] text-green-600">+{fmtVND(p.profit, true)}</p>
+                    <p className="text-xs font-black text-blue-900 dark:text-blue-400">
+                      {fmtVND(p.revenue, true)}
+                    </p>
+                    <p className="text-[10px] text-green-600 dark:text-green-400">
+                      Lãi {fmtVND(p.profit, true)}
+                    </p>
                   </div>
                 </div>
               ))}
-              {!loading && !data?.topProductsByRevenue?.length && (
-                <p className="py-6 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu</p>
-              )}
             </div>
           )}
         </Section>
-      </div>
 
-      {/* ── 6 + 7. Top khách hàng & Công nợ ── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Top khách hàng */}
-        <Section title="Top khách hàng (30 ngày)" icon="MedalIcon">
+        <Section title="Top khách hàng (30 ngày)" icon="groups">
           {loading ? (
             <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12" />
-              ))}
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
             </div>
+          ) : (data?.topCustomers ?? []).length === 0 ? (
+            <p className="py-10 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu</p>
           ) : (
             <div className="divide-y divide-slate-50 dark:divide-[#333333]">
               {(data?.topCustomers ?? []).map((c, idx) => (
-                <div key={c.customerId} className="flex items-center gap-3 py-2.5">
-                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-orange-50 text-[10px] font-black text-orange-600 dark:bg-orange-900/30">
+                <div key={c.customerId} className="flex items-center gap-3 py-3">
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-amber-50 text-[10px] font-black text-amber-600 dark:bg-amber-900/30">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">{c.customerName}</p>
+                    <p className="truncate text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">
+                      {c.customerName}
+                    </p>
                     <p className="text-[10px] text-slate-400 dark:text-[#808080]">
-                      {c.phoneNumber ?? '—'} · {fmtInt(c.orderCount)} đơn
+                      {c.phoneNumber ?? '—'} &middot; {fmtInt(c.orderCount)} đơn
                     </p>
                   </div>
                   <div className="text-right">
@@ -338,96 +364,156 @@ const InventoryDashboard = () => {
                       {fmtVND(c.totalSpent, true)}
                     </p>
                     {c.totalDebt > 0 && (
-                      <p className="text-[10px] text-red-500">Nợ: {fmtVND(c.totalDebt, true)}</p>
+                      <p className="text-[10px] text-red-500">Nợ {fmtVND(c.totalDebt, true)}</p>
                     )}
                   </div>
                 </div>
               ))}
-              {!loading && !data?.topCustomers?.length && (
-                <p className="py-6 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu</p>
-              )}
             </div>
-          )}
-        </Section>
-
-        {/* Công nợ khách hàng */}
-        <Section title="Tổng quan công nợ khách hàng" icon="account_balance">
-          {loading ? (
-            <div className="grid grid-cols-2 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-20" />
-              ))}
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  {
-                    label: 'Tổng công nợ',
-                    value: fmtVND(data?.customerDebtSummary?.totalDebt ?? 0, true),
-                    sub: `${fmtInt(data?.customerDebtSummary?.customerCount ?? 0)} khách`,
-                    color: 'text-blue-900',
-                    bg: 'bg-blue-50',
-                    icon: 'CircleDollarSign',
-                  },
-                  {
-                    label: 'Đơn chờ xử lý',
-                    value: fmtInt(data?.pendingOrderCount ?? 0),
-                    sub: 'đơn đang chờ',
-                    color: 'text-orange-600',
-                    bg: 'bg-orange-50',
-                    icon: 'ClipboardClock',
-                  },
-                  {
-                    label: 'Chi phí chờ duyệt',
-                    value: fmtVND(data?.pendingExpenseAmount ?? 0, true),
-                    sub: `${fmtInt(data?.pendingExpenseCount ?? 0)} phiếu`,
-                    color: 'text-slate-700',
-                    bg: 'bg-slate-50',
-                    icon: 'receipt',
-                  },
-                ].map((item) => (
-                  <div key={item.label} className={`rounded-lg p-3 ${item.bg} dark:bg-opacity-20`}>
-                    <div
-                      className={`mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-[#999999]`}
-                    >
-                      <Icon name={item.icon} className="text-sm" />
-                      {item.label}
-                    </div>
-                    <p className={`text-lg font-extrabold ${item.color}`}>{item.value}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-[#999999]">{item.sub}</p>
-                  </div>
-                ))}
-              </div>
-            </>
           )}
         </Section>
       </div>
 
-      {/* ── 8 + 9. Hàng tồn kho thấp & Chi phí theo danh mục ── */}
+      {/* ── Row 6: Tổng quan công nợ ── */}
+      <Section title="Tổng quan công nợ" icon="account_balance">
+        {loading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <MiniMetric
+                icon="local_shipping"
+                label="Nợ Nhà Cung Cấp"
+                value={fmtVND((data?.totalSupplierDebt ?? 0) - (data?.supplierDebtPaidLast30Days ?? 0), true)}
+                color="text-blue-900 dark:text-blue-400"
+                bg="bg-blue-50 dark:bg-blue-950/30"
+              />
+              <MiniMetric
+                icon="receipt"
+                label="Chi Phí Chờ Duyệt"
+                value={fmtVND(data?.pendingExpenseAmount, true)}
+                sub={`${fmtInt(data?.pendingExpenseCount)} phiếu chi`}
+                color="text-amber-600 dark:text-amber-400"
+                bg="bg-amber-50 dark:bg-amber-950/30"
+              />
+            </div>
+          </>
+        )}
+      </Section>
+
+      {/* ── Row 7: Top SP theo lợi nhuận + Danh mục bán chạy ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Top sản phẩm theo lợi nhuận */}
+        <Section title="Top sản phẩm theo lợi nhuận (30 ngày)" icon="savings">
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
+            </div>
+          ) : (data?.topProductsByProfit ?? []).length === 0 ? (
+            <p className="py-10 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu</p>
+          ) : (
+            <div className="divide-y divide-slate-50 dark:divide-[#333333]">
+              {(data?.topProductsByProfit ?? []).map((p, idx) => (
+                <div key={p.productId} className="flex items-center gap-3 py-3">
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-50 text-[10px] font-black text-green-600 dark:bg-green-900/30">
+                    {idx + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">
+                      {p.productName}
+                    </p>
+                    <p className="text-[10px] text-slate-400 dark:text-[#808080]">
+                      {p.categoryName} &middot; SL: {fmtInt(p.quantitySold)} &middot; Biên: {fmtPct(p.profitMarginPercent)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-black text-green-600 dark:text-green-400">
+                      {fmtVND(p.profit, true)}
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-[#999999]">
+                      DT {fmtVND(p.revenue, true)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        {/* Danh mục bán chạy */}
+        <Section title="Danh mục bán chạy (30 ngày)" icon="category">
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
+            </div>
+          ) : (data?.topCategoriesByRevenue ?? []).length === 0 ? (
+            <p className="py-10 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu</p>
+          ) : (
+            <div className="space-y-3">
+              {(() => {
+                const totalCatRev = (data?.topCategoriesByRevenue ?? []).reduce((s, c) => s + (c.revenue || 0), 0);
+                const catColors = [
+                  'bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500',
+                ];
+                return (data?.topCategoriesByRevenue ?? []).map((cat, i) => {
+                  const pct = totalCatRev > 0 ? ((cat.revenue || 0) / totalCatRev) * 100 : 0;
+                  return (
+                    <div key={cat.categoryName}>
+                      <div className="mb-1 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full ${catColors[i % catColors.length]}`} />
+                          <span className="text-xs font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                            {cat.categoryName || 'Sản phẩm chưa phân định danh mục'}
+                          </span>
+                          <span className="text-[10px] text-slate-400 dark:text-[#808080]">
+                            ({fmtInt(cat.quantitySold)} sp)
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">
+                            {fmtVND(cat.revenue, true)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#272727]">
+                        <div
+                          className={`h-full rounded-full ${catColors[i % catColors.length]}`}
+                          style={{ width: `${Math.max(pct, 1)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
+        </Section>
+      </div>
+
+      {/* ── Row 8: Hàng tồn kho thấp + Chi phí theo danh mục ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Hàng tồn kho thấp */}
         <Section title="Hàng tồn kho thấp" icon="inventory">
           {loading ? (
             <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-10" />
-              ))}
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
             </div>
           ) : (data?.lowStockProducts ?? []).length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <Icon name="check_circle" className="text-3xl text-green-400" />
-              <p className="text-sm font-semibold text-slate-600 dark:text-[#999999]">Tất cả sản phẩm đủ hàng</p>
+            <div className="flex flex-col items-center gap-2 py-10 text-center">
+              <Icon name="check_circle" className="text-3xl text-emerald-400" />
+              <p className="text-sm font-semibold text-slate-500 dark:text-[#999999]">Tất cả sản phẩm đủ hàng</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-[#333333]">
-                    {['Sản phẩm', 'Tối thiểu', 'Tồn'].map((h, index) => (
+                    {['Sản phẩm', 'Danh mục', 'Tồn', 'Tối thiểu'].map((h, i) => (
                       <th
                         key={h}
-                        className={`pb-2 pr-3 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080] ${index > 0 ? 'text-right' : ''}`}
+                        className={`pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080] ${i > 0 ? 'text-right' : 'pr-3'} ${i > 0 && i < 3 ? 'px-2' : ''}`}
                       >
                         {h}
                       </th>
@@ -435,17 +521,22 @@ const InventoryDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
-                  {data.lowStockProducts.map((p) => (
+                  {(data?.lowStockProducts ?? []).map((p) => (
                     <tr key={p.productId} className="hover:bg-slate-50 dark:hover:bg-[#272727]">
                       <td className="py-2 pr-3">
-                        <p className="max-w-[140px] truncate font-bold text-slate-800 dark:text-[#e5e5e5]">
+                        <p className="max-w-[120px] truncate text-xs font-bold text-slate-800 dark:text-[#e5e5e5]">
                           {p.productName}
                         </p>
-                        <p className="text-[10px] text-slate-400 dark:text-[#808080]">{p.categoryName}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-[#808080]">{p.productCode}</p>
                       </td>
-                      <td className="py-2 pr-3 text-right text-slate-500 dark:text-[#999999]">{fmtInt(p.minimumStock)}</td>
-                      <td className="py-2 text-right font-semibold text-orange-600">
+                      <td className="px-2 text-right text-[10px] text-slate-400 dark:text-[#808080]">
+                        {p.categoryName}
+                      </td>
+                      <td className="px-2 text-right text-xs font-semibold text-red-500">
                         {fmtInt(p.availableStock)}
+                      </td>
+                      <td className="px-2 text-right text-xs text-slate-500 dark:text-[#999999]">
+                        {fmtInt(p.minimumStock)}
                       </td>
                     </tr>
                   ))}
@@ -459,35 +550,25 @@ const InventoryDashboard = () => {
         <Section title="Chi phí theo danh mục (30 ngày)" icon="pie_chart">
           {loading ? (
             <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-10" />
-              ))}
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
             </div>
           ) : (data?.expenseByCategory ?? []).length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu chi phí</p>
+            <p className="py-10 text-center text-sm text-slate-400 dark:text-[#808080]">Chưa có dữ liệu chi phí</p>
           ) : (
             <div className="space-y-3">
               {(() => {
-                const totalExp = data.expenseByCategory.reduce((s, c) => s + c.totalAmount, 0);
-                return data.expenseByCategory.map((cat, i) => {
-                  const pct = totalExp > 0 ? (cat.totalAmount / totalExp) * 100 : 0;
-                  const colors = [
-                    'bg-blue-500',
-                    'bg-purple-500',
-                    'bg-orange-500',
-                    'bg-green-500',
-                    'bg-red-400',
-                    'bg-teal-500',
-                    'bg-pink-500',
-                    'bg-yellow-500',
-                    'bg-indigo-500',
-                    'bg-slate-400',
-                  ];
+                const totalExp = (data?.expenseByCategory ?? []).reduce((s, c) => s + (c.totalAmount || 0), 0);
+                const expColors = [
+                  'bg-slate-500', 'bg-rose-500', 'bg-amber-500', 'bg-blue-500', 'bg-violet-500',
+                  'bg-emerald-500', 'bg-cyan-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500',
+                ];
+                return (data?.expenseByCategory ?? []).map((cat, i) => {
+                  const pct = totalExp > 0 ? ((cat.totalAmount || 0) / totalExp) * 100 : 0;
                   return (
                     <div key={cat.categoryName}>
                       <div className="mb-1 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full ${colors[i % colors.length]}`} />
+                          <span className={`h-2.5 w-2.5 rounded-full ${expColors[i % expColors.length]}`} />
                           <span className="text-xs font-semibold text-slate-700 dark:text-[#b3b3b3]">
                             {cat.categoryName}
                           </span>
@@ -501,8 +582,8 @@ const InventoryDashboard = () => {
                       </div>
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#272727]">
                         <div
-                          className={`h-full rounded-full ${colors[i % colors.length]}`}
-                          style={{ width: `${pct}%` }}
+                          className={`h-full rounded-full ${expColors[i % expColors.length]}`}
+                          style={{ width: `${Math.max(pct, 1)}%` }}
                         />
                       </div>
                     </div>
@@ -513,9 +594,8 @@ const InventoryDashboard = () => {
           )}
         </Section>
       </div>
-
     </div>
   );
 };
 
-export default InventoryDashboard;
+export default OwnerDashboard;

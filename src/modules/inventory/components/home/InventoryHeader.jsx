@@ -5,6 +5,7 @@ import Logo from '../../../../shared/components/Logo';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import InventoryNotificationDropdown from './InventoryNotificationDropdown';
 import { useTheme } from '../../../../shared/contexts/ThemeContext';
+import { hasRole } from '../../../../shared/utils/roleRedirect';
 
 const InventoryHeader = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const InventoryHeader = () => {
   }, []);
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = userRoles.some((r) => r.toLowerCase() === 'owner');
+  const isOwner = hasRole(userRoles, 'Owner');
 
   const handleLogout = () => {
     logout();
@@ -55,7 +56,9 @@ const InventoryHeader = () => {
               <div className="absolute inset-0 animate-spin rounded-full border-4 border-slate-100 border-t-primary dark:border-[#333333]" />
               <Icon name="point_of_sale" className="animate-pulse text-primary" size={22} />
             </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Khởi tạo thiết bị bán hàng</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">
+              Khởi tạo thiết bị bán hàng
+            </h3>
             <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-[#999999]">
               Đang đồng bộ dữ liệu và kết nối máy quét mã vạch...
             </p>
@@ -98,7 +101,9 @@ const InventoryHeader = () => {
             {isProfileOpen && (
               <div className="animate-fadeIn absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f]">
                 <div className="border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
-                  <p className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">{user?.fullName || user?.name}</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">
+                    {user?.fullName || user?.name}
+                  </p>
                   <p className="mt-0.5 truncate text-[11px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
                     {userRoles.join(', ')}
                   </p>
@@ -109,7 +114,11 @@ const InventoryHeader = () => {
                     onClick={toggleTheme}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-[#b3b3b3] dark:hover:bg-[#272727]"
                   >
-                    <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} size={16} className="text-slate-500 dark:text-[#999999]" />
+                    <Icon
+                      name={theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                      size={16}
+                      className="text-slate-500 dark:text-[#999999]"
+                    />
                     {theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
                   </button>
 
@@ -117,7 +126,11 @@ const InventoryHeader = () => {
                     onClick={handleGoToAccountSettings}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-[#b3b3b3] dark:hover:bg-[#272727]"
                   >
-                    <Icon name="settings" size={16} className="text-slate-500 dark:text-[#999999]" />
+                    <Icon
+                      name="settings"
+                      size={16}
+                      className="text-slate-500 dark:text-[#999999]"
+                    />
                     Cài đặt tài khoản
                   </button>
                   <div className="my-1 border-t border-slate-100 dark:border-[#333333]" />
