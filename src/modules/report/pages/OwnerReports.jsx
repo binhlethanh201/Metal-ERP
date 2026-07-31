@@ -241,7 +241,7 @@ export const OwnerReports = () => {
 
       case 'stock-movement': {
         const movementPayload = { fromDate, toDate, productId: productId || null };
-        if (categoryId) movementPayload.categoryId = categoryId;
+        if (categoryId) movementPayload.categoryName = categoryId;
         await fetchStockMovement(movementPayload);
         break;
       }
@@ -256,7 +256,7 @@ export const OwnerReports = () => {
 
       case 'product-profit': {
         const profitPayload = { fromDate, toDate, sortBy, pageNumber: 1, pageSize };
-        if (categoryId) profitPayload.categoryId = categoryId;
+        if (categoryId) profitPayload.categoryName = categoryId;
         await fetchProductProfit(profitPayload);
         break;
       }
@@ -372,7 +372,9 @@ export const OwnerReports = () => {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Báo cáo Tổng hợp</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">
+            Báo cáo Tổng hợp
+          </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
             Phân tích dữ liệu kinh doanh và vận hành hệ thống
           </p>

@@ -154,6 +154,50 @@ export const DailyEndReport = ({ data }) => {
           </div>
         </div>
       </Card>
+
+      {/* Chi phí và lợi nhuận ròng */}
+      <Card
+        header={
+          <h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
+            Chi phí & Lợi nhuận ròng
+          </h4>
+        }
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-xl border border-red-100 bg-red-50/50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
+            <p className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400">
+              Tổng chi phí
+            </p>
+            <p className="mt-1 text-xl font-bold text-red-600 dark:text-red-400">
+              {formatCurrency(data.totalExpense || 0)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">Phiếu chi tiền</p>
+          </div>
+          <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 dark:border-purple-900/50 dark:bg-purple-900/20">
+            <p className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400">
+              Lợi nhuận ròng
+            </p>
+            <p
+              className={`mt-1 text-xl font-bold ${(data.netProfit || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+            >
+              {formatCurrency(data.netProfit || 0)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">Doanh thu - Chi phí</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+              Biên lợi nhuận
+            </p>
+            <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
+              {data.totalRevenue > 0
+                ? (((data.netProfit || 0) / data.totalRevenue) * 100).toFixed(1)
+                : '0.0'}
+              %
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">Lợi nhuận / Doanh thu</p>
+          </div>
+        </div>
+      </Card>
     </>
   );
 };
