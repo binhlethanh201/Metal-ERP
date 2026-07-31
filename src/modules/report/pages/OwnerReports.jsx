@@ -241,7 +241,7 @@ export const OwnerReports = () => {
 
       case 'stock-movement': {
         const movementPayload = { fromDate, toDate, productId: productId || null };
-        if (categoryId) movementPayload.categoryName = categoryId;
+        if (categoryId) movementPayload.categoryId = categoryId;
         await fetchStockMovement(movementPayload);
         break;
       }
