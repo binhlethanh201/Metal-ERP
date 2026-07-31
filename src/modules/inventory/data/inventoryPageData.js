@@ -17,6 +17,7 @@ export const sidebarItems = [
   {
     label: 'Hàng hóa & Kho',
     icon: 'inventory_2',
+    permission: 'STOCK_VIEW',
     children: [
       { label: 'Danh sách hàng hóa', path: '/inventory/products' },
       { label: 'Nhập kho', path: '/inventory/import' },
