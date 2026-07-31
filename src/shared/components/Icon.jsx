@@ -85,6 +85,7 @@ const staticIconMap = {
   warning: 'AlertTriangle',
   dangerous: 'XCircle',
   history: 'History',
+  policy: 'ScrollText',
   check: 'Check',
   north_east: 'ArrowUpRight',
   swap_horiz: 'ArrowLeftRight',

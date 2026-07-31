@@ -6,7 +6,6 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../../../shared/components/Modal';
 import Icon from '../../../shared/components/Icon';
 import { apiGet } from '../../../services/apiClient';
-import { useAuth } from '../../../shared/hooks/useAuth';
 
 const formatDuration = (totalDays) => {
   if (!totalDays) return 'Không cho phép';
@@ -32,7 +31,6 @@ const TABS = [
 ];
 
 const StorePolicyModal = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('return');
   const [returnPolicies, setReturnPolicies] = useState([]);
   const [discountTiers, setDiscountTiers] = useState([]);
@@ -43,18 +41,14 @@ const StorePolicyModal = ({ isOpen, onClose }) => {
     const fetchPolicies = async () => {
       setLoading(true);
       try {
-        const branchId = user?.branchId || localStorage.getItem('branchId');
-        if (branchId) {
-          const policies = await apiGet(
-            `/api/owner/branches/${branchId}/return-policies/categories`
-          );
-          setReturnPolicies(Array.isArray(policies) ? policies : []);
-        }
+        const policies = await apiGet('/api/pos/returns/return-policies');
+        setReturnPolicies(Array.isArray(policies) ? policies : []);
       } catch (e) {
         console.error('Failed to fetch return policies:', e);
       }
       try {
-        const tiers = await apiGet('/api/order-discount-tiers');
+        const tiersRes = await apiGet('/api/order-discount-tiers');
+        const tiers = tiersRes?.data || tiersRes;
         setDiscountTiers(Array.isArray(tiers) ? tiers : []);
       } catch (e) {
         console.error('Failed to fetch discount tiers:', e);
@@ -62,7 +56,7 @@ const StorePolicyModal = ({ isOpen, onClose }) => {
       setLoading(false);
     };
     fetchPolicies();
-  }, [isOpen, user?.branchId]);
+  }, [isOpen]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Chính sách cửa hàng" size="lg">

@@ -84,12 +84,16 @@ const ReceiptLineTable = ({ p, onRequestNewProduct }) => (
             <th className="w-[85px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Số lượng
             </th>
-            <th className="w-[110px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
-              Đơn giá
-            </th>
-            <th className="w-[120px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
-              Thành tiền
-            </th>
+            {!p.isCustomerReturn && (
+              <th className="w-[110px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
+                Đơn giá
+              </th>
+            )}
+            {!p.isCustomerReturn && (
+              <th className="w-[120px] px-2 py-2.5 text-right text-[10px] font-bold text-slate-500 dark:text-[#999999]">
+                Thành tiền
+              </th>
+            )}
             <th className="w-[120px] px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 dark:text-[#999999]">
               Ghi chú
             </th>
@@ -213,23 +217,27 @@ const ReceiptLineTable = ({ p, onRequestNewProduct }) => (
                     disabled={!isD}
                   />
                 </td>
-                <td className="px-2 py-1.5">
-                  <input
-                    type="number"
-                    className={`w-full rounded border px-2 py-1.5 text-right text-sm outline-none ${isD ? 'border-slate-200 bg-white focus:border-blue-500' : 'cursor-not-allowed border-transparent bg-transparent text-slate-400'}`}
-                    value={isD ? line.unitPrice || '' : ''}
-                    min={0}
-                    onChange={(e) => p.recalcLine(line.id, 'unitPrice', e.target.value)}
-                    disabled={!isD}
-                  />
-                </td>
-                <td className="px-2 py-1.5 text-right">
-                  <span
-                    className={`text-sm font-semibold tabular-nums ${isD ? 'text-slate-800' : 'text-slate-400'}`}
-                  >
-                    {isD ? fmt(line.amount) : ''}
-                  </span>
-                </td>
+                {!p.isCustomerReturn && (
+                  <td className="px-2 py-1.5">
+                    <input
+                      type="number"
+                      className={`w-full rounded border px-2 py-1.5 text-right text-sm outline-none ${isD ? 'border-slate-200 bg-white focus:border-blue-500' : 'cursor-not-allowed border-transparent bg-transparent text-slate-400'}`}
+                      value={isD ? line.unitPrice || '' : ''}
+                      min={0}
+                      onChange={(e) => p.recalcLine(line.id, 'unitPrice', e.target.value)}
+                      disabled={!isD}
+                    />
+                  </td>
+                )}
+                {!p.isCustomerReturn && (
+                  <td className="px-2 py-1.5 text-right">
+                    <span
+                      className={`text-sm font-semibold tabular-nums ${isD ? 'text-slate-800' : 'text-slate-400'}`}
+                    >
+                      {isD ? fmt(line.amount) : ''}
+                    </span>
+                  </td>
+                )}
                 <td className="px-2 py-1.5">
                   <input
                     type="text"

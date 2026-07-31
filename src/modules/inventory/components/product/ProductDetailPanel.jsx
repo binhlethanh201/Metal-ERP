@@ -5,6 +5,30 @@ import { formatMoney, isProductActive } from '../../utils/productUtils';
 
 const fmtMoney = (v) => formatMoney(v);
 
+const isInactiveValue = (value) => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  return (
+    value === false ||
+    value === 0 ||
+    value === -1 ||
+    normalized === '0' ||
+    normalized === '-1' ||
+    normalized === 'inactive' ||
+    normalized === 'false'
+  );
+};
+
+const normalizeDetailStatus = (data = {}) => {
+  if (isInactiveValue(data.productStatus)) return 'inactive';
+  if (isInactiveValue(data.isActive)) return 'inactive';
+  if (isInactiveValue(data.IsActive)) return 'inactive';
+  if (isInactiveValue(data.status)) return 'inactive';
+  if (isInactiveValue(data.Status)) return 'inactive';
+  if (isInactiveValue(data.directSale)) return 'inactive';
+  if (isInactiveValue(data.DirectSale)) return 'inactive';
+  return 'active';
+};
+
 const SummaryBar = ({ row }) => {
   const items = [
     { label: 'Mã SP', value: row.productCode || row.id },
@@ -278,6 +302,7 @@ export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) =>
         const res = await getProduct(productId);
         if (res?.success && res?.data) {
           const apiData = res.data;
+          const productStatus = normalizeDetailStatus(apiData);
           // Map PascalCase từ backend C# sang lowercase frontend
           setFullData((prev) => ({
             ...prev,
@@ -290,6 +315,8 @@ export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) =>
             weightUnit: apiData.weightUnit || apiData.WeightUnit || prev.weightUnit || 'g',
             specification:
               apiData.specification || apiData.Specification || prev.specification || '',
+            productStatus,
+            isActive: productStatus !== 'inactive',
           }));
         }
       } catch (err) {

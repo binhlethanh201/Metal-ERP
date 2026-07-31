@@ -73,6 +73,32 @@ export const formatDateTime = (date) => formatDate(date, 'DD/MM/YYYY HH:mm');
 
 export const formatTime = (date) => formatDate(date, 'HH:mm:ss');
 
+/**
+ * Trả về chuỗi ngày YYYY-MM-DD theo giờ địa phương (KHÔNG dùng UTC).
+ * Dùng để gửi query params date cho API, tránh lệch 1 ngày khi dùng toISOString().
+ */
+export const getLocalDateString = (date = new Date()) => {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+/**
+ * Trả về chuỗi datetime YYYY-MM-DDTHH:mm theo giờ địa phương.
+ * Dùng cho input type="datetime-local".
+ */
+export const getLocalDateTimeString = (date = new Date()) => {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day}T${h}:${min}`;
+};
+
 const dateUtils = { formatDate, formatDateTime, formatTime };
 
 export default dateUtils;

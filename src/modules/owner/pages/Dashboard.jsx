@@ -465,7 +465,7 @@ const OwnerDashboard = () => {
                         <div className="flex items-center gap-2">
                           <span className={`h-2.5 w-2.5 rounded-full ${catColors[i % catColors.length]}`} />
                           <span className="text-xs font-semibold text-slate-700 dark:text-[#b3b3b3]">
-                            {cat.categoryName}
+                            {cat.categoryName || 'Sản phẩm chưa phân định danh mục'}
                           </span>
                           <span className="text-[10px] text-slate-400 dark:text-[#808080]">
                             ({fmtInt(cat.quantitySold)} sp)
@@ -510,10 +510,10 @@ const OwnerDashboard = () => {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-[#333333]">
-                    {['Sản phẩm', 'Danh mục', 'Tồn', 'Tối thiểu', 'Thiếu'].map((h, i) => (
+                    {['Sản phẩm', 'Danh mục', 'Tồn', 'Tối thiểu'].map((h, i) => (
                       <th
                         key={h}
-                        className={`pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080] ${i > 0 ? 'text-right' : 'pr-3'} ${i > 0 && i < 4 ? 'px-2' : ''} ${i === 4 ? 'pl-2' : ''}`}
+                        className={`pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080] ${i > 0 ? 'text-right' : 'pr-3'} ${i > 0 && i < 3 ? 'px-2' : ''}`}
                       >
                         {h}
                       </th>
@@ -537,9 +537,6 @@ const OwnerDashboard = () => {
                       </td>
                       <td className="px-2 text-right text-xs text-slate-500 dark:text-[#999999]">
                         {fmtInt(p.minimumStock)}
-                      </td>
-                      <td className="pl-2 text-right text-xs font-bold text-red-500">
-                        {fmtInt(p.shortage)}
                       </td>
                     </tr>
                   ))}

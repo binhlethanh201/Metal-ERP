@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { RefreshCw, RotateCcw, Package, Filter } from 'lucide-react';
 import Icon from '../../../shared/components/Icon';
 import { Card } from '../../../shared/components/Card';
@@ -87,7 +88,9 @@ const normalizeInwardInventory = (item) => ({
   status: mapStatus(item?.status),
   branchName: item?.branchName || '-',
   branchId: item?.branchId,
-  reason: item?.reason || item?.note || '-',
+  reason: item?.ticketType === 'CUSTOMER_RETURN' && (!item?.reason || item?.reason === 'Nhập kho')
+    ? 'Khách hàng trả'
+    : (item?.reason || item?.note || '-'),
   note: item?.note || '',
   ticketType: item?.ticketType || 'PURCHASE',
   items: (item?.items || []).map(normalizeItem),
@@ -140,6 +143,7 @@ const normalizeItem = (item) => ({
 
 // Main component
 export const InventoryTransactionManagement = () => {
+  const location = useLocation();
 
   // State
   const [activeTab, setActiveTab] = useState('ALL');
@@ -255,6 +259,46 @@ export const InventoryTransactionManagement = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Tự động mở phiếu nhập/xuất khi có ticketId từ URL (từ thông báo)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ticketId = params.get('ticketId');
+    const type = params.get('type');
+    const search = params.get('search');
+
+    if (type) setActiveTab(type);
+    if (search) setSearchTerm(search);
+
+    if (!ticketId) return;
+
+    const openTicketFromUrl = async () => {
+      setDetailLoading(true);
+      setIsDetailOpen(true);
+      try {
+        const res =
+          type === 'INWARD'
+            ? await getInwardInventory(ticketId)
+            : await getOutwardInventory(ticketId);
+        const rawData = res?.data || res;
+        if (rawData && (rawData.stockTicketId || rawData.ticketCode || rawData.items)) {
+          const normalized =
+            type === 'INWARD'
+              ? normalizeInwardInventory(rawData)
+              : normalizeOutwardInventory(rawData);
+          setSelectedTransaction(normalized);
+        }
+        if (type) setActiveTab(type);
+      } catch (error) {
+        console.error('Failed to open ticket from URL:', error);
+        setIsDetailOpen(false);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    openTicketFromUrl();
+  }, [location.search]);
 
   // Filter data based on tab and search
   const filteredData = useMemo(() => {
@@ -696,9 +740,11 @@ export const InventoryTransactionManagement = () => {
                     <td className="px-4 py-3 text-right text-slate-600 dark:text-[#b3b3b3]">{row.itemCount}</td>
                     <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">{(row.totalQuantity || 0).toLocaleString('vi-VN')}</td>
                     <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
-                      {row.type === 'OUTWARD' && row.totalAmount === 0
-                        ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">{row.reason || row.ticketType || '-'}</span>
-                        : formatCurrency(row.totalAmount)}
+                      {row.ticketType === 'CUSTOMER_RETURN'
+                        ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">Khách hàng trả</span>
+                        : row.type === 'OUTWARD' && row.totalAmount === 0
+                          ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">{row.reason || row.ticketType || '-'}</span>
+                          : formatCurrency(row.totalAmount)}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">{row.createdByName}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.status} size="sm" /></td>

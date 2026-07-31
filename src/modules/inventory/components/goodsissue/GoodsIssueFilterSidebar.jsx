@@ -5,6 +5,7 @@
  */
 import { useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import { getLocalDateString } from '../../../../shared/utils/formatDate';
 
 /* ── QuickRangePopover ── */
 const quickRangeOptions = [
@@ -150,8 +151,8 @@ const DatePickerPopup = ({ dateFrom, dateTo, onApply, onCancel }) => {
     if (selFrom) {
       const end = selTo || selFrom;
       onApply({
-        dateFrom: selFrom.toISOString().slice(0, 10),
-        dateTo: end.toISOString().slice(0, 10),
+        dateFrom: getLocalDateString(selFrom),
+        dateTo: getLocalDateString(end),
         label: `${selFrom.toLocaleDateString('vi-VN')} - ${end.toLocaleDateString('vi-VN')}`,
       });
     }

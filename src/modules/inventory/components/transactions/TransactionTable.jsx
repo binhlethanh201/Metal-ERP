@@ -195,7 +195,10 @@ export const TransactionTable = ({
                       {Number(row.totalQuantity || 0).toLocaleString('vi-VN')}
                     </td>
                     <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
-                      {formatCurrency(row.totalAmount)}
+                      {row.ticketType === 'CUSTOMER_RETURN' || row.ticketType === 'RETURN_SUPPLIER'
+                        ? <span className="text-amber-600 font-semibold">Khách hàng trả</span>
+                        : formatCurrency(row.totalAmount)
+                      }
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-[#999999]">{row.createdByName || '-'}</td>
                     <td className="px-4 py-3">

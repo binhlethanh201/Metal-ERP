@@ -28,8 +28,8 @@ export const LOW_STOCK_COLUMNS = [
   { key: 'productName', header: 'Tên sản phẩm' },
   { key: 'categoryName', header: 'Nhóm' },
   { key: 'currentStock', header: 'Tồn hiện tại' },
-  { key: 'minimumStock', header: 'Tồn tối thiểu' },
   { key: 'shortage', header: 'Chênh lệch' },
+  { key: 'minimumStock', header: 'Tồn tối thiểu' },
   {
     key: 'severity',
     header: 'Mức độ',
@@ -69,7 +69,7 @@ export const PRODUCT_PROFIT_COLUMNS = [
   {
     key: 'profitMargin',
     header: 'Biên LN',
-    render: (v) => <span className="font-semibold text-purple-600">{v}%</span>,
+    render: (v) => <span className="font-semibold text-purple-600">{(v ?? 0).toFixed(2)}%</span>,
   },
 ];
 
