@@ -3,6 +3,19 @@ import { getShifts } from '../services/posService';
 
 const STORAGE_KEY = 'pos_active_shift';
 
+// Ca quá 24 giờ coi như "kẹt" / bị bỏ quên → bỏ qua, không dùng và clear khỏi localStorage.
+const MAX_SHIFT_AGE_HOURS = 24;
+
+const isStaleShift = (startedAt) => {
+  if (!startedAt) return true;
+  const t = new Date(startedAt).getTime();
+  if (Number.isNaN(t)) return true;
+  const ageHours = (Date.now() - t) / (1000 * 60 * 60);
+  return ageHours > MAX_SHIFT_AGE_HOURS;
+};
+
+const isFreshShift = (startedAt) => !isStaleShift(startedAt);
+
 /**
  * Đồng bộ ca đang mở từ BE về localStorage.
  * Tránh lỗi MSG-76 khi user đăng nhập lại hoặc sang máy khác mà
@@ -11,13 +24,20 @@ const STORAGE_KEY = 'pos_active_shift';
  * Logic:
  *   - Lấy GET /pos/shifts?status=OPEN
  *   - Lọc ca có UserId khớp với currentUser (BE lọc giúp rồi)
+ *   - Bỏ qua ca quá 24 giờ (coi như kẹt, không dùng)
  *   - Lưu object { id, shiftCode, openingBalance } vào localStorage
  *   - Nếu không có ca nào → set null
  */
 export const useActiveShift = ({ enabled = true } = {}) => {
   const [activeShift, setActiveShift] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      // Cache cũ / quá hạn → không dùng
+      if (cached && !isFreshShift(cached.startedAt)) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return cached;
     } catch {
       return null;
     }
@@ -31,7 +51,11 @@ export const useActiveShift = ({ enabled = true } = {}) => {
       const res = await getShifts({ status: 'OPEN', pageSize: 10 });
       const items = res?.data?.items || res?.items || res?.data || [];
       // Ca OPEN của chính user hiện tại (BE đã filter theo user)
-      const open = Array.isArray(items) && items.length > 0 ? items[0] : null;
+      // Bỏ qua ca quá 24 giờ (coi như kẹt)
+      const fresh = Array.isArray(items)
+        ? items.filter((s) => isFreshShift(s.startedAt))
+        : [];
+      const open = fresh.length > 0 ? fresh[0] : null;
       if (open) {
         const mapped = {
           id: open.shiftId || open.id,
@@ -44,6 +68,7 @@ export const useActiveShift = ({ enabled = true } = {}) => {
         setActiveShift(mapped);
         return mapped;
       }
+      // Không có ca hợp lệ → xóa cache (kể cả cache cũ)
       localStorage.removeItem(STORAGE_KEY);
       setActiveShift(null);
       return null;
@@ -68,3 +93,4 @@ export const useActiveShift = ({ enabled = true } = {}) => {
 };
 
 export default useActiveShift;
+
