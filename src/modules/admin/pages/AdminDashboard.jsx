@@ -119,6 +119,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
+  // eslint-disable-next-line
   const [chart, setChart] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
   const [overview, setOverview] = useState(null);
