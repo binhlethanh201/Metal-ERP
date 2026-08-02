@@ -67,11 +67,11 @@ const ForgotPasswordPage = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/80 to-primary/60 mix-blend-multiply" />
         <div className="relative z-10 max-w-md px-8 text-center text-white drop-shadow-lg">
           <h2 className="mb-6 text-4xl font-black leading-tight tracking-tighter">
-            M.E.P Intelligent Retail Management System
+            M.E.P Retail Management System
           </h2>
           <div className="mx-auto mb-6 h-1 w-16 bg-white/40" />
           <p className="text-base font-medium leading-relaxed text-white/95">
-            Hệ thống Quản lý Bán hàng Thông minh ngành Kim khí & Thiết bị xây dựng.
+            Hệ thống Quản lý Bán hàng ngành Kim khí Điện Nước.
           </p>
         </div>
       </div>
