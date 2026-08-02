@@ -52,9 +52,7 @@ export const useActiveShift = ({ enabled = true } = {}) => {
       const items = res?.data?.items || res?.items || res?.data || [];
       // Ca OPEN của chính user hiện tại (BE đã filter theo user)
       // Bỏ qua ca quá 24 giờ (coi như kẹt)
-      const fresh = Array.isArray(items)
-        ? items.filter((s) => isFreshShift(s.startedAt))
-        : [];
+      const fresh = Array.isArray(items) ? items.filter((s) => isFreshShift(s.startedAt)) : [];
       const open = fresh.length > 0 ? fresh[0] : null;
       if (open) {
         const mapped = {
@@ -93,4 +91,3 @@ export const useActiveShift = ({ enabled = true } = {}) => {
 };
 
 export default useActiveShift;
-
