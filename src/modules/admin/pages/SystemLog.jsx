@@ -41,7 +41,7 @@ const SystemLog = () => {
     return logs.filter((log) => {
       const searchLower = searchTerm.toLowerCase();
       
-      const cleanDescription = (log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '');
+      const cleanDescription = (log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9-]{36}/gi, '');
       const translatedAction = translateAction(log.action);
 
       const matchesSearch =

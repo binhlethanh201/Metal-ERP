@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import StaffModal from '../../owner/components/staff/StaffModal';
-import CreateAccountModal from '../components/account/CreateAccountModal';
 import { getUserList, createOwner, createStaff, getRoleList, getPermissionList, getAdminBranches } from '../services/adminService';
 
 const AdminUserManagement = () => {
@@ -166,7 +165,7 @@ const AdminUserManagement = () => {
       </table>
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] px-4 py-3">
-          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-[#999999]">
+          <div clastaskkill /IM node.exe /FsName="flex items-center gap-3 text-xs text-slate-500 dark:text-[#999999]">
             <div className="flex items-center gap-2">
               <span>Hiển thị</span>
               <select 

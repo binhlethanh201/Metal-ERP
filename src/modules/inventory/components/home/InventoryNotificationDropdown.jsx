@@ -2,11 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import {
   getInventoryNotifications,
-  getSystemNotifications,
   markNotificationsAsRead,
 } from '../../services/inventoryCheckService';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const InventoryNotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);

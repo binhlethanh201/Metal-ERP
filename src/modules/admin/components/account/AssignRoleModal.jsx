@@ -24,6 +24,7 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
         .map(ar => ar.roleId);
       setRoleIds(activeIds);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user, roles]);
 
   if (!isOpen || !user) return null;

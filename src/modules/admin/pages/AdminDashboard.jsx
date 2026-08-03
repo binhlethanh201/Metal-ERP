@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
 
 import Icon from '../../../shared/components/Icon';
 import OwnerReports from '../../report/pages/OwnerReports';
@@ -18,7 +8,6 @@ import {
   getRevenueChart,
   getRecentEvents,
   exportDashboard,
-  getOverview,
 } from '../services/adminService';
 
 const formatCurrency = (value) => {
@@ -105,7 +94,6 @@ const AdminDashboard = () => {
   // eslint-disable-next-line
   const [chart, setChart] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
-  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
