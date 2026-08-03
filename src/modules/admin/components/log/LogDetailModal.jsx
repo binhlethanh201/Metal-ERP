@@ -1,6 +1,44 @@
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
 
+const actionTranslations = {
+  'CREATE_OWNER': 'Tạo tài khoản Chủ cửa hàng',
+  'CREATE_STAFF': 'Tạo tài khoản Nhân viên',
+  'UPDATE_ROLE_PERMISSIONS': 'Cập nhật phân quyền',
+  'CANCEL_EXPENSE_VOUCHER': 'Hủy phiếu chi',
+  'CREATE_EXPENSE_VOUCHER': 'Tạo phiếu chi',
+  'CONFIRM_EXPENSE_VOUCHER': 'Xác nhận phiếu chi',
+  'CANCEL_RETURN_ORDER': 'Hủy đơn trả hàng',
+  'CREATE_CUSTOMER': 'Tạo khách hàng mới',
+  'UPDATE_CUSTOMER': 'Cập nhật khách hàng',
+  'CONFIRM_OUTWARD_INVENTORY': 'Xác nhận xuất kho',
+  'INVENTORY_CHECK_RECONCILIATION': 'Cân bằng kho (Kiểm kê)',
+  'FINALIZE_INVOICE': 'Hoàn tất hóa đơn',
+  'RECORD_PAYMENT': 'Ghi nhận thanh toán',
+  'CREATE_INWARD_INVENTORY': 'Tạo phiếu nhập kho',
+  'CONFIRM_INWARD_INVENTORY': 'Xác nhận nhập kho',
+  'CANCEL_INWARD_INVENTORY': 'Hủy phiếu nhập kho',
+  'CREATE_OUTWARD_INVENTORY': 'Tạo phiếu xuất kho',
+  'CANCEL_OUTWARD_INVENTORY': 'Hủy phiếu xuất kho',
+  'CREATE_INVENTORY_CHECK': 'Tạo phiếu kiểm kê',
+  'CANCEL_INVENTORY_CHECK': 'Hủy phiếu kiểm kê',
+  'APPROVE_INVENTORY_CHECK': 'Duyệt phiếu kiểm kê',
+  'REJECT_INVENTORY_CHECK': 'Từ chối phiếu kiểm kê',
+  'LOGIN': 'Đăng nhập',
+  'LOGOUT': 'Đăng xuất',
+  'UPDATE_USER': 'Cập nhật tài khoản',
+  'DELETE_USER': 'Xóa tài khoản',
+  'PERMANENT_DELETE_USER': 'Xóa vĩnh viễn tài khoản',
+  'UPDATE_PRODUCT': 'Cập nhật sản phẩm',
+  'CREATE_PRODUCT': 'Tạo sản phẩm',
+  'DELETE_PRODUCT': 'Xóa sản phẩm'
+};
+
+const translateAction = (action) => {
+  if (!action) return '—';
+  return actionTranslations[action.toUpperCase()] || action;
+};
+
 const LogDetailModal = ({ log, onClose }) => {
   if (!log) return null;
 
@@ -9,9 +47,8 @@ const LogDetailModal = ({ log, onClose }) => {
       `ID: ${log.logId}`,
       `Thời gian: ${log.timestamp}`,
       `Mức độ: ${log.level}`,
-      `Nguồn: ${log.source}`,
-      `Hành động: ${log.action}`,
-      `Mô tả: ${log.description}`,
+      `Hành động: ${translateAction(log.action)}`,
+      `Mô tả: ${(log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')}`,
       log.ipAddress ? `IP: ${log.ipAddress}` : '',
       log.userAgent ? `Trình duyệt: ${log.userAgent}` : '',
     ]
@@ -19,12 +56,12 @@ const LogDetailModal = ({ log, onClose }) => {
       .join('\n');
 
     navigator.clipboard.writeText(text).then(() => {
-      alert('ÄÃ£ copy toÃ n bá»™ thÃ´ng tin log vÃ o clipboard.');
+      alert('Đã copy toàn bộ thông tin log vào clipboard.');
     });
   };
 
   const formatTimestamp = (ts) =>
-    ts ? new Date(ts).toLocaleString('vi-VN', { hour12: false }) : 'â€”';
+    ts ? new Date(ts).toLocaleString('vi-VN', { hour12: false }) : '—';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -36,7 +73,7 @@ const LogDetailModal = ({ log, onClose }) => {
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#333333] px-6 py-4">
           <div className="flex items-center gap-2 text-slate-900 dark:text-[#e5e5e5]">
             <Icon name="terminal" size={20} />
-            <h3 className="text-base font-bold">Chi tiáº¿t Nháº­t kÃ½: {log.logId}</h3>
+            <h3 className="text-base font-bold">Chi tiết Nhật ký: {log.logId}</h3>
           </div>
           <button onClick={onClose} className="text-slate-400 dark:text-[#666666] hover:text-slate-900 dark:text-[#e5e5e5]">
             <Icon name="x" size={18} />
@@ -75,15 +112,9 @@ const LogDetailModal = ({ log, onClose }) => {
               </div>
               <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                 <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Nguồn
-                </p>
-                <p className="mt-1 font-mono text-sm font-bold text-[#004785] dark:text-blue-400">{log.source || 'â€”'}</p>
-              </div>
-              <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
-                <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">
                   Hành động
                 </p>
-                <p className="mt-1 font-mono text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{log.action}</p>
+                <p className="mt-1 font-mono text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{translateAction(log.action)}</p>
               </div>
             </div>
           </div>
@@ -95,7 +126,7 @@ const LogDetailModal = ({ log, onClose }) => {
             </h4>
             <div className="rounded-md border border-slate-200 dark:border-[#333333] bg-slate-900 dark:bg-black p-4">
               <p className="break-words font-mono text-sm leading-relaxed text-slate-100 dark:text-white">
-                {log.description || 'â€”'}
+                {(log.description || '—').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')}
               </p>
             </div>
           </div>

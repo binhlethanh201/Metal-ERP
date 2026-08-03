@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
+import StaffModal from '../../owner/components/staff/StaffModal';
 import CreateAccountModal from '../components/account/CreateAccountModal';
-import { getUserList, createOwner, createStaff, getRoleList, getAdminBranches } from '../services/adminService';
+import { getUserList, createOwner, createStaff, getRoleList, getPermissionList, getAdminBranches } from '../services/adminService';
 
 const AdminUserManagement = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const AdminUserManagement = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [roles, setRoles] = useState([]);
+  const [permissions, setPermissions] = useState([]);
   const [branches, setBranches] = useState([]);
 
   const fetchData = useCallback(() => {
@@ -23,12 +25,14 @@ const AdminUserManagement = () => {
     Promise.all([
       getUserList({ status: statusFilter, pageSize: 1000 }), 
       getRoleList(),
+      getPermissionList(),
       getAdminBranches({ pageSize: 1000 })
     ])
-      .then(([userData, roleData, branchData]) => {
+      .then(([userData, roleData, permData, branchData]) => {
         const list = Array.isArray(userData) ? userData : userData?.items || [];
         setUsers(list);
         setRoles(Array.isArray(roleData) ? roleData : []);
+        setPermissions(Array.isArray(permData) ? permData : []);
         setBranches(branchData?.items || []);
         setLoading(false);
       })
@@ -45,10 +49,16 @@ const AdminUserManagement = () => {
 
   const handleCreateUser = async (formData) => {
     try {
-      if (formData.roleName === 'Owner') {
-        await createOwner(formData);
+      const submitData = {
+        ...formData,
+        roleName: formData.defaultRoleType,
+        permissionCodes: formData.customPermissionCodes,
+      };
+
+      if (submitData.roleName === 'Owner') {
+        await createOwner(submitData);
       } else {
-        await createStaff(formData);
+        await createStaff(submitData);
       }
       alert('Tạo người dùng thành công!');
       setIsCreateModalOpen(false);
@@ -80,7 +90,6 @@ const AdminUserManagement = () => {
           <tr className="border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             <th className="px-4 py-3">ID & Email người dùng</th>
             <th className="px-4 py-3">Họ Tên</th>
-            <th className="px-4 py-3">Thuộc Cửa Hàng</th>
             <th className="px-4 py-3">Vai trò (Roles)</th>
             <th className="px-4 py-3 text-center">Trạng thái</th>
             <th className="px-4 py-3 text-right">Thao tác</th>
@@ -98,18 +107,23 @@ const AdminUserManagement = () => {
                   <div className="mt-0.5 font-mono text-[10px] text-slate-400 dark:text-[#666666]">{user.userId}</div>
                 </td>
                 <td className="px-4 py-3 font-bold">{user.fullName || '—'}</td>
-                <td className="px-4 py-3 text-[11px] font-semibold text-[#004785] dark:text-blue-400">
-                  {user.defaultBranchName || '—'}
-                </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
-                    {(user.roles || []).map((r) => (
-                      <span
-                        key={r.roleId}
-                        className="rounded bg-[#004785] dark:bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
-                      >
-                        {r.roleName}
-                      </span>
+                    {Array.from(new Set((user.roles || []).map((r) => {
+                      const lower = (r.roleName || '').toLowerCase().replace(/\s+/g, '');
+                      let displayRole = r.roleName;
+                      if (lower.includes('sales')) displayRole = 'Nhân viên Bán hàng';
+                      else if (lower.includes('inventory')) displayRole = 'Nhân viên Kho';
+                      else if (lower === 'staff') displayRole = 'Nhân viên';
+                      else if (lower === 'owner') displayRole = 'Chủ cửa hàng';
+                      return displayRole;
+                    }))).map((displayRole, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded bg-[#004785] dark:bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                        >
+                          {displayRole}
+                        </span>
                     ))}
                   </div>
                 </td>
@@ -211,10 +225,12 @@ const AdminUserManagement = () => {
         )}
       </div>
 
-      <CreateAccountModal
+      <StaffModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateUser}
+        permissions={permissions}
+        isAdminContext={true}
         roles={roles}
         branches={branches}
       />

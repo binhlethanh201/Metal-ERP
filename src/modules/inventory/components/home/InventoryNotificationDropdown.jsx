@@ -2,11 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import {
   getInventoryNotifications,
+  getSystemNotifications,
   markNotificationsAsRead,
 } from '../../services/inventoryCheckService';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const InventoryNotificationDropdown = () => {
+  const { user } = useAuth();
+  const userId = user?.userId || 'guest';
+  const lsKey = `read_system_notifs_${userId}`;
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -17,11 +22,44 @@ const InventoryNotificationDropdown = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 });
-      if (res?.success && res.data) {
-        setNotifications(res.data.items || []);
-        setUnreadCount(res.data.unreadCount || 0);
+      const [invRes, sysRes] = await Promise.all([
+        getInventoryNotifications({ pageNumber: 1, pageSize: 20 }).catch(() => null),
+        getSystemNotifications(7).catch(() => null)
+      ]);
+      
+      let invItems = [];
+      let sysItems = [];
+      let newUnreadCount = 0;
+
+      if (invRes?.success && invRes.data) {
+        invItems = invRes.data.items || [];
+        newUnreadCount += invRes.data.unreadCount || 0;
       }
+      
+      if (sysRes?.success && sysRes.data) {
+        sysItems = sysRes.data || [];
+        // Optional: Count system notifications as unread if they haven't been clicked.
+        // We can use localStorage to track read system notifications.
+        const readSys = JSON.parse(localStorage.getItem(lsKey) || '[]');
+        const unreadSys = sysItems.filter(n => !readSys.includes(n.notificationId));
+        newUnreadCount += unreadSys.length;
+        
+        // Normalize system items to match inventory items structure
+        sysItems = sysItems.map(n => ({
+          notificationId: n.notificationId,
+          type: n.isUrgent ? 'SystemUrgent' : 'System',
+          typeDisplay: 'Hệ thống',
+          createdAt: n.sentAt,
+          message: n.content,
+          isRead: readSys.includes(n.notificationId),
+          title: n.title,
+          isSystem: true
+        }));
+      }
+
+      const combined = [...invItems, ...sysItems].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setNotifications(combined);
+      setUnreadCount(newUnreadCount);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -35,7 +73,15 @@ const InventoryNotificationDropdown = () => {
 
     // Polling every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    
+    // Listen to real-time events from Layout
+    const handleRefresh = () => fetchNotifications();
+    window.addEventListener('RefreshNotifications', handleRefresh);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('RefreshNotifications', handleRefresh);
+    };
   }, []);
 
   useEffect(() => {
@@ -64,13 +110,33 @@ const InventoryNotificationDropdown = () => {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         setUnreadCount(0);
       }
+      
+      // Mark all system as read locally
+      const sysIds = notifications.filter(n => n.isSystem).map(n => n.notificationId);
+      localStorage.setItem(lsKey, JSON.stringify(sysIds));
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
   };
 
   const handleNotificationClick = async (notif) => {
-    // Mark this specific notification as read if it's unread
+    // If it's a system notification, just mark as read locally
+    if (notif.isSystem) {
+      if (!notif.isRead) {
+        const readSys = JSON.parse(localStorage.getItem(lsKey) || '[]');
+        readSys.push(notif.notificationId);
+        localStorage.setItem(lsKey, JSON.stringify(readSys));
+        
+        setNotifications((prev) =>
+          prev.map((n) => (n.notificationId === notif.notificationId ? { ...n, isRead: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+      setIsOpen(false);
+      return;
+    }
+
+    // For inventory notifications
     if (!notif.isRead) {
       try {
         await markNotificationsAsRead([notif.notificationId], false);
@@ -144,6 +210,10 @@ const InventoryNotificationDropdown = () => {
         return { name: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-100' };
       case 'RecountRequested':
         return { name: 'replay', color: 'text-orange-500', bg: 'bg-orange-100' };
+      case 'SystemUrgent':
+        return { name: 'warning', color: 'text-red-500', bg: 'bg-red-100' };
+      case 'System':
+        return { name: 'campaign', color: 'text-indigo-500', bg: 'bg-indigo-100' };
       case 'Created':
         return { name: 'add_circle', color: 'text-purple-500', bg: 'bg-purple-100' };
       default:
@@ -201,8 +271,13 @@ const InventoryNotificationDropdown = () => {
                         <Icon name={iconInfo.name} size={20} className={iconInfo.color} />
                       </div>
                       <div className="min-w-0 flex-1">
+                        {notif.title && (
+                          <p className={`text-sm ${!notif.isRead ? 'font-bold text-slate-900 dark:text-[#e5e5e5]' : 'font-semibold text-slate-700 dark:text-[#b3b3b3]'}`}>
+                            {notif.title}
+                          </p>
+                        )}
                         <p
-                          className={`text-sm ${!notif.isRead ? 'font-bold text-slate-900 dark:text-[#e5e5e5]' : 'text-slate-700 dark:text-[#b3b3b3]'}`}
+                          className={`${notif.title ? 'text-xs mt-0.5' : 'text-sm'} ${!notif.isRead ? (notif.title ? 'text-slate-700 dark:text-[#e5e5e5]' : 'font-bold text-slate-900 dark:text-[#e5e5e5]') : 'text-slate-600 dark:text-[#b3b3b3]'}`}
                         >
                           {notif.message}
                         </p>

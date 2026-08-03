@@ -141,6 +141,10 @@ export const getInventoryNotifications = (filters = {}) => {
   return apiGet(`${ENDPOINTS.INVENTORY.GET_NOTIFICATIONS}${queryString ? `?${queryString}` : ''}`);
 };
 
+export const getSystemNotifications = (days = 7) => {
+  return apiGet(`/api/Users/me/system-notifications?days=${days}`);
+};
+
 /**
  * Đánh dấu thông báo đã đọc
  * PUT /api/InventoryCheck/notifications/read

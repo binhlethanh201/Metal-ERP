@@ -4,11 +4,27 @@ import Icon from '../../../../shared/components/Icon';
 const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
   const [roleIds, setRoleIds] = useState([]);
 
+  const allowedRoles = ['Owner', 'InventoryStaff', 'SalesStaff'];
+  
+  // Deduplicate and filter roles from DB
+  const assignableRoles = Array.from(
+    new Map(
+      roles
+        .filter((r) => allowedRoles.includes(r.roleName.replace(/\s+/g, '')))
+        .map((r) => [r.roleName.replace(/\s+/g, ''), r])
+    ).values()
+  );
+
   useEffect(() => {
     if (isOpen && user) {
-      setRoleIds((user.roles || []).map((r) => r.roleId));
+      // Find which assignableRoles the user currently has by comparing normalized names
+      const userRoleNames = (user.roles || []).map(r => r.roleName.replace(/\s+/g, ''));
+      const activeIds = assignableRoles
+        .filter(ar => userRoleNames.includes(ar.roleName.replace(/\s+/g, '')))
+        .map(ar => ar.roleId);
+      setRoleIds(activeIds);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, roles]);
 
   if (!isOpen || !user) return null;
 
@@ -23,15 +39,11 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
     onSave(user.userId, roleIds);
   };
 
-  const assignableRoles = roles.filter(
-    (r) => r.roleName.toLowerCase() !== 'admin' && r.roleName.toLowerCase() !== 'communityuser'
-  );
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-6 shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#333333] pb-3">
-          <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Chá»‰nh sá»­a Chá»©c Vá»¥</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Chỉnh sửa Chức vụ</h3>
           <button onClick={onClose} className="text-slate-400 dark:text-[#666666] hover:text-slate-900 dark:text-[#e5e5e5]">
             <Icon name="x" size={18} />
           </button>
@@ -56,7 +68,9 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
                   className="h-4 w-4 rounded text-[#004785] dark:text-blue-400 focus:ring-primary"
                 />
                 <div>
-                  <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{role.roleName}</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                    {role.roleName === 'InventoryStaff' ? 'Inventory Staff' : role.roleName === 'SalesStaff' ? 'Sales Staff' : role.roleName}
+                  </div>
                   <div className="text-[10px] leading-tight text-slate-500 dark:text-[#999999]">
                     {role.description || `Quyền hạn của ${role.roleName}`}
                   </div>

@@ -63,7 +63,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   Staff: [],
 };
 
-const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
+const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminContext = false }) => {
   const [form, setForm] = useState(initialFormState);
   const [isCustomizing, setIsCustomizing] = useState(false);
 
@@ -103,8 +103,12 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!staff && (!form.username || !form.password)) {
+    if (!staff && form.defaultRoleType !== 'Owner' && (!form.username || !form.password)) {
       alert('Tên đăng nhập và Mật khẩu là bắt buộc khi tạo mới!');
+      return;
+    }
+    if (!staff && form.defaultRoleType === 'Owner' && !form.password) {
+      alert('Mật khẩu là bắt buộc khi tạo tài khoản Owner!');
       return;
     }
 
@@ -121,10 +125,9 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
     const submitData = { ...form };
     if (!staff) {
       submitData.customPermissionCodes = submitData.permissionCodes;
-      delete submitData.permissionCodes;
-      if (!isCustomizing && form.defaultRoleType) {
-        submitData.customPermissionCodes = [];
-      }
+      // Do NOT delete permissionCodes so parent components can read it if they expect it
+      // Do NOT set customPermissionCodes to [] because the backend Role DB might have empty permissions.
+      // We explicitly send the default permissions to the backend to create them.
     }
     onSave(submitData);
   };
@@ -170,7 +173,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
     <div className="flex w-full items-center justify-end gap-2">
       <Button variant="primary" type="submit" form="staff-form" className="flex items-center gap-2">
         <Icon name="save" size={18} />
-        {staff ? 'Lưu thay đổi' : 'Tạo nhân viên'}
+        {staff ? 'Lưu thay đổi' : isAdminContext ? 'Tạo người dùng' : 'Tạo nhân viên'}
       </Button>
     </div>
   );
@@ -183,7 +186,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
       title={
         <div>
           <span className="block">
-            {staff ? `Chi tiết nhân viên: ${staff.fullName}` : 'Thêm Nhân viên mới'}
+            {staff ? `Chi tiết: ${staff.fullName}` : isAdminContext ? 'Thêm Người dùng mới' : 'Thêm Nhân viên mới'}
           </span>
           {staff && (
             <span className="mt-1 text-xs font-normal text-slate-500 dark:text-[#999999]">
@@ -197,7 +200,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
     >
       <form id="staff-form" onSubmit={handleSubmit}>
         <div className="mb-6 grid grid-cols-2 gap-5">
-          {!staff && (
+          {!staff && form.defaultRoleType !== 'Owner' && (
             <Input
               label="Tên đăng nhập"
               required
@@ -251,6 +254,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               onChange={handleRoleChange}
               disabled={!!staff}
             >
+              {isAdminContext && <option value="Owner">Chủ cửa hàng (Owner)</option>}
               <option value="SalesStaff">Nhân viên Bán hàng</option>
               <option value="InventoryStaff">Nhân viên Kho</option>
               <option value="Staff">Nhân viên</option>
@@ -290,7 +294,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
                   size={20}
                   className="mr-2 inline align-text-bottom text-blue-600"
                 />
-                Phân quyền chi tiết ({form.permissionCodes.length} quyền đang chọn)
+                Phân quyền chi tiết ({form.defaultRoleType === 'Owner' ? 'Tất cả quyền' : `${form.permissionCodes.length} quyền đang chọn`})
               </label>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-[#999999]">
                 {!staff
@@ -343,6 +347,16 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave }) => {
               >
                 <Icon name="edit" size={14} /> Tôi muốn tự chọn / ghi đè quyền thủ công
               </button>
+            </div>
+          ) : form.defaultRoleType === 'Owner' ? (
+            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-6 text-center dark:border-blue-900/50 dark:bg-blue-900/20">
+              <Icon name="admin_panel_settings" size={32} className="mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+              <h4 className="text-sm font-bold text-blue-900 dark:text-blue-300">
+                Tài khoản Chủ cửa hàng (Owner)
+              </h4>
+              <p className="mx-auto mt-1 max-w-lg text-xs text-blue-700 dark:text-blue-400">
+                Chủ cửa hàng mặc định có toàn quyền truy cập vào tất cả các chức năng và chi nhánh trên hệ thống. Không cần cấu hình phân quyền chi tiết.
+              </p>
             </div>
           ) : (
             <div className="space-y-6">

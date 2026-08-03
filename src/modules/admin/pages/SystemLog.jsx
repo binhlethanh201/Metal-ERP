@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
 import { getLogList, getLogDetail, exportLogs } from '../services/adminService';
 import LogFilterBar from '../components/log/LogFilterBar';
-import LogTable from '../components/log/LogTable';
+import LogTable, { translateAction } from '../components/log/LogTable';
 import LogDetailModal from '../components/log/LogDetailModal';
 
 const SystemLog = () => {
@@ -35,11 +35,16 @@ const SystemLog = () => {
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
-      // 1. Filter by Search Term
+      const searchLower = searchTerm.toLowerCase();
+      
+      const cleanDescription = (log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '');
+      const translatedAction = translateAction(log.action);
+
       const matchesSearch =
-        (log.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (log.source || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (log.action || '').toLowerCase().includes(searchTerm.toLowerCase());
+        cleanDescription.toLowerCase().includes(searchLower) ||
+        (log.userName || '').toLowerCase().includes(searchLower) ||
+        translatedAction.toLowerCase().includes(searchLower) ||
+        (log.source || '').toLowerCase().includes(searchLower);
 
       // 2. Filter by Level (Client-side fallback)
       const logLvl = log.level ? log.level.toUpperCase() : 'INFO'; // Default empty level to INFO
