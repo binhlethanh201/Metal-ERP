@@ -275,11 +275,10 @@ export const InventoryReports = () => {
             <button
               key={report.key}
               onClick={() => setSelectedReport(report.key)}
-              className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
-                selectedReport === report.key
+              className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-all ${selectedReport === report.key
                   ? 'border-[#004785] bg-blue-50/50 text-[#004785]'
                   : 'border-transparent text-slate-500 dark:text-[#999999] hover:border-slate-300 dark:border-[#404040] hover:text-slate-700 dark:text-[#b3b3b3]'
-              }`}
+                }`}
             >
               {report.label}
             </button>
