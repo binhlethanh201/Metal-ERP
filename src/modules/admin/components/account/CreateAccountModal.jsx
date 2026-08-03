@@ -66,7 +66,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
       newErrors.phoneNumber = 'Số điện thoại không hợp lệ.';
     }
     if (!formData.roleName) newErrors.roleName = 'Vui lòng chọn loại tài khoản.';
-    
+
     // Nếu là Owner và không chọn BranchId có sẵn, thì bắt buộc nhập tên cửa hàng
     if (formData.roleName === 'Owner' && !formData.branchId && !formData.branchName?.trim()) {
       newErrors.branchName = 'Vui lòng nhập tên cửa hàng mới cho Chủ cửa hàng này, hoặc chọn một Cửa hàng có sẵn bên dưới.';
@@ -76,7 +76,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     if (formData.roleName && formData.roleName !== 'Owner' && formData.roleName !== 'Admin' && !formData.branchId) {
       newErrors.branchId = 'Vui lòng chọn Cửa hàng cho tài khoản này.';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -84,15 +84,32 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
-    const dataToSave = { ...formData, username: formData.email };
+
+    // Set username = email
+    let mappedRoleName = formData.roleName;
+    if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
+    if (mappedRoleName === 'Inventory Staff') mappedRoleName = 'InventoryStaff';
+
+    const normalizedBranchId = formData.branchId && formData.branchId !== 'null' ? formData.branchId : undefined;
+    const normalizedBranchName = formData.branchName?.trim() || undefined;
+    const normalizedPhoneNumber = formData.phoneNumber?.trim() || undefined;
+
+    const dataToSave = {
+      ...formData,
+      username: formData.email,
+      roleName: mappedRoleName,
+      branchId: normalizedBranchId,
+      branchName: normalizedBranchName,
+      phoneNumber: normalizedPhoneNumber,
+    };
+
     onSave(dataToSave);
   };
 
   // Bỏ chặn Staff, chỉ chặn Admin và CommunityUser
   const assignableRoles = roles.filter(
-    (r) => 
-      r.roleName.toLowerCase() !== 'admin' && 
+    (r) =>
+      r.roleName.toLowerCase() !== 'admin' &&
       r.roleName.toLowerCase() !== 'communityuser'
   );
 
@@ -177,11 +194,10 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
               {assignableRoles.map((role) => (
                 <label
                   key={role.roleId}
-                  className={`flex cursor-pointer items-center gap-2 rounded border p-2 transition-colors ${
-                    formData.roleName === role.roleName
-                      ? 'border-[#004785] bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-slate-200 dark:border-[#333333] hover:bg-slate-50 dark:hover:bg-[#1a1a1a]'
-                  }`}
+                  className={`flex cursor-pointer items-center gap-2 rounded border p-2 transition-colors ${formData.roleName === role.roleName
+                    ? 'border-[#004785] bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-slate-200 dark:border-[#333333] hover:bg-slate-50 dark:hover:bg-[#1a1a1a]'
+                    }`}
                 >
                   <input
                     type="radio"

@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Icon from '../../../shared/components/Icon';
-import OwnerReports from '../../report/pages/OwnerReports';
+
 import {
   getDashboardStats,
   getRevenueChart,
   getRecentEvents,
   exportDashboard,
+
 } from '../services/adminService';
 
 const formatCurrency = (value) => {
@@ -94,6 +95,7 @@ const AdminDashboard = () => {
   // eslint-disable-next-line
   const [chart, setChart] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -162,23 +164,17 @@ const AdminDashboard = () => {
           {/* ========================================================================= */}
           {/* 1. ADMIN KPI CARDS */}
           {/* ========================================================================= */}
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
             {loading ? (
-              Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)
+              Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-24" />)
             ) : (
               <>
+
                 <KPICardAdmin
-                  icon="store"
+                  icon="people"
                   label="Tài Khoản Đang Hoạt Động"
                   value={formatCurrency(stats?.activeTenants)}
                   unit="tài khoản"
-                  tone="navy"
-                />
-                <KPICardAdmin
-                  icon="receipt_long"
-                  label="Doanh Thu Hóa Đơn (30d)"
-                  value={formatCurrency(stats?.subscriptionRevenue)}
-                  unit="VNĐ"
                   tone="green"
                 />
                 <KPICardAdmin
@@ -279,12 +275,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* ========================================================================= */}
-          {/* 3. OWNER REPORTS TABS */}
-          {/* ========================================================================= */}
-          <div className="mt-8 border-t border-slate-200 pt-8 dark:border-[#333333]">
-            <OwnerReports />
-          </div>
+
         </>
       )}
     </div>
