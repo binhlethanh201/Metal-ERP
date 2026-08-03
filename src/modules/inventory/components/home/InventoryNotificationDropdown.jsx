@@ -9,9 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const InventoryNotificationDropdown = () => {
-  const { user } = useAuth();
-  const userId = user?.userId || 'guest';
-  const lsKey = `read_system_notifs_${userId}`;
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -22,43 +19,17 @@ const InventoryNotificationDropdown = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const [invRes, sysRes] = await Promise.all([
-        getInventoryNotifications({ pageNumber: 1, pageSize: 20 }).catch(() => null),
-        getSystemNotifications(7).catch(() => null)
-      ]);
+      const invRes = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 }).catch(() => null);
       
       let invItems = [];
-      let sysItems = [];
       let newUnreadCount = 0;
 
       if (invRes?.success && invRes.data) {
         invItems = invRes.data.items || [];
-        newUnreadCount += invRes.data.unreadCount || 0;
-      }
-      
-      if (sysRes?.success && sysRes.data) {
-        sysItems = sysRes.data || [];
-        // Optional: Count system notifications as unread if they haven't been clicked.
-        // We can use localStorage to track read system notifications.
-        const readSys = JSON.parse(localStorage.getItem(lsKey) || '[]');
-        const unreadSys = sysItems.filter(n => !readSys.includes(n.notificationId));
-        newUnreadCount += unreadSys.length;
-        
-        // Normalize system items to match inventory items structure
-        sysItems = sysItems.map(n => ({
-          notificationId: n.notificationId,
-          type: n.isUrgent ? 'SystemUrgent' : 'System',
-          typeDisplay: 'Hệ thống',
-          createdAt: n.sentAt,
-          message: n.content,
-          isRead: readSys.includes(n.notificationId),
-          title: n.title,
-          isSystem: true
-        }));
+        newUnreadCount = invRes.data.unreadCount || 0;
       }
 
-      const combined = [...invItems, ...sysItems].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setNotifications(combined);
+      setNotifications(invItems);
       setUnreadCount(newUnreadCount);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -110,31 +81,12 @@ const InventoryNotificationDropdown = () => {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         setUnreadCount(0);
       }
-      
-      // Mark all system as read locally
-      const sysIds = notifications.filter(n => n.isSystem).map(n => n.notificationId);
-      localStorage.setItem(lsKey, JSON.stringify(sysIds));
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
   };
 
   const handleNotificationClick = async (notif) => {
-    // If it's a system notification, just mark as read locally
-    if (notif.isSystem) {
-      if (!notif.isRead) {
-        const readSys = JSON.parse(localStorage.getItem(lsKey) || '[]');
-        readSys.push(notif.notificationId);
-        localStorage.setItem(lsKey, JSON.stringify(readSys));
-        
-        setNotifications((prev) =>
-          prev.map((n) => (n.notificationId === notif.notificationId ? { ...n, isRead: true } : n))
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-      setIsOpen(false);
-      return;
-    }
 
     // For inventory notifications
     if (!notif.isRead) {
@@ -200,7 +152,13 @@ const InventoryNotificationDropdown = () => {
     return date.toLocaleDateString('vi-VN');
   };
 
-  const getIconForType = (type) => {
+  const getIconForType = (type, message) => {
+    if (type === 'Announcement') {
+      return (message || '').includes('[KHẨN')
+        ? { name: 'warning', color: 'text-red-500', bg: 'bg-red-100' }
+        : { name: 'campaign', color: 'text-indigo-500', bg: 'bg-indigo-100' };
+    }
+    
     switch (type) {
       case 'Assigned':
         return { name: 'assignment_ind', color: 'text-blue-500', bg: 'bg-blue-100' };
@@ -210,10 +168,6 @@ const InventoryNotificationDropdown = () => {
         return { name: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-100' };
       case 'RecountRequested':
         return { name: 'replay', color: 'text-orange-500', bg: 'bg-orange-100' };
-      case 'SystemUrgent':
-        return { name: 'warning', color: 'text-red-500', bg: 'bg-red-100' };
-      case 'System':
-        return { name: 'campaign', color: 'text-indigo-500', bg: 'bg-indigo-100' };
       case 'Created':
         return { name: 'add_circle', color: 'text-purple-500', bg: 'bg-purple-100' };
       default:
@@ -258,7 +212,7 @@ const InventoryNotificationDropdown = () => {
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-[#333333]">
                 {notifications.map((notif) => {
-                  const iconInfo = getIconForType(notif.type);
+                  const iconInfo = getIconForType(notif.type, notif.message);
                   return (
                     <div
                       key={notif.notificationId}

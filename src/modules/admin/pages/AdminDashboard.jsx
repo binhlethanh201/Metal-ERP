@@ -197,7 +197,7 @@ const AdminDashboard = () => {
                   icon="warning"
                   label="Cảnh Báo Công Nợ"
                   value={formatCurrency(stats?.overdueAlerts)}
-                  unit="cảnh báo"
+                  unit={`cảnh báo (Tổng: ${formatCurrency(stats?.overdueDebtAmount)} đ)`}
                   tone={stats?.overdueAlerts > 0 ? 'red' : 'green'}
                 />
               </>

@@ -13,6 +13,10 @@ const AdminUserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
@@ -84,7 +88,11 @@ const AdminUserManagement = () => {
         <div className="p-8 text-center text-xs text-slate-500 dark:text-[#999999]">Không có dữ liệu.</div>
       );
 
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const paginatedUsers = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
     return (
+      <div className="flex flex-col space-y-4">
       <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
         <thead>
           <tr className="border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
@@ -96,7 +104,7 @@ const AdminUserManagement = () => {
           </tr>
         </thead>
         <tbody className="divide-y divide-outline-variant">
-          {filtered.map((user) => {
+          {paginatedUsers.map((user) => {
             const isActive = user.isActive === 1 || user.isActive === true;
             return (
               <tr key={user.userId} className="transition-colors hover:bg-white dark:bg-[#0f0f0f]">
@@ -156,6 +164,48 @@ const AdminUserManagement = () => {
           })}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] px-4 py-3">
+          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-[#999999]">
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select 
+                value={itemsPerPage}
+                onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="rounded border border-slate-200 dark:border-[#333333] bg-transparent py-1 px-2 text-xs text-slate-900 dark:text-[#e5e5e5] outline-none focus:border-[#004785]"
+              >
+                <option value={10}>10 dòng</option>
+                <option value={20}>20 dòng</option>
+                <option value={50}>50 dòng</option>
+                <option value={100}>100 dòng</option>
+              </select>
+            </div>
+            <span>
+              {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filtered.length)} trong tổng số {filtered.length} dòng
+            </span>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:hover:bg-[#272727]"
+            >
+              <Icon name="chevron_left" size={16} />
+            </button>
+            <span className="font-medium text-slate-600 dark:text-[#999999]">
+              Trang {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:hover:bg-[#272727]"
+            >
+              <Icon name="chevron_right" size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+      </div>
     );
   };
 
@@ -190,32 +240,53 @@ const AdminUserManagement = () => {
             type="text"
             placeholder="Tìm kiếm theo tên hoặc email..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             className="w-full rounded-md border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-3 py-2 pl-9 text-xs font-semibold outline-none transition-colors focus:border-[#004785] focus:bg-white dark:bg-[#0f0f0f] text-slate-900 dark:text-[#e5e5e5] placeholder:text-slate-400"
           />
         </div>
 
         {/* TABS */}
-        <div className="flex gap-1">
-          {[
-            { value: '', label: 'Tất cả trạng thái' },
-            { value: 'active', label: 'Đang hoạt động' },
-            { value: 'suspended', label: 'Đã khóa' },
-            { value: 'deleted', label: 'Đã xóa' },
-          ].map((tab) => (
+        <div className="flex gap-2 text-[10px] font-bold">
             <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`rounded-md px-4 py-2 text-xs font-bold transition-all ${statusFilter === tab.value
-                  ? 'bg-[#004785] text-white shadow-sm'
-                  : 'text-slate-500 dark:text-[#999999] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] hover:text-slate-900 dark:hover:text-[#e5e5e5]'
+              onClick={() => { setStatusFilter(''); setCurrentPage(1); }}
+              className={`rounded-md px-3 py-1.5 uppercase transition-colors ${!statusFilter
+                  ? 'bg-[#004785] text-white shadow dark:bg-blue-600'
+                  : 'bg-white text-slate-500 hover:bg-slate-50 dark:bg-[#0f0f0f] dark:text-[#999999] dark:hover:bg-[#1a1a1a]'
                 }`}
             >
-              {tab.label}
+              Tất cả trạng thái
             </button>
-          ))}
-        </div>
+            <button
+              onClick={() => { setStatusFilter('ACTIVE'); setCurrentPage(1); }}
+              className={`rounded-md px-3 py-1.5 uppercase transition-colors ${statusFilter === 'ACTIVE'
+                  ? 'bg-[#004785] text-white shadow dark:bg-blue-600'
+                  : 'bg-white text-slate-500 hover:bg-slate-50 dark:bg-[#0f0f0f] dark:text-[#999999] dark:hover:bg-[#1a1a1a]'
+                }`}
+            >
+              Đang hoạt động
+            </button>
+            <button
+              onClick={() => { setStatusFilter('INACTIVE'); setCurrentPage(1); }}
+              className={`rounded-md px-3 py-1.5 uppercase transition-colors ${statusFilter === 'INACTIVE'
+                  ? 'bg-[#004785] text-white shadow dark:bg-blue-600'
+                  : 'bg-white text-slate-500 hover:bg-slate-50 dark:bg-[#0f0f0f] dark:text-[#999999] dark:hover:bg-[#1a1a1a]'
+                }`}
+            >
+              Đã khóa
+            </button>
+            <button
+              onClick={() => { setStatusFilter('DELETED'); setCurrentPage(1); }}
+              className={`rounded-md px-3 py-1.5 uppercase transition-colors ${statusFilter === 'DELETED'
+                  ? 'bg-[#004785] text-white shadow dark:bg-blue-600'
+                  : 'bg-white text-slate-500 hover:bg-slate-50 dark:bg-[#0f0f0f] dark:text-[#999999] dark:hover:bg-[#1a1a1a]'
+                }`}
+            >
+              Đã xóa
+            </button>
+          </div>
       </div>
+
+      {error && <div className="mb-4 text-xs font-bold text-red-600 dark:text-red-500">{error}</div>}
 
       <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] shadow-sm">
         {error ? (

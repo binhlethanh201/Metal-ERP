@@ -45,7 +45,8 @@ const actionTranslations = {
   'DEACTIVATE_USER': 'Khóa tài khoản',
   'ACTIVATE_USER': 'Kích hoạt tài khoản',
   'RESET_PASSWORD': 'Khôi phục mật khẩu',
-  'DELETE_BRANCH': 'Xóa cửa hàng'
+  'DELETE_BRANCH': 'Xóa cửa hàng',
+  'CREATE_BRANCH': 'Tạo cửa hàng'
 };
 
 export const translateAction = (action) => {
