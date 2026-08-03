@@ -99,13 +99,12 @@ const LogDetailModal = ({ log, onClose }) => {
               <div className="rounded-md bg-slate-50 dark:bg-[#1a1a1a] p-3">
                 <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">Mức độ</p>
                 <span
-                  className={`mt-1 inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold ${
-                    log.level === 'ERROR'
-                      ? 'bg-error text-on-error'
-                      : log.level === 'WARN'
-                        ? 'bg-secondary-container text-on-secondary-container'
-                        : 'bg-tertiary-container text-on-tertiary-container'
-                  }`}
+                  className={`mt-1 inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold ${log.level === 'ERROR'
+                    ? 'bg-error text-on-error'
+                    : log.level === 'WARN'
+                      ? 'bg-secondary-container text-on-secondary-container'
+                      : 'bg-tertiary-container text-on-tertiary-container'
+                    }`}
                 >
                   {log.level || 'INFO'}
                 </span>

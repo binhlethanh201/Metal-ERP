@@ -31,7 +31,6 @@ const saveCustomTypes = (types) => {
 const DEFAULT_TYPES = [
   { value: 1, label: 'Nhập mua hàng từ NCC' },
   { value: 2, label: 'Khách hàng trả lại' },
-  { value: 3, label: 'Cân bằng kho' },
 ];
 
 export const ImportTicketForm = ({
@@ -294,7 +293,6 @@ export const ImportTicketForm = ({
               >
                 <option value={1}>Nhập mua</option>
                 <option value={2}>Trả lại</option>
-                <option value={3}>Cân bằng</option>
               </select>
             </div>
             <button
@@ -343,7 +341,7 @@ export const ImportTicketForm = ({
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{t.label}</span>
                   <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                    {t.value === 1 ? 'Nhập mua' : t.value === 2 ? 'Trả lại' : 'Cân bằng'}
+                    {t.value === 1 ? 'Nhập mua' : 'Trả lại'}
                   </span>
                 </div>
                 <button

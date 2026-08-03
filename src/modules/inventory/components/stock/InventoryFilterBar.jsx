@@ -29,7 +29,6 @@ export const InventoryFilterBar = ({
           { value: '', label: 'Tất cả loại nhập' },
           { value: 'PURCHASE', label: 'Nhập hàng từ NCC' },
           { value: 'CUSTOMER_RETURN', label: 'Khách hàng trả lại' },
-          { value: 'BALANCE_ADJUST', label: 'Cân bằng kiểm kho' },
         ]
       : [
           { value: '', label: 'Tất cả loại xuất' },
