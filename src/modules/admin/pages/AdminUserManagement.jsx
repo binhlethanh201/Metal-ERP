@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import CreateAccountModal from '../components/account/CreateAccountModal';
-import { getUserList, createOwner, createStaff, getRoleList } from '../services/adminService';
+import { getUserList, createOwner, createStaff, getRoleList, getAdminBranches } from '../services/adminService';
 
 const AdminUserManagement = () => {
   const navigate = useNavigate();
@@ -14,16 +14,22 @@ const AdminUserManagement = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [roles, setRoles] = useState([]);
+  const [branches, setBranches] = useState([]);
 
   const fetchData = useCallback(() => {
     setLoading(true);
     setError(null);
 
-    Promise.all([getUserList({ status: statusFilter }), getRoleList()])
-      .then(([userData, roleData]) => {
+    Promise.all([
+      getUserList({ status: statusFilter, pageSize: 1000 }), 
+      getRoleList(),
+      getAdminBranches({ pageSize: 1000 })
+    ])
+      .then(([userData, roleData, branchData]) => {
         const list = Array.isArray(userData) ? userData : userData?.items || [];
         setUsers(list);
         setRoles(Array.isArray(roleData) ? roleData : []);
+        setBranches(branchData?.items || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -74,6 +80,7 @@ const AdminUserManagement = () => {
           <tr className="border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             <th className="px-4 py-3">ID & Email người dùng</th>
             <th className="px-4 py-3">Họ Tên</th>
+            <th className="px-4 py-3">Thuộc Cửa Hàng</th>
             <th className="px-4 py-3">Vai trò (Roles)</th>
             <th className="px-4 py-3 text-center">Trạng thái</th>
             <th className="px-4 py-3 text-right">Thao tác</th>
@@ -91,6 +98,9 @@ const AdminUserManagement = () => {
                   <div className="mt-0.5 font-mono text-[10px] text-slate-400 dark:text-[#666666]">{user.userId}</div>
                 </td>
                 <td className="px-4 py-3 font-bold">{user.fullName || '—'}</td>
+                <td className="px-4 py-3 text-[11px] font-semibold text-[#004785] dark:text-blue-400">
+                  {user.defaultBranchName || '—'}
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
                     {(user.roles || []).map((r) => (
@@ -206,6 +216,7 @@ const AdminUserManagement = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateUser}
         roles={roles}
+        branches={branches}
       />
     </div>
   );

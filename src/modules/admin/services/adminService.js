@@ -22,6 +22,7 @@ export const createStaff = (data) => apiPost(ENDPOINTS.ADMIN.ACCOUNT_CREATE_STAF
 
 export const updateUser = (id, data) => apiPut(ENDPOINTS.ADMIN.ACCOUNT_UPDATE(id), data);
 export const assignUserRoles = (id, roleIds) => apiPut(ENDPOINTS.ADMIN.ACCOUNT_ROLES(id), { roleIds });
+export const assignUserBranch = (id, branchId) => apiPut(ENDPOINTS.ADMIN.ACCOUNT_ASSIGN_BRANCH(id), { branchId });
 export const changeUserStatus = (id, isActive) =>
   apiPatch(ENDPOINTS.ADMIN.ACCOUNT_STATUS(id), { isActive });
 export const resetUserPassword = (id, newPassword) =>
@@ -38,6 +39,14 @@ export const getOwnerList = (params = {}) => apiGet(ENDPOINTS.ADMIN.OWNER_LIST, 
 export const createOwner = (data) => apiPost(ENDPOINTS.ADMIN.ACCOUNT_CREATE_OWNER, data);
 export const updateOwner = (id, data) => apiPut(ENDPOINTS.ADMIN.OWNER_UPDATE(id), data);
 export const banOwner = (id, reason) => apiPut(ENDPOINTS.ADMIN.OWNER_BAN(id), { reason });
+
+// ============ Admin Branch Management ============
+export const getAdminBranches = (params = {}) => apiGet(ENDPOINTS.ADMIN.BRANCH_LIST, { params });
+export const getAdminBranchDetail = (id) => apiGet(ENDPOINTS.ADMIN.BRANCH_DETAIL(id));
+export const createAdminBranch = (data) => apiPost(ENDPOINTS.ADMIN.BRANCH_CREATE, data);
+export const updateAdminBranch = (id, data) => apiPut(ENDPOINTS.ADMIN.BRANCH_UPDATE(id), data);
+export const deleteAdminBranch = (id) => apiDelete(ENDPOINTS.ADMIN.BRANCH_DELETE(id));
+export const assignUserToAdminBranch = (id, data) => apiPost(ENDPOINTS.ADMIN.BRANCH_ASSIGN_USER(id), data);
 
 // ============ Role & Permission Management ============
 export const getRoleList = () => apiGet(ENDPOINTS.ADMIN.ROLE_LIST);

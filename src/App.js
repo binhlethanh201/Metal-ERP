@@ -67,6 +67,7 @@ const AdminRoleManagement = lazy(() => import('./modules/admin/pages/AdminRoleMa
 const StoreApprovals = lazy(() => import('./modules/admin/pages/StoreApprovals'));
 const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotifications'));
 const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
+const AdminBranchManagement = lazy(() => import('./modules/admin/pages/AdminBranchManagement'));
 
 // Owner Module
 const OwnerAuditLog = lazy(() => import('./modules/owner/pages/OwnerAuditLog'));
@@ -185,6 +186,7 @@ function App() {
               <Route path="users" element={<AdminUserManagement />} />
               <Route path="users/:id" element={<AdminUserDetail />} />
               <Route path="roles" element={<AdminRoleManagement />} />
+              <Route path="branches" element={<AdminBranchManagement />} />
               <Route path="approvals" element={<StoreApprovals />} />
               <Route path="notifications" element={<SystemNotifications />} />
               <Route path="logs" element={<SystemLog />} />

@@ -218,6 +218,7 @@ export const ENDPOINTS = {
     ACCOUNT_UPDATE: (id) => `/api/admin/accounts/${id}`,
     ACCOUNT_ROLES: (id) => `/api/admin/accounts/${id}/roles`,
     ACCOUNT_STATUS: (id) => `/api/admin/accounts/${id}/status`,
+    ACCOUNT_ASSIGN_BRANCH: (id) => `/api/admin/accounts/${id}/branch`,
     ACCOUNT_RESET_PASSWORD: (id) => `/api/admin/accounts/${id}/reset-password`,
     ACCOUNT_SOFT_DELETE: (id) => `/api/admin/accounts/${id}`,
     ACCOUNT_RESTORE: (id) => `/api/admin/accounts/${id}/restore`,
@@ -257,6 +258,14 @@ export const ENDPOINTS = {
     OWNER_CREATE: '/api/admin/owners',
     OWNER_UPDATE: (id) => `/api/admin/owners/${id}`,
     OWNER_BAN: (id) => `/api/admin/owners/${id}/ban`,
+
+    // Admin Branch Management (Quản lý Chi nhánh)
+    BRANCH_LIST: '/api/admin/branches',
+    BRANCH_CREATE: '/api/admin/branches',
+    BRANCH_DETAIL: (id) => `/api/admin/branches/${id}`,
+    BRANCH_UPDATE: (id) => `/api/admin/branches/${id}`,
+    BRANCH_DELETE: (id) => `/api/admin/branches/${id}`,
+    BRANCH_ASSIGN_USER: (id) => `/api/admin/branches/${id}/assign-user`,
   },
 
   // ============ AUTH (Xác thực) ============
