@@ -62,26 +62,31 @@ const normalizeExportRows = (item, index) => {
 const getItemKey = (item) => item.branchProductId || item.productId || item.id || item.Id;
 
 const REASON_OPTIONS = [
-  { value: 'Xuất bán hàng', label: 'Xuất bán hàng' },
-  { value: 'Trả hàng nhà cung cấp', label: 'Trả hàng nhà cung cấp' },
-  { value: 'Xuất nội bộ / Điều chuyển', label: 'Xuất nội bộ / Điều chuyển' },
-  { value: '__other__', label: 'Khác...' },
+  {
+    value: 'Xuất trả nhà cung cấp',
+    label: 'Xuất trả nhà cung cấp',
+    description: 'Sử dụng khi xuất trả lại hàng hóa bị lỗi, hỏng hoặc không đúng cam kết cho Nhà cung cấp.',
+  },
+  {
+    value: 'Xuất hủy / Hao hụt',
+    label: 'Xuất hủy / Hao hụt',
+    description: 'Sử dụng khi xuất loại bỏ hàng hóa bị hết hạn sử dụng, hỏng hóc, vỡ nát trong quá trình lưu kho.',
+  },
+  {
+    value: 'Xuất sử dụng nội bộ',
+    label: 'Xuất sử dụng nội bộ',
+    description: 'Sử dụng khi xuất hàng hóa để làm hàng mẫu (sample), tặng nhân viên, hoặc phục vụ hoạt động nội bộ công ty.',
+  },
 ];
 
 const getOutwardType = (reason) => {
-  // Map lý do xuất → OutwardInventoryType enum ở BE:
-  //   1 = ReturnToSupplier  → RTS (Xuất bán hàng / Trả NCC)
-  //   2 = DamagedHaoHut     → DAM (Xuất hủy / Hao hụt)
-  //   3 = InternalUse       → INT (Xuất nội bộ / Điều chuyển)
-  if (reason === 'Xuất bán hàng' || reason === 'Trả hàng nhà cung cấp') return 1;
-  if (reason === 'Xuất hủy / Hao hụt') return 2;
-  if (reason === 'Xuất nội bộ / Điều chuyển') return 3;
-  // 'Khác...' hoặc custom reason: mặc định 3 (InternalUse) — BE sẽ xử lý tiếp
+  if (reason === 'Xuất trả nhà cung cấp' || reason === 'Trả hàng nhà cung cấp' || reason === 'Xuất trả NCC') return 1;
+  if (reason === 'Xuất hủy / Hao hụt' || reason === 'Xuất hủy') return 2;
+  if (reason === 'Xuất sử dụng nội bộ' || reason === 'Xuất nội bộ / Điều chuyển') return 3;
   return 3;
 };
 
 const TARGET_OPTIONS = [
-  { value: 'Khách hàng', label: 'Khách hàng' },
   { value: 'Nhà cung cấp', label: 'Nhà cung cấp' },
   { value: 'Nội bộ', label: 'Nội bộ' },
   { value: '__other__', label: 'Khác...' },
@@ -118,10 +123,9 @@ export const StockExport = () => {
   const [ticketCode, setTicketCode] = useState('');
   const [exportDate, setExportDate] = useState(today.date);
   const [exportTime, setExportTime] = useState(today.time);
-  const [targetType, setTargetType] = useState('Khách hàng');
+  const [targetType, setTargetType] = useState('Nhà cung cấp');
   const [targetName, setTargetName] = useState('');
-  const [reasonType, setReasonType] = useState('Xuất bán hàng');
-  const [reasonOther, setReasonOther] = useState('');
+  const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
   const [note, setNote] = useState('');
 
   const [items, setItems] = useState([]);
@@ -190,10 +194,9 @@ export const StockExport = () => {
     setTicketCode(generateTicketCode());
     setExportDate(t.date);
     setExportTime(t.time);
-    setTargetType('Khách hàng');
+    setTargetType('Nhà cung cấp');
     setTargetName('');
-    setReasonType('Xuất bán hàng');
-    setReasonOther('');
+    setReasonType('Xuất trả nhà cung cấp');
     setNote('');
     setItems([]);
     setSelectedProductId('');
@@ -208,7 +211,7 @@ export const StockExport = () => {
     if (!isSubmitting) setIsModalOpen(false);
   };
 
-  const resolvedReason = reasonType === '__other__' ? reasonOther : reasonType;
+  const resolvedReason = reasonType;
 
   const getProductStock = (product) => {
     const stock =
@@ -404,12 +407,13 @@ export const StockExport = () => {
             const lyDo = groups[0].lyDo;
             if (lyDo === 'Trả NCC' || lyDo === 'Tra NCC') {
               setTargetType('Nhà cung cấp');
-              setReasonType('Trả hàng nhà cung cấp');
+              setReasonType('Xuất trả nhà cung cấp');
             } else if (lyDo === 'Xuất hủy' || lyDo === 'Xuat huy') {
-              setReasonType('__other__');
-              setReasonOther('Xuất hủy');
+              setTargetType('Nội bộ');
+              setReasonType('Xuất hủy / Hao hụt');
             } else if (lyDo === 'Điều chuyển' || lyDo === 'Dieu chuyen') {
-              setReasonType('Xuất nội bộ / Điều chuyển');
+              setTargetType('Nội bộ');
+              setReasonType('Xuất sử dụng nội bộ');
             }
           }
           if (!data.data.hasErrors) {
@@ -430,7 +434,7 @@ export const StockExport = () => {
     }
   };
 
-  const isSale = reasonType === 'Xuất bán hàng';
+  const isSale = false;
 
   const summary = useMemo(() => {
     const qty = exports.reduce((total, item) => total + Number(item.quantity || 0), 0);
@@ -448,20 +452,13 @@ export const StockExport = () => {
 
     if (!targetName.trim()) {
       const label =
-        targetType === 'Khách hàng'
-          ? 'tên khách hàng'
-          : targetType === 'Nhà cung cấp'
-            ? 'tên nhà cung cấp'
-            : targetType === 'Nội bộ'
-              ? 'tên đơn vị / bộ phận'
-              : 'tên đối tượng xuất';
+        targetType === 'Nhà cung cấp'
+          ? 'tên nhà cung cấp'
+          : targetType === 'Nội bộ'
+            ? 'tên đơn vị / bộ phận'
+            : 'tên đối tượng xuất';
       errors.push(`Chưa nhập ${label}`);
       fields.targetName = true;
-    }
-
-    if (reasonType === '__other__' && !reasonOther.trim()) {
-      errors.push('Chưa nhập lý do xuất kho');
-      fields.reasonOther = true;
     }
 
     if (!items.length) {
@@ -475,18 +472,6 @@ export const StockExport = () => {
         fields[`qty_${getItemKey(item)}`] = true;
       }
     });
-
-    if (reasonType === 'Xuất bán hàng') {
-      items.forEach((item) => {
-        if (!item.unitPrice || Number(item.unitPrice) <= 0) {
-          errors.push(`Sản phẩm "${item.productName}" chưa nhập đơn giá`);
-          fields[`price_${getItemKey(item)}`] = true;
-        } else if (Number(item.unitPrice) < 1000) {
-          errors.push(`Sản phẩm "${item.productName}" có đơn giá tối thiểu là 1.000đ`);
-          fields[`price_${getItemKey(item)}`] = true;
-        }
-      });
-    }
 
     setFieldErrors(fields);
     return errors;
@@ -851,12 +836,11 @@ export const StockExport = () => {
                     setTargetType(e.target.value);
                     setTargetName('');
                     const targetReasonMap = {
-                      'Khách hàng': 'Xuất bán hàng',
-                      'Nhà cung cấp': 'Trả hàng nhà cung cấp',
-                      'Nội bộ': 'Xuất nội bộ / Điều chuyển',
+                      'Nhà cung cấp': 'Xuất trả nhà cung cấp',
+                      'Nội bộ': 'Xuất sử dụng nội bộ',
                     };
                     const mapped = targetReasonMap[e.target.value];
-                    if (mapped && reasonType !== '__other__') setReasonType(mapped);
+                    if (mapped) setReasonType(mapped);
                   }}
                 >
                   {TARGET_OPTIONS.map((opt) => (
@@ -872,21 +856,17 @@ export const StockExport = () => {
             {targetType !== '__other__' && (
               <div className="mt-3">
                 <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
-                  {targetType === 'Khách hàng'
-                    ? 'Tên khách hàng'
-                    : targetType === 'Nhà cung cấp'
-                      ? 'Tên nhà cung cấp'
-                      : 'Tên đơn vị / bộ phận'}{' '}
+                  {targetType === 'Nhà cung cấp'
+                    ? 'Tên nhà cung cấp'
+                    : 'Tên đơn vị / bộ phận'}{' '}
                   <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder={
-                    targetType === 'Khách hàng'
-                      ? 'VD: Công ty TNHH ABC'
-                      : targetType === 'Nhà cung cấp'
-                        ? 'VD: Công ty Hòa Phát'
-                        : 'VD: Xưởng sản xuất số 1'
+                    targetType === 'Nhà cung cấp'
+                      ? 'VD: Công ty Hòa Phát'
+                      : 'VD: Xưởng sản xuất số 1'
                   }
                   className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
                     fieldErrors.targetName
@@ -936,11 +916,10 @@ export const StockExport = () => {
                 value={reasonType}
                 onChange={(e) => {
                   setReasonType(e.target.value);
-                  if (e.target.value !== '__other__') setReasonOther('');
                   const reasonTargetMap = {
-                    'Xuất bán hàng': 'Khách hàng',
-                    'Trả hàng nhà cung cấp': 'Nhà cung cấp',
-                    'Xuất nội bộ / Điều chuyển': 'Nội bộ',
+                    'Xuất trả nhà cung cấp': 'Nhà cung cấp',
+                    'Xuất hủy / Hao hụt': 'Nội bộ',
+                    'Xuất sử dụng nội bộ': 'Nội bộ',
                   };
                   const mapped = reasonTargetMap[e.target.value];
                   if (mapped && targetType !== '__other__') {
@@ -955,22 +934,9 @@ export const StockExport = () => {
                   </option>
                 ))}
               </select>
-              {reasonType === '__other__' && (
-                <input
-                  type="text"
-                  placeholder="Nhập lý do khác..."
-                  className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.reasonOther
-                      ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
-                      : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
-                  value={reasonOther}
-                  onChange={(e) => {
-                    setReasonOther(e.target.value);
-                    setFieldErrors((prev) => ({ ...prev, reasonOther: false }));
-                  }}
-                />
-              )}
+              <p className="mt-2 text-xs text-slate-500 dark:text-[#999999]">
+                {REASON_OPTIONS.find((opt) => opt.value === reasonType)?.description || 'Vui lòng chọn một lý do phù hợp với quy trình xuất kho.'}
+              </p>
             </div>
 
             <div className="space-y-1.5">

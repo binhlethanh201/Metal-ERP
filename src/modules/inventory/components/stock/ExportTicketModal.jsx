@@ -18,22 +18,33 @@ const extractList = (response) => {
 };
 
 const REASON_OPTIONS = [
-  { value: 'Xuất bán hàng', label: 'Xuất bán hàng' },
-  { value: 'Trả hàng nhà cung cấp', label: 'Trả hàng nhà cung cấp' },
-  { value: 'Xuất nội bộ / Điều chuyển', label: 'Xuất nội bộ / Điều chuyển' },
-  { value: '__other__', label: 'Khác...' },
+  {
+    value: 'Xuất trả nhà cung cấp',
+    label: 'Xuất trả nhà cung cấp',
+    description: 'Sử dụng khi xuất trả lại hàng hóa bị lỗi, hỏng hoặc không đúng cam kết cho Nhà cung cấp.',
+  },
+  {
+    value: 'Xuất hủy / Hao hụt',
+    label: 'Xuất hủy / Hao hụt',
+    description: 'Sử dụng khi xuất loại bỏ hàng hóa bị hết hạn sử dụng, hỏng hóc, vỡ nát trong quá trình lưu kho.',
+  },
+  {
+    value: 'Xuất sử dụng nội bộ',
+    label: 'Xuất sử dụng nội bộ',
+    description: 'Sử dụng khi xuất hàng hóa để làm hàng mẫu (sample), tặng nhân viên, hoặc phục vụ hoạt động nội bộ công ty.',
+  },
 ];
 
 const TARGET_OPTIONS = [
-  { value: 'Khách hàng', label: 'Khách hàng' },
   { value: 'Nhà cung cấp', label: 'Nhà cung cấp' },
   { value: 'Nội bộ', label: 'Nội bộ' },
   { value: '__other__', label: 'Khác...' },
 ];
 
 const getOutwardType = (reason) => {
-  if (reason === 'Trả hàng nhà cung cấp') return 1;
-  if (reason === 'Xuất hủy / Hao hụt') return 2;
+  if (reason === 'Xuất trả nhà cung cấp' || reason === 'Trả hàng nhà cung cấp' || reason === 'Xuất trả NCC') return 1;
+  if (reason === 'Xuất hủy / Hao hụt' || reason === 'Xuất hủy') return 2;
+  if (reason === 'Xuất sử dụng nội bộ' || reason === 'Xuất nội bộ / Điều chuyển') return 3;
   return 3;
 };
 
@@ -59,10 +70,9 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const [ticketCode, setTicketCode] = useState('');
   const [exportDate, setExportDate] = useState(today.date);
   const [exportTime, setExportTime] = useState(today.time);
-  const [targetType, setTargetType] = useState('Khách hàng');
+  const [targetType, setTargetType] = useState('Nhà cung cấp');
   const [targetName, setTargetName] = useState('');
-  const [reasonType, setReasonType] = useState('Xuất bán hàng');
-  const [reasonOther, setReasonOther] = useState('');
+  const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
   const [note, setNote] = useState('');
 
   const [items, setItems] = useState([]);
@@ -102,10 +112,9 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     setTicketCode(generatedCode);
     setExportDate(t.date);
     setExportTime(t.time);
-    setTargetType('Khách hàng');
+    setTargetType('Nhà cung cấp');
     setTargetName('');
-    setReasonType('Xuất bán hàng');
-    setReasonOther('');
+    setReasonType('Xuất trả nhà cung cấp');
     setNote('');
     setItems([]);
     setSelectedProductId('');
@@ -129,7 +138,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     loadProducts();
   }, [isOpen]);
 
-  const resolvedReason = reasonType === '__other__' ? reasonOther : reasonType;
+  const resolvedReason = reasonType;
 
   const getProductStock = (product) => {
     const stock = product.actualStock ?? product.availableStock ?? product.stock ?? product.quantity ?? 0;
@@ -212,7 +221,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     );
   };
 
-  const isSale = reasonType === 'Xuất bán hàng';
+  const isSale = false;
 
   const handleDownloadTemplate = async () => {
     try {
@@ -262,9 +271,9 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
           setItems(mappedItems);
           if (groups?.length === 1) {
             const lyDo = groups[0].lyDo;
-            if (lyDo === 'Trả NCC' || lyDo === 'Tra NCC') { setTargetType('Nhà cung cấp'); setReasonType('Trả hàng nhà cung cấp'); }
-            else if (lyDo === 'Xuất hủy' || lyDo === 'Xuat huy') { setReasonType('__other__'); setReasonOther('Xuất hủy'); }
-            else if (lyDo === 'Điều chuyển' || lyDo === 'Dieu chuyen') setReasonType('Xuất nội bộ / Điều chuyển');
+            if (lyDo === 'Trả NCC' || lyDo === 'Tra NCC') { setTargetType('Nhà cung cấp'); setReasonType('Xuất trả nhà cung cấp'); }
+            else if (lyDo === 'Xuất hủy' || lyDo === 'Xuat huy') { setTargetType('Nội bộ'); setReasonType('Xuất hủy / Hao hụt'); }
+            else if (lyDo === 'Điều chuyển' || lyDo === 'Dieu chuyen') { setTargetType('Nội bộ'); setReasonType('Xuất sử dụng nội bộ'); }
           }
           setStatusMessage(errors?.length > 0 ? `Đã nạp ${mappedItems.length} dòng hợp lệ. ${errors.length} dòng lỗi.` : `Đã nạp ${mappedItems.length} sản phẩm từ Excel.`);
         } else if (errors?.length > 0) {
@@ -291,16 +300,10 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     }
 
     if (!targetName.trim()) {
-      const label = targetType === 'Khách hàng' ? 'tên khách hàng'
-        : targetType === 'Nhà cung cấp' ? 'tên nhà cung cấp'
+      const label = targetType === 'Nhà cung cấp' ? 'tên nhà cung cấp'
         : targetType === 'Nội bộ' ? 'tên đơn vị / bộ phận' : 'tên đối tượng xuất';
       errors.push(`Chưa nhập ${label}`);
       fields.targetName = true;
-    }
-
-    if (reasonType === '__other__' && !reasonOther.trim()) {
-      errors.push('Chưa nhập lý do xuất kho');
-      fields.reasonOther = true;
     }
 
     if (!items.length) {
@@ -314,18 +317,6 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         fields[`qty_${getItemKey(item)}`] = true;
       }
     });
-
-    if (isSale) {
-      items.forEach((item) => {
-        if (!item.unitPrice || Number(item.unitPrice) <= 0) {
-          errors.push(`Sản phẩm "${item.productName}" chưa nhập đơn giá`);
-          fields[`price_${getItemKey(item)}`] = true;
-        } else if (Number(item.unitPrice) < 1000) {
-          errors.push(`Sản phẩm "${item.productName}" có đơn giá tối thiểu là 1.000đ`);
-          fields[`price_${getItemKey(item)}`] = true;
-        }
-      });
-    }
 
     setFieldErrors(fields);
     return errors;
@@ -354,7 +345,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         items: items.map((i) => ({
           branchProductId: getItemKey(i),
           quantity: Number(i.quantity || 0),
-          ...(isSale && { unitPrice: Number(i.unitPrice || 0) }),
+          unitPrice: Number(i.unitPrice || 0),
         })),
       };
 
@@ -493,10 +484,10 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
           {targetType !== '__other__' ? (
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
-                {targetType === 'Khách hàng' ? 'Tên khách hàng' : targetType === 'Nhà cung cấp' ? 'Tên nhà cung cấp' : 'Tên đơn vị / bộ phận'} <span className="text-red-500">*</span>
+                {targetType === 'Nhà cung cấp' ? 'Tên nhà cung cấp' : 'Tên đơn vị / bộ phận'} <span className="text-red-500">*</span>
               </label>
               <input type="text"
-                placeholder={targetType === 'Khách hàng' ? 'VD: Công ty TNHH ABC' : targetType === 'Nhà cung cấp' ? 'VD: Công ty Hòa Phát' : 'VD: Xưởng sản xuất số 1'}
+                placeholder={targetType === 'Nhà cung cấp' ? 'VD: Công ty Hòa Phát' : 'VD: Xưởng sản xuất số 1'}
                 className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
                   fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                 }`}
@@ -520,16 +511,12 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
             <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Lý do xuất kho <span className="text-red-500">*</span></label>
             <select
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-              value={reasonType} onChange={(e) => { setReasonType(e.target.value); if (e.target.value !== '__other__') setReasonOther(''); }}>
+              value={reasonType} onChange={(e) => { setReasonType(e.target.value); }}>
               {REASON_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
             </select>
-            {reasonType === '__other__' && (
-              <input type="text" placeholder="Nhập lý do khác..."
-                className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                  fieldErrors.reasonOther ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                }`}
-                value={reasonOther} onChange={(e) => { setReasonOther(e.target.value); setFieldErrors((prev) => ({ ...prev, reasonOther: false })); }} />
-            )}
+            <p className="mt-2 text-xs text-slate-500 dark:text-[#999999]">
+              {REASON_OPTIONS.find((opt) => opt.value === reasonType)?.description || 'Vui lòng chọn một lý do phù hợp với quy trình xuất kho.'}
+            </p>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Ghi chú thêm</label>

@@ -204,7 +204,7 @@ export const InventoryTransactionManagement = () => {
           (supList || []).forEach((s) => {
             if (s.id) supplierMap[s.id] = s.name || s.supplierName || '';
           });
-        } catch {} // eslint-disable-line no-empty
+        } catch { } // eslint-disable-line no-empty
 
         if (inwardRes?.success && inwardRes?.data) {
           setInwardData(
@@ -228,7 +228,7 @@ export const InventoryTransactionManagement = () => {
                     localStorage.getItem(`outward_party_${item.ticketCode}`) || ''
                   ).replace(/^.*?:\s*/g, '');
                   if (localName) return { ...normalized, partyName: localName };
-                } catch {} // eslint-disable-line no-empty
+                } catch { } // eslint-disable-line no-empty
               }
               return normalized;
             })
@@ -389,7 +389,7 @@ export const InventoryTransactionManagement = () => {
                 partyName: supData.name || supData.supplierName || '-',
               };
             }
-          } catch {}
+          } catch { }
         }
         // Tra cứu tên đối tượng xuất từ localStorage
         if (transaction.type === 'OUTWARD' && rawData.ticketCode && normalized.partyName === '-') {
@@ -400,7 +400,7 @@ export const InventoryTransactionManagement = () => {
             if (localName) {
               normalized = { ...normalized, partyName: localName };
             }
-          } catch {} // eslint-disable-line no-empty
+          } catch { } // eslint-disable-line no-empty
         }
         setSelectedTransaction(normalized);
       } else {
@@ -476,20 +476,8 @@ export const InventoryTransactionManagement = () => {
           <p className="mt-1 text-gray-600 dark:text-[#999999]">Theo dõi toàn bộ giao dịch nhập kho và xuất kho</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setImportModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
-          >
-            <Icon name="add" size={18} />
-            Tạo phiếu nhập
-          </button>
-          <button
-            onClick={() => setExportModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-rose-700"
-          >
-            <Icon name="remove" size={18} />
-            Tạo phiếu xuất
-          </button>
+
+
         </div>
       </div>
 
@@ -649,16 +637,14 @@ export const InventoryTransactionManagement = () => {
                   key={tab.key}
                   type="button"
                   onClick={() => { setActiveTab(tab.key); setPagination((p) => ({ ...p, currentPage: 1 })); }}
-                  className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-                    activeTab === tab.key
-                      ? 'bg-[#004785] text-white shadow-sm'
-                      : 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#333] dark:text-[#b3b3b3] dark:hover:bg-[#272727]'
-                  }`}
+                  className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${activeTab === tab.key
+                    ? 'bg-[#004785] text-white shadow-sm'
+                    : 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#333] dark:text-[#b3b3b3] dark:hover:bg-[#272727]'
+                    }`}
                 >
                   {tab.label}
-                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs ${
-                    activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-[#333] dark:text-[#b3b3b3]'
-                  }`}>
+                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs ${activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-[#333] dark:text-[#b3b3b3]'
+                    }`}>
                     {tab.count}
                   </span>
                 </button>

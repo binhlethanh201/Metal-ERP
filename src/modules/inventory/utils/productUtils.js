@@ -166,12 +166,39 @@ export const createProductPayload = (form) => ({
   isActive: form.productStatus !== 'inactive' && form.status !== 'inactive' && form.isActive !== false,
 });
 
-// Chuẩn hóa Payload UPDATE (Backend yêu cầu ProductCode)
+// Chuẩn hóa Payload UPDATE (Backend yêu cầu ProductCode; không cho phép sửa kho qua API update)
 export const updateProductPayload = (form) => {
-  const base = createProductPayload(form);
-  // Giữ lại productCode từ sản phẩm gốc - Backend yêu cầu ProductCode bắt buộc
-  base.productCode = form.productCode || form.id || base.productCode || '';
-  return base;
+  return {
+    productCode: form.productCode || form.id || '',
+    productName: form.name || form.productName || '',
+    barcode: form.barcode || '',
+    specification: buildSpecification(form),
+    itemType: form.itemType || 'Goods',
+    brandName: form.brand || '',
+    categoryName: form.group || '',
+    supplierId: form.supplierId || null,
+    weight: Number(form.weight) || null,
+    weightUnit: form.weightUnit || 'g',
+    width: Number(form.width) || null,
+    length: Number(form.length) || null,
+    height: Number(form.height) || null,
+    sizeUnit: form.sizeUnit || 'mm',
+    medias: (form.images || [])
+      .map((i) => (typeof i === 'string' ? i : i?.url || ''))
+      .filter(Boolean),
+    attributes: (form.attributes || [])
+      .filter((a) => (a?.name || '').trim())
+      .map((a) => ({
+        name: a.name || '',
+        value: a.value || '',
+      })),
+    conversionUnits: (form.conversionUnits || []).map((u) => ({
+      name: u.name || '',
+      rate: Number(u.rate) || 1,
+      price: Number(u.price) || 0,
+      directSale: u.directSale !== false,
+    })),
+  };
 };
 
 export const formatMoney = (value) => new Intl.NumberFormat('vi-VN').format(value);
