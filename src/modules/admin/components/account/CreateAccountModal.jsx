@@ -71,19 +71,13 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
     e.preventDefault();
     if (!validateForm()) return;
     
-    // Set username = email
-    let mappedRoleName = formData.roleName;
-    if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
-    if (mappedRoleName === 'Inventory Staff') mappedRoleName = 'InventoryStaff';
-
-    const dataToSave = { ...formData, username: formData.email, roleName: mappedRoleName };
+    const dataToSave = { ...formData, username: formData.email };
     onSave(dataToSave);
   };
 
-  // Lọc bỏ role Admin ra khỏi danh sách được cấp
-  const assignableRoles = roles.filter(
-    (r) => r.roleName.toLowerCase() !== 'admin' && r.roleName.toLowerCase() !== 'communityuser'
-  );
+  // Chỉ hiển thị 3 loại tài khoản theo yêu cầu
+  const allowedRoles = ['Owner', 'InventoryStaff', 'SalesStaff'];
+  const assignableRoles = roles.filter((r) => allowedRoles.includes(r.roleName));
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -181,7 +175,9 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
                     className="h-4 w-4 text-[#004785] focus:ring-[#004785]"
                   />
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">{role.roleName}</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">
+                      {role.roleName === 'InventoryStaff' ? 'Inventory Staff' : role.roleName === 'SalesStaff' ? 'Sales Staff' : role.roleName}
+                    </div>
                   </div>
                 </label>
               ))}

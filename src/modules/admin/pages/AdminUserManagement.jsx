@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
-import CreateAccountModal from '../components/account/CreateAccountModal';
-import { getUserList, createOwner, createStaff, getRoleList } from '../services/adminService';
+import StaffModal from '../../owner/components/staff/StaffModal';
+import { getUserList, createOwner, createStaff, getRoleList, getPermissionList } from '../services/adminService';
 
 const AdminUserManagement = () => {
   const navigate = useNavigate();
@@ -14,16 +14,18 @@ const AdminUserManagement = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [roles, setRoles] = useState([]);
+  const [permissions, setPermissions] = useState([]);
 
   const fetchData = useCallback(() => {
     setLoading(true);
     setError(null);
 
-    Promise.all([getUserList({ status: statusFilter }), getRoleList()])
-      .then(([userData, roleData]) => {
+    Promise.all([getUserList({ status: statusFilter }), getRoleList(), getPermissionList()])
+      .then(([userData, roleData, permData]) => {
         const list = Array.isArray(userData) ? userData : userData?.items || [];
         setUsers(list);
         setRoles(Array.isArray(roleData) ? roleData : []);
+        setPermissions(Array.isArray(permData) ? permData : []);
         setLoading(false);
       })
       .catch((err) => {
@@ -39,10 +41,16 @@ const AdminUserManagement = () => {
 
   const handleCreateUser = async (formData) => {
     try {
-      if (formData.roleName === 'Owner') {
-        await createOwner(formData);
+      const submitData = {
+        ...formData,
+        roleName: formData.defaultRoleType,
+        permissionCodes: formData.customPermissionCodes,
+      };
+
+      if (submitData.roleName === 'Owner') {
+        await createOwner(submitData);
       } else {
-        await createStaff(formData);
+        await createStaff(submitData);
       }
       alert('Tạo người dùng thành công!');
       setIsCreateModalOpen(false);
@@ -93,13 +101,21 @@ const AdminUserManagement = () => {
                 <td className="px-4 py-3 font-bold">{user.fullName || '—'}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
-                    {(user.roles || []).map((r) => (
-                      <span
-                        key={r.roleId}
-                        className="rounded bg-[#004785] dark:bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
-                      >
-                        {r.roleName}
-                      </span>
+                    {Array.from(new Set((user.roles || []).map((r) => {
+                      const lower = (r.roleName || '').toLowerCase().replace(/\s+/g, '');
+                      let displayRole = r.roleName;
+                      if (lower.includes('sales')) displayRole = 'Sales Staff';
+                      else if (lower.includes('inventory')) displayRole = 'Inventory Staff';
+                      else if (lower === 'staff') displayRole = 'Staff';
+                      else if (lower === 'owner') displayRole = 'Owner';
+                      return displayRole;
+                    }))).map((displayRole, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded bg-[#004785] dark:bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                        >
+                          {displayRole}
+                        </span>
                     ))}
                   </div>
                 </td>
@@ -201,11 +217,12 @@ const AdminUserManagement = () => {
         )}
       </div>
 
-      <CreateAccountModal
+      <StaffModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateUser}
-        roles={roles}
+        permissions={permissions}
+        isAdminContext={true}
       />
     </div>
   );

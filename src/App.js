@@ -69,6 +69,7 @@ const AdminRoleManagement = lazy(() => import('./modules/admin/pages/AdminRoleMa
 const StoreApprovals = lazy(() => import('./modules/admin/pages/StoreApprovals'));
 const SystemNotifications = lazy(() => import('./modules/admin/pages/SystemNotifications'));
 const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
+const AdminReports = lazy(() => import('./modules/admin/pages/AdminReports'));
 
 // Owner Module
 const OwnerAuditLog = lazy(() => import('./modules/owner/pages/OwnerAuditLog'));
@@ -190,6 +191,7 @@ function App() {
               <Route path="approvals" element={<StoreApprovals />} />
               <Route path="notifications" element={<SystemNotifications />} />
               <Route path="logs" element={<SystemLog />} />
+              <Route path="reports" element={<AdminReports />} />
             </Route>
           </Route>
 

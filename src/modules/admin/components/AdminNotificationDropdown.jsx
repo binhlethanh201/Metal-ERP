@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
-import { getNotificationList } from '../services/adminService';
+import { getRecentEvents } from '../services/adminService';
 
 const AdminNotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -13,10 +14,18 @@ const AdminNotificationDropdown = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await getNotificationList({ page: 1, pageSize: 10 });
-      // Assuming res is either PageResultDto directly or { data: PageResultDto }
-      const items = res?.items || res?.data?.items || [];
+      const res = await getRecentEvents(10);
+      const items = Array.isArray(res) ? res : res?.data || [];
       setNotifications(items);
+
+      const lastViewed = localStorage.getItem('admin_notif_last_viewed');
+      if (!lastViewed) {
+        setUnreadCount(items.length);
+      } else {
+        const lastViewedDate = new Date(lastViewed);
+        const count = items.filter(n => new Date(n.timestamp || n.Timestamp) > lastViewedDate).length;
+        setUnreadCount(count);
+      }
     } catch (error) {
       console.error('Failed to fetch admin notifications:', error);
     } finally {
@@ -48,6 +57,11 @@ const AdminNotificationDropdown = () => {
     }
   };
 
+  const handleMarkAllAsRead = () => {
+    localStorage.setItem('admin_notif_last_viewed', new Date().toISOString());
+    setUnreadCount(0);
+  };
+
   const formatTimeAgo = (dateString) => {
     if (!dateString) return '';
     const normalizedString = dateString.endsWith('Z') || dateString.includes('+') ? dateString : dateString + 'Z';
@@ -67,16 +81,20 @@ const AdminNotificationDropdown = () => {
 
   const getIconForTarget = (target) => {
     switch (target?.toUpperCase()) {
-      case 'ALL':
-        return { name: 'public', color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' };
-      case 'OWNER':
-        return { name: 'storefront', color: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' };
-      case 'STAFF':
-        return { name: 'badge', color: 'text-purple-500 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' };
-      case 'COMMUNITY':
-        return { name: 'groups', color: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' };
+      case 'ERROR':
+      case 'DELETE':
+      case 'DELETE_ACCOUNT':
+        return { name: 'error', color: 'text-red-500 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' };
+      case 'WARNING':
+      case 'UPDATE':
+      case 'UPDATE_ACCOUNT':
+        return { name: 'warning', color: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' };
+      case 'INFO':
+      case 'CREATE':
+      case 'CREATE_OWNER':
+        return { name: 'add_circle', color: 'text-purple-500 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' };
       default:
-        return { name: 'notifications', color: 'text-slate-500 dark:text-[#999999]', bg: 'bg-slate-100 dark:bg-[#272727]' };
+        return { name: 'notifications', color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' };
     }
   };
 
@@ -87,8 +105,10 @@ const AdminNotificationDropdown = () => {
         className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] text-slate-500 dark:text-[#999999] hover:bg-slate-100 dark:hover:bg-[#272727]"
       >
         <Icon name="notifications" size={16} />
-        {notifications.length > 0 && (
-           <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+        {unreadCount > 0 && (
+           <span className="absolute right-1.5 top-1.5 flex h-1.5 w-1.5 items-center justify-center rounded-full bg-red-500">
+             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+           </span>
         )}
       </button>
 
@@ -96,6 +116,17 @@ const AdminNotificationDropdown = () => {
         <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] shadow-xl sm:w-96">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] px-4 py-3">
             <h3 className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Thông báo hệ thống</h3>
+            {unreadCount > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAllAsRead();
+                }}
+                className="text-xs font-semibold text-blue-500 hover:text-blue-600 dark:text-blue-400"
+              >
+                Đánh dấu đã đọc
+              </button>
+            )}
           </div>
 
           <div className="max-h-[400px] overflow-y-auto">
@@ -112,32 +143,33 @@ const AdminNotificationDropdown = () => {
             ) : (
               <div className="divide-y divide-slate-200 dark:divide-[#333333]">
                 {notifications.map((notif) => {
-                  const iconInfo = getIconForTarget(notif.target);
+                  const iconInfo = getIconForTarget(notif.level || notif.action);
+                  const isUnread = localStorage.getItem('admin_notif_last_viewed') ? new Date(notif.timestamp || notif.Timestamp) > new Date(localStorage.getItem('admin_notif_last_viewed')) : true;
                   return (
                     <div
-                      key={notif.notificationId}
+                      key={notif.logId || notif.id}
                       onClick={() => {
                         setIsOpen(false);
-                        navigate('/admin/notifications');
+                        navigate('/admin/logs');
                       }}
-                      className="flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
+                      className={"flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-[#1a1a1a]" + (isUnread ? " bg-blue-50/50 dark:bg-blue-900/10" : "")}
                     >
                       <div className={"mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full " + iconInfo.bg}>
                         <Icon name={iconInfo.name} size={20} className={iconInfo.color} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5] mb-1">
-                          {notif.title}
-                        </p>
-                        <p className="text-xs font-semibold text-slate-500 dark:text-[#999999] line-clamp-2">
-                          {notif.content}
+                          {notif.description}
                         </p>
                         <div className="mt-1 flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-[#666666]">
-                          <span className={notif.isUrgent ? 'text-red-500' : ''}>{notif.isUrgent ? 'Khẩn cấp' : notif.target}</span>
+                          <span className={notif.level === 'ERROR' ? 'text-red-500' : ''}>{notif.action || 'Hoạt động'}</span>
                           <span>•</span>
-                          <span>{formatTimeAgo(notif.createdAt)}</span>
+                          <span>{formatTimeAgo(notif.timestamp || notif.Timestamp)}</span>
                         </div>
                       </div>
+                      {isUnread && (
+                        <div className="mt-2 flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-blue-500"></div>
+                      )}
                     </div>
                   );
                 })}
@@ -150,11 +182,11 @@ const AdminNotificationDropdown = () => {
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  navigate('/admin/notifications');
+                  navigate('/admin/logs');
                 }}
                 className="text-xs font-bold text-[#004785] dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
-                Xem tất cả thông báo
+                Tới trang Lịch sử hệ thống
               </button>
             </div>
           )}

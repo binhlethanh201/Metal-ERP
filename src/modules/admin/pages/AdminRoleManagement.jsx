@@ -155,8 +155,13 @@ const AdminRoleManagement = () => {
           ? parts[0].toUpperCase()
           : 'OTHER';
 
-      // Bỏ toàn bộ quyền thuộc Owner
-      if (prefix === 'OWNER') {
+      // Bỏ toàn bộ quyền thuộc Owner và các module không dành cho Staff
+      if (
+        prefix === 'OWNER' ||
+        prefix === 'STAFF' ||
+        prefix === 'SYSTEM' ||
+        prefix === 'REPORT'
+      ) {
         return;
       }
 
@@ -270,9 +275,8 @@ const AdminRoleManagement = () => {
                 const roleName =
                   role.roleName?.toLowerCase() || '';
 
-                // Không hiển thị Owner
+                // Chỉ hiển thị 2 loại nhân viên (không hiển thị Owner, Staff chung, Admin)
                 return [
-                  'staff',
                   'salesstaff',
                   'inventorystaff',
                 ].includes(roleName);
@@ -313,7 +317,7 @@ const AdminRoleManagement = () => {
                             : 'text-slate-900 dark:text-[#e5e5e5]'
                         }`}
                       >
-                        {role.roleName}
+                        {role.roleName === 'InventoryStaff' ? 'Inventory Staff' : role.roleName === 'SalesStaff' ? 'Sales Staff' : role.roleName}
                       </span>
 
                       <span
@@ -485,20 +489,16 @@ const AdminRoleManagement = () => {
                                           ? 'text-[#004785] dark:text-blue-400'
                                           : 'text-slate-900 group-hover:text-[#004785] dark:text-[#e5e5e5] dark:group-hover:text-blue-400'
                                       }`}
+                                      title={permission.permissionName || permission.permissionCode}
                                     >
-                                      {
-                                        permission.permissionCode
-                                      }
+                                      {permission.permissionName || permission.permissionCode}
                                     </div>
 
                                     <div
                                       className="w-32 truncate text-[10px] leading-tight text-slate-500 dark:text-[#999999] md:w-48"
-                                      title={
-                                        permission.permissionName
-                                      }
+                                      title={permission.permissionCode}
                                     >
-                                      {permission.permissionName ||
-                                        'Cấp quyền truy cập'}
+                                      {permission.permissionCode}
                                     </div>
                                   </div>
                                 </label>

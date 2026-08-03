@@ -4,9 +4,14 @@
  */
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import * as signalR from '@microsoft/signalr';
 import PosSidebar from '../components/layout/PosSidebar';
 import PosHeader from '../components/layout/PosHeader';
 import PosFooter from '../components/layout/PosFooter';
+import Icon from '../../../shared/components/Icon';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5100';
+const HUB_URL = `${API_BASE}/r/mepHub`;
 
 const ROUTE_TO_MENU = {
   '/pos': 'Máy bán hàng',
@@ -22,6 +27,7 @@ const PosLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [toasts, setToasts] = useState([]);
   const [search, setSearch] = useState('');
   const [notice, setNotice] = useState('');
   const [quickAddCust, setQuickAddCust] = useState(0);
@@ -57,10 +63,88 @@ const PosLayout = () => {
     noticeTimer.current = setTimeout(() => setNotice(''), 2200);
   }, []);
 
+  // ---- Toast helpers ----
+  const addToast = useCallback((message, type = 'info', description = null) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type, description }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, type === 'warning' || type === 'error' ? 8000 : 5000);
+  }, []);
+
+  const hubRef = useRef(null);
+
+  // ---- SignalR real-time connection ----
+  useEffect(() => {
+    const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    if (!token) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(HUB_URL, { accessTokenFactory: () => token })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    hubRef.current = connection;
+
+    // Lắng nghe Thông báo hệ thống từ Admin
+    connection.on('SystemNotification', (data) => {
+      addToast(
+        `${data.title || 'Thông báo hệ thống mới'}`,
+        data.isUrgent ? 'warning' : 'info',
+        data.content
+      );
+    });
+
+    connection.start().catch((err) => {
+      console.warn('SignalR không thể kết nối từ POS:', err.message);
+    });
+
+    return () => {
+      connection.stop().catch(() => {});
+    };
+  }, [addToast]);
+
+  const TOAST_STYLES = {
+    info: 'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200',
+    warning: 'bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700/50 dark:text-amber-200',
+    error: 'bg-red-50 border-red-300 text-red-800 dark:bg-red-900/30 dark:border-red-700/50 dark:text-red-200',
+    success: 'bg-green-50 border-green-300 text-green-800 dark:bg-green-900/30 dark:border-green-700/50 dark:text-green-200',
+  };
+  const TOAST_ICONS = {
+    info: 'info',
+    warning: 'warning',
+    error: 'dangerous',
+    success: 'check_circle',
+  };
+
   const handleMenuSelect = (label) => {};
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 antialiased dark:bg-[#0a0a0a] dark:text-[#e5e5e5]">
+      {/* Toast notifications */}
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-3 w-full max-w-md">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`flex items-start gap-4 rounded-xl border p-5 shadow-2xl transition-all ${TOAST_STYLES[t.type]} w-full`}
+          >
+            <Icon name={TOAST_ICONS[t.type]} size={24} className="mt-0.5 shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-base font-black uppercase tracking-wide">{t.message}</span>
+              {t.description && (
+                <span className="mt-1.5 text-sm font-medium opacity-90">{t.description}</span>
+              )}
+            </div>
+            <button
+              onClick={() => setToasts((prev) => prev.filter((item) => item.id !== t.id))}
+              className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+            >
+              <Icon name="close" size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
       {/* Toast */}
       {notice && (
         <div className="fixed left-1/2 top-5 z-[100] -translate-x-1/2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-2xl dark:bg-[#272727]">

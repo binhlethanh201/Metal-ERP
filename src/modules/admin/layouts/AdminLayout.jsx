@@ -145,14 +145,16 @@ const AdminLayout = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900 antialiased dark:bg-[#0f0f0f] dark:text-[#e5e5e5]">
       {/* Toast notifications */}
-      <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-2">
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-3 w-full max-w-md">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`flex min-w-72 max-w-sm items-center gap-3 rounded-lg border px-4 py-3 shadow-lg ${TOAST_STYLES[t.type] || TOAST_STYLES.info}`}
+            className={`flex items-start gap-4 rounded-xl border p-5 shadow-2xl transition-all ${TOAST_STYLES[t.type] || TOAST_STYLES.info} w-full`}
           >
-            <Icon name={TOAST_ICONS[t.type] || 'info'} size={16} className="flex-shrink-0" />
-            <p className="text-sm font-medium">{t.message}</p>
+            <Icon name={TOAST_ICONS[t.type] || 'info'} size={24} className="mt-0.5 shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-base font-black uppercase tracking-wide">{t.message}</span>
+            </div>
           </div>
         ))}
       </div>

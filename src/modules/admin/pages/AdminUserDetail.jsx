@@ -45,7 +45,8 @@ const AdminUserDetail = () => {
         getRoleList(),
       ]);
       setUser(userData);
-      setActivities(Array.isArray(activityData) ? activityData : []);
+      // The API returns a paginated result { items: [...] } so we need to extract items
+      setActivities(activityData?.items || (Array.isArray(activityData) ? activityData : []));
       setRoles(Array.isArray(roleData) ? roleData : []);
       setEditFormData({
         fullName: userData?.fullName || '',
@@ -169,12 +170,19 @@ const AdminUserDetail = () => {
                     ? 'ĐANG HOẠT ĐỘNG'
                     : 'ĐÃ BỊ KHÓA'}
               </span>
-              {(user.roles || []).map((r) => (
+              {Array.from(
+                new Map(
+                  (user.roles || []).map((r) => [
+                    r.roleName.replace(/\s+/g, ''),
+                    { ...r, displayName: r.roleName === 'SalesStaff' ? 'Sales Staff' : r.roleName === 'InventoryStaff' ? 'Inventory Staff' : r.roleName }
+                  ])
+                ).values()
+              ).map((r) => (
                 <span
                   key={r.roleId}
-                  className="rounded-full border border-secondary-container/50 bg-secondary-container px-3 py-1 text-xs font-bold text-on-secondary-container"
+                  className="rounded-full border border-[#004785]/20 bg-[#004785]/10 dark:border-blue-400/20 dark:bg-blue-400/10 px-3 py-1 text-xs font-bold text-[#004785] dark:text-blue-400"
                 >
-                  {r.roleName}
+                  {r.displayName}
                 </span>
               ))}
             </div>
@@ -288,18 +296,88 @@ const AdminUserDetail = () => {
             </div>
           ) : (
             <div className="relative ml-4 space-y-8 border-l-2 border-slate-200 dark:border-[#333333] pb-4">
-              {activities.map((log, idx) => (
-                <div key={idx} className="relative pl-6">
-                  <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-[#004785] dark:bg-blue-600 ring-4 ring-white dark:ring-[#0f0f0f]"></div>
-                  <div className="text-sm font-black uppercase text-slate-900 dark:text-[#e5e5e5]">{log.action}</div>
-                  <div className="mt-1 text-xs font-bold text-[#004785] dark:text-blue-400">
-                    {new Date(log.createdAt).toLocaleString('vi-VN')}
+              {activities.map((log, idx) => {
+                const translateAction = (actionCode) => {
+                  if (!actionCode) return 'KHÔNG XÁC ĐỊNH';
+                  const exactMap = {
+                    'LOGIN': 'Đăng nhập hệ thống',
+                    'LOGOUT': 'Đăng xuất hệ thống',
+                    'ASSIGN_ROLE': 'Cấp quyền / Vai trò',
+                    'RESET_PASSWORD': 'Cấp lại mật khẩu',
+                    'INVENTORY_CHECK_RECONCILIATION': 'Cân bằng kho (Kiểm kê)',
+                    'RECORD_PAYMENT': 'Ghi nhận thanh toán',
+                    'FINALIZE_INVOICE': 'Hoàn tất hóa đơn',
+                    'HOLD_INVOICE': 'Lưu tạm hóa đơn',
+                    'START_SHIFT': 'Mở ca làm việc',
+                    'END_SHIFT': 'Đóng ca làm việc',
+                    'IMPORT_DATA': 'Nhập dữ liệu',
+                    'EXPORT_DATA': 'Xuất dữ liệu'
+                  };
+                  if (exactMap[actionCode]) return exactMap[actionCode];
+
+                  let translated = actionCode;
+                  const prefixes = {
+                    'CREATE_': 'Tạo mới ',
+                    'UPDATE_': 'Cập nhật ',
+                    'DELETE_': 'Xóa ',
+                    'PERMANENT_DELETE_': 'Xóa vĩnh viễn ',
+                    'RESTORE_': 'Khôi phục ',
+                    'CONFIRM_': 'Xác nhận ',
+                    'CANCEL_': 'Hủy bỏ ',
+                    'APPROVE_': 'Phê duyệt ',
+                    'REJECT_': 'Từ chối '
+                  };
+                  const entities = {
+                    'INWARD_INVENTORY': 'phiếu nhập kho',
+                    'OUTWARD_INVENTORY': 'phiếu xuất kho',
+                    'INVENTORY_CHECK': 'phiếu kiểm kê',
+                    'USER': 'tài khoản',
+                    'OWNER': 'chủ cửa hàng',
+                    'STAFF': 'nhân viên',
+                    'CUSTOMER': 'khách hàng',
+                    'SUPPLIER': 'nhà cung cấp',
+                    'PRODUCT': 'sản phẩm',
+                    'EXPENSE_VOUCHER': 'phiếu chi',
+                    'RECEIPT_VOUCHER': 'phiếu thu',
+                    'ORDER': 'đơn hàng',
+                    'INVOICE': 'hóa đơn',
+                    'RETURN': 'phiếu trả hàng',
+                    'ROLE': 'vai trò',
+                    'BRANCH': 'chi nhánh'
+                  };
+
+                  for (const [prefix, preTrans] of Object.entries(prefixes)) {
+                    if (translated.startsWith(prefix)) {
+                      let entityStr = translated.replace(prefix, '');
+                      let entityTrans = entities[entityStr] || entityStr.replace(/_/g, ' ').toLowerCase();
+                      return preTrans + entityTrans;
+                    }
+                  }
+                  return actionCode.replace(/_/g, ' ');
+                };
+
+                const displayAction = translateAction(log.action);
+                
+                return (
+                  <div key={idx} className="relative pl-6">
+                    <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-[#004785] dark:bg-blue-600 ring-4 ring-white dark:ring-[#0f0f0f]"></div>
+                    <div className="text-sm font-black uppercase text-slate-900 dark:text-[#e5e5e5]">{displayAction}</div>
+                    <div className="mt-1 flex items-center gap-2 text-xs font-bold text-[#004785] dark:text-blue-400">
+                      <Icon name="schedule" size={14} />
+                      {new Date(log.timestamp).toLocaleString('vi-VN')}
+                      
+                      {log.ipAddress && (
+                        <span className="ml-2 rounded bg-slate-100 dark:bg-[#272727] px-2 py-0.5 text-[10px] text-slate-500 dark:text-[#999999]">
+                          IP: {log.ipAddress}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-2 rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-3 text-sm font-medium text-slate-500 dark:text-[#999999] shadow-sm">
+                      {log.description || 'Không có mô tả chi tiết'}
+                    </div>
                   </div>
-                  <div className="mt-2 rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-3 text-sm font-medium text-slate-500 dark:text-[#999999] shadow-sm">
-                    {log.description}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
