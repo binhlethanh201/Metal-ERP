@@ -85,7 +85,6 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-
     // Set username = email
     let mappedRoleName = formData.roleName;
     if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
@@ -103,7 +102,6 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
       branchName: normalizedBranchName,
       phoneNumber: normalizedPhoneNumber,
     };
-
 
     onSave(dataToSave);
   };
