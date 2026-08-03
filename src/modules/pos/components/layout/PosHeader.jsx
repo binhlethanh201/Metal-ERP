@@ -10,7 +10,7 @@ import { useAuth } from '../../../../shared/hooks/useAuth';
 import { useTheme } from '../../../../shared/contexts/ThemeContext';
 import StorePolicyModal from '../StorePolicyModal';
 
-const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
+const PosHeader = ({ onHistory, onQuickAdd }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -45,14 +45,6 @@ const PosHeader = ({ onBarcodeScan, onHistory, onQuickAdd }) => {
       <Logo moduleName="Máy bán hàng" />
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onBarcodeScan}
-          className="flex items-center gap-2 rounded-lg border border-[#004785] bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#003566] active:scale-95"
-        >
-          <Icon name="qr_code_scanner" className="text-base" />
-          <span>Quét mã</span>
-        </button>
         <button
           type="button"
           onClick={onHistory}
