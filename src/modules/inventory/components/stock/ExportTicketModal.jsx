@@ -355,7 +355,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       const newTicketCode = createRes?.data?.ticketCode || ticketId;
 
       if (newTicketCode && targetName.trim()) {
-        try { localStorage.setItem(`outward_party_${newTicketCode}`, targetName.trim()); } catch {}
+        try { localStorage.setItem(`outward_party_${newTicketCode}`, targetName.trim()); } catch { }
       }
 
       if (ticketId && !isDraft) {
@@ -430,11 +430,10 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
             const msg = statusMessage.toLowerCase();
             const isError = msg.includes('lỗi') || msg.includes('chưa') || msg.includes('tối thiểu') || msg.includes('không hợp lệ') || msg.includes('vượt');
             return (
-              <div className={`flex items-start gap-3 rounded-lg border p-4 ${
-                isError
+              <div className={`flex items-start gap-3 rounded-lg border p-4 ${isError
                   ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
                   : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-              }`}>
+                }`}>
                 <Icon name={isError ? 'error' : 'check_circle'} size={20} className="mt-0.5 shrink-0" />
                 <div className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800 dark:text-red-300' : 'text-emerald-800 dark:text-emerald-400'}`}>{statusMessage}</div>
                 <button type="button" onClick={() => { setStatusMessage(''); setFieldErrors({}); }} className="shrink-0 rounded p-1 opacity-60 hover:opacity-100">
@@ -459,9 +458,8 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Ngày xuất <span className="text-red-500">*</span></label>
               <input type="date" required
-                className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                  fieldErrors.exportDate ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.exportDate ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                  }`}
                 value={exportDate} onChange={(e) => { setExportDate(e.target.value); setFieldErrors((prev) => ({ ...prev, exportDate: false })); }} />
             </div>
             <div className="space-y-1.5">
@@ -488,18 +486,16 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               </label>
               <input type="text"
                 placeholder={targetType === 'Nhà cung cấp' ? 'VD: Công ty Hòa Phát' : 'VD: Xưởng sản xuất số 1'}
-                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                  fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                }`}
+                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                  }`}
                 value={targetName} onChange={(e) => { setTargetName(e.target.value); setFieldErrors((prev) => ({ ...prev, targetName: false })); }} />
             </div>
           ) : (
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Nhập đối tượng xuất <span className="text-red-500">*</span></label>
               <input type="text" placeholder="VD: Đối tác vận chuyển, Bảo hành..."
-                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                  fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                }`}
+                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                  }`}
                 value={targetName} onChange={(e) => { setTargetName(e.target.value); setFieldErrors((prev) => ({ ...prev, targetName: false })); }} />
             </div>
           )}
@@ -547,9 +543,9 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
                   <span className={selectedProductId ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}>
                     {selectedProductId
                       ? (() => {
-                          const p = products.find((x) => getItemKey(x) === selectedProductId);
-                          return p ? `${p.productCode || p.ProductCode || ''} - ${p.productName || p.ProductName || ''}` : '-- Chọn sản phẩm --';
-                        })()
+                        const p = products.find((x) => getItemKey(x) === selectedProductId);
+                        return p ? `${p.productCode || p.ProductCode || ''} - ${p.productName || p.ProductName || ''}` : '-- Chọn sản phẩm --';
+                      })()
                       : '-- Chọn sản phẩm --'}
                   </span>
                   <Icon name="expand_more" size={18} className={`text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -727,9 +723,8 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               </table>
             </div>
           ) : (
-            <div className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
-              fieldErrors.items ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20' : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
-            }`}>
+            <div className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${fieldErrors.items ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20' : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
+              }`}>
               <Icon name="inventory_2" size={32} className="mb-2 opacity-40" />
               <p className="text-sm font-medium">Chưa có sản phẩm nào</p>
               <p className="mt-1 text-xs">Thêm sản phẩm ở trên để tạo phiếu xuất</p>

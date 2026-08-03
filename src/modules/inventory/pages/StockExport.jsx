@@ -40,7 +40,7 @@ const normalizeExportRows = (item, index) => {
   let partyName = '';
   try {
     partyName = localStorage.getItem(`outward_party_${ticketCode}`) || '';
-  } catch {}
+  } catch { }
 
   return [
     {
@@ -365,7 +365,7 @@ export const StockExport = () => {
               const allItems = extractList(allRes);
               availableProducts = allItems;
               if (allItems.length > products.length) setProducts(allItems);
-            } catch {}
+            } catch { }
           }
 
           const mappedItems = validRows.map((row) => {
@@ -518,7 +518,7 @@ export const StockExport = () => {
       if (newTicketCode && targetName.trim()) {
         try {
           localStorage.setItem(`outward_party_${newTicketCode}`, targetName.trim());
-        } catch {} // eslint-disable-line no-empty
+        } catch { } // eslint-disable-line no-empty
       }
 
       if (ticketId) {
@@ -699,11 +699,10 @@ export const StockExport = () => {
                 msg.includes('vượt');
               return (
                 <div
-                  className={`flex items-start gap-3 rounded-lg border p-4 ${
-                    isError
+                  className={`flex items-start gap-3 rounded-lg border p-4 ${isError
                       ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
                       : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-                  }`}
+                    }`}
                 >
                   <Icon
                     name={isError ? 'error' : 'check_circle'}
@@ -798,11 +797,10 @@ export const StockExport = () => {
                 <input
                   type="date"
                   required
-                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.exportDate
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.exportDate
                       ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                       : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
+                    }`}
                   value={exportDate}
                   onChange={(e) => {
                     setExportDate(e.target.value);
@@ -868,11 +866,10 @@ export const StockExport = () => {
                       ? 'VD: Công ty Hòa Phát'
                       : 'VD: Xưởng sản xuất số 1'
                   }
-                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.targetName
+                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName
                       ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                       : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
+                    }`}
                   value={targetName}
                   onChange={(e) => {
                     setTargetName(e.target.value);
@@ -890,11 +887,10 @@ export const StockExport = () => {
                 <input
                   type="text"
                   placeholder="VD: Đối tác vận chuyển, Bảo hành..."
-                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.targetName
+                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName
                       ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                       : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
+                    }`}
                   value={targetName}
                   onChange={(e) => {
                     setTargetName(e.target.value);
@@ -990,11 +986,11 @@ export const StockExport = () => {
                     >
                       {selectedProductId
                         ? (() => {
-                            const p = products.find((x) => getItemKey(x) === selectedProductId);
-                            return p
-                              ? `${p.productCode || p.ProductCode || ''} - ${p.productName || p.ProductName || ''}`
-                              : '-- Chọn sản phẩm --';
-                          })()
+                          const p = products.find((x) => getItemKey(x) === selectedProductId);
+                          return p
+                            ? `${p.productCode || p.ProductCode || ''} - ${p.productName || p.ProductName || ''}`
+                            : '-- Chọn sản phẩm --';
+                        })()
                         : '-- Chọn sản phẩm --'}
                     </span>
                     <Icon
@@ -1040,11 +1036,10 @@ export const StockExport = () => {
                               <button
                                 key={idValue}
                                 type="button"
-                                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-[#333333] ${
-                                  isActive
+                                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-[#333333] ${isActive
                                     ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-[#272727] dark:text-blue-300'
                                     : 'text-slate-700 dark:text-[#b3b3b3]'
-                                }`}
+                                  }`}
                                 onClick={() => {
                                   setSelectedProductId(idValue);
                                   setDropdownOpen(false);
@@ -1336,11 +1331,10 @@ export const StockExport = () => {
               </div>
             ) : (
               <div
-                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
-                  fieldErrors.items
+                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${fieldErrors.items
                     ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20'
                     : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
-                }`}
+                  }`}
               >
                 <Icon name="inventory_2" size={32} className="mb-2 opacity-40" />
                 <p className="text-sm font-medium">Chưa có sản phẩm nào</p>

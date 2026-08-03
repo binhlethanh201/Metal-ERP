@@ -60,10 +60,10 @@ export const ImportTicketForm = ({
 
   const filteredSuppliers = supplierSearch.trim()
     ? suppliers.filter((s) =>
-        `${s.name || ''} ${s.code || ''} ${s.phone || ''}`
-          .toLowerCase()
-          .includes(supplierSearch.trim().toLowerCase())
-      )
+      `${s.name || ''} ${s.code || ''} ${s.phone || ''}`
+        .toLowerCase()
+        .includes(supplierSearch.trim().toLowerCase())
+    )
     : suppliers;
 
   return (
@@ -221,13 +221,12 @@ export const ImportTicketForm = ({
           </div>
 
           <div
-            className={`flex items-start gap-2.5 rounded-2xl border px-3.5 py-3 text-sm ${
-              status.type === 'error'
+            className={`flex items-start gap-2.5 rounded-2xl border px-3.5 py-3 text-sm ${status.type === 'error'
                 ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/50 dark:text-red-200'
                 : status.type === 'success'
                   ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/50 dark:text-green-200'
                   : 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
-            }`}
+              }`}
           >
             {status.type === 'error' ? (
               <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />

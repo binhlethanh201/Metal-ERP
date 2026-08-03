@@ -16,10 +16,12 @@ export const STOCK_COLUMNS = [
   { key: 'openingStock', header: 'Đầu kỳ' },
   { key: 'inwardQuantity', header: 'Nhập' },
   { key: 'outwardQuantity', header: 'Xuất' },
+  { key: 'adjustmentQuantity', header: 'Điều chỉnh' },
   { key: 'closingStock', header: 'Cuối kỳ' },
   { key: 'openingValue', header: 'Giá trị đầu kỳ', render: (v) => formatCurrency(v) },
   { key: 'inwardValue', header: 'Giá trị nhập', render: (v) => formatCurrency(v) },
   { key: 'outwardValue', header: 'Giá trị xuất', render: (v) => formatCurrency(v) },
+  { key: 'adjustmentValue', header: 'Giá trị điều chỉnh', render: (v) => formatCurrency(v) },
   { key: 'closingValue', header: 'Giá trị cuối kỳ', render: (v) => formatCurrency(v) },
 ];
 

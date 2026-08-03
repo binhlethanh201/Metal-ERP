@@ -219,9 +219,9 @@ export const OwnerReports = () => {
         { key: 'date', header: 'Ngày' },
         { key: 'timeKey', header: 'Thời gian' },
         { key: 'revenue', header: 'Doanh thu' },
-        { key: 'orders', header: 'Số đơn' },
-        { key: 'averageValue', header: 'Giá trị TB' },
-        { key: 'growthPercent', header: 'Tăng trưởng (%)' },
+        { key: 'totalCost', header: 'Tổng giá vốn' },
+        { key: 'grossProfit', header: 'Lợi nhuận gộp' },
+        { key: 'profitMargin', header: 'Tỷ suất lợi nhuận (%)' },
       ];
       exportToCSV(revenueData.tableData, revColumns, 'Bao_Cao_Doanh_Thu_Theo_Thoi_Gian');
     } else if (selectedReport === 'low-stock' && lowStockData?.items) {

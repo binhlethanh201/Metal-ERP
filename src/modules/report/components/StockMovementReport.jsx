@@ -20,7 +20,7 @@ export const StockMovementReport = ({ data, isLoading }) => {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card padding="p-5" className="border-l-4 border-l-blue-500">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             Giá trị Tồn Đầu Kỳ
@@ -45,6 +45,15 @@ export const StockMovementReport = ({ data, isLoading }) => {
           </p>
           <p className="mt-1 text-2xl font-extrabold text-rose-600">
             {formatCurrency(data.totalOutwardValue)}
+          </p>
+        </Card>
+
+        <Card padding="p-5" className="border-l-4 border-l-amber-500">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
+            Giá trị Điều Chỉnh
+          </p>
+          <p className="mt-1 text-2xl font-extrabold text-amber-700">
+            {formatCurrency(data.totalAdjustmentValue || 0)}
           </p>
         </Card>
 

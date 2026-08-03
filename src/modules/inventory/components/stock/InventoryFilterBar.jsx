@@ -26,16 +26,16 @@ export const InventoryFilterBar = ({
   const ticketTypes =
     type === 'INWARD'
       ? [
-          { value: '', label: 'Tất cả loại nhập' },
-          { value: 'PURCHASE', label: 'Nhập hàng từ NCC' },
-          { value: 'CUSTOMER_RETURN', label: 'Khách hàng trả lại' },
-        ]
+        { value: '', label: 'Tất cả loại nhập' },
+        { value: 'PURCHASE', label: 'Nhập hàng từ NCC' },
+        { value: 'CUSTOMER_RETURN', label: 'Khách hàng trả lại' },
+      ]
       : [
-          { value: '', label: 'Tất cả loại xuất' },
-          { value: 'RETURN_SUPPLIER', label: 'Trả hàng cho NCC' },
-          { value: 'WRITE_OFF', label: 'Xuất hủy / Hao hụt' },
-          { value: 'TRANSFER', label: 'Xuất điều chuyển nội bộ' },
-        ];
+        { value: '', label: 'Tất cả loại xuất' },
+        { value: 'RETURN_SUPPLIER', label: 'Trả hàng cho NCC' },
+        { value: 'WRITE_OFF', label: 'Xuất hủy / Hao hụt' },
+        { value: 'TRANSFER', label: 'Xuất điều chuyển nội bộ' },
+      ];
 
   // Đếm số lượng bộ lọc đang áp dụng (ẩn trong Drawer) để hiển thị Badge
   const todayString = getLocalDateString();
@@ -98,17 +98,17 @@ export const InventoryFilterBar = ({
             filters.fromDate ||
             filters.toDate !== todayString ||
             filters.branchId) && (
-            <Button
-              type="button"
-              variant="danger"
-              size="sm"
-              onClick={onResetFilter}
-              className="flex items-center gap-1"
-              title="Xóa toàn bộ bộ lọc"
-            >
-              <RotateCcw size={13} /> Đặt lại
-            </Button>
-          )}
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                onClick={onResetFilter}
+                className="flex items-center gap-1"
+                title="Xóa toàn bộ bộ lọc"
+              >
+                <RotateCcw size={13} /> Đặt lại
+              </Button>
+            )}
         </div>
       </div>
 

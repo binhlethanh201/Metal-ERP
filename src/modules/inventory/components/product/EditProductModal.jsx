@@ -463,9 +463,9 @@ const UnitManagement = ({ f }) => (
                         {unit.price
                           ? fmtMoney(unit.price)
                           : fmtMoney(
-                              (Number(f.form.baseUnit?.price) || 0) *
-                                (Number(unit.rate || unit.convertValue) || 1)
-                            )}
+                            (Number(f.form.baseUnit?.price) || 0) *
+                            (Number(unit.rate || unit.convertValue) || 1)
+                          )}
                       </span>
                       <span className="ml-0.5 text-slate-400 dark:text-[#808080]">₫</span>
                     </td>
@@ -646,9 +646,9 @@ const UnitManagement = ({ f }) => (
               from === f.form.baseUnit?.name
                 ? cv
                 : (() => {
-                    const pm = computeMul(from);
-                    return pm == null ? null : cv * pm;
-                  })();
+                  const pm = computeMul(from);
+                  return pm == null ? null : cv * pm;
+                })();
             if (!mult) return null;
             const suggestPrice = base * mult;
             return (

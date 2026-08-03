@@ -25,24 +25,22 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
       render: (v) => <span className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{v}</span>,
     },
     { key: 'revenue', header: 'Doanh thu', render: (v) => formatCurrency(v) },
-    { key: 'orders', header: 'Số đơn' },
-    { key: 'averageValue', header: 'Giá trị TB', render: (v) => formatCurrency(v) },
+    { key: 'totalCost', header: 'Tổng giá vốn', render: (v) => formatCurrency(v) },
     {
-      key: 'growthPercent',
-      header: 'Tăng trưởng',
-      render: (v) => (
-        <span
-          className={v > 0 ? 'font-medium text-green-600' : v < 0 ? 'font-medium text-red-600' : ''}
-        >
-          {v > 0 ? `+${(v ?? 0).toFixed(2)}%` : `${(v ?? 0).toFixed(2)}%`}
-        </span>
-      ),
+      key: 'grossProfit',
+      header: 'Lợi nhuận gộp',
+      render: (v) => <span className="font-semibold text-green-600">{formatCurrency(v)}</span>,
+    },
+    {
+      key: 'profitMargin',
+      header: 'Tỷ suất lợi nhuận (%)',
+      render: (v) => <span className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{((v ?? 0)).toFixed(2)}%</span>,
     },
   ];
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <Card padding="p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             Tổng doanh thu
@@ -61,15 +59,24 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
 
         <Card padding="p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
-            Trung bình/Đơn
+            Tổng lợi nhuận gộp
           </p>
           <p className="mt-1 text-2xl font-extrabold text-emerald-600">
-            {formatCurrency(data.averageOrderValue)}
+            {formatCurrency(data.totalGrossProfit || 0)}
+          </p>
+        </Card>
+
+        <Card padding="p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
+            Tỷ suất lợi nhuận TB
+          </p>
+          <p className="mt-1 text-2xl font-extrabold text-amber-600">
+            {((data.averageProfitMargin || 0)).toFixed(2)}%
           </p>
         </Card>
       </div>
 
-      <Card header={<h2 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Biểu đồ tăng trưởng</h2>}>
+      <Card header={<h2 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Biểu đồ doanh thu theo thời gian</h2>}>
         {data.chartData?.length ? (
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
