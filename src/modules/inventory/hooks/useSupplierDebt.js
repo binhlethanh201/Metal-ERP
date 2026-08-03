@@ -71,7 +71,7 @@ export const useSupplierDebt = () => {
   const handleExport = async () => {
     try {
       setLoading(true);
-      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5100';
+      const baseUrl = process.env.REACT_APP_API_URL;
       const url = new URL(`${baseUrl}/api/supplierdebt/export`);
 
       if (status !== 'all') url.searchParams.append('status', status);

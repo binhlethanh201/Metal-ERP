@@ -430,6 +430,7 @@ export const useGoodsReceiptPopup = (onClose) => {
       alert(e?.message || 'Lỗi');
       return false;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isValid, isPurchase, header, dirtyLines, attachments]);
 
   return {

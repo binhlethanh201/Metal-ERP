@@ -8,7 +8,7 @@ import Icon from '../../../shared/components/Icon';
 import { getInventoryNotifications } from '../services/inventoryCheckService';
 import { useAuth } from '../../../shared/hooks/useAuth';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5100';
+const API_BASE = process.env.REACT_APP_API_URL;
 const HUB_URL = `${API_BASE}/r/mepHub`;
 
 const InventoryLayout = () => {

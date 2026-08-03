@@ -157,7 +157,7 @@ const AdminUserDetail = () => {
       {/* Nút quay lại */}
       <button
         onClick={() => navigate('/admin/users')}
-        className="hover:text-[#004785] dark:text-blue-400-variant flex items-center gap-2 text-sm font-bold text-[#004785] dark:text-blue-400 transition-colors"
+        className="flex items-center gap-2 text-sm font-bold text-[#004785] dark:text-blue-400 transition-colors hover:text-[#003566] dark:hover:text-blue-300"
       >
         <Icon name="arrow_back" size={18} /> QUAY LẠI DANH SÁCH
       </button>
@@ -165,7 +165,7 @@ const AdminUserDetail = () => {
       {/* HEADER CHI TIẾT */}
       <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-6 shadow-sm md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#004785] dark:bg-blue-600-container text-2xl font-bold uppercase text-white-container shadow-inner">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#004785] text-2xl font-bold uppercase text-white shadow-inner">
             {(user.fullName || user.email).charAt(0)}
           </div>
           <div>
@@ -213,36 +213,33 @@ const AdminUserDetail = () => {
           </div>
         </div>
 
-        {/* CÁC NÚT THAO TÁC IN ĐẬM RÕ RÀNG */}
-        <div className="flex flex-wrap gap-3">
+        {/* CÁC NÚT THAO TÁC */}
+        <div className="flex flex-wrap gap-2">
           {user.status !== 'DELETED' && user.status !== 'PERMANENT_DELETED' && (
             <>
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
               >
-                <Icon name="edit" size={18} /> Sửa Thông Tin
+                <Icon name="edit" size={16} /> Sửa
               </button>
-
               <button
                 onClick={() => setIsAssignModalOpen(true)}
-                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
               >
-                <Icon name="manage_accounts" size={18} /> Phân Quyền
+                <Icon name="manage_accounts" size={16} /> Phân Quyền
               </button>
-
               <button
                 onClick={() => setIsAssignBranchModalOpen(true)}
-                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
               >
-                <Icon name="storefront" size={18} /> Gán Cửa Hàng
+                <Icon name="storefront" size={16} /> Gán Cửa Hàng
               </button>
-
               <button
                 onClick={handleResetPassword}
-                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
               >
-                <Icon name="key" size={18} /> Cấp Lại Mật Khẩu
+                <Icon name="key" size={16} /> Cấp Lại MK
               </button>
 
               <button
@@ -254,13 +251,14 @@ const AdminUserDetail = () => {
                     message: `Bạn có chắc chắn muốn ${isActive ? 'khóa' : 'mở khóa'} tài khoản này?`,
                   })
                 }
-                className={`flex items-center gap-2 rounded-lg border-2 px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all ${isActive
-                  ? 'border-error text-red-600 dark:text-red-500 hover:bg-red-50 dark:bg-red-900/30/30'
-                  : 'border-green-600 text-green-600 hover:bg-green-100/50'
-                  }`}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'border-red-300 bg-white text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-[#1a1a1a] dark:text-red-400 dark:hover:bg-red-950/30'
+                    : 'border-green-300 bg-white text-green-600 hover:bg-green-50 dark:border-green-800 dark:bg-[#1a1a1a] dark:text-green-400 dark:hover:bg-green-950/30'
+                }`}
               >
-                <Icon name={isActive ? 'lock' : 'lock_open'} size={18} />{' '}
-                {isActive ? 'Khóa Tài Khoản' : 'Mở Khóa'}
+                <Icon name={isActive ? 'lock' : 'lock_open'} size={16} />
+                {isActive ? 'Khóa' : 'Mở Khóa'}
               </button>
 
               <button
@@ -269,12 +267,12 @@ const AdminUserDetail = () => {
                     isOpen: true,
                     type: 'soft_delete',
                     title: 'XÓA TÀI KHOẢN',
-                    message: 'Bạn có chắc chắn muốn xóa tài khoản này? Tài khoản sẽ chuyển sang trạng thái ĐÃ XÓA và có thể khôi phục.',
+                    message: 'Bạn có chắc chắn muốn xóa tài khoản này?',
                   })
                 }
-                className="flex items-center gap-2 rounded-lg border-2 border-error bg-error text-on-error px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-error/90"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
               >
-                <Icon name="delete" size={18} /> Xóa
+                <Icon name="delete" size={16} /> Xóa
               </button>
             </>
           )}
@@ -290,23 +288,22 @@ const AdminUserDetail = () => {
                     message: 'Khôi phục tài khoản này để tiếp tục sử dụng?',
                   })
                 }
-                className="flex items-center gap-2 rounded-lg border-2 border-green-600 bg-green-600 text-white px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-green-700"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
               >
-                <Icon name="restore" size={18} /> Khôi Phục
+                <Icon name="restore" size={16} /> Khôi Phục
               </button>
-
               <button
                 onClick={() =>
                   setConfirmModal({
                     isOpen: true,
                     type: 'permanent_delete',
                     title: 'XÓA VĨNH VIỄN',
-                    message: 'Bạn có chắc chắn xóa VĨNH VIỄN tài khoản này? Dữ liệu cá nhân sẽ bị ẩn danh hoàn toàn.',
+                    message: 'Bạn có chắc chắn xóa VĨNH VIỄN tài khoản này?',
                   })
                 }
-                className="flex items-center gap-2 rounded-lg border-2 border-error bg-error text-on-error px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-error/90"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
               >
-                <Icon name="delete_forever" size={18} /> Xóa Vĩnh Viễn
+                <Icon name="delete_forever" size={16} /> Xóa Vĩnh Viễn
               </button>
             </>
           )}

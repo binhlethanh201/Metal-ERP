@@ -44,17 +44,6 @@ const HeldOrdersDrawer = ({ isOpen, onClose, onResume, heldOrders = [] }) => {
     return `${mins} phút trước`;
   };
 
-  const getExpiryLabel = (heldAt) => {
-    if (!heldAt) return '';
-    const expiry = new Date(heldAt).getTime() + 24 * 3600000;
-    const remaining = expiry - Date.now();
-    if (remaining <= 0) return { label: 'Đã hết hạn', variant: 'danger' };
-    const hours = Math.floor(remaining / 3600000);
-    if (hours < 2) return { label: `Còn ${hours}h`, variant: 'danger' };
-    if (hours < 6) return { label: `Còn ${hours}h`, variant: 'warning' };
-    return { label: `Còn ${hours}h`, variant: 'info' };
-  };
-
   return (
     <Modal
       isOpen={isOpen}

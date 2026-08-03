@@ -11,12 +11,6 @@ export const useBranchSettings = (branchId) => {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
 
-  // Fetch settings on mount or branchId change
-  useEffect(() => {
-    if (!branchId) return;
-    fetchSettings();
-  }, [branchId, fetchSettings]);
-
   const fetchSettings = useCallback(async () => {
     if (!branchId) return;
     setLoading(true);
@@ -43,6 +37,12 @@ export const useBranchSettings = (branchId) => {
       setLoading(false);
     }
   }, [branchId]);
+
+  // Fetch settings on mount or branchId change
+  useEffect(() => {
+    if (!branchId) return;
+    fetchSettings();
+  }, [branchId, fetchSettings]);
 
   const saveSettings = useCallback(
     async (data) => {
