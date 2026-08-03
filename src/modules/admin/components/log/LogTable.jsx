@@ -34,7 +34,18 @@ const actionTranslations = {
   'PERMANENT_DELETE_USER': 'Xóa vĩnh viễn tài khoản',
   'UPDATE_PRODUCT': 'Cập nhật sản phẩm',
   'CREATE_PRODUCT': 'Tạo sản phẩm',
-  'DELETE_PRODUCT': 'Xóa sản phẩm'
+  'DELETE_PRODUCT': 'Xóa sản phẩm',
+  'ASSIGN_ROLE': 'Gán vai trò',
+  'BAN_STAFF': 'Khóa tài khoản nhân viên',
+  'EXCEL_IMPORT': 'Nhập từ Excel',
+  'APPROVE_PO': 'Duyệt đơn mua hàng',
+  'CREATE_STOCK_TICKET': 'Tạo phiếu kiểm kho',
+  'RESOLVE_VIOLATION': 'Xử lý vi phạm',
+  'CREATE_BRANCH_PRODUCT': 'Thêm sản phẩm chi nhánh',
+  'DEACTIVATE_USER': 'Khóa tài khoản',
+  'ACTIVATE_USER': 'Kích hoạt tài khoản',
+  'RESET_PASSWORD': 'Khôi phục mật khẩu',
+  'DELETE_BRANCH': 'Xóa cửa hàng'
 };
 
 export const translateAction = (action) => {
@@ -93,9 +104,27 @@ const LogTable = ({ logs, onRowClick }) => {
 
                   <div
                     className="mt-0.5 max-w-xl truncate text-[11px] text-slate-500 dark:text-[#999999]"
-                    title={(log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')}
+                    title={(log.description || '')
+                      .replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')
+                      .replace(/SalesStaff|Sales Staff/g, 'Nhân viên Bán hàng')
+                      .replace(/InventoryStaff|Inventory Staff/g, 'Nhân viên Kho')
+                      .replace(/Owner/g, 'Chủ cửa hàng')
+                      .replace(/Role:/g, 'Vai trò:')
+                      .replace(/Branch:/g, 'Cửa hàng:')
+                      .replace(/\(soft\)/g, '(tạm ẩn)')
+                      .replace(/chi nhánh/g, 'cửa hàng')
+                    }
                   >
-                    {(log.description || 'Không có mô tả').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')}
+                    {(log.description || 'Không có mô tả')
+                      .replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')
+                      .replace(/SalesStaff|Sales Staff/g, 'Nhân viên Bán hàng')
+                      .replace(/InventoryStaff|Inventory Staff/g, 'Nhân viên Kho')
+                      .replace(/Owner/g, 'Chủ cửa hàng')
+                      .replace(/Role:/g, 'Vai trò:')
+                      .replace(/Branch:/g, 'Cửa hàng:')
+                      .replace(/\(soft\)/g, '(tạm ẩn)')
+                      .replace(/chi nhánh/g, 'cửa hàng')
+                    }
                   </div>
                 </td>
               </tr>

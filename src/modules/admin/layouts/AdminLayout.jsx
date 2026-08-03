@@ -112,7 +112,6 @@ const AdminLayout = () => {
           badge: null,
           icon: 'admin_panel_settings',
         },
-        { label: 'Quản lý Cửa hàng', path: '/admin/branches', badge: null, icon: 'store' },
       ],
     },
 
@@ -125,7 +124,7 @@ const AdminLayout = () => {
           badge: null,
           icon: 'campaign',
         },
-        { label: 'Nhật ký máy chủ (Log)', path: '/admin/logs', badge: null, icon: 'terminal' },
+        { label: 'Nhật ký máy chủ', path: '/admin/logs', badge: null, icon: 'terminal' },
       ],
     },
   ];

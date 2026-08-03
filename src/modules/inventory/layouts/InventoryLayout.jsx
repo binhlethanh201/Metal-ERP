@@ -49,6 +49,8 @@ const InventoryLayout = () => {
         data.isUrgent ? 'warning' : 'info',
         data.content
       );
+      // Phát sự kiện để báo cho các component khác (như Notification Dropdown) cập nhật
+      window.dispatchEvent(new CustomEvent('RefreshNotifications'));
     });
 
     connection.start().catch((err) => {
