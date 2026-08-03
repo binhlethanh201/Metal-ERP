@@ -139,11 +139,19 @@ export const TicketDetailModal = ({
       onReload && onReload();
       onClose();
     } catch (error) {
-      const errList = error?.data?.errors;
-      const msg = Array.isArray(errList)
-        ? errList.join(' | ')
-        : error?.message || 'Lỗi khi xác nhận phiếu';
-      onNotify && onNotify({ type: 'error', message: msg });
+      let msg;
+      if (error?.status === 409 || error?.status === 400) {
+        msg = 'Phiếu này đã được duyệt trước đó! Tồn kho đã được hạch toán.';
+        window.alert(msg);
+      } else {
+        const errList = error?.data?.errors;
+        msg = Array.isArray(errList)
+          ? errList.join(' | ')
+          : error?.message || 'Lỗi khi xác nhận phiếu';
+        onNotify && onNotify({ type: 'error', message: msg });
+      }
+      onReload && onReload();
+      onClose();
     } finally {
       setIsConfirming(false);
     }
