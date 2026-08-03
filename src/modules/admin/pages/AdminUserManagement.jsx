@@ -9,7 +9,9 @@ const AdminUserManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // eslint-disable-next-line no-unused-vars
   const [branchFilter, setBranchFilter] = useState('');
+  // eslint-disable-next-line no-unused-vars
   const [roleFilter, setRoleFilter] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
