@@ -10,7 +10,7 @@ import PosHeader from '../components/layout/PosHeader';
 import PosFooter from '../components/layout/PosFooter';
 import Icon from '../../../shared/components/Icon';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5100';
+const API_BASE = process.env.REACT_APP_API_URL;
 const HUB_URL = `${API_BASE}/r/mepHub`;
 
 const ROUTE_TO_MENU = {

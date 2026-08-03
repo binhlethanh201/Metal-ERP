@@ -221,7 +221,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const handleDownloadTemplate = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch('http://localhost:5100/api/inwardinventoryexcel/template', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/inwardinventoryexcel/template`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Tải template thất bại');
@@ -245,7 +245,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       const token = localStorage.getItem('authToken');
       const formData = new FormData();
       formData.append('File', file);
-      const res = await fetch('http://localhost:5100/api/inwardinventoryexcel/parse', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/inwardinventoryexcel/parse`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

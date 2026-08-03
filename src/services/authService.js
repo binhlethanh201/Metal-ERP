@@ -20,7 +20,7 @@ const getAuthBaseUrl = () => {
   const envUrl =
     normalizeBaseUrl(process.env.REACT_APP_AUTH_URL) ||
     normalizeBaseUrl(process.env.REACT_APP_API_URL) ||
-    'http://localhost:5100';
+    '';
 
   // Xóa bỏ /api hoặc /api/Auth ở cuối nếu lỡ nhập vào .env để lấy domain thuần
   const cleanDomain = envUrl.replace(/\/api(\/Auth)?$/, '');

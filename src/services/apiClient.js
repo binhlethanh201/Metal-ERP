@@ -3,7 +3,7 @@
  * Sửa đổi tại đây sẽ ảnh hưởng đến toàn bộ ứng dụng
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5100';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const API_CONFIG = {
   baseURL: API_BASE_URL,
@@ -217,8 +217,8 @@ export const apiDelete = (endpoint, options = {}) =>
   apiClient(endpoint, { ...options, method: 'DELETE' });
 
 // ============= POS-specific helpers =============
-// Backend POS chạy ở localhost:5100, khác với inventory (localhost:3000)
-const POS_BASE_URL = process.env.REACT_APP_POS_API_URL || 'http://localhost:5100/api';
+// POS dùng chung backend với inventory; baseURL thêm hậu tố /api
+const POS_BASE_URL = `${API_BASE_URL}/api`;
 
 /**
  * GET request cho POS backend

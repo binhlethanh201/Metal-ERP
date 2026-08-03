@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const HandleViolationModal = ({ isOpen, onClose, reportData, onConfirm }) => {
@@ -30,11 +30,7 @@ const HandleViolationModal = ({ isOpen, onClose, reportData, onConfirm }) => {
             <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">
               Äá»‘i tÆ°á»£ng pháº¡t: <span className="text-red-600 dark:text-red-500">{reportData.targetName}</span>
             </p>
-<<<<<<< HEAD
-            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">Log ID: {reportData.id}</p>
-=======
-            <p className="mt-1 text-xs text-on-surface-variant">ID bản ghi: {reportData.id}</p>
->>>>>>> 9d5631bfb765b833a8d7830917d3f30bf3c6f588
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">ID bản ghi: {reportData.id}</p>
           </div>
 
           <div>
