@@ -48,7 +48,7 @@ const LogDetailModal = ({ log, onClose }) => {
       `Thời gian: ${log.timestamp}`,
       `Mức độ: ${log.level}`,
       `Hành động: ${translateAction(log.action)}`,
-      `Mô tả: ${(log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')}`,
+      `Mô tả: ${(log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9-]{36}/gi, '')}`,
       log.ipAddress ? `IP: ${log.ipAddress}` : '',
       log.userAgent ? `Trình duyệt: ${log.userAgent}` : '',
     ]
@@ -125,7 +125,7 @@ const LogDetailModal = ({ log, onClose }) => {
             </h4>
             <div className="rounded-md border border-slate-200 dark:border-[#333333] bg-slate-900 dark:bg-black p-4">
               <p className="break-words font-mono text-sm leading-relaxed text-slate-100 dark:text-white">
-                {(log.description || '—').replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')}
+                {(log.description || '—').replace(/( - Branch: | tại chi nhánh )[a-f0-9-]{36}/gi, '')}
               </p>
             </div>
           </div>

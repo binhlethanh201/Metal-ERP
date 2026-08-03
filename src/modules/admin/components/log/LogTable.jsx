@@ -45,7 +45,8 @@ const actionTranslations = {
   'DEACTIVATE_USER': 'Khóa tài khoản',
   'ACTIVATE_USER': 'Kích hoạt tài khoản',
   'RESET_PASSWORD': 'Khôi phục mật khẩu',
-  'DELETE_BRANCH': 'Xóa cửa hàng'
+  'DELETE_BRANCH': 'Xóa cửa hàng',
+  'CREATE_BRANCH': 'Tạo cửa hàng'
 };
 
 export const translateAction = (action) => {
@@ -105,7 +106,7 @@ const LogTable = ({ logs, onRowClick }) => {
                   <div
                     className="mt-0.5 max-w-xl truncate text-[11px] text-slate-500 dark:text-[#999999]"
                     title={(log.description || '')
-                      .replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')
+                      .replace(/( - Branch: | tại chi nhánh )[a-f0-9-]{36}/gi, '')
                       .replace(/SalesStaff|Sales Staff/g, 'Nhân viên Bán hàng')
                       .replace(/InventoryStaff|Inventory Staff/g, 'Nhân viên Kho')
                       .replace(/Owner/g, 'Chủ cửa hàng')
@@ -116,7 +117,7 @@ const LogTable = ({ logs, onRowClick }) => {
                     }
                   >
                     {(log.description || 'Không có mô tả')
-                      .replace(/( - Branch: | tại chi nhánh )[a-f0-9\-]{36}/gi, '')
+                      .replace(/( - Branch: | tại chi nhánh )[a-f0-9-]{36}/gi, '')
                       .replace(/SalesStaff|Sales Staff/g, 'Nhân viên Bán hàng')
                       .replace(/InventoryStaff|Inventory Staff/g, 'Nhân viên Kho')
                       .replace(/Owner/g, 'Chủ cửa hàng')

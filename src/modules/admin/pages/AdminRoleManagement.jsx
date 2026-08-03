@@ -317,7 +317,7 @@ const AdminRoleManagement = () => {
                             : 'text-slate-900 dark:text-[#e5e5e5]'
                         }`}
                       >
-                        {role.roleName === 'InventoryStaff' ? 'Inventory Staff' : role.roleName === 'SalesStaff' ? 'Sales Staff' : role.roleName}
+                        {role.roleName === 'InventoryStaff' ? 'Nhân viên Kho' : role.roleName === 'SalesStaff' ? 'Nhân viên Bán hàng' : role.roleName === 'Owner' ? 'Chủ cửa hàng' : role.roleName}
                       </span>
 
                       <span
@@ -371,7 +371,7 @@ const AdminRoleManagement = () => {
                   <h2 className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
                     Quyền hạn của:{' '}
                     <span className="text-[#004785] dark:text-blue-400">
-                      {selectedRole?.roleName}
+                      {selectedRole?.roleName === 'InventoryStaff' ? 'Nhân viên Kho' : selectedRole?.roleName === 'SalesStaff' ? 'Nhân viên Bán hàng' : selectedRole?.roleName === 'Owner' ? 'Chủ cửa hàng' : selectedRole?.roleName}
                     </span>
                   </h2>
 
@@ -494,12 +494,7 @@ const AdminRoleManagement = () => {
                                       {permission.permissionName || permission.permissionCode}
                                     </div>
 
-                                    <div
-                                      className="w-32 truncate text-[10px] leading-tight text-slate-500 dark:text-[#999999] md:w-48"
-                                      title={permission.permissionCode}
-                                    >
-                                      {permission.permissionCode}
-                                    </div>
+
                                   </div>
                                 </label>
                               );

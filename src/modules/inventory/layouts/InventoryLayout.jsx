@@ -5,28 +5,83 @@ import InventorySidebar from '../components/home/InventorySidebar';
 import InventoryHeader from '../components/home/InventoryHeader';
 import AiChatWidget from '../../../shared/components/AiChatWidget';
 import Icon from '../../../shared/components/Icon';
+import { getInventoryNotifications } from '../services/inventoryCheckService';
+import { useAuth } from '../../../shared/hooks/useAuth';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5100';
 const HUB_URL = `${API_BASE}/r/mepHub`;
 
 const InventoryLayout = () => {
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toasts, setToasts] = useState([]);
   const hubRef = useRef(null);
 
   // ---- Toast helpers ----
-  const addToast = useCallback((message, type = 'info', description = null) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type, description }]);
+  const addToast = useCallback((message, type = 'info', description = null, notifId = null) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message, type, description, notifId }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, type === 'warning' || type === 'error' ? 8000 : 5000);
   }, []);
 
+  const handleDismissToast = (t) => {
+    setToasts((prev) => prev.filter((item) => item.id !== t.id));
+    if (t.notifId) {
+      const key = `dismissed_toasts_${user?.userId || 'guest'}`;
+      const dismissed = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!dismissed.includes(t.notifId)) {
+        dismissed.push(t.notifId);
+        localStorage.setItem(key, JSON.stringify(dismissed));
+      }
+    }
+  };
+
   useEffect(() => {
     window.testToast = () => addToast('Đây là thông báo test', 'info', 'Chi tiết test');
     return () => { delete window.testToast; };
   }, [addToast]);
+
+  // Load missed recent system notifications on mount (within 1 hour)
+  useEffect(() => {
+    const fetchRecentSysNotifs = async () => {
+      try {
+        const res = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 });
+        if (res?.success && res.data?.items) {
+          const items = res.data.items;
+          const now = new Date();
+          const key = `dismissed_toasts_${user?.userId || 'guest'}`;
+          const dismissed = JSON.parse(localStorage.getItem(key) || '[]');
+          
+          const recent = items.filter(n => {
+            if (n.type !== 'Announcement' || n.isRead || dismissed.includes(n.notificationId)) return false;
+            const createdAt = new Date(n.createdAt.endsWith('Z') || n.createdAt.includes('+') ? n.createdAt : n.createdAt + 'Z');
+            const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
+            return hoursDiff <= 1; // within 1 hour
+          });
+          
+          // Show toasts sequentially or together
+          recent.forEach((n, idx) => {
+            setTimeout(() => {
+              const isUrgent = (n.message || '').includes('[KHẨN');
+              addToast(
+                isUrgent ? 'Thông báo Khẩn cấp' : 'Thông báo hệ thống mới',
+                isUrgent ? 'warning' : 'info',
+                n.message,
+                n.notificationId
+              );
+            }, idx * 1000); // Stagger toasts by 1 second
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch recent system notifs on mount:', err);
+      }
+    };
+    
+    fetchRecentSysNotifs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // ---- SignalR real-time connection ----
   useEffect(() => {
@@ -92,7 +147,7 @@ const InventoryLayout = () => {
               )}
             </div>
             <button
-              onClick={() => setToasts((prev) => prev.filter((item) => item.id !== t.id))}
+              onClick={() => handleDismissToast(t)}
               className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10"
             >
               <Icon name="close" size={14} />
