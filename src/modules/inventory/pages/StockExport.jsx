@@ -7,6 +7,8 @@ import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Modal } from '../../../shared/components/Modal';
 import Icon from '../../../shared/components/Icon';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../shared/utils/permissions';
 import {
   createOutwardInventory,
   confirmOutwardInventory,
@@ -29,31 +31,32 @@ const normalizeExportRows = (item, index) => {
   const totalQuantity = itemsList.reduce((acc, curr) => acc + Number(curr?.quantity || 0), 0);
   const productNames = itemsList.map((i) => i.productName || '').filter(Boolean);
   const quantities = itemsList.map((i) => Number(i.quantity || 0));
-  const productName = productNames.length > 0
-    ? productNames.join('\n')
-    : 'Sản phẩm xuất kho';
-  const quantityDisplay = quantities.length > 0
-    ? quantities.map((q) => q.toLocaleString('vi-VN')).join('\n')
-    : String(item?.quantity || 0);
+  const productName = productNames.length > 0 ? productNames.join('\n') : 'Sản phẩm xuất kho';
+  const quantityDisplay =
+    quantities.length > 0
+      ? quantities.map((q) => q.toLocaleString('vi-VN')).join('\n')
+      : String(item?.quantity || 0);
   const ticketCode = item?.ticketCode || `EX-${index + 1}`;
   let partyName = '';
   try {
     partyName = localStorage.getItem(`outward_party_${ticketCode}`) || '';
   } catch {}
 
-  return [{
-    id: item?.stockTicketId || item?.id || `EXP-${index + 1}`,
-    stockTicketId: item?.stockTicketId || item?.id,
-    ticketCode,
-    productName,
-    quantity: totalQuantity || item?.quantity || 0,
-    quantityDisplay,
-    date: item?.createdAt || item?.Date || '',
-    reason: item?.reason || item?.Reason || '',
-    status: item?.status || item?.Status || 'COMPLETED',
-    cancelReason: item?.cancelReason || '',
-    partyName,
-  }];
+  return [
+    {
+      id: item?.stockTicketId || item?.id || `EXP-${index + 1}`,
+      stockTicketId: item?.stockTicketId || item?.id,
+      ticketCode,
+      productName,
+      quantity: totalQuantity || item?.quantity || 0,
+      quantityDisplay,
+      date: item?.createdAt || item?.Date || '',
+      reason: item?.reason || item?.Reason || '',
+      status: item?.status || item?.Status || 'COMPLETED',
+      cancelReason: item?.cancelReason || '',
+      partyName,
+    },
+  ];
 };
 
 const getItemKey = (item) => item.branchProductId || item.productId || item.id || item.Id;
@@ -66,8 +69,14 @@ const REASON_OPTIONS = [
 ];
 
 const getOutwardType = (reason) => {
-  if (reason === 'Trả hàng nhà cung cấp') return 1;
+  // Map lý do xuất → OutwardInventoryType enum ở BE:
+  //   1 = ReturnToSupplier  → RTS (Xuất bán hàng / Trả NCC)
+  //   2 = DamagedHaoHut     → DAM (Xuất hủy / Hao hụt)
+  //   3 = InternalUse       → INT (Xuất nội bộ / Điều chuyển)
+  if (reason === 'Xuất bán hàng' || reason === 'Trả hàng nhà cung cấp') return 1;
   if (reason === 'Xuất hủy / Hao hụt') return 2;
+  if (reason === 'Xuất nội bộ / Điều chuyển') return 3;
+  // 'Khác...' hoặc custom reason: mặc định 3 (InternalUse) — BE sẽ xử lý tiếp
   return 3;
 };
 
@@ -89,6 +98,8 @@ const nowDateTime = () => {
 
 export const StockExport = () => {
   const today = nowDateTime();
+  const { user } = useAuth();
+  const canCreate = hasPermission(user, 'STOCK_OUTWARD_CREATE');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exports, setExports] = useState([]);
@@ -146,7 +157,9 @@ export const StockExport = () => {
 
       try {
         const exportsResponse = await getOutwardInventories(queryParams);
-        const exportItems = extractList(exportsResponse).flatMap(normalizeExportRows).filter(Boolean);
+        const exportItems = extractList(exportsResponse)
+          .flatMap(normalizeExportRows)
+          .filter(Boolean);
         setExports(exportItems);
       } catch {
         setExports([]);
@@ -339,21 +352,26 @@ export const StockExport = () => {
         if (validRows && validRows.length > 0) {
           // Đảm bảo có đủ dữ liệu sản phẩm để tra cứu tồn kho
           const existingIds = new Set(products.map((p) => String(getItemKey(p))));
+          let availableProducts = products;
           const missingIds = validRows
             .map((row) => String(row.productId || row.resolvedProductId || ''))
             .filter((id) => id && !existingIds.has(id));
           if (missingIds.length > 0) {
             try {
-              const allRes = await getProducts({ pageNumber: 1, pageSize: 2000 });
+              const allRes = await getProducts({ pageNumber: 1, pageSize: 1000 });
               const allItems = extractList(allRes);
+              availableProducts = allItems;
               if (allItems.length > products.length) setProducts(allItems);
             } catch {}
           }
 
           const mappedItems = validRows.map((row) => {
             const pid = row.productId || row.resolvedProductId || '';
-            const matchedProduct = products.find(
-              (p) => String(getItemKey(p)) === String(pid)
+            const matchedProduct = availableProducts.find(
+              (p) =>
+                String(getItemKey(p)) === String(pid) ||
+                String(p.productId || p.Id || '') === String(pid) ||
+                String(p.productCode || p.ProductCode || '') === String(pid)
             );
             const stock = matchedProduct ? getProductStock(matchedProduct) : 0;
             const unit = matchedProduct ? getUnit(matchedProduct) : '';
@@ -370,11 +388,17 @@ export const StockExport = () => {
           });
           setItems(mappedItems);
           if (mappedItems.length === 0 && errors && errors.length > 0) {
-            setStatusMessage('File có lỗi, không có dòng nào hợp lệ để nạp. Vui lòng sửa file Excel và thử lại.');
+            setStatusMessage(
+              'File có lỗi, không có dòng nào hợp lệ để nạp. Vui lòng sửa file Excel và thử lại.'
+            );
           } else if (mappedItems.length > 0 && errors && errors.length > 0) {
-            setStatusMessage(`Đã nạp ${mappedItems.length} dòng hợp lệ. ${errors.length} dòng lỗi bị bỏ qua.`);
+            setStatusMessage(
+              `Đã nạp ${mappedItems.length} dòng hợp lệ. ${errors.length} dòng lỗi bị bỏ qua.`
+            );
           } else if (mappedItems.length > 0) {
-            setStatusMessage(`Đã nạp ${mappedItems.length} sản phẩm từ Excel. Kiểm tra và xác nhận xuất kho.`);
+            setStatusMessage(
+              `Đã nạp ${mappedItems.length} sản phẩm từ Excel. Kiểm tra và xác nhận xuất kho.`
+            );
           }
           if (groups && groups.length === 1) {
             const lyDo = groups[0].lyDo;
@@ -390,7 +414,9 @@ export const StockExport = () => {
           }
           if (!data.data.hasErrors) {
             setImportResult(null);
-            setStatusMessage(`Đã nạp ${mappedItems.length} sản phẩm từ Excel. Kiểm tra và xác nhận xuất kho.`);
+            setStatusMessage(
+              `Đã nạp ${mappedItems.length} sản phẩm từ Excel. Kiểm tra và xác nhận xuất kho.`
+            );
           }
         }
       } else {
@@ -471,6 +497,11 @@ export const StockExport = () => {
       event.preventDefault();
     }
 
+    if (!canCreate) {
+      setStatusMessage('Bạn không có quyền tạo phiếu xuất kho');
+      return;
+    }
+
     const errors = validateForm();
     if (errors.length > 0) {
       setStatusMessage(errors.join('; '));
@@ -489,9 +520,9 @@ export const StockExport = () => {
         note: note || reasonText,
         ...(ticketCode.trim() && { ticketCode: ticketCode.trim() }),
         items: items.map((i) => ({
-          branchProductId: getItemKey(i),
+          branchProductId: i.productId,
           quantity: Number(i.quantity || 0),
-          ...(isSale && { unitPrice: Number(i.unitPrice || 0) }),
+          unitPrice: Number(i.unitPrice || 0),
         })),
       };
       setStatusMessage('Đang tạo phiếu xuất kho...');
@@ -548,15 +579,23 @@ export const StockExport = () => {
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Xuất kho</h1>
-          <p className="mt-1 text-gray-600 dark:text-[#999999]">Ghi nhận và quản lý các phiếu xuất từ kho</p>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">
+            Ghi nhận và quản lý các phiếu xuất từ kho
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
             {isLoading ? 'Đang tải dữ liệu xuất kho...' : 'Sẵn sàng tạo phiếu'}
           </div>
-          <Button variant="primary" onClick={openModal} className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={openModal}
+            disabled={!canCreate}
+            title={canCreate ? '' : 'Bạn không có quyền tạo phiếu xuất kho'}
+            className="flex items-center gap-2"
+          >
             <Icon name="add" size={20} />
-             Xuất hàng
+            Xuất hàng
           </Button>
         </div>
       </div>
@@ -605,19 +644,19 @@ export const StockExport = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-blue-600">{(summary.totalExports)}</div>
+            <div className="text-3xl font-bold text-blue-600">{summary.totalExports}</div>
             <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu xuất</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-green-600">{(summary.totalQuantity)}</div>
+            <div className="text-3xl font-bold text-green-600">{summary.totalQuantity}</div>
             <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng số lượng xuất</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-3xl font-bold text-yellow-600">{(summary.monthlyCount)}</div>
+            <div className="text-3xl font-bold text-yellow-600">{summary.monthlyCount}</div>
             <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Trong tháng</p>
           </div>
         </Card>
@@ -658,50 +697,66 @@ export const StockExport = () => {
           >
             <Icon name="upload_file" size={16} /> {importing ? 'Đang import...' : 'Nhập từ Excel'}
           </button>
-          {importing && <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>}
+          {importing && (
+            <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>
+          )}
         </div>
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* Error / Status Banner */}
-          {statusMessage && (
+          {statusMessage &&
             (() => {
               const msg = statusMessage.toLowerCase();
-              const isError = msg.includes('lỗi') || msg.includes('chưa') || msg.includes('tối thiểu') || msg.includes('không hợp lệ') || msg.includes('vượt');
+              const isError =
+                msg.includes('lỗi') ||
+                msg.includes('chưa') ||
+                msg.includes('tối thiểu') ||
+                msg.includes('không hợp lệ') ||
+                msg.includes('vượt');
               return (
-            <div
-              className={`flex items-start gap-3 rounded-lg border p-4 ${
-                isError
-                  ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-              }`}
-            >
-              <Icon
-                name={isError ? 'error' : 'check_circle'}
-                size={20}
-                className="mt-0.5 shrink-0"
-              />
-              <div className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800 dark:text-red-300' : 'text-emerald-800 dark:text-emerald-400'}`}>{statusMessage}</div>
-              <button
-                type="button"
-                onClick={() => { setStatusMessage(''); setFieldErrors({}); }}
-                className="shrink-0 rounded p-1 opacity-60 hover:opacity-100"
-              >
-                <Icon name="close" size={16} />
-              </button>
-            </div>
+                <div
+                  className={`flex items-start gap-3 rounded-lg border p-4 ${
+                    isError
+                      ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
+                      : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
+                  }`}
+                >
+                  <Icon
+                    name={isError ? 'error' : 'check_circle'}
+                    size={20}
+                    className="mt-0.5 shrink-0"
+                  />
+                  <div
+                    className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800 dark:text-red-300' : 'text-emerald-800 dark:text-emerald-400'}`}
+                  >
+                    {statusMessage}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusMessage('');
+                      setFieldErrors({});
+                    }}
+                    className="shrink-0 rounded p-1 opacity-60 hover:opacity-100"
+                  >
+                    <Icon name="close" size={16} />
+                  </button>
+                </div>
               );
-            })()
-          )}
+            })()}
 
           {importResult && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-bold text-amber-800 dark:text-amber-300">
-                  Kết quả import: {importResult.validRows?.length || 0} dòng hợp lệ, {importResult.errors?.length || 0} lỗi
+                  Kết quả import: {importResult.validRows?.length || 0} dòng hợp lệ,{' '}
+                  {importResult.errors?.length || 0} lỗi
                 </h3>
-                <Button variant="secondary" size="sm" onClick={() => setImportResult(null)}>Đóng</Button>
+                <Button variant="secondary" size="sm" onClick={() => setImportResult(null)}>
+                  Đóng
+                </Button>
               </div>
               {importResult.errors?.length > 0 && (
-                <div className="max-h-40 overflow-y-auto space-y-1">
+                <div className="max-h-40 space-y-1 overflow-y-auto">
                   {importResult.errors.map((err, i) => (
                     <p key={i} className="text-sm text-red-600 dark:text-red-400">
                       Dòng {err.rowNumber}: {err.errorMessage}
@@ -712,14 +767,18 @@ export const StockExport = () => {
               {importResult.groups?.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {importResult.groups.map((g, i) => (
-                    <span key={i} className="rounded bg-white px-2 py-1 text-xs text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]">
+                    <span
+                      key={i}
+                      className="rounded bg-white px-2 py-1 text-xs text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]"
+                    >
                       {g.lyDo}: {g.itemCount} SP - {g.totalValue?.toLocaleString('vi-VN')} VNĐ
                     </span>
                   ))}
                 </div>
               )}
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Các dòng hợp lệ đã được nạp vào form bên dưới. Kiểm tra lại và bấm Xác nhận xuất kho.
+                Các dòng hợp lệ đã được nạp vào form bên dưới. Kiểm tra lại và bấm Xác nhận xuất
+                kho.
               </p>
             </div>
           )}
@@ -734,7 +793,8 @@ export const StockExport = () => {
               {/* Số phiếu xuất */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
-                  Số phiếu xuất <span className="font-normal text-slate-400 dark:text-[#808080]"></span>
+                  Số phiếu xuất{' '}
+                  <span className="font-normal text-slate-400 dark:text-[#808080]"></span>
                 </label>
                 <input
                   type="text"
@@ -754,7 +814,9 @@ export const StockExport = () => {
                   type="date"
                   required
                   className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.exportDate ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                    fieldErrors.exportDate
+                      ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
+                      : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={exportDate}
                   onChange={(e) => {
@@ -766,7 +828,9 @@ export const StockExport = () => {
 
               {/* Giờ xuất */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Giờ xuất</label>
+                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                  Giờ xuất
+                </label>
                 <input
                   type="time"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
@@ -825,7 +889,9 @@ export const StockExport = () => {
                         : 'VD: Xưởng sản xuất số 1'
                   }
                   className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                    fieldErrors.targetName
+                      ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
+                      : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={targetName}
                   onChange={(e) => {
@@ -845,7 +911,9 @@ export const StockExport = () => {
                   type="text"
                   placeholder="VD: Đối tác vận chuyển, Bảo hành..."
                   className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                    fieldErrors.targetName
+                      ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
+                      : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={targetName}
                   onChange={(e) => {
@@ -892,7 +960,9 @@ export const StockExport = () => {
                   type="text"
                   placeholder="Nhập lý do khác..."
                   className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.reasonOther ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                    fieldErrors.reasonOther
+                      ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
+                      : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                   value={reasonOther}
                   onChange={(e) => {
@@ -904,7 +974,9 @@ export const StockExport = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Ghi chú thêm</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                Ghi chú thêm
+              </label>
               <input
                 type="text"
                 placeholder="Ghi chú chi tiết (không bắt buộc)"
@@ -943,7 +1015,13 @@ export const StockExport = () => {
                     className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                     onClick={() => setDropdownOpen((o) => !o)}
                   >
-                    <span className={selectedProductId ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}>
+                    <span
+                      className={
+                        selectedProductId
+                          ? 'text-slate-800 dark:text-[#e5e5e5]'
+                          : 'text-slate-400 dark:text-[#808080]'
+                      }
+                    >
                       {selectedProductId
                         ? (() => {
                             const p = products.find((x) => getItemKey(x) === selectedProductId);
@@ -1205,7 +1283,9 @@ export const StockExport = () => {
                             </div>
                           </td>
                           <td className="px-3 py-3 text-center">
-                            <span className="text-[12px] text-slate-500 dark:text-[#999999]">{item.unit || '---'}</span>
+                            <span className="text-[12px] text-slate-500 dark:text-[#999999]">
+                              {item.unit || '---'}
+                            </span>
                           </td>
                           <td className="px-3 py-3 text-center">
                             <span
@@ -1289,9 +1369,13 @@ export const StockExport = () => {
                 </table>
               </div>
             ) : (
-              <div className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
-                fieldErrors.items ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20' : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
-              }`}>
+              <div
+                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
+                  fieldErrors.items
+                    ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20'
+                    : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
+                }`}
+              >
                 <Icon name="inventory_2" size={32} className="mb-2 opacity-40" />
                 <p className="text-sm font-medium">Chưa có sản phẩm nào</p>
                 <p className="mt-1 text-xs">Thêm sản phẩm ở trên để tạo phiếu xuất</p>
@@ -1311,7 +1395,8 @@ export const StockExport = () => {
             </button>
             <button
               type="button"
-              disabled={isSubmitting || items.length === 0}
+              disabled={isSubmitting || !canCreate || items.length === 0}
+              title={!canCreate ? 'Bạn không có quyền tạo phiếu xuất kho' : ''}
               className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-400 dark:hover:bg-sky-900/30"
               onClick={(e) => handleSubmit(e, true)}
             >
@@ -1320,7 +1405,8 @@ export const StockExport = () => {
             <Button
               type="button"
               variant="primary"
-              disabled={isSubmitting || items.length === 0}
+              disabled={isSubmitting || !canCreate || items.length === 0}
+              title={!canCreate ? 'Bạn không có quyền tạo phiếu xuất kho' : ''}
               onClick={(e) => handleSubmit(e, false)}
             >
               {isSubmitting ? 'Đang xử lý...' : 'Xác nhận xuất kho'}

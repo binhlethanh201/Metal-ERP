@@ -112,6 +112,7 @@ const AdminLayout = () => {
           badge: null,
           icon: 'admin_panel_settings',
         },
+        { label: 'Quản lý Cửa hàng', path: '/admin/branches', badge: null, icon: 'store' },
       ],
     },
 

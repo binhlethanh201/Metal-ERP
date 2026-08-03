@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
-const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
+const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -19,7 +19,10 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
         email: '',
         password: '',
         phoneNumber: '',
-        roleName: '', // 'Owner', 'Sales Staff', 'Inventory Staff', 'Staff'
+        roleIds: [],
+        branchId: '',
+        roleName: '',
+        branchName: '',
       });
       setErrors({});
     }
@@ -39,6 +42,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
     setFormData((prev) => ({
       ...prev,
       roleName,
+      branchName: '', // Reset when changing role
     }));
     if (errors.roleName) {
       setErrors({ ...errors, roleName: null });
@@ -63,6 +67,16 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
     }
     if (!formData.roleName) newErrors.roleName = 'Vui lòng chọn loại tài khoản.';
     
+    // Nếu là Owner và không chọn BranchId có sẵn, thì bắt buộc nhập tên cửa hàng
+    if (formData.roleName === 'Owner' && !formData.branchId && !formData.branchName?.trim()) {
+      newErrors.branchName = 'Vui lòng nhập tên cửa hàng mới cho Chủ cửa hàng này, hoặc chọn một Cửa hàng có sẵn bên dưới.';
+    }
+
+    // Nếu không phải Owner, bắt buộc phải chọn BranchId
+    if (formData.roleName && formData.roleName !== 'Owner' && formData.roleName !== 'Admin' && !formData.branchId) {
+      newErrors.branchId = 'Vui lòng chọn Cửa hàng cho tài khoản này.';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -75,9 +89,12 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
     onSave(dataToSave);
   };
 
-  // Chỉ hiển thị 3 loại tài khoản theo yêu cầu
-  const allowedRoles = ['Owner', 'InventoryStaff', 'SalesStaff'];
-  const assignableRoles = roles.filter((r) => allowedRoles.includes(r.roleName));
+  // Bỏ chặn Staff, chỉ chặn Admin và CommunityUser
+  const assignableRoles = roles.filter(
+    (r) => 
+      r.roleName.toLowerCase() !== 'admin' && 
+      r.roleName.toLowerCase() !== 'communityuser'
+  );
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -176,7 +193,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles }) => {
                   />
                   <div>
                     <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">
-                      {role.roleName === 'InventoryStaff' ? 'Inventory Staff' : role.roleName === 'SalesStaff' ? 'Sales Staff' : role.roleName}
+                      {role.roleName === 'InventoryStaff' ? 'Nhân viên Kho' : role.roleName === 'SalesStaff' ? 'Nhân viên Bán hàng' : role.roleName === 'Owner' ? 'Chủ cửa hàng' : role.roleName}
                     </div>
                   </div>
                 </label>

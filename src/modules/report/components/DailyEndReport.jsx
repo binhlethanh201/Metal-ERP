@@ -8,7 +8,9 @@ export const DailyEndReport = ({ data }) => {
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card padding="p-5" className="border-t-4 border-t-blue-500">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">Ngày</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
+            Ngày
+          </p>
           <p className="mt-2 text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
             {new Date(data.reportDate).toLocaleDateString('vi-VN')}
           </p>
@@ -27,7 +29,9 @@ export const DailyEndReport = ({ data }) => {
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             Số lượng đơn
           </p>
-          <p className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">{data.totalOrders}</p>
+          <p className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">
+            {data.totalOrders}
+          </p>
         </Card>
 
         <Card padding="p-5" className="border-t-4 border-t-amber-500">
@@ -40,10 +44,18 @@ export const DailyEndReport = ({ data }) => {
         </Card>
       </div>
 
-      <Card header={<h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Cơ cấu thanh toán</h4>}>
+      <Card
+        header={
+          <h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
+            Cơ cấu thanh toán
+          </h4>
+        }
+      >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
-            <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">Tiền mặt</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+              Tiền mặt
+            </p>
             <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
               {formatCurrency(data.paymentBreakdown?.cashAmount || 0)}
             </p>
@@ -53,7 +65,9 @@ export const DailyEndReport = ({ data }) => {
           </div>
 
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
-            <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">Chuyển khoản</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+              Chuyển khoản
+            </p>
             <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
               {formatCurrency(data.paymentBreakdown?.transferAmount || 0)}
             </p>
@@ -76,39 +90,111 @@ export const DailyEndReport = ({ data }) => {
         </div>
       </Card>
       {(data.refundCount > 0 || data.refundCashAmount > 0 || data.refundTransferAmount > 0) && (
-        <Card header={<h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Hoàn tiền (phiếu trả hàng)</h4>}>
+        <Card
+          header={
+            <h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
+              Hoàn tiền (phiếu trả hàng)
+            </h4>
+          }
+        >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
-              <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">Hoàn tiền mặt</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                Hoàn tiền mặt
+              </p>
               <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
                 {formatCurrency(data.refundCashAmount || 0)}
               </p>
             </div>
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
-              <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">Hoàn chuyển khoản</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                Hoàn chuyển khoản
+              </p>
               <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
                 {formatCurrency(data.refundTransferAmount || 0)}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Số phiếu trả</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                Số phiếu trả
+              </p>
               <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
                 {data.refundCount || 0}
               </p>
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-[#999999]">Đổi hàng ngang giá không tính ở đây</p>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-[#999999]">
+                Đổi hàng ngang giá không tính ở đây
+              </p>
             </div>
           </div>
         </Card>
       )}
-      <Card header={<h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Phiếu kho trong ngày</h4>}>
+      <Card
+        header={
+          <h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
+            Phiếu kho trong ngày
+          </h4>
+        }
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-900/50 dark:bg-emerald-900/20">
-            <p className="text-xs font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Phiếu nhập</p>
-            <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">{data.inwardTicketCount || 0}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+              Phiếu nhập
+            </p>
+            <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
+              {data.inwardTicketCount || 0}
+            </p>
           </div>
           <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4 dark:border-rose-900/50 dark:bg-rose-900/20">
-            <p className="text-xs font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">Phiếu xuất</p>
-            <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">{data.outwardTicketCount || 0}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+              Phiếu xuất
+            </p>
+            <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
+              {data.outwardTicketCount || 0}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Chi phí và lợi nhuận ròng */}
+      <Card
+        header={
+          <h4 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
+            Chi phí & Lợi nhuận ròng
+          </h4>
+        }
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-xl border border-red-100 bg-red-50/50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
+            <p className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400">
+              Tổng chi phí
+            </p>
+            <p className="mt-1 text-xl font-bold text-red-600 dark:text-red-400">
+              {formatCurrency(data.totalExpense || 0)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">Phiếu chi tiền</p>
+          </div>
+          <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 dark:border-purple-900/50 dark:bg-purple-900/20">
+            <p className="text-xs font-bold uppercase tracking-wide text-purple-600 dark:text-purple-400">
+              Lợi nhuận ròng
+            </p>
+            <p
+              className={`mt-1 text-xl font-bold ${(data.netProfit || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+            >
+              {formatCurrency(data.netProfit || 0)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">Doanh thu - Chi phí</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+              Biên lợi nhuận
+            </p>
+            <p className="mt-1 text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
+              {data.totalRevenue > 0
+                ? (((data.netProfit || 0) / data.totalRevenue) * 100).toFixed(1)
+                : '0.0'}
+              %
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">Lợi nhuận / Doanh thu</p>
           </div>
         </div>
       </Card>

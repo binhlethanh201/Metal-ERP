@@ -154,10 +154,6 @@ const PosLayout = () => {
 
       {/* Header */}
       <PosHeader
-        onBarcodeScan={() => {
-          navigate('/pos');
-          setTimeout(() => showNotice('Đang mở chế độ quét mã'), 300);
-        }}
         onHistory={() => navigate('/pos/orders')}
         onQuickAdd={() => {
           navigate('/pos');

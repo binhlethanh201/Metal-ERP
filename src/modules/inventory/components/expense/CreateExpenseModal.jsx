@@ -17,6 +17,18 @@ const CreateExpenseModal = ({ isOpen, onClose, handleCreate, categories }) => {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
+  const formatAmountDisplay = (val) => {
+    if (!val) return '';
+    return Number(val).toLocaleString('vi-VN');
+  };
+
+  const handleAmountChange = (e) => {
+    const raw = e.target.value.replace(/\./g, '');
+    if (/^\d*$/.test(raw)) {
+      setForm((f) => ({ ...f, amount: raw }));
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setForm(EMPTY_FORM);
@@ -112,10 +124,11 @@ const CreateExpenseModal = ({ isOpen, onClose, handleCreate, categories }) => {
 
         <Input
           label="Số tiền (VNĐ)"
-          type="number"
-          min="1"
-          value={form.amount}
-          onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+          type="text"
+          inputMode="numeric"
+          value={formatAmountDisplay(form.amount)}
+          onChange={handleAmountChange}
+          placeholder="0"
           required
         />
 

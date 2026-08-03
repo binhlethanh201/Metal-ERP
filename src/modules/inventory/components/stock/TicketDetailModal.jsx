@@ -90,8 +90,8 @@ export const TicketDetailModal = ({
         const data = res?.data || res;
         if (active && data) {
           setDetail(data);
-          setEditReason(data.reason || '');
-          setEditNote(data.note || '');
+          setEditReason(data.reason || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : ''));
+          setEditNote(data.note || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : ''));
 
           // Tra cứu tên nhà cung cấp từ supplierId
           if (type === 'INWARD' && data.supplierId) {
@@ -139,11 +139,19 @@ export const TicketDetailModal = ({
       onReload && onReload();
       onClose();
     } catch (error) {
-      const errList = error?.data?.errors;
-      const msg = Array.isArray(errList)
-        ? errList.join(' | ')
-        : error?.message || 'Lỗi khi xác nhận phiếu';
-      onNotify && onNotify({ type: 'error', message: msg });
+      let msg;
+      if (error?.status === 409 || error?.status === 400) {
+        msg = 'Phiếu này đã được duyệt trước đó! Tồn kho đã được hạch toán.';
+        window.alert(msg);
+      } else {
+        const errList = error?.data?.errors;
+        msg = Array.isArray(errList)
+          ? errList.join(' | ')
+          : error?.message || 'Lỗi khi xác nhận phiếu';
+        onNotify && onNotify({ type: 'error', message: msg });
+      }
+      onReload && onReload();
+      onClose();
     } finally {
       setIsConfirming(false);
     }
@@ -203,6 +211,9 @@ export const TicketDetailModal = ({
   const isPending = statusUpper === 'PENDING';
   const isCompleted = statusUpper === 'COMPLETED';
   const isCancelled = statusUpper === 'CANCELLED';
+  const isCustomerReturn = detail?.ticketType === 'CUSTOMER_RETURN';
+  const isReturnSupplier = detail?.ticketType === 'RETURN_SUPPLIER';
+  const hidePriceFields = isCustomerReturn || isReturnSupplier;
 
   const canEditReason = isPending;
   const canEditNote = isPending || isCompleted;
@@ -408,13 +419,21 @@ export const TicketDetailModal = ({
                   <div>
                     <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Lý do phiếu:</span>
                     <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                      {detail.reason || 'Không có lý do'}
+                      {(() => {
+                        const raw = detail.reason || '';
+                        if (isCustomerReturn && (!raw || raw === 'Nhập kho')) return 'Khách hàng trả';
+                        return raw || 'Không có lý do';
+                      })()}
                     </p>
                   </div>
                   <div>
                     <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Ghi chú thêm:</span>
                     <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                      {detail.note || 'Không có ghi chú'}
+                      {(() => {
+                        const raw = detail.note || '';
+                        if (isCustomerReturn && (!raw || raw === 'Nhập kho')) return 'Khách hàng trả';
+                        return raw || 'Không có ghi chú';
+                      })()}
                     </p>
                   </div>
                 </div>
@@ -430,7 +449,7 @@ export const TicketDetailModal = ({
                       <th className="px-3 py-3">Mã hàng</th>
                       <th className="px-3 py-3">Tên sản phẩm</th>
                       <th className="w-16 px-3 py-3 text-center">ĐVT</th>
-                      {type === 'INWARD' && <th className="px-3 py-3 text-right">Đơn giá nhập</th>}
+                      {type === 'INWARD' && !hidePriceFields && <th className="px-3 py-3 text-right">Đơn giá nhập</th>}
                       {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Đơn giá</th>}
                       {isCompleted && (
                         <th className="px-3 py-3 text-right text-slate-500 dark:text-[#999999]">Tồn trước</th>
@@ -441,14 +460,14 @@ export const TicketDetailModal = ({
                       {isCompleted && (
                         <th className="px-3 py-3 text-right text-green-700">Tồn sau</th>
                       )}
-                      {type === 'INWARD' && <th className="px-3 py-3 text-right">Thành tiền</th>}
+                      {type === 'INWARD' && !hidePriceFields && <th className="px-3 py-3 text-right">Thành tiền</th>}
                       {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Thành tiền</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
                     {!detail.items || detail.items.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-slate-400 dark:text-[#808080]">
+                        <td colSpan={10} className="py-6 text-center text-slate-400 dark:text-[#808080]">
                           Không có sản phẩm nào
                         </td>
                       </tr>
@@ -474,7 +493,7 @@ export const TicketDetailModal = ({
                             <td className="px-3 py-3 text-center text-slate-600 dark:text-[#999999]">
                               {item.unit || item.Unit || item.unitName || item.UnitName || '---'}
                             </td>
-                            {type === 'INWARD' && (
+                            {type === 'INWARD' && !hidePriceFields && (
                               <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
                                 {formatCurrency(item.costPrice)}
                               </td>
@@ -497,7 +516,7 @@ export const TicketDetailModal = ({
                                 {afterQty}
                               </td>
                             )}
-                            {type === 'INWARD' && (
+                            {type === 'INWARD' && !hidePriceFields && (
                               <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
                                 {formatCurrency(qty * Number(item.costPrice || 0))}
                               </td>

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import StaffModal from '../../owner/components/staff/StaffModal';
-import { getUserList, createOwner, createStaff, getRoleList, getPermissionList } from '../services/adminService';
+import CreateAccountModal from '../components/account/CreateAccountModal';
+import { getUserList, createOwner, createStaff, getRoleList, getPermissionList, getAdminBranches } from '../services/adminService';
 
 const AdminUserManagement = () => {
   const navigate = useNavigate();
@@ -15,17 +16,24 @@ const AdminUserManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
+  const [branches, setBranches] = useState([]);
 
   const fetchData = useCallback(() => {
     setLoading(true);
     setError(null);
 
-    Promise.all([getUserList({ status: statusFilter }), getRoleList(), getPermissionList()])
-      .then(([userData, roleData, permData]) => {
+    Promise.all([
+      getUserList({ status: statusFilter, pageSize: 1000 }), 
+      getRoleList(),
+      getPermissionList(),
+      getAdminBranches({ pageSize: 1000 })
+    ])
+      .then(([userData, roleData, permData, branchData]) => {
         const list = Array.isArray(userData) ? userData : userData?.items || [];
         setUsers(list);
         setRoles(Array.isArray(roleData) ? roleData : []);
         setPermissions(Array.isArray(permData) ? permData : []);
+        setBranches(branchData?.items || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -104,10 +112,10 @@ const AdminUserManagement = () => {
                     {Array.from(new Set((user.roles || []).map((r) => {
                       const lower = (r.roleName || '').toLowerCase().replace(/\s+/g, '');
                       let displayRole = r.roleName;
-                      if (lower.includes('sales')) displayRole = 'Sales Staff';
-                      else if (lower.includes('inventory')) displayRole = 'Inventory Staff';
-                      else if (lower === 'staff') displayRole = 'Staff';
-                      else if (lower === 'owner') displayRole = 'Owner';
+                      if (lower.includes('sales')) displayRole = 'Nhân viên Bán hàng';
+                      else if (lower.includes('inventory')) displayRole = 'Nhân viên Kho';
+                      else if (lower === 'staff') displayRole = 'Nhân viên';
+                      else if (lower === 'owner') displayRole = 'Chủ cửa hàng';
                       return displayRole;
                     }))).map((displayRole, idx) => (
                         <span
@@ -223,6 +231,8 @@ const AdminUserManagement = () => {
         onSave={handleCreateUser}
         permissions={permissions}
         isAdminContext={true}
+        roles={roles}
+        branches={branches}
       />
     </div>
   );

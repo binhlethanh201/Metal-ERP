@@ -7,6 +7,7 @@ import {
   sendNotification,
   cancelNotification,
   deleteNotification,
+  getAdminBranches,
 } from '../services/adminService';
 
 const SystemNotifications = () => {
@@ -20,9 +21,25 @@ const SystemNotifications = () => {
     title: '',
     content: '',
     targetType: 'ALL_USERS',
+    branchId: '',
     priority: 'NORMAL',
     scheduledFor: '',
   });
+
+  const [branches, setBranches] = useState([]);
+
+  const fetchBranches = useCallback(async () => {
+    try {
+      const data = await getAdminBranches({ pageSize: 100 });
+      setBranches(data?.items || []);
+    } catch (err) {
+      console.error('Lỗi tải danh sách cửa hàng', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
 
   const fetchNotifications = useCallback(() => {
     setLoading(true);
@@ -50,6 +67,7 @@ const SystemNotifications = () => {
       title: '',
       content: '',
       targetType: 'ALL_USERS',
+      branchId: '',
       priority: 'NORMAL',
       scheduledFor: '',
     });
@@ -61,6 +79,7 @@ const SystemNotifications = () => {
       title: notif.title || '',
       content: notif.content || '',
       targetType: notif.target === 'ALL' ? 'ALL_USERS' : notif.target === 'OWNER' ? 'OWNERS' : 'STAFFS',
+      branchId: notif.branchId || '',
       priority: notif.isUrgent ? 'HIGH' : 'NORMAL',
       scheduledFor: notif.scheduledAt
         ? new Date(notif.scheduledAt).toISOString().slice(0, 16)
@@ -77,6 +96,7 @@ const SystemNotifications = () => {
         title: formData.title,
         content: formData.content,
         target: formData.targetType === 'ALL_USERS' ? 'ALL' : formData.targetType === 'OWNERS' ? 'OWNER' : 'STAFF',
+        branchId: formData.branchId || null,
         isUrgent: formData.priority === 'HIGH',
         scheduledAt: formData.scheduledFor || null
       };
@@ -188,10 +208,30 @@ const SystemNotifications = () => {
                   className="w-full rounded border border-slate-200 dark:border-[#333333] bg-transparent text-slate-900 dark:text-[#e5e5e5] p-2 text-xs outline-none focus:border-[#004785] dark:focus:border-blue-600 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-[#0f0f0f] dark:[&>option]:text-[#e5e5e5]"
                 >
                   <option value="ALL_USERS">Tất cả người dùng</option>
-                  <option value="OWNERS">Chỉ Chủ cửa hàng</option>
-                  <option value="STAFFS">Chỉ Nhân viên</option>
+                  <option value="OWNERS">Chủ cửa hàng</option>
+                  <option value="STAFFS">Nhân viên</option>
                 </select>
               </div>
+              
+              {(formData.targetType === 'OWNERS' || formData.targetType === 'STAFFS') && (
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="mb-1 block text-xs font-bold text-slate-500 dark:text-[#999999]">
+                    Cửa hàng (Không bắt buộc)
+                  </label>
+                  <select
+                    name="branchId"
+                    value={formData.branchId}
+                    onChange={handleChange}
+                    className="w-full rounded border border-slate-200 dark:border-[#333333] bg-transparent text-slate-900 dark:text-[#e5e5e5] p-2 text-xs outline-none focus:border-[#004785] dark:focus:border-blue-600 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-[#0f0f0f] dark:[&>option]:text-[#e5e5e5]"
+                  >
+                    <option value="">-- Tất cả cửa hàng --</option>
+                    {branches.map(b => (
+                      <option key={b.branchId} value={b.branchId}>{b.branchName}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="mb-1 block text-xs font-bold text-slate-500 dark:text-[#999999]">
                   Mức độ ưu tiên

@@ -14,6 +14,8 @@ import { Badge } from '../../../../shared/components/Badge';
 import { Button } from '../../../../shared/components/Button';
 import IconButton from '../../../../shared/components/IconButton';
 import { Table } from '../../../../shared/components/Table';
+import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../../shared/utils/permissions';
 
 const renderStatusBadge = (status) => {
   switch (status?.toUpperCase()) {
@@ -36,7 +38,11 @@ const renderStatusBadge = (status) => {
         </Badge>
       );
     default:
-      return <span className="text-xs font-medium text-slate-500 dark:text-[#999999]">{status || 'N/A'}</span>;
+      return (
+        <span className="text-xs font-medium text-slate-500 dark:text-[#999999]">
+          {status || 'N/A'}
+        </span>
+      );
   }
 };
 
@@ -49,6 +55,17 @@ export const InventoryHistoryCard = ({
   onNotify,
   branches = [],
 }) => {
+  const { user } = useAuth();
+
+  const canConfirm =
+    type === 'OUTWARD'
+      ? hasPermission(user, 'STOCK_OUTWARD_CONFIRM')
+      : hasPermission(user, 'STOCK_INWARD_UPDATE');
+  const canCancel =
+    type === 'OUTWARD'
+      ? hasPermission(user, 'STOCK_OUTWARD_DELETE')
+      : hasPermission(user, 'STOCK_INWARD_DELETE');
+
   const [cancellingTicket, setCancellingTicket] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
@@ -167,11 +184,18 @@ export const InventoryHistoryCard = ({
         });
       if (onReload) onReload();
     } catch (error) {
-      const errList = error?.data?.errors;
-      const msg = Array.isArray(errList)
-        ? errList.join(' | ')
-        : error?.message || 'Lỗi khi xác nhận phiếu';
-      onNotify && onNotify({ type: 'error', message: msg });
+      let msg;
+      if (error?.status === 409 || error?.status === 400) {
+        msg = 'Phiếu này đã được duyệt trước đó! Tồn kho đã được hạch toán.';
+        window.alert(msg);
+      } else {
+        const errList = error?.data?.errors;
+        msg = Array.isArray(errList)
+          ? errList.join(' | ')
+          : error?.message || 'Lỗi khi xác nhận phiếu';
+        onNotify && onNotify({ type: 'error', message: msg });
+      }
+      if (onReload) onReload();
     } finally {
       setConfirmingId(null);
     }
@@ -198,11 +222,16 @@ export const InventoryHistoryCard = ({
       setCancellingTicket(null);
       if (onReload) onReload();
     } catch (error) {
-      const errList = error?.data?.errors;
-      const msg = Array.isArray(errList)
-        ? errList.join(', ')
-        : error?.message || 'Lỗi khi hủy phiếu';
-      onNotify && onNotify({ type: 'error', message: msg });
+      let msg = error?.message || 'Lỗi khi hủy phiếu';
+      msg = msg.replace(/[.;,]?\s*Sản phẩm bị ảnh hưởng.*$/i, '');
+      msg = msg.replace(/\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '');
+      const status = error?.status || 0;
+      if (status >= 400 && status < 500) {
+        window.alert(msg);
+      } else {
+        onNotify && onNotify({ type: 'error', message: msg });
+      }
+      if (onReload) onReload();
     } finally {
       setIsSubmittingCancel(false);
     }
@@ -253,7 +282,9 @@ export const InventoryHistoryCard = ({
               <span className="font-medium text-slate-700 dark:text-[#b3b3b3]">{text}</span>
             )}
             {row.cancelReason && (
-              <div className="mt-0.5 text-xs italic text-rose-600 dark:text-rose-400">Lý do hủy: {row.cancelReason}</div>
+              <div className="mt-0.5 text-xs italic text-rose-600 dark:text-rose-400">
+                Lý do hủy: {row.cancelReason}
+              </div>
             )}
           </div>
         );
@@ -265,7 +296,9 @@ export const InventoryHistoryCard = ({
       width: '100px',
       align: 'right',
       render: (_, row) => {
-        const text = row.quantityDisplay || (row.quantity != null ? Number(row.quantity).toLocaleString('vi-VN') : '---');
+        const text =
+          row.quantityDisplay ||
+          (row.quantity != null ? Number(row.quantity).toLocaleString('vi-VN') : '---');
         const lines = String(text).split('\n').filter(Boolean);
         return (
           <div>
@@ -298,12 +331,15 @@ export const InventoryHistoryCard = ({
 
         return (
           <div className="flex items-center justify-end gap-1">
-            {isPending && (
+            {isPending && canConfirm && (
               <Button
                 variant="primary"
                 size="sm"
                 disabled={isConfirming}
-                onClick={(e) => { e.stopPropagation(); handleConfirmTicket(row); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConfirmTicket(row);
+                }}
                 title="Xác nhận duyệt để cộng/trừ kho thực tế"
                 className="flex items-center gap-1 whitespace-nowrap !px-2.5 !py-1 !text-[11px]"
               >
@@ -315,9 +351,18 @@ export const InventoryHistoryCard = ({
               variant="ghost"
               space="customer"
               size="sm"
-              disabled={isCancelled || isConfirming}
-              onClick={(e) => { e.stopPropagation(); setCancellingTicket(row); }}
-              title={isCancelled ? 'Phiếu đã bị hủy' : 'Hủy phiếu này'}
+              disabled={isCancelled || isConfirming || !canCancel}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCancellingTicket(row);
+              }}
+              title={
+                isCancelled
+                  ? 'Phiếu đã bị hủy'
+                  : !canCancel
+                    ? 'Bạn không có quyền hủy phiếu này'
+                    : 'Hủy phiếu này'
+              }
             />
           </div>
         );
@@ -348,9 +393,15 @@ export const InventoryHistoryCard = ({
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">{title}</h2>
             <p className="text-xs text-slate-500 dark:text-[#999999]">
-              Tổng số: <span className="font-semibold text-slate-700 dark:text-[#b3b3b3]">{tickets.length}</span> phiếu
+              Tổng số:{' '}
+              <span className="font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                {tickets.length}
+              </span>{' '}
+              phiếu
               {kw && (
-                <span className="ml-1 text-amber-600 dark:text-amber-400">(hiển thị {filteredTickets.length})</span>
+                <span className="ml-1 text-amber-600 dark:text-amber-400">
+                  (hiển thị {filteredTickets.length})
+                </span>
               )}
             </p>
           </div>
@@ -432,8 +483,7 @@ export const InventoryHistoryCard = ({
               </div>
               <span>
                 {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
-                {Math.min(currentPage * pageSize, totalItems)} trong tổng số{' '}
-                {totalItems} phiếu
+                {Math.min(currentPage * pageSize, totalItems)} trong tổng số {totalItems} phiếu
               </span>
             </div>
             <div className="flex items-center gap-2">

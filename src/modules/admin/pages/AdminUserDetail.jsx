@@ -12,9 +12,12 @@ import {
   softDeleteUser,
   permanentDeleteUser,
   restoreUser,
+  assignUserBranch,
+  getAdminBranches,
 } from '../services/adminService';
 import ConfirmActionModal from '../components/ConfirmActionModal';
 import AssignRoleModal from '../components/account/AssignRoleModal';
+import AssignBranchModal from '../components/account/AssignBranchModal';
 
 const AdminUserDetail = () => {
   const { id } = useParams();
@@ -23,6 +26,7 @@ const AdminUserDetail = () => {
   const [user, setUser] = useState(null);
   const [activities, setActivities] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Modals state
@@ -33,21 +37,24 @@ const AdminUserDetail = () => {
     message: '',
   });
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isAssignBranchModalOpen, setIsAssignBranchModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({ fullName: '', phoneNumber: '' });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [userData, activityData, roleData] = await Promise.all([
+      const [userData, activityData, roleData, branchData] = await Promise.all([
         getUserDetail(id),
         getUserActivities(id),
         getRoleList(),
+        getAdminBranches({ pageSize: 1000 }),
       ]);
       setUser(userData);
       // The API returns a paginated result { items: [...] } so we need to extract items
       setActivities(activityData?.items || (Array.isArray(activityData) ? activityData : []));
       setRoles(Array.isArray(roleData) ? roleData : []);
+      setBranches(branchData?.items || []);
       setEditFormData({
         fullName: userData?.fullName || '',
         phoneNumber: userData?.phoneNumber || '',
@@ -110,6 +117,17 @@ const AdminUserDetail = () => {
       fetchData();
     } catch (err) {
       alert(err.message || 'Cập nhật quyền thất bại');
+    }
+  };
+
+  const handleAssignBranch = async (userId, branchId) => {
+    try {
+      await assignUserBranch(userId, branchId);
+      alert('Gán cửa hàng thành công!');
+      setIsAssignBranchModalOpen(false);
+      fetchData();
+    } catch (err) {
+      alert(err.message || 'Gán cửa hàng thất bại');
     }
   };
 
@@ -185,6 +203,12 @@ const AdminUserDetail = () => {
                   {r.displayName}
                 </span>
               ))}
+              
+              {user.defaultBranchName && (
+                <span className="rounded-full border border-blue-200 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-800 text-[#004785] dark:text-blue-400 px-3 py-1 text-xs font-bold flex items-center gap-1">
+                  <Icon name="storefront" size={14} /> {user.defaultBranchName}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -205,6 +229,13 @@ const AdminUserDetail = () => {
                 className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
                 <Icon name="manage_accounts" size={18} /> Phân Quyền
+              </button>
+
+              <button
+                onClick={() => setIsAssignBranchModalOpen(true)}
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
+              >
+                <Icon name="storefront" size={18} /> Gán Cửa Hàng
               </button>
 
               <button
@@ -397,6 +428,14 @@ const AdminUserDetail = () => {
         onClose={() => setIsAssignModalOpen(false)}
         onSave={handleAssignRoles}
         roles={roles}
+        user={user}
+      />
+
+      <AssignBranchModal
+        isOpen={isAssignBranchModalOpen}
+        onClose={() => setIsAssignBranchModalOpen(false)}
+        onSave={handleAssignBranch}
+        branches={branches}
         user={user}
       />
 

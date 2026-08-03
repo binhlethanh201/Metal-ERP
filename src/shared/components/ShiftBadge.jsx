@@ -1,9 +1,14 @@
 /**
  * ShiftBadge - Component hiển thị trạng thái ca bán hàng
  * Dùng chung cho PosHeader và InventoryHeader.
+ *
+ * Đồng bộ trạng thái ca từ BE thông qua useActiveShift (hook tự filter
+ * và clear ca quá hạn 24h, không tin localStorage mù quáng).
  */
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useActiveShift } from '../../modules/pos/hooks/useActiveShift';
+import { useAuth } from '../hooks/useAuth';
 
 const formatStartTime = (startedAt) => {
   if (!startedAt) return '---';
@@ -29,40 +34,18 @@ const formatElapsed = (startedAt) => {
 
 const ShiftBadge = () => {
   const navigate = useNavigate();
-  const [shiftInfo, setShiftInfo] = useState(() => {
-    try {
-      const raw = localStorage.getItem('pos_active_shift');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  });
+  const { user } = useAuth();
+  const { activeShift } = useActiveShift({ enabled: !!user });
+
+  // Re-render mỗi phút để cập nhật "đã mở X giờ Y phút"
   const [, setTick] = useState(0);
-
   useEffect(() => {
-    const readShift = () => {
-      try {
-        const raw = localStorage.getItem('pos_active_shift');
-        setShiftInfo(raw ? JSON.parse(raw) : null);
-      } catch {
-        setShiftInfo(null);
-      }
-    };
-    const interval = setInterval(readShift, 3000);
-    window.addEventListener('storage', readShift);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', readShift);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!shiftInfo?.startedAt) return undefined;
+    if (!activeShift?.startedAt) return undefined;
     const t = setInterval(() => setTick((n) => n + 1), 60000);
     return () => clearInterval(t);
-  }, [shiftInfo?.startedAt]);
+  }, [activeShift?.startedAt]);
 
-  if (shiftInfo) {
+  if (activeShift) {
     return (
       <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5 shadow-sm dark:border-green-800 dark:from-green-950 dark:to-emerald-950">
         <div className="flex items-center gap-2">
@@ -86,12 +69,12 @@ const ShiftBadge = () => {
                 />
               </svg>
               <span className="text-sm font-bold text-green-800 dark:text-green-300">
-                Ca: {formatStartTime(shiftInfo.startedAt)}
+                Ca: {formatStartTime(activeShift.startedAt)}
               </span>
             </div>
             <span className="text-[10px] font-semibold tracking-wide text-green-600 dark:text-green-400">
-              {shiftInfo.userName || shiftInfo.cashier || 'Thu ngân'} ·{' '}
-              {formatElapsed(shiftInfo.startedAt) || `${shiftInfo.orderCount ?? 0} đơn`}
+              {activeShift.userName || activeShift.cashier || 'Thu ngân'} ·{' '}
+              {formatElapsed(activeShift.startedAt) || `${activeShift.orderCount ?? 0} đơn`}
             </span>
           </div>
         </div>
@@ -105,7 +88,7 @@ const ShiftBadge = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573-1.066c-.426-1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
             />
             <path
               strokeLinecap="round"

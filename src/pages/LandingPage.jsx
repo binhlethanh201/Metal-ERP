@@ -41,7 +41,7 @@ const LandingPage = () => {
     {
       title: 'Dự báo Nhu cầu bằng AI',
       description:
-        'Tích hợp mô hình dữ liệu thông minh phân tích chu kỳ bán hàng để dự đoán xu hướng biến động giá và sức mua vật tư.',
+        'Tích hợp mô hình dữ liệu phân tích chu kỳ bán hàng để dự đoán xu hướng biến động giá và sức mua vật tư.',
       icon: BarChart3,
     },
     {
@@ -96,7 +96,7 @@ const LandingPage = () => {
               <div className="space-y-6 text-left lg:col-span-6">
                 <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#004785] shadow-sm dark:border-blue-800 dark:bg-blue-950/30">
                   <Sparkles size={14} className="fill-amber-500 text-amber-500" />
-                  Phiên bản nền tảng quản trị thông minh 2026
+                  Phiên bản nền tảng quản trị 2026
                 </div>
 
                 <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl md:leading-[1.12] dark:text-[#e5e5e5]">
