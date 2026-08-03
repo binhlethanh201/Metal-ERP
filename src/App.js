@@ -12,9 +12,7 @@ import IdleTimeout from './shared/components/auth/IdleTimeout';
 
 // Static Pages
 import LandingPage from './pages/LandingPage';
-import NotFound from './pages/errors/NotFound';
-import AccessDenied from './pages/errors/AccessDenied';
-import ServerError from './pages/errors/ServerError';
+import ErrorToast from './shared/components/ErrorToast';
 
 // Auth Pages
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
@@ -193,10 +191,10 @@ function App() {
             </Route>
           </Route>
 
-          {/* ROUTE ERROR */}
-          <Route path="/403" element={<AccessDenied />} />
-          <Route path="/500" element={<ServerError />} />
-          <Route path="*" element={<NotFound />} />
+          {/* ROUTE ERROR - redirect kèm toast */}
+          <Route path="/403" element={<ErrorToast message="Bạn không có quyền truy cập trang này!" redirectTo="/" />} />
+          <Route path="/500" element={<ErrorToast message="Lỗi máy chủ! Vui lòng thử lại sau." redirectTo="/" />} />
+          <Route path="*" element={<ErrorToast message="Không tìm thấy trang yêu cầu!" redirectTo="/" />} />
         </Routes>
         </Suspense>
       </ThemeProvider>
