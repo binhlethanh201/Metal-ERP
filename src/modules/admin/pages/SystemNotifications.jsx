@@ -298,7 +298,7 @@ const SystemNotifications = () => {
                 onClick={fetchNotifications}
                 className="text-[#004785] dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
-                <Icon name="refresh" size={18} />
+                <Icon name="sync" size={18} />
               </button>
             </div>
           </div>
@@ -376,7 +376,7 @@ const SystemNotifications = () => {
                                   className="rounded p-1 text-slate-400 dark:text-[#666666] hover:bg-red-50 dark:bg-red-900/30 hover:text-red-600 dark:text-red-500"
                                   title="Hủy lịch"
                                 >
-                                  <Icon name="cancel" size={16} />
+                                  <Icon name="close" size={16} />
                                 </button>
                               </>
                             )}
