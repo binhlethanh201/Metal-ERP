@@ -1,5 +1,5 @@
 // src/modules/report/pages/OwnerReports.jsx
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
 import {
@@ -233,7 +233,11 @@ export const OwnerReports = () => {
     }
   };
 
-  const loadReport = async () => {
+  // FIX: dùng useCallback với đầy đủ dependencies để tránh stale closure.
+  // Trước đây loadReport là hàm thường bên trong component → closure capture giá trị state
+  // tại thời điểm render — khi filter thay đổi mà không re-render đúng cách thì API vẫn
+  // gọi với giá trị cũ.
+  const loadReport = useCallback(async () => {
     switch (selectedReport) {
       case 'daily-end':
         await fetchDailyEnd({ date: reportDate });
@@ -275,7 +279,29 @@ export const OwnerReports = () => {
       default:
         break;
     }
-  };
+  }, [
+    selectedReport,
+    reportDate,
+    fromDate,
+    toDate,
+    categoryId,
+    productId,
+    timeGrouping,
+    includeZeroStock,
+    sortBy,
+    pageSize,
+    supplierId,
+    purchaseFromDate,
+    purchaseToDate,
+    paymentFromDate,
+    paymentToDate,
+    fetchDailyEnd,
+    fetchStockMovement,
+    fetchRevenue,
+    fetchLowStock,
+    fetchProductProfit,
+    fetchSupplierDetail,
+  ]);
 
   // ============ EFFECTS ============
   useEffect(() => {
@@ -354,18 +380,19 @@ export const OwnerReports = () => {
     };
   }, [categoryId, categories]);
 
+  // Khi chuyển tab báo cáo → load lại báo cáo mới
+  // loadReport là stable useCallback nên không cần eslint-disable
   useEffect(() => {
     if (selectedReport === 'supplier-detail' && !supplierId) return;
     loadReport();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedReport]);
+  }, [selectedReport, loadReport]);
 
+  // Khi supplierId được chọn lần đầu → auto load báo cáo nhà cung cấp
   useEffect(() => {
     if (selectedReport === 'supplier-detail' && supplierId) {
       loadReport();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supplierId]);
+  }, [supplierId]); // eslint-disable-line react-hooks/exhaustive-deps -- chỉ trigger khi supplierId thay đổi, không theo loadReport để tránh loop
 
   // ============ RENDER ============
   return (

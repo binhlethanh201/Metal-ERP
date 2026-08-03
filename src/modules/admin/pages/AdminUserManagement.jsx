@@ -2,13 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import StaffModal from '../../owner/components/staff/StaffModal';
-import CreateAccountModal from '../components/account/CreateAccountModal';
+
 import { getUserList, createOwner, createStaff, getRoleList, getPermissionList, getAdminBranches } from '../services/adminService';
 
 const AdminUserManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,12 +72,22 @@ const AdminUserManagement = () => {
   };
 
   const renderUsersTable = () => {
-    const filtered = users.filter(
-      (u) =>
+    const filtered = users.filter((u) => {
+      const matchSearch =
         !searchTerm ||
         (u.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchBranch =
+        !branchFilter ||
+        u.defaultBranchId === branchFilter;
+
+      const matchRole =
+        !roleFilter ||
+        (u.roles || []).some((r) => r.roleId === roleFilter);
+
+      return matchSearch && matchBranch && matchRole;
+    });
 
     if (loading)
       return <div className="p-8 text-center text-xs text-slate-500 dark:text-[#999999]">Đang tải...</div>;
@@ -178,9 +190,9 @@ const AdminUserManagement = () => {
         </button>
       </div>
 
-      <div className="flex items-center justify-between rounded-md border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-2 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-2 shadow-sm">
         {/* SEARCH BAR */}
-        <div className="relative w-80">
+        <div className="relative min-w-[200px] flex-1">
           <Icon
             name="search"
             size={14}
@@ -195,8 +207,40 @@ const AdminUserManagement = () => {
           />
         </div>
 
-        {/* TABS */}
-        <div className="flex gap-1">
+        {/* FILTER: CỬA HÀNG */}
+        <div className="relative">
+          <Icon name="store" size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <select
+            value={branchFilter}
+            onChange={(e) => setBranchFilter(e.target.value)}
+            className="appearance-none rounded-md border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] pl-8 pr-7 py-2 text-xs font-semibold outline-none focus:border-[#004785] text-slate-900 dark:text-[#e5e5e5] min-w-[150px] cursor-pointer"
+          >
+            <option value="">Tất cả cửa hàng</option>
+            {branches.map((b) => (
+              <option key={b.branchId} value={b.branchId}>{b.branchName}</option>
+            ))}
+          </select>
+          <Icon name="expand_more" size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+
+        {/* FILTER: VAI TRÒ */}
+        <div className="relative">
+          <Icon name="admin_panel_settings" size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="appearance-none rounded-md border border-slate-200 dark:border-[#333333] bg-slate-50 dark:bg-[#1a1a1a] pl-8 pr-7 py-2 text-xs font-semibold outline-none focus:border-[#004785] text-slate-900 dark:text-[#e5e5e5] min-w-[140px] cursor-pointer"
+          >
+            <option value="">Tất cả vai trò</option>
+            {roles.map((r) => (
+              <option key={r.roleId} value={r.roleId}>{r.roleName}</option>
+            ))}
+          </select>
+          <Icon name="expand_more" size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+
+        {/* TABS TRẠNG THÁI */}
+        <div className="flex gap-1 ml-auto">
           {[
             { value: '', label: 'Tất cả trạng thái' },
             { value: 'active', label: 'Đang hoạt động' },

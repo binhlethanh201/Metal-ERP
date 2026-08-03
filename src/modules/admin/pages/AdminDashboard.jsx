@@ -1,24 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+
 
 import Icon from '../../../shared/components/Icon';
-import OwnerReports from '../../report/pages/OwnerReports';
+
 import {
   getDashboardStats,
   getRevenueChart,
   getRecentEvents,
   exportDashboard,
   getOverview,
+  getAdminBranches,
 } from '../services/adminService';
 
 const formatCurrency = (value) => {
@@ -105,7 +97,7 @@ const AdminDashboard = () => {
   // eslint-disable-next-line
   const [chart, setChart] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
-  const [overview, setOverview] = useState(null);
+  const [activeBranchCount, setActiveBranchCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -114,11 +106,15 @@ const AdminDashboard = () => {
       getDashboardStats(),
       getRevenueChart(new Date().getFullYear()),
       getRecentEvents(20),
+      getOverview(),
+      getAdminBranches({ pageSize: 1, status: 'active' }),
     ])
-      .then(([statsData, chartData, eventsData]) => {
+      .then(([statsData, chartData, eventsData, overviewData, branchData]) => {
         setStats(statsData);
         setChart(Array.isArray(chartData) ? chartData : []);
         setRecentEvents(Array.isArray(eventsData) ? eventsData : []);
+        const count = overviewData?.activeBranches ?? branchData?.totalCount ?? branchData?.items?.length ?? 0;
+        setActiveBranchCount(count);
         setLoading(false);
       })
       .catch((err) => {
@@ -180,17 +176,17 @@ const AdminDashboard = () => {
             ) : (
               <>
                 <KPICardAdmin
-                  icon="store"
-                  label="Tài Khoản Đang Hoạt Động"
-                  value={formatCurrency(stats?.activeTenants)}
-                  unit="tài khoản"
+                  icon="storefront"
+                  label="Cửa Hàng Đang Hoạt Động"
+                  value={formatCurrency(activeBranchCount ?? 0)}
+                  unit="cửa hàng"
                   tone="navy"
                 />
                 <KPICardAdmin
-                  icon="receipt_long"
-                  label="Doanh Thu Hóa Đơn (30d)"
-                  value={formatCurrency(stats?.subscriptionRevenue)}
-                  unit="VNĐ"
+                  icon="people"
+                  label="Tài Khoản Đang Hoạt Động"
+                  value={formatCurrency(stats?.activeTenants)}
+                  unit="tài khoản"
                   tone="green"
                 />
                 <KPICardAdmin
@@ -291,12 +287,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* ========================================================================= */}
-          {/* 3. OWNER REPORTS TABS */}
-          {/* ========================================================================= */}
-          <div className="mt-8 border-t border-slate-200 pt-8 dark:border-[#333333]">
-            <OwnerReports />
-          </div>
+
         </>
       )}
     </div>
