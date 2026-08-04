@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from '../../../../shared/components/Icon';
 import {
   getInventoryNotifications,
@@ -11,7 +12,9 @@ const InventoryNotificationDropdown = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const dropdownRef = useRef(null);
+  const [panelStyle, setPanelStyle] = useState({});
+  const btnRef = useRef(null);
+  const panelRef = useRef(null);
   const navigate = useNavigate();
 
   const fetchNotifications = async () => {
@@ -55,7 +58,10 @@ const InventoryNotificationDropdown = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        panelRef.current && !panelRef.current.contains(event.target) &&
+        btnRef.current && !btnRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -63,13 +69,37 @@ const InventoryNotificationDropdown = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const updatePosition = () => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    setPanelStyle({
+      position: 'fixed',
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right,
+      zIndex: 9999,
+    });
+  };
+
   const handleToggle = () => {
     const nextState = !isOpen;
     setIsOpen(nextState);
     if (nextState) {
       fetchNotifications();
+      setTimeout(updatePosition, 0);
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+      return () => {
+        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', updatePosition, true);
+      };
+    }
+  }, [isOpen]);
 
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) return;
@@ -174,8 +204,9 @@ const InventoryNotificationDropdown = () => {
   };
 
   return (
-    <div className="relative pl-1" ref={dropdownRef}>
+    <div className="relative pl-1">
       <button
+        ref={btnRef}
         type="button"
         onClick={handleToggle}
         className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 active:scale-95 dark:text-[#999999] dark:hover:bg-[#272727]"
@@ -188,15 +219,15 @@ const InventoryNotificationDropdown = () => {
         )}
       </button>
 
-      {isOpen && (
-        <div className="animate-fadeIn absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f] sm:w-96">
+      {isOpen && createPortal(
+        <div ref={panelRef} style={panelStyle} className="w-80 sm:w-96 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-[#333333] dark:bg-[#0f0f0f]">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-b-[#333333] dark:bg-[#1a1a1a]">
             <h3 className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">Thông báo</h3>
           </div>
 
           {/* List */}
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className="max-h-[340px] overflow-y-auto">
             {loading && notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-[#808080]">
                 <Icon name="sync" className="mb-2 animate-spin text-3xl" />
@@ -262,7 +293,7 @@ const InventoryNotificationDropdown = () => {
             </div>
           )}
         </div>
-      )}
+        , document.body)}
     </div>
   );
 };

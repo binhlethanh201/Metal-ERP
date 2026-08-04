@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import * as signalR from '@microsoft/signalr';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import Icon from '../../../shared/components/Icon';
@@ -28,7 +29,9 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
-  const dropdownRef = useRef(null);
+  const [profilePanelStyle, setProfilePanelStyle] = useState({});
+  const profileBtnRef = useRef(null);
+  const profilePanelRef = useRef(null);
   const hubRef = useRef(null);
 
   const addToast = useCallback((message, type = 'info') => {
@@ -46,11 +49,20 @@ const AdminLayout = () => {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsProfileOpen(false);
+    const handler = (e) => {
+      if (profilePanelRef.current && !profilePanelRef.current.contains(e.target) &&
+          profileBtnRef.current && !profileBtnRef.current.contains(e.target)) {
+        setIsProfileOpen(false);
+      }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const updateProfilePosition = useCallback(() => {
+    if (!profileBtnRef.current) return;
+    const r = profileBtnRef.current.getBoundingClientRect();
+    setProfilePanelStyle({ position: 'fixed', top: r.bottom + 8, right: window.innerWidth - r.right, zIndex: 9999 });
   }, []);
 
   useEffect(() => {
@@ -115,17 +127,22 @@ const AdminLayout = () => {
 
           <AdminNotificationDropdown />
 
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative">
             <button
+              ref={profileBtnRef}
               type="button"
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              onClick={() => {
+                const next = !isProfileOpen;
+                setIsProfileOpen(next);
+                if (next) setTimeout(updateProfilePosition, 0);
+              }}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-[#004785] text-sm font-bold text-white transition-transform active:scale-95"
             >
               {(user?.name || user?.fullName || 'A').charAt(0).toUpperCase()}
             </button>
 
-            {isProfileOpen && (
-              <div className="animate-fadeIn absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f]">
+            {isProfileOpen && createPortal(
+              <div ref={profilePanelRef} style={profilePanelStyle} className="w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-[#333333] dark:bg-[#0f0f0f]">
                 <div className="border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
                   <p className="text-sm font-bold text-slate-800 dark:text-[#e5e5e5]">{user?.name || user?.fullName || 'Admin'}</p>
                   <p className="mt-0.5 truncate text-[11px] font-semibold uppercase text-slate-500 dark:text-[#999999]">{user?.email || 'admin@mep.system'}</p>
@@ -144,7 +161,7 @@ const AdminLayout = () => {
                   </button>
                 </div>
               </div>
-            )}
+              , document.body)}
           </div>
         </div>
       </header>

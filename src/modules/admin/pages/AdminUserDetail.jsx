@@ -404,7 +404,9 @@ const AdminUserDetail = () => {
                   <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-[#004785] ring-4 ring-white dark:bg-blue-600 dark:ring-[#0f0f0f]" />
                   <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{log.action}</div>
                   <div className="mt-1 text-[11px] font-semibold text-slate-400 dark:text-[#808080]">
-                    {new Date(log.createdAt).toLocaleString('vi-VN')}
+                    {log.timestamp
+                    ? new Date(log.timestamp.endsWith('Z') || log.timestamp.includes('+') ? log.timestamp : log.timestamp + 'Z').toLocaleString('vi-VN')
+                    : '—'}
                   </div>
                   <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-600 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#b3b3b3]">
                     {log.description}
