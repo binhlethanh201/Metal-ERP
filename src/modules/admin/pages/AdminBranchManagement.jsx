@@ -2,22 +2,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
 import {
   getAdminBranches,
-  createAdminBranch,
   updateAdminBranch,
   deleteAdminBranch,
   getUserList,
 } from '../services/adminService';
+
+const PAGE_SIZE = 20;
 
 const AdminBranchManagement = () => {
   const [branches, setBranches] = useState([]);
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
-  // Modals state
   const [showModal, setShowModal] = useState(false);
-
-  // Form state
   const [editingBranch, setEditingBranch] = useState(null);
   const [formData, setFormData] = useState({
     branchName: '',
@@ -36,7 +36,6 @@ const AdminBranchManagement = () => {
     const trimmedPhone = (data.phone || '').trim();
     const trimmedAddress = (data.address || '').trim();
     const trimmedType = (data.type || '').trim();
-    const trimmedManagerUserId = (data.managerUserId || '').trim();
 
     if (!trimmedBranchName) {
       errors.branchName = 'Tên cửa hàng là bắt buộc.';
@@ -62,34 +61,30 @@ const AdminBranchManagement = () => {
       errors.type = 'Loại cửa hàng phải có từ 2 đến 50 ký tự.';
     }
 
-    if (!trimmedManagerUserId) {
-      errors.managerUserId = 'Chủ cửa hàng là bắt buộc.';
-    }
-
     return errors;
   };
 
-  const fetchBranchesAndOwners = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [branchesData, ownersData] = await Promise.all([
-        getAdminBranches({ pageSize: 100 }),
-        getUserList({ role: 'owner', pageSize: 1000 })
+        getAdminBranches({ pageSize: 1000 }),
+        getUserList({ role: 'owner', pageSize: 1000 }),
       ]);
       setBranches(branchesData?.items || []);
       setOwners(ownersData?.items || []);
     } catch (err) {
       console.error(err);
-      setError('Lỗi khi tải danh sách cửa hàng hoặc chủ cửa hàng.');
+      setError('Lỗi khi tải danh sách cửa hàng.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchBranchesAndOwners();
-  }, [fetchBranchesAndOwners]);
+    fetchData();
+  }, [fetchData]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -97,13 +92,9 @@ const AdminBranchManagement = () => {
       ...prev,
       [name]: type === 'checkbox' ? (checked ? 1 : 0) : value,
     }));
-  };
-
-  const openCreateModal = () => {
-    setEditingBranch(null);
-    setFormData({ branchName: '', phone: '', address: '', city: '', type: '', managerUserId: '', isActive: 1 });
-    setFormErrors({});
-    setShowModal(true);
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: null }));
+    }
   };
 
   const openEditModal = (branch) => {
@@ -123,12 +114,9 @@ const AdminBranchManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const errors = validateBranchForm(formData);
     setFormErrors(errors);
-    if (Object.keys(errors).length > 0) {
-      return;
-    }
+    if (Object.keys(errors).length > 0) return;
 
     const payload = {
       branchName: formData.branchName.trim(),
@@ -141,15 +129,10 @@ const AdminBranchManagement = () => {
     };
 
     try {
-      if (editingBranch) {
-        await updateAdminBranch(editingBranch.branchId, payload);
-        alert('Cập nhật cửa hàng thành công');
-      } else {
-        await createAdminBranch(payload);
-        alert('Tạo cửa hàng thành công');
-      }
+      await updateAdminBranch(editingBranch.branchId, payload);
+      alert('Cập nhật cửa hàng thành công');
       setShowModal(false);
-      fetchBranchesAndOwners();
+      fetchData();
     } catch (err) {
       alert(err.message || 'Lưu thất bại');
     }
@@ -160,85 +143,126 @@ const AdminBranchManagement = () => {
     try {
       await deleteAdminBranch(id);
       alert('Đã xoá cửa hàng');
-      fetchBranchesAndOwners();
+      fetchData();
     } catch (err) {
+      console.error('Delete branch error:', err);
       alert(err.message || 'Xoá thất bại');
     }
   };
 
+  const filtered = branches.filter(
+    (b) =>
+      !search ||
+      (b.branchName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.phone || '').includes(search) ||
+      (b.address || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pagedBranches = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#333333] pb-3">
+    <div className="w-full space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-xl font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
-            Quản lý Cửa hàng
-          </h1>
-          <p className="mt-1 text-sm font-semibold uppercase tracking-tight text-slate-500 dark:text-[#999999]">
-            DANH SÁCH CỬA HÀNG TOÀN HỆ THỐNG
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Quản lý Cửa hàng</h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">
+            Danh sách cửa hàng toàn hệ thống.
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 rounded bg-[#004785] px-4 py-2 text-xs font-bold text-white hover:bg-[#004785]/90 dark:bg-blue-600 dark:hover:bg-blue-700"
-        >
-          <Icon name="add" size={16} /> Tạo Cửa Hàng
-        </button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
-          <h2 className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
-            Danh sách Cửa hàng
-          </h2>
-          <button
-            onClick={fetchBranchesAndOwners}
-            className="text-[#004785] hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            <Icon name="refresh" size={18} />
-          </button>
+      {/* TABLE CARD */}
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-[#333333] dark:bg-[#1a1a1a]">
+        {/* TOOLBAR */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-[#333333]">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+              Danh sách Cửa hàng
+            </h2>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-[#333333] dark:text-[#999999]">
+              {filtered.length}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative w-64">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#808080]">
+                <Icon name="search" size={16} />
+              </div>
+              <input
+                placeholder="Tìm theo tên, SĐT, địa chỉ..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                className="w-full rounded-lg border border-slate-200 py-1.5 pl-9 pr-3 text-xs outline-none transition-colors focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] dark:placeholder:text-[#808080]"
+              />
+            </div>
+            <button
+              onClick={fetchData}
+              className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#004785] dark:hover:bg-[#333333] dark:hover:text-blue-400"
+              title="Làm mới"
+            >
+              <Icon name="sync" size={18} />
+            </button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto p-0">
+        {/* TABLE */}
+        <div className="overflow-x-auto p-4">
           {loading ? (
-            <div className="p-8 text-center text-xs text-slate-500">Đang tải...</div>
+            <div className="flex items-center justify-center py-12 text-slate-400 dark:text-[#808080]">
+              <Icon name="sync" className="mr-2 animate-spin text-xl" />
+              <span className="text-sm font-semibold">Đang tải...</span>
+            </div>
           ) : error ? (
-            <div className="p-8 text-center font-bold text-red-600">{error}</div>
+            <div className="py-12 text-center font-bold text-red-600 dark:text-red-500">{error}</div>
+          ) : pagedBranches.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-[#808080]">
+              <Icon name="store" size={40} className="mb-2 opacity-50" />
+              <p className="text-sm font-semibold">Không có cửa hàng nào.</p>
+            </div>
           ) : (
             <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
               <thead>
-                <tr className="border-b border-slate-200 bg-white text-[10px] font-bold uppercase text-slate-500 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]">
+                <tr className="border-b border-slate-200 dark:border-[#333333] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
                   <th className="px-4 py-3">Tên Cửa Hàng</th>
                   <th className="px-4 py-3">Chủ Cửa Hàng</th>
-                  <th className="px-4 py-3">Thông Tin Liên Hệ</th>
+                  <th className="px-4 py-3">SĐT</th>
                   <th className="px-4 py-3">Địa Chỉ</th>
                   <th className="px-4 py-3 text-center">Trạng Thái</th>
                   <th className="px-4 py-3 text-right">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-[#333333]">
-                {branches.map((b) => (
-                  <tr key={b.branchId} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#1a1a1a]">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
+                {pagedBranches.map((b) => (
+                  <tr key={b.branchId} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]">
                     <td className="px-4 py-3 font-bold">{b.branchName}</td>
-                    <td className="px-4 py-3">{b.managerFullName || b.managerEmail || '-'}</td>
-                    <td className="px-4 py-3">{b.phone || '-'}</td>
-                    <td className="px-4 py-3">{b.address || '-'}</td>
+                    <td className="px-4 py-3">{b.managerFullName || b.managerEmail || '—'}</td>
+                    <td className="px-4 py-3">{b.phone || '—'}</td>
+                    <td className="px-4 py-3 max-w-[200px] truncate">{b.address || '—'}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`rounded px-2 py-1 text-[10px] font-bold ${b.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                          b.isActive
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }`}
+                      >
                         {b.isActive ? 'Hoạt động' : 'Đã khóa'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
                         <button
                           onClick={() => openEditModal(b)}
-                          className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#004785] dark:hover:bg-[#333333] dark:hover:text-blue-400"
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#004785] dark:hover:bg-[#333333] dark:hover:text-blue-400"
                           title="Sửa"
                         >
                           <Icon name="edit" size={16} />
                         </button>
                         <button
                           onClick={() => handleDelete(b.branchId)}
-                          className="rounded p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-500"
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-500"
                           title="Xoá"
                         >
                           <Icon name="delete" size={16} />
@@ -247,133 +271,184 @@ const AdminBranchManagement = () => {
                     </td>
                   </tr>
                 ))}
-                {branches.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="px-4 py-8 text-center text-slate-500">
-                      Không có cửa hàng nào.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           )}
         </div>
+
+        {/* PAGINATION */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-[#333333]">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={PAGE_SIZE}
+                onChange={() => {}}
+                className="rounded border border-slate-300 px-2 py-1 text-xs outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+              >
+                <option value={20}>20 dòng</option>
+              </select>
+            </div>
+            <span>
+              {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, filtered.length)} trong tổng số {filtered.length} cửa hàng
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+            >
+              <Icon name="chevron_left" className="text-[18px]" />
+            </button>
+            <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+              Trang {page} / {totalPages}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+            >
+              <Icon name="chevron_right" className="text-[18px]" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* MODAL TẠO/SỬA */}
+      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-[#0f0f0f] dark:border dark:border-[#333333]">
-            <h3 className="mb-4 text-lg font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
-              {editingBranch ? 'Sửa Cửa Hàng' : 'Thêm Cửa Hàng Mới'}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Tên cửa hàng *</label>
-                <input
-                  type="text"
-                  name="branchName"
-                  value={formData.branchName}
-                  onChange={handleInputChange}
-                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
-                />
-                {formErrors.branchName && <p className="mt-1 text-[10px] text-red-600">{formErrors.branchName}</p>}
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f]">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-[#333333]">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Sửa Cửa Hàng</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-slate-900 dark:text-[#666666] dark:hover:text-[#e5e5e5]"
+              >
+                <Icon name="close" size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                    Tên cửa hàng <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="branchName"
+                    value={formData.branchName}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-lg border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${formErrors.branchName ? 'border-red-500' : 'border-slate-200 dark:border-[#333333]'} focus:border-[#004785] dark:focus:border-blue-500`}
+                  />
+                  {formErrors.branchName && <p className="mt-1 text-[10px] text-red-500">{formErrors.branchName}</p>}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                    Số điện thoại <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-lg border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${formErrors.phone ? 'border-red-500' : 'border-slate-200 dark:border-[#333333]'} focus:border-[#004785] dark:focus:border-blue-500`}
+                  />
+                  {formErrors.phone && <p className="mt-1 text-[10px] text-red-500">{formErrors.phone}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                    Thành phố
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] dark:border-[#333333] focus:border-[#004785] dark:focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                    Loại cửa hàng <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-lg border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${formErrors.type ? 'border-red-500' : 'border-slate-200 dark:border-[#333333]'} focus:border-[#004785] dark:focus:border-blue-500`}
+                  />
+                  {formErrors.type && <p className="mt-1 text-[10px] text-red-500">{formErrors.type}</p>}
+                </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Số điện thoại *</label>
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
-                />
-                {formErrors.phone && <p className="mt-1 text-[10px] text-red-600">{formErrors.phone}</p>}
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Thành phố *</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
-                />
-                {formErrors.city && <p className="mt-1 text-[10px] text-red-600">{formErrors.city}</p>}
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Loại cửa hàng *</label>
-                <input
-                  type="text"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
-                />
-                {formErrors.type && <p className="mt-1 text-[10px] text-red-600">{formErrors.type}</p>}
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Địa chỉ *</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                  Địa chỉ <span className="text-red-500">*</span>
+                </label>
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  rows={3}
-                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
+                  rows={2}
+                  className={`w-full rounded-lg border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] ${formErrors.address ? 'border-red-500' : 'border-slate-200 dark:border-[#333333]'} focus:border-[#004785] dark:focus:border-blue-500`}
                 />
-                {formErrors.address && <p className="mt-1 text-[10px] text-red-600">{formErrors.address}</p>}
+                {formErrors.address && <p className="mt-1 text-[10px] text-red-500">{formErrors.address}</p>}
               </div>
-              <div className="flex items-center gap-2 pt-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                  Chủ cửa hàng
+                </label>
+                <select
+                  name="managerUserId"
+                  value={formData.managerUserId}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-200 bg-transparent p-2 text-xs text-slate-900 outline-none focus:border-[#004785] dark:border-[#333333] dark:text-[#e5e5e5] dark:focus:border-blue-500 [&>option]:bg-white dark:[&>option]:bg-[#0f0f0f]"
+                >
+                  <option value="">-- Chưa gán Chủ cửa hàng --</option>
+                  {owners.map((owner) => (
+                    <option key={owner.userId} value={owner.userId}>
+                      {owner.fullName || owner.userName} ({owner.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   name="isActive"
                   id="isActive"
                   checked={formData.isActive === 1}
                   onChange={handleInputChange}
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="h-4 w-4 rounded accent-[#004785]"
                 />
-                <label htmlFor="isActive" className="text-xs font-bold text-slate-700 dark:text-[#b3b3b3]">
+                <label htmlFor="isActive" className="text-xs font-semibold text-slate-700 dark:text-[#b3b3b3]">
                   Trạng thái Hoạt động
                 </label>
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Chủ cửa hàng *</label>
-                <select
-                  name="managerUserId"
-                  value={formData.managerUserId}
-                  onChange={handleInputChange}
-                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 outline-none focus:border-[#004785] dark:border-[#333333] dark:text-[#e5e5e5] dark:focus:border-blue-600 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-[#0f0f0f] dark:[&>option]:text-[#e5e5e5]"
-                >
-                  <option value="">-- Chưa gán Chủ cửa hàng --</option>
-                  {owners.map(owner => (
-                    <option key={owner.userId} value={owner.userId}>
-                      {owner.fullName || owner.userName} ({owner.email})
-                    </option>
-                  ))}
-                </select>
-                {formErrors.managerUserId && <p className="mt-1 text-[10px] text-red-600">{formErrors.managerUserId}</p>}
-                <p className="mt-1 text-[10px] text-slate-400">Chọn một Chủ cửa hàng (Owner) để quản lý cửa hàng này.</p>
-              </div>
-              <div className="mt-4 flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-[#333333]">
+              <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-[#333333]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded bg-slate-100 px-4 py-2 text-xs font-bold hover:bg-slate-200 dark:bg-[#272727] dark:hover:bg-[#333333]"
+                  className="rounded-lg bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-200 dark:bg-[#272727] dark:text-[#e5e5e5] dark:hover:bg-[#333333]"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-[#004785] px-4 py-2 text-xs font-bold text-white hover:bg-[#004785]/90 dark:bg-blue-600"
+                  className="rounded-lg bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
                 >
-                  Xác nhận
+                  Cập nhật
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 };

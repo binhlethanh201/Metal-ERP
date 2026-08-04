@@ -42,10 +42,25 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     setFormData((prev) => ({
       ...prev,
       roleName,
-      branchName: '', // Reset when changing role
+      branchId: '',
+      branchName: '',
     }));
     if (errors.roleName) {
       setErrors({ ...errors, roleName: null });
+    }
+  };
+
+  const handleBranchSelect = (e) => {
+    const value = e.target.value;
+    if (value === '__new__') {
+      // Keep branchId empty, use branchName for new store
+      setFormData((prev) => ({ ...prev, branchId: '' }));
+    } else {
+      // Existing branch selected, clear branchName
+      setFormData((prev) => ({ ...prev, branchId: value, branchName: '' }));
+    }
+    if (errors.branchId) {
+      setErrors({ ...errors, branchId: null });
     }
   };
 
@@ -70,6 +85,9 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     // Nếu là Owner và không chọn BranchId có sẵn, thì bắt buộc nhập tên cửa hàng
     if (formData.roleName === 'Owner' && !formData.branchId && !formData.branchName?.trim()) {
       newErrors.branchName = 'Vui lòng nhập tên cửa hàng mới cho Chủ cửa hàng này, hoặc chọn một Cửa hàng có sẵn bên dưới.';
+    }
+    if (formData.branchName && formData.branchName.trim().length > 100) {
+      newErrors.branchName = 'Tên cửa hàng không được vượt quá 100 ký tự.';
     }
 
     // Nếu không phải Owner, bắt buộc phải chọn BranchId
@@ -189,7 +207,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
           {formData.roleName === 'Owner' && !formData.branchId && (
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
-                Tên Cửa Hàng Mới (Nếu tạo Cửa hàng mới) <span className="text-red-600 dark:text-red-500">*</span>
+                Tên cửa hàng <span className="text-red-600 dark:text-red-500">*</span>
               </label>
               <input
                 name="branchName"
@@ -206,17 +224,22 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
           {formData.roleName && formData.roleName !== 'Admin' && (
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
-                Chọn Cửa Hàng (Nếu đã có) {formData.roleName !== 'Owner' && <span className="text-red-600 dark:text-red-500">*</span>}
+                Chọn Cửa Hàng {formData.roleName !== 'Owner' && <span className="text-red-600 dark:text-red-500">*</span>}
               </label>
               <select
                 name="branchId"
-                value={formData.branchId || ''}
-                onChange={handleChange}
-                className={`w-full rounded border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] [&>option]:bg-white dark:[&>option]:bg-[#0f0f0f] ${errors.branchId ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-[#333333] focus:border-[#004785]'}`}
+                value={formData.branchId || (formData.roleName === 'Owner' && formData.branchName ? '__new__' : '')}
+                onChange={handleBranchSelect}
+                disabled={formData.roleName === 'Owner' && !!formData.branchName}
+                className={`w-full rounded border p-2 text-xs outline-none bg-transparent text-slate-900 dark:text-[#e5e5e5] [&>option]:bg-white dark:[&>option]:bg-[#0f0f0f] ${errors.branchId ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-[#333333] focus:border-[#004785]'} ${formData.roleName === 'Owner' && !!formData.branchName ? 'cursor-not-allowed opacity-60' : ''}`}
               >
-                <option value="">-- Tạo cửa hàng mới (Chỉ áp dụng cho Chủ Cửa Hàng) --</option>
+                {formData.roleName === 'Owner' && formData.branchName ? (
+                  <option value="__new__">{formData.branchName} (Tạo mới)</option>
+                ) : (
+                  <option value="">-- {formData.roleName === 'Owner' ? 'Nhập tên cửa hàng mới bên trên' : 'Chọn cửa hàng'} --</option>
+                )}
                 {(branches || []).map(b => (
-                  <option key={b.branchId} value={b.branchId}>{b.branchName}</option>
+                  <option key={b.branchId} value={b.branchId}>{b.branchName} - {b.managerFullName || b.managerEmail || 'Chưa gắn chủ'}</option>
                 ))}
               </select>
               {errors.branchId && <p className="mt-1 text-[10px] text-red-500">{errors.branchId}</p>}
@@ -256,8 +279,8 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
             {formData.roleName === 'Owner' && !formData.branchId && (
               <div className="mt-3 rounded-md bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-100 dark:border-blue-800/30 flex items-start gap-2">
                 <Icon name="info" size={16} className="text-[#004785] dark:text-blue-400 mt-0.5" />
-                <p className="text-[11px] font-semibold text-[#004785] dark:text-blue-300">
-                  Hệ thống sẽ tự động khởi tạo Cửa Hàng <strong>{formData.branchName || 'mới'}</strong> và gán Chủ cửa hàng này làm người quản lý mặc định.
+                <p className="text-[11px] font-semibold text-[#004785] dark:text-blue-300 break-words">
+                  Hệ thống sẽ tự động khởi tạo Cửa Hàng <strong className="break-all">{formData.branchName || 'mới'}</strong> và gán Chủ cửa hàng này làm người quản lý mặc định.
                 </p>
               </div>
             )}
