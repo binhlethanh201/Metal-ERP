@@ -45,11 +45,23 @@ const translateErrorMessage = (msg) => {
     [/unauthorized/i, 'Không có quyền truy cập.'],
     [/internal server error/i, 'Lỗi máy chủ nội bộ.'],
     [/bad request/i, 'Yêu cầu không hợp lệ.'],
-    [/already\s*(confirmed|approved|processed|completed|duyệt)/i, 'Phiếu này đã được duyệt trước đó!'],
-    [/cannot\s*confirm.*(?:not\s*pending|already|status)/i, 'Không thể duyệt phiếu - trạng thái không còn là chờ duyệt.'],
+    [
+      /already\s*(confirmed|approved|processed|completed|duyệt)/i,
+      'Phiếu này đã được duyệt trước đó!',
+    ],
+    [
+      /cannot\s*confirm.*(?:not\s*pending|already|status)/i,
+      'Không thể duyệt phiếu - trạng thái không còn là chờ duyệt.',
+    ],
     [/conflict/i, 'Dữ liệu bị trùng lặp.'],
-    [/không thể hủy vì hàng đã được xuất khỏi kho.*/i, 'Không thể hủy - hàng trong kho không đủ để hoàn trả!'],
-    [/insufficient\s+stock|cannot\s+cancel.*stock|stock\s+is\s+not\s+enough|không\s+đủ\s+tồn|không\s+đủ\s+hàng/i, 'Không thể hủy - tồn kho không đủ để hoàn trả!'],
+    [
+      /không thể hủy vì hàng đã được xuất khỏi kho.*/i,
+      'Không thể hủy - hàng trong kho không đủ để hoàn trả!',
+    ],
+    [
+      /insufficient\s+stock|cannot\s+cancel.*stock|stock\s+is\s+not\s+enough|không\s+đủ\s+tồn|không\s+đủ\s+hàng/i,
+      'Không thể hủy - tồn kho không đủ để hoàn trả!',
+    ],
     [/forbidden/i, 'Không có quyền thực hiện thao tác này.'],
     [
       /an item with the same key has already been added/i,
@@ -119,7 +131,10 @@ export const apiClient = async (endpoint, options = {}) => {
     if (!response.ok) {
       // 401 → redirect login (token hết hạn, bị xóa, hoặc bị khóa)
       if (response.status === 401) {
-        const errorBody401 = await response.clone().json().catch(() => ({}));
+        const errorBody401 = await response
+          .clone()
+          .json()
+          .catch(() => ({}));
         const isInactive =
           errorBody401?.code === 'ACCOUNT_INACTIVE' ||
           /khóa|xóa|inactive/i.test(errorBody401?.message || '');
@@ -154,7 +169,9 @@ export const apiClient = async (endpoint, options = {}) => {
       if (validationErrors && typeof validationErrors === 'object') {
         detail = Object.entries(validationErrors)
           .map(([, v]) => String(Array.isArray(v) ? v.join(', ') : v))
-          .map((m) => m.replace(/\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ''))
+          .map((m) =>
+            m.replace(/\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '')
+          )
           .join('; ');
       }
       const rawMsg =

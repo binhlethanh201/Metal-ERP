@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Icon from '../../../shared/components/Icon';
 import {
   getPermissionList,
@@ -126,14 +121,10 @@ const AdminRoleManagement = () => {
       ]);
 
       setMatrix(Array.isArray(matrixData) ? matrixData : []);
-      setAllPermissions(
-        Array.isArray(permissionData) ? permissionData : []
-      );
+      setAllPermissions(Array.isArray(permissionData) ? permissionData : []);
     } catch (err) {
       console.error('API error:', err);
-      setError(
-        err.message || 'Không tải được dữ liệu phân quyền'
-      );
+      setError(err.message || 'Không tải được dữ liệu phân quyền');
     } finally {
       setLoading(false);
     }
@@ -159,32 +150,22 @@ const AdminRoleManagement = () => {
   const handleTogglePermission = (permissionId) => {
     setEditedPermissions((previousPermissions) =>
       previousPermissions.includes(permissionId)
-        ? previousPermissions.filter(
-            (id) => id !== permissionId
-          )
+        ? previousPermissions.filter((id) => id !== permissionId)
         : [...previousPermissions, permissionId]
     );
   };
 
   // Chọn hoặc bỏ chọn toàn bộ quyền trong một nhóm
-  const handleToggleGroup = (
-    groupPermissionIds,
-    isAllChecked
-  ) => {
+  const handleToggleGroup = (groupPermissionIds, isAllChecked) => {
     if (isAllChecked) {
       // Bỏ chọn toàn bộ quyền trong nhóm
       setEditedPermissions((previousPermissions) =>
-        previousPermissions.filter(
-          (id) => !groupPermissionIds.includes(id)
-        )
+        previousPermissions.filter((id) => !groupPermissionIds.includes(id))
       );
     } else {
       // Chọn toàn bộ quyền trong nhóm
       setEditedPermissions((previousPermissions) => {
-        const permissionSet = new Set([
-          ...previousPermissions,
-          ...groupPermissionIds,
-        ]);
+        const permissionSet = new Set([...previousPermissions, ...groupPermissionIds]);
 
         return Array.from(permissionSet);
       });
@@ -198,10 +179,7 @@ const AdminRoleManagement = () => {
     setIsSaving(true);
 
     try {
-      await updateRolePermissions(
-        selectedRoleId,
-        editedPermissions
-      );
+      await updateRolePermissions(selectedRoleId, editedPermissions);
 
       alert('Cập nhật quyền thành công!');
 
@@ -242,22 +220,17 @@ const AdminRoleManagement = () => {
     const groups = {};
 
     allPermissions.forEach((permission) => {
-      const permissionCode =
-        permission.permissionCode || '';
+      const permissionCode = permission.permissionCode || '';
 
       const parts = permissionCode.split('_');
-      const prefix =
-        parts.length > 1
-          ? parts[0].toUpperCase()
-          : 'OTHER';
+      const prefix = parts.length > 1 ? parts[0].toUpperCase() : 'OTHER';
 
       // Bỏ toàn bộ quyền thuộc Owner
       if (prefix === 'OWNER') {
         return;
       }
 
-      const moduleName =
-        MODULE_MAP[prefix] || 'Các quyền hạn khác';
+      const moduleName = MODULE_MAP[prefix] || 'Các quyền hạn khác';
 
       if (!groups[moduleName]) {
         groups[moduleName] = [];
@@ -269,9 +242,7 @@ const AdminRoleManagement = () => {
     // Sắp xếp quyền theo bảng chữ cái trong từng nhóm
     Object.values(groups).forEach((permissionList) => {
       permissionList.sort((permissionA, permissionB) =>
-        permissionA.permissionCode.localeCompare(
-          permissionB.permissionCode
-        )
+        permissionA.permissionCode.localeCompare(permissionB.permissionCode)
       );
     });
 
@@ -287,19 +258,12 @@ const AdminRoleManagement = () => {
   }
 
   if (error) {
-    return (
-      <div className="p-8 text-center font-bold text-red-600 dark:text-red-500">
-        {error}
-      </div>
-    );
+    return <div className="p-8 text-center font-bold text-red-600 dark:text-red-500">{error}</div>;
   }
 
-  const selectedRole = matrix.find(
-    (role) => role.roleId === selectedRoleId
-  );
+  const selectedRole = matrix.find((role) => role.roleId === selectedRoleId);
 
-  const isSuperAdmin =
-    selectedRole?.roleName?.toUpperCase() === 'ADMIN';
+  const isSuperAdmin = selectedRole?.roleName?.toUpperCase() === 'ADMIN';
 
   return (
     <div className="flex h-[calc(100vh-100px)] flex-col">
@@ -319,9 +283,7 @@ const AdminRoleManagement = () => {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() =>
-                handleSelectRole(selectedRole)
-              }
+              onClick={() => handleSelectRole(selectedRole)}
               disabled={isSaving}
               className="rounded bg-slate-100 px-4 py-2 text-xs font-bold text-slate-900 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-[#272727] dark:text-[#e5e5e5] dark:hover:bg-[#333333]"
             >
@@ -334,18 +296,9 @@ const AdminRoleManagement = () => {
               disabled={isSaving}
               className="flex items-center gap-2 rounded bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#003663] disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700"
             >
-              <Icon
-                name={
-                  isSaving
-                    ? 'hourglass_empty'
-                    : 'save'
-                }
-                size={16}
-              />
+              <Icon name={isSaving ? 'hourglass_empty' : 'save'} size={16} />
 
-              {isSaving
-                ? 'Đang lưu...'
-                : 'Lưu quyền hạn'}
+              {isSaving ? 'Đang lưu...' : 'Lưu quyền hạn'}
             </button>
           </div>
         )}
@@ -363,37 +316,25 @@ const AdminRoleManagement = () => {
           <div className="no-scrollbar flex-1 space-y-1 overflow-y-auto p-2">
             {matrix
               .filter((role) => {
-                const roleName =
-                  role.roleName?.toLowerCase() || '';
+                const roleName = role.roleName?.toLowerCase() || '';
 
                 // Không hiển thị Owner
-                return [
-                  'salesstaff',
-                  'inventorystaff',
-                ].includes(roleName);
+                return ['salesstaff', 'inventorystaff'].includes(roleName);
               })
               .map((role) => {
-                const isSelected =
-                  role.roleId === selectedRoleId;
+                const isSelected = role.roleId === selectedRoleId;
 
-                const permissionCount = (
-                  role.permissions || []
-                ).filter((permission) => {
-                  const permissionCode =
-                    permission.permissionCode || '';
+                const permissionCount = (role.permissions || []).filter((permission) => {
+                  const permissionCode = permission.permissionCode || '';
 
-                  return !permissionCode
-                    .toUpperCase()
-                    .startsWith('OWNER_');
+                  return !permissionCode.toUpperCase().startsWith('OWNER_');
                 }).length;
 
                 return (
                   <button
                     type="button"
                     key={role.roleId}
-                    onClick={() =>
-                      handleSelectRole(role)
-                    }
+                    onClick={() => handleSelectRole(role)}
                     className={`w-full rounded-lg border px-4 py-3 text-left transition-all ${
                       isSelected
                         ? 'border-[#004785] bg-[#004785] shadow-sm dark:border-blue-600 dark:bg-blue-600'
@@ -403,9 +344,7 @@ const AdminRoleManagement = () => {
                     <div className="flex items-center justify-between">
                       <span
                         className={`text-sm font-bold ${
-                          isSelected
-                            ? 'text-white'
-                            : 'text-slate-900 dark:text-[#e5e5e5]'
+                          isSelected ? 'text-white' : 'text-slate-900 dark:text-[#e5e5e5]'
                         }`}
                       >
                         {role.roleName}
@@ -424,9 +363,7 @@ const AdminRoleManagement = () => {
 
                     <div
                       className={`mt-1 text-[11px] ${
-                        isSelected
-                          ? 'text-white/80'
-                          : 'text-slate-500 dark:text-[#999999]'
+                        isSelected ? 'text-white/80' : 'text-slate-500 dark:text-[#999999]'
                       }`}
                     >
                       Nhấp để xem và cấu hình quyền
@@ -441,19 +378,13 @@ const AdminRoleManagement = () => {
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
           {!selectedRoleId ? (
             <div className="flex flex-1 flex-col items-center justify-center text-slate-400 dark:text-[#666666]">
-              <Icon
-                name="admin_panel_settings"
-                size={48}
-                className="mb-4 opacity-50"
-              />
+              <Icon name="admin_panel_settings" size={48} className="mb-4 opacity-50" />
 
               <p className="text-sm font-bold text-slate-500 dark:text-[#999999]">
                 Chưa chọn chức vụ nào.
               </p>
 
-              <p className="text-xs">
-                Hãy chọn một chức vụ ở cột bên trái để bắt đầu phân quyền.
-              </p>
+              <p className="text-xs">Hãy chọn một chức vụ ở cột bên trái để bắt đầu phân quyền.</p>
             </div>
           ) : (
             <>
@@ -476,134 +407,100 @@ const AdminRoleManagement = () => {
                 {isSuperAdmin && (
                   <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-600 dark:border-red-800/30 dark:bg-red-900/20 dark:text-red-500">
                     <Icon name="info" size={16} />
-
                     Super Admin được mặc định toàn quyền và không thể chỉnh sửa từ giao diện.
                   </div>
                 )}
 
-                {Object.entries(groupedPermissions).map(
-                  ([groupName, permissions]) => {
-                    const groupPermissionIds =
-                      permissions.map(
-                        (permission) =>
-                          permission.permissionId
-                      );
+                {Object.entries(groupedPermissions).map(([groupName, permissions]) => {
+                  const groupPermissionIds = permissions.map(
+                    (permission) => permission.permissionId
+                  );
 
-                    const isAllChecked =
-                      groupPermissionIds.every((id) =>
-                        editedPermissions.includes(id)
-                      );
+                  const isAllChecked = groupPermissionIds.every((id) =>
+                    editedPermissions.includes(id)
+                  );
 
-                    const isIndeterminate =
-                      !isAllChecked &&
-                      groupPermissionIds.some((id) =>
-                        editedPermissions.includes(id)
-                      );
+                  const isIndeterminate =
+                    !isAllChecked &&
+                    groupPermissionIds.some((id) => editedPermissions.includes(id));
 
-                    return (
-                      <div
-                        key={groupName}
-                        className="mb-6"
-                      >
-                        <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2 dark:border-[#333333]">
-                          <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
-                            <Icon
-                              name="folder"
-                              size={18}
-                              className="text-[#004785] dark:text-blue-400"
-                            />
+                  return (
+                    <div key={groupName} className="mb-6">
+                      <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2 dark:border-[#333333]">
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                          <Icon
+                            name="folder"
+                            size={18}
+                            className="text-[#004785] dark:text-blue-400"
+                          />
 
-                            {groupName}
-                          </h3>
+                          {groupName}
+                        </h3>
 
-                          <label className="group flex cursor-pointer items-center gap-2">
-                            <span className="text-[11px] font-bold text-slate-500 group-hover:text-[#004785] dark:text-[#999999] dark:group-hover:text-blue-400">
-                              Chọn hết nhóm này
-                            </span>
+                        <label className="group flex cursor-pointer items-center gap-2">
+                          <span className="text-[11px] font-bold text-slate-500 group-hover:text-[#004785] dark:text-[#999999] dark:group-hover:text-blue-400">
+                            Chọn hết nhóm này
+                          </span>
 
-                            <input
-                              type="checkbox"
-                              disabled={isSuperAdmin}
-                              checked={isAllChecked}
-                              ref={(input) => {
-                                if (input) {
-                                  input.indeterminate =
-                                    isIndeterminate;
-                                }
-                              }}
-                              onChange={() =>
-                                handleToggleGroup(
-                                  groupPermissionIds,
-                                  isAllChecked
-                                )
+                          <input
+                            type="checkbox"
+                            disabled={isSuperAdmin}
+                            checked={isAllChecked}
+                            ref={(input) => {
+                              if (input) {
+                                input.indeterminate = isIndeterminate;
                               }
-                              className="h-4 w-4 rounded text-[#004785] focus:ring-[#004785] disabled:opacity-50 dark:text-blue-400"
-                            />
-                          </label>
-                        </div>
+                            }}
+                            onChange={() => handleToggleGroup(groupPermissionIds, isAllChecked)}
+                            className="h-4 w-4 rounded text-[#004785] focus:ring-[#004785] disabled:opacity-50 dark:text-blue-400"
+                          />
+                        </label>
+                      </div>
 
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-3">
-                          {permissions.map(
-                            (permission) => {
-                              const isChecked =
-                                editedPermissions.includes(
-                                  permission.permissionId
-                                );
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-3">
+                        {permissions.map((permission) => {
+                          const isChecked = editedPermissions.includes(permission.permissionId);
 
-                              return (
-                                <label
-                                  key={
-                                    permission.permissionId
-                                  }
-                                  className={`group flex items-start gap-2 ${
-                                    isSuperAdmin
-                                      ? 'cursor-not-allowed opacity-60'
-                                      : 'cursor-pointer'
+                          return (
+                            <label
+                              key={permission.permissionId}
+                              className={`group flex items-start gap-2 ${
+                                isSuperAdmin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                disabled={isSuperAdmin}
+                                checked={isChecked}
+                                onChange={() => handleTogglePermission(permission.permissionId)}
+                                className="mt-0.5 h-4 w-4 rounded border-slate-200 text-[#004785] focus:ring-[#004785] dark:border-[#333333] dark:text-blue-400"
+                              />
+
+                              <div>
+                                <div
+                                  className={`text-xs font-bold transition-colors ${
+                                    isChecked
+                                      ? 'text-[#004785] dark:text-blue-400'
+                                      : 'text-slate-900 group-hover:text-[#004785] dark:text-[#e5e5e5] dark:group-hover:text-blue-400'
                                   }`}
                                 >
-                                  <input
-                                    type="checkbox"
-                                    disabled={isSuperAdmin}
-                                    checked={isChecked}
-                                    onChange={() =>
-                                      handleTogglePermission(
-                                        permission.permissionId
-                                      )
-                                    }
-                                    className="mt-0.5 h-4 w-4 rounded border-slate-200 text-[#004785] focus:ring-[#004785] dark:border-[#333333] dark:text-blue-400"
-                                  />
+                                  {permission.permissionCode}
+                                </div>
 
-                                  <div>
-                                    <div
-                                      className={`text-xs font-bold transition-colors ${
-                                        isChecked
-                                          ? 'text-[#004785] dark:text-blue-400'
-                                          : 'text-slate-900 group-hover:text-[#004785] dark:text-[#e5e5e5] dark:group-hover:text-blue-400'
-                                      }`}
-                                    >
-                                      {
-                                        permission.permissionCode
-                                      }
-                                    </div>
-
-                                    <div
-                                      className="mt-0.5 w-40 text-xs font-semibold leading-snug text-slate-600 dark:text-[#b3b3b3] md:w-56 line-clamp-2"
-                                      title={getPermissionLabel(
-                                        permission
-                                      )}
-                                    >
-                                      {getPermissionLabel(permission)}
-                                    </div>
-                                  </div>
-                                </label>
-                              );
-                            }
-                          )}
-                        </div>
+                                <div
+                                  className="mt-0.5 line-clamp-2 w-40 text-xs font-semibold leading-snug text-slate-600 dark:text-[#b3b3b3] md:w-56"
+                                  title={getPermissionLabel(permission)}
+                                >
+                                  {getPermissionLabel(permission)}
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
                       </div>
-                    );
-                  }
-                )}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}

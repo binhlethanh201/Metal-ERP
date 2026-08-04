@@ -64,9 +64,10 @@ const SystemNotifications = () => {
   }, [fetchNotifications]);
 
   // Filter by status
-  const filteredNotifications = statusFilter === 'ALL'
-    ? notifications
-    : notifications.filter((n) => (n.status || '').toUpperCase() === statusFilter);
+  const filteredNotifications =
+    statusFilter === 'ALL'
+      ? notifications
+      : notifications.filter((n) => (n.status || '').toUpperCase() === statusFilter);
   const pagedFiltered = filteredNotifications.slice((page - 1) * pageSize, page * pageSize);
   const filteredTotalPages = Math.max(1, Math.ceil(filteredNotifications.length / pageSize));
 
@@ -102,12 +103,11 @@ const SystemNotifications = () => {
     setFormData({
       title: notif.title || '',
       content: notif.content || '',
-      targetType: notif.target === 'ALL' ? 'ALL_USERS' : notif.target === 'OWNER' ? 'OWNERS' : 'STAFFS',
+      targetType:
+        notif.target === 'ALL' ? 'ALL_USERS' : notif.target === 'OWNER' ? 'OWNERS' : 'STAFFS',
       branchId: notif.branchId || '',
       priority: notif.isUrgent ? 'HIGH' : 'NORMAL',
-      scheduledFor: notif.scheduledAt
-        ? new Date(notif.scheduledAt).toISOString().slice(0, 16)
-        : '',
+      scheduledFor: notif.scheduledAt ? new Date(notif.scheduledAt).toISOString().slice(0, 16) : '',
     });
   };
 
@@ -119,7 +119,12 @@ const SystemNotifications = () => {
       const payload = {
         title: formData.title,
         content: formData.content,
-        target: formData.targetType === 'ALL_USERS' ? 'ALL' : formData.targetType === 'OWNERS' ? 'OWNER' : 'STAFF',
+        target:
+          formData.targetType === 'ALL_USERS'
+            ? 'ALL'
+            : formData.targetType === 'OWNERS'
+              ? 'OWNER'
+              : 'STAFF',
         branchId: formData.branchId || null,
         isUrgent: formData.priority === 'HIGH',
         scheduledAt: formData.scheduledFor || null,
@@ -177,7 +182,9 @@ const SystemNotifications = () => {
       {/* HEADER */}
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Thông Báo Hệ Thống</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">
+            Thông Báo Hệ Thống
+          </h1>
           <p className="mt-1 text-gray-600 dark:text-[#999999]">
             Quản lý và phát sóng thông báo cho người dùng.
           </p>
@@ -268,7 +275,9 @@ const SystemNotifications = () => {
                 >
                   <option value="">-- Tất cả cửa hàng --</option>
                   {branches.map((b) => (
-                    <option key={b.branchId} value={b.branchId}>{b.branchName} - {b.managerFullName || b.managerEmail || 'Chưa gắn chủ'}</option>
+                    <option key={b.branchId} value={b.branchId}>
+                      {b.branchName} - {b.managerFullName || b.managerEmail || 'Chưa gắn chủ'}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -283,7 +292,7 @@ const SystemNotifications = () => {
                 name="scheduledFor"
                 value={formData.scheduledFor}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-200 bg-transparent p-2 text-xs text-slate-900 outline-none transition-colors focus:border-[#004785] dark:border-[#333333] dark:text-[#e5e5e5] dark:focus:border-blue-500 [color-scheme:light] dark:[color-scheme:dark]"
+                className="w-full rounded-lg border border-slate-200 bg-transparent p-2 text-xs text-slate-900 outline-none transition-colors [color-scheme:light] focus:border-[#004785] dark:border-[#333333] dark:text-[#e5e5e5] dark:[color-scheme:dark] dark:focus:border-blue-500"
               />
             </div>
 
@@ -321,7 +330,10 @@ const SystemNotifications = () => {
             <div className="flex items-center gap-2">
               <select
                 value={statusFilter}
-                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
                 className="rounded-lg border border-slate-200 bg-transparent px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-[#004785] dark:border-[#333333] dark:text-[#d4d4d4]"
                 title="Lọc theo trạng thái"
               >
@@ -347,18 +359,22 @@ const SystemNotifications = () => {
                 <span className="text-sm font-semibold">Đang tải...</span>
               </div>
             ) : error ? (
-              <div className="py-12 text-center font-bold text-red-600 dark:text-red-500">{error}</div>
+              <div className="py-12 text-center font-bold text-red-600 dark:text-red-500">
+                {error}
+              </div>
             ) : filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-[#808080]">
                 <Icon name="campaign" size={40} className="mb-2 opacity-50" />
                 <p className="text-sm font-semibold">
-                  {statusFilter === 'ALL' ? 'Không có thông báo nào.' : `Không có thông báo ở trạng thái "${STATUS_LABEL[statusFilter] || statusFilter}".`}
+                  {statusFilter === 'ALL'
+                    ? 'Không có thông báo nào.'
+                    : `Không có thông báo ở trạng thái "${STATUS_LABEL[statusFilter] || statusFilter}".`}
                 </p>
               </div>
             ) : (
               <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-[#333333] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
+                  <tr className="border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-[#333333] dark:text-[#999999]">
                     <th className="px-4 py-3">Tiêu đề</th>
                     <th className="px-4 py-3">Ưu tiên</th>
                     <th className="px-4 py-3 text-center">Trạng thái</th>
@@ -377,7 +393,10 @@ const SystemNotifications = () => {
                         className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]"
                       >
                         <td className="px-4 py-3">
-                          <div className="max-w-xs truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]" title={n.title}>
+                          <div
+                            className="max-w-xs truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]"
+                            title={n.title}
+                          >
                             {n.title}
                           </div>
                           <div className="mt-0.5 text-[10px] text-slate-400 dark:text-[#808080]">
@@ -461,7 +480,10 @@ const SystemNotifications = () => {
                 <span>Hiển thị</span>
                 <select
                   value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
                   className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
                 >
                   <option value={20}>20 dòng</option>
@@ -470,7 +492,9 @@ const SystemNotifications = () => {
                 </select>
               </div>
               <span>
-                {filteredNotifications.length === 0 ? 0 : (page - 1) * pageSize + 1} - {Math.min(page * pageSize, filteredNotifications.length)} trong tổng số {filteredNotifications.length} thông báo
+                {filteredNotifications.length === 0 ? 0 : (page - 1) * pageSize + 1} -{' '}
+                {Math.min(page * pageSize, filteredNotifications.length)} trong tổng số{' '}
+                {filteredNotifications.length} thông báo
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -513,7 +537,10 @@ const SystemNotifications = () => {
                   {detailNotif.title || '(Không có tiêu đề)'}
                 </h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">
-                  Tạo lúc {detailNotif.createdAt ? new Date(detailNotif.createdAt).toLocaleString('vi-VN') : '—'}
+                  Tạo lúc{' '}
+                  {detailNotif.createdAt
+                    ? new Date(detailNotif.createdAt).toLocaleString('vi-VN')
+                    : '—'}
                   {detailNotif.createdByName ? ` bởi ${detailNotif.createdByName}` : ''}
                 </p>
               </div>
@@ -547,25 +574,38 @@ const SystemNotifications = () => {
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
-                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Đối tượng</div>
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                  Đối tượng
+                </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
                   {TARGET_LABEL[detailNotif.target] || detailNotif.target || '—'}
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
-                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Cửa hàng</div>
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                  Cửa hàng
+                </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
-                  {detailNotif.branchName || (detailNotif.branchId ? detailNotif.branchId.slice(0, 8) + '…' : 'Tất cả cửa hàng')}
+                  {detailNotif.branchName ||
+                    (detailNotif.branchId
+                      ? detailNotif.branchId.slice(0, 8) + '…'
+                      : 'Tất cả cửa hàng')}
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
-                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Lên lịch gửi</div>
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                  Lên lịch gửi
+                </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
-                  {detailNotif.scheduledAt ? new Date(detailNotif.scheduledAt).toLocaleString('vi-VN') : 'Gửi ngay khi bấm Gửi'}
+                  {detailNotif.scheduledAt
+                    ? new Date(detailNotif.scheduledAt).toLocaleString('vi-VN')
+                    : 'Gửi ngay khi bấm Gửi'}
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
-                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Đã gửi lúc</div>
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                  Đã gửi lúc
+                </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
                   {detailNotif.sentAt ? new Date(detailNotif.sentAt).toLocaleString('vi-VN') : '—'}
                 </div>
