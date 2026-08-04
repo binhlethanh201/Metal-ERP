@@ -25,6 +25,9 @@ const AdminUserDetail = () => {
 
   const [user, setUser] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityPageSize, setActivityPageSize] = useState(20);
   const [roles, setRoles] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,18 +42,25 @@ const AdminUserDetail = () => {
   const [isAssignBranchModalOpen, setIsAssignBranchModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({ fullName: '', phoneNumber: '' });
+  const [editErrors, setEditErrors] = useState({});
+  const [isResetPwOpen, setIsResetPwOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetPwError, setResetPwError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (actPage = 1, actSize = 20) => {
     setLoading(true);
     try {
       const [userData, activityData, roleData, branchData] = await Promise.all([
         getUserDetail(id),
-        getUserActivities(id),
+        getUserActivities(id, actPage, actSize),
         getRoleList(),
         getAdminBranches({ pageSize: 1000 }),
       ]);
       setUser(userData);
-      setActivities(Array.isArray(activityData) ? activityData : []);
+      setActivities(activityData?.items || []);
+      setActivityTotal(activityData?.totalCount || 0);
       setRoles(Array.isArray(roleData) ? roleData : []);
       setBranches(branchData?.items || []);
       setEditFormData({
@@ -67,20 +77,32 @@ const AdminUserDetail = () => {
   }, [id, navigate]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchData(activityPage, activityPageSize);
+  }, [fetchData, activityPage, activityPageSize]);
+
+  const openResetPassword = () => {
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetPwError('');
+    setShowPassword(false);
+    setIsResetPwOpen(true);
+  };
 
   const handleResetPassword = async () => {
-    const newPass = window.prompt(
-      `Nhập mật khẩu mới cho tài khoản ${user.email}:\n(Ít nhất 6 ký tự)`
-    );
-    if (!newPass) return;
-    if (newPass.length < 6) return alert('Mật khẩu phải có ít nhất 6 ký tự!');
+    if (!newPassword || newPassword.length < 6) {
+      setResetPwError('Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetPwError('Mật khẩu xác nhận không khớp.');
+      return;
+    }
     try {
-      await resetUserPassword(id, newPass);
+      await resetUserPassword(id, newPassword);
       alert('Đặt lại mật khẩu thành công!');
+      setIsResetPwOpen(false);
     } catch (err) {
-      alert(err.message || 'Lỗi khi đặt lại mật khẩu');
+      setResetPwError(err.message || 'Lỗi khi đặt lại mật khẩu');
     }
   };
 
@@ -101,7 +123,8 @@ const AdminUserDetail = () => {
         alert('Đã xóa vĩnh viễn tài khoản!');
       }
       setConfirmModal({ isOpen: false });
-      fetchData();
+      setActivityPage(1);
+      fetchData(1, activityPageSize);
     } catch (err) {
       alert(err.message || 'Thao tác thất bại');
     }
@@ -112,7 +135,8 @@ const AdminUserDetail = () => {
       await assignUserRoles(userId, roleIds);
       alert('Cập nhật quyền thành công!');
       setIsAssignModalOpen(false);
-      fetchData();
+      setActivityPage(1);
+      fetchData(1, activityPageSize);
     } catch (err) {
       alert(err.message || 'Cập nhật quyền thất bại');
     }
@@ -123,23 +147,44 @@ const AdminUserDetail = () => {
       await assignUserBranch(userId, branchId);
       alert('Gán cửa hàng thành công!');
       setIsAssignBranchModalOpen(false);
-      fetchData();
+      setActivityPage(1);
+      fetchData(1, activityPageSize);
     } catch (err) {
       alert(err.message || 'Gán cửa hàng thất bại');
     }
   };
 
+  const validateEditForm = () => {
+    const errors = {};
+    if (!editFormData.fullName.trim()) {
+      errors.fullName = 'Vui lòng nhập họ và tên.';
+    }
+    if (editFormData.phoneNumber && !/^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(editFormData.phoneNumber.trim())) {
+      errors.phoneNumber = 'Số điện thoại không đúng định dạng (VD: 0912345678).';
+    }
+    setEditErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleUpdateUser = async (e) => {
     e.preventDefault();
+    if (!validateEditForm()) return;
     try {
-      await updateUser(id, editFormData);
+      await updateUser(id, {
+        fullName: editFormData.fullName.trim(),
+        phoneNumber: editFormData.phoneNumber?.trim() || undefined,
+      });
       alert('Cập nhật thông tin thành công!');
       setIsEditModalOpen(false);
-      fetchData();
+      setEditErrors({});
+      setActivityPage(1);
+      fetchData(1, activityPageSize);
     } catch (err) {
       alert(err.message || 'Cập nhật thông tin thất bại');
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(activityTotal / activityPageSize));
 
   if (loading || !user) {
     return (
@@ -229,7 +274,7 @@ const AdminUserDetail = () => {
               </button>
 
               <button
-                onClick={handleResetPassword}
+                onClick={openResetPassword}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#e5e5e5] dark:hover:border-blue-500 dark:hover:text-blue-400"
               >
                 <Icon name="key" size={16} /> Cấp lại MK
@@ -353,6 +398,49 @@ const AdminUserDetail = () => {
             </div>
           )}
         </div>
+
+        {activities.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-[#333333]">
+            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#b3b3b3]">
+              <div className="flex items-center gap-2">
+                <span>Hiển thị</span>
+                <select
+                  value={activityPageSize}
+                  onChange={(e) => { setActivityPageSize(Number(e.target.value)); setActivityPage(1); }}
+                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+                >
+                  <option value={20}>20 dòng</option>
+                  <option value={50}>50 dòng</option>
+                  <option value={100}>100 dòng</option>
+                </select>
+              </div>
+              <span>
+                {(activityPage - 1) * activityPageSize + 1} - {Math.min(activityPage * activityPageSize, activityTotal)} trong tổng số {activityTotal} bản ghi
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                disabled={activityPage <= 1}
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+              >
+                <Icon name="chevron_left" className="text-[18px]" />
+              </button>
+              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
+                Trang {activityPage} / {totalPages}
+              </div>
+              <button
+                type="button"
+                onClick={() => setActivityPage((p) => Math.min(totalPages, p + 1))}
+                disabled={activityPage >= totalPages}
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+              >
+                <Icon name="chevron_right" className="text-[18px]" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <ConfirmActionModal
@@ -388,15 +476,15 @@ const AdminUserDetail = () => {
             <form onSubmit={handleUpdateUser} className="space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
-                  Họ và Tên
+                  Họ và Tên <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={editFormData.fullName}
-                  onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none transition-colors focus:border-[#004785] dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:focus:border-blue-500"
-                  required
+                  onChange={(e) => { setEditFormData({ ...editFormData, fullName: e.target.value }); if (editErrors.fullName) setEditErrors({ ...editErrors, fullName: null }); }}
+                  className={`w-full rounded-lg border p-2 text-xs outline-none transition-colors focus:border-[#004785] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:focus:border-blue-500 ${editErrors.fullName ? 'border-red-500' : 'border-slate-200 dark:border-[#333333]'}`}
                 />
+                {editErrors.fullName && <p className="mt-1 text-[10px] text-red-500">{editErrors.fullName}</p>}
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
@@ -405,9 +493,10 @@ const AdminUserDetail = () => {
                 <input
                   type="tel"
                   value={editFormData.phoneNumber}
-                  onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none transition-colors focus:border-[#004785] dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:focus:border-blue-500"
+                  onChange={(e) => { setEditFormData({ ...editFormData, phoneNumber: e.target.value }); if (editErrors.phoneNumber) setEditErrors({ ...editErrors, phoneNumber: null }); }}
+                  className={`w-full rounded-lg border p-2 text-xs outline-none transition-colors focus:border-[#004785] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:focus:border-blue-500 ${editErrors.phoneNumber ? 'border-red-500' : 'border-slate-200 dark:border-[#333333]'}`}
                 />
+                {editErrors.phoneNumber && <p className="mt-1 text-[10px] text-red-500">{editErrors.phoneNumber}</p>}
               </div>
               <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-[#333333]">
                 <button
@@ -425,6 +514,81 @@ const AdminUserDetail = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* RESET PASSWORD MODAL */}
+      {isResetPwOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-[#333333] dark:bg-[#0f0f0f]">
+            <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-[#e5e5e5]">Cấp lại mật khẩu</h3>
+            <p className="mb-4 text-xs text-slate-500 dark:text-[#999999]">
+              Đặt lại mật khẩu cho tài khoản <strong className="text-slate-900 dark:text-[#e5e5e5]">{user?.email}</strong>
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                  Mật khẩu mới <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => { setNewPassword(e.target.value); setResetPwError(''); }}
+                    className="w-full rounded-lg border border-slate-200 p-2 pr-9 text-xs outline-none transition-colors focus:border-[#004785] dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:focus:border-blue-500"
+                    placeholder="Ít nhất 6 ký tự"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-[#666666] dark:hover:text-[#b3b3b3]"
+                  >
+                    <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={16} />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
+                  Xác nhận mật khẩu <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setResetPwError(''); }}
+                    className="w-full rounded-lg border border-slate-200 p-2 pr-9 text-xs outline-none transition-colors focus:border-[#004785] dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:focus:border-blue-500"
+                    placeholder="Nhập lại mật khẩu"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-[#666666] dark:hover:text-[#b3b3b3]"
+                  >
+                    <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={16} />
+                  </button>
+                </div>
+              </div>
+              {resetPwError && (
+                <p className="text-[11px] font-semibold text-red-500">{resetPwError}</p>
+              )}
+            </div>
+            <div className="mt-4 flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-[#333333]">
+              <button
+                type="button"
+                onClick={() => setIsResetPwOpen(false)}
+                className="rounded-lg bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-200 dark:bg-[#272727] dark:text-[#e5e5e5] dark:hover:bg-[#333333]"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                className="rounded-lg bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                Xác nhận
+              </button>
+            </div>
           </div>
         </div>
       )}

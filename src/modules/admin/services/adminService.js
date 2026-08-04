@@ -27,7 +27,8 @@ export const changeUserStatus = (id, isActive) =>
   apiPatch(ENDPOINTS.ADMIN.ACCOUNT_STATUS(id), { isActive });
 export const resetUserPassword = (id, newPassword) =>
   apiPost(ENDPOINTS.ADMIN.ACCOUNT_RESET_PASSWORD(id), { newPassword });
-export const getUserActivities = (id) => apiGet(ENDPOINTS.ADMIN.USER_ACTIVITIES(id));
+export const getUserActivities = (id, page = 1, pageSize = 20) =>
+  apiGet(`${ENDPOINTS.ADMIN.USER_ACTIVITIES(id)}?page=${page}&pageSize=${pageSize}`);
 
 export const softDeleteUser = (id) => apiDelete(ENDPOINTS.ADMIN.ACCOUNT_SOFT_DELETE(id));
 export const permanentDeleteUser = (id) => apiDelete(ENDPOINTS.ADMIN.ACCOUNT_PERMANENT_DELETE(id));
