@@ -117,12 +117,30 @@ export const apiClient = async (endpoint, options = {}) => {
 
     // Xử lý lỗi HTTP
     if (!response.ok) {
-      // 401 → redirect login
+      // 401 → redirect login (token hết hạn, bị xóa, hoặc bị khóa)
       if (response.status === 401) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-        throw new Error('Unauthorized');
+        const errorBody401 = await response.clone().json().catch(() => ({}));
+        const isInactive =
+          errorBody401?.code === 'ACCOUNT_INACTIVE' ||
+          /khóa|xóa|inactive/i.test(errorBody401?.message || '');
+        try {
+          sessionStorage.removeItem('authToken');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          sessionStorage.setItem(
+            'logoutReason',
+            isInactive
+              ? errorBody401?.message || 'Tài khoản đã bị khóa hoặc xóa. Vui lòng đăng nhập lại.'
+              : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+          );
+        } catch (e) {
+          /* storage unavailable */
+        }
+        // Tránh vòng lặp redirect nếu đang ở /login
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
+        throw new Error(errorBody401?.message || 'Unauthorized');
       }
       // 403 → throw với message rõ
       if (response.status === 403) {

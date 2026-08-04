@@ -11,6 +11,100 @@ import {
   updateRolePermissions,
 } from '../services/adminService';
 
+// Mapping đầy đủ tên quyền tiếng Việt theo permissionCode.
+// Ưu tiên lookup theo code (chính xác), fallback về permissionName từ BE, cuối cùng mới dùng chuỗi chung.
+const PERMISSION_NAME_VI = {
+  // Bán hàng & Thu ngân
+  SALE_VIEW: 'Xem đơn bán hàng',
+  SALE_CREATE: 'Tạo đơn bán hàng',
+  SALE_EDIT: 'Sửa đơn bán hàng',
+  SALE_CANCEL: 'Hủy đơn bán hàng',
+  SALE_FINALIZE: 'Chốt đơn bán hàng',
+  SALE_RETURN: 'Trả hàng / Hoàn tiền',
+  SALE_DISCOUNT: 'Áp dụng giảm giá',
+
+  PAYMENT_CREATE: 'Tạo thanh toán',
+  PAYMENT_CONFIRM: 'Xác nhận chuyển khoản',
+  PAYMENT_REFUND: 'Hoàn tiền thanh toán',
+  PAYMENT_HISTORY: 'Xem lịch sử thanh toán',
+
+  SHIFT_OPEN: 'Mở ca làm việc',
+  SHIFT_CLOSE: 'Đóng ca làm việc',
+  SHIFT_VIEW: 'Xem ca làm việc',
+
+  PRINT_INVOICE: 'In hóa đơn',
+  PRINT_REPORT: 'In báo cáo',
+
+  // Quản lý kho bãi & Sản phẩm
+  STOCK_VIEW: 'Xem tồn kho',
+  STOCK_ADJUST: 'Điều chỉnh tồn kho',
+  STOCK_TRANSFER: 'Chuyển kho giữa các cửa hàng',
+
+  INVENTORY_VIEW: 'Xem phiếu kiểm kho',
+  INVENTORY_CREATE: 'Tạo phiếu kiểm kho',
+  INVENTORY_APPROVE: 'Duyệt phiếu kiểm kho',
+  INVENTORY_EXPORT: 'Xuất báo cáo kiểm kho',
+
+  PRODUCT_VIEW: 'Xem sản phẩm',
+  PRODUCT_CREATE: 'Tạo sản phẩm mới',
+  PRODUCT_EDIT: 'Sửa thông tin sản phẩm',
+  PRODUCT_DELETE: 'Xóa sản phẩm',
+  PRODUCT_CATEGORY: 'Quản lý nhóm hàng / thương hiệu',
+  PRODUCT_BARCODE: 'In mã vạch sản phẩm',
+
+  INWARD_VIEW: 'Xem phiếu nhập kho',
+  INWARD_CREATE: 'Tạo phiếu nhập kho',
+  INWARD_APPROVE: 'Duyệt phiếu nhập kho',
+
+  SUPPLIER_VIEW: 'Xem nhà cung cấp',
+  SUPPLIER_CREATE: 'Tạo nhà cung cấp',
+  SUPPLIER_EDIT: 'Sửa nhà cung cấp',
+  SUPPLIER_DELETE: 'Xóa nhà cung cấp',
+  SUPPLIER_DEBT: 'Xem công nợ nhà cung cấp',
+
+  // Chăm sóc khách hàng
+  CUSTOMER_VIEW: 'Xem khách hàng',
+  CUSTOMER_CREATE: 'Tạo khách hàng mới',
+  CUSTOMER_EDIT: 'Sửa thông tin khách hàng',
+  CUSTOMER_DELETE: 'Xóa khách hàng',
+  CUSTOMER_DEBT: 'Xem công nợ khách hàng',
+
+  LOYALTY_VIEW: 'Xem chương trình khách hàng thân thiết',
+  LOYALTY_EDIT: 'Cấu hình điểm thưởng',
+
+  PROMOTION_VIEW: 'Xem chương trình khuyến mãi',
+  PROMOTION_CREATE: 'Tạo khuyến mãi',
+  PROMOTION_EDIT: 'Sửa khuyến mãi',
+  PROMOTION_DELETE: 'Xóa khuyến mãi',
+
+  // Quản lý nhân sự
+  STAFF_VIEW: 'Xem danh sách nhân viên',
+  STAFF_CREATE: 'Tạo tài khoản nhân viên',
+  STAFF_EDIT: 'Sửa thông tin nhân viên',
+  STAFF_DELETE: 'Khóa / Xóa nhân viên',
+  STAFF_ASSIGN: 'Phân công nhân viên vào cửa hàng',
+  STAFF_SCHEDULE: 'Xem lịch làm việc',
+
+  // Báo cáo & Hệ thống
+  REPORT_SALE: 'Xem báo cáo bán hàng',
+  REPORT_INVENTORY: 'Xem báo cáo tồn kho',
+  REPORT_REVENUE: 'Xem báo cáo doanh thu',
+  REPORT_PROFIT: 'Xem báo cáo lợi nhuận',
+  REPORT_EXPORT: 'Xuất báo cáo',
+
+  SYSTEM_LOG: 'Xem nhật ký hệ thống',
+  SYSTEM_SETTINGS: 'Cấu hình hệ thống',
+  SYSTEM_BACKUP: 'Sao lưu / Phục hồi dữ liệu',
+  SYSTEM_AUDIT: 'Truy vết thay đổi dữ liệu',
+};
+
+const getPermissionLabel = (permission) => {
+  const code = (permission?.permissionCode || '').toUpperCase();
+  if (PERMISSION_NAME_VI[code]) return PERMISSION_NAME_VI[code];
+  if (permission?.permissionName) return permission.permissionName;
+  return 'Cấp quyền truy cập';
+};
+
 const AdminRoleManagement = () => {
   const [matrix, setMatrix] = useState([]);
   const [allPermissions, setAllPermissions] = useState([]);
@@ -130,6 +224,8 @@ const AdminRoleManagement = () => {
       PRINT: 'Bán hàng & Thu ngân',
 
       STOCK: 'Quản lý kho bãi & Sản phẩm',
+      INVENTORY: 'Quản lý kho bãi & Sản phẩm',
+      INWARD: 'Quản lý kho bãi & Sản phẩm',
       PRODUCT: 'Quản lý kho bãi & Sản phẩm',
       SUPPLIER: 'Quản lý kho bãi & Sản phẩm',
 
@@ -491,13 +587,12 @@ const AdminRoleManagement = () => {
                                     </div>
 
                                     <div
-                                      className="w-32 truncate text-[10px] leading-tight text-slate-500 dark:text-[#999999] md:w-48"
-                                      title={
-                                        permission.permissionName
-                                      }
+                                      className="mt-0.5 w-40 text-xs font-semibold leading-snug text-slate-600 dark:text-[#b3b3b3] md:w-56 line-clamp-2"
+                                      title={getPermissionLabel(
+                                        permission
+                                      )}
                                     >
-                                      {permission.permissionName ||
-                                        'Cấp quyền truy cập'}
+                                      {getPermissionLabel(permission)}
                                     </div>
                                   </div>
                                 </label>

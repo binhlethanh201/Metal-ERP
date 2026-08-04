@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
+import { Modal } from '../../../shared/components/Modal';
 import {
   getNotificationList,
   createNotification,
@@ -16,6 +17,8 @@ const SystemNotifications = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [detailNotif, setDetailNotif] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -60,8 +63,25 @@ const SystemNotifications = () => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  const totalPages = Math.max(1, Math.ceil(notifications.length / pageSize));
-  const pagedNotifications = notifications.slice((page - 1) * pageSize, page * pageSize);
+  // Filter by status
+  const filteredNotifications = statusFilter === 'ALL'
+    ? notifications
+    : notifications.filter((n) => (n.status || '').toUpperCase() === statusFilter);
+  const pagedFiltered = filteredNotifications.slice((page - 1) * pageSize, page * pageSize);
+  const filteredTotalPages = Math.max(1, Math.ceil(filteredNotifications.length / pageSize));
+
+  const TARGET_LABEL = {
+    ALL: 'Tất cả người dùng',
+    OWNER: 'Chủ cửa hàng',
+    STAFF: 'Nhân viên',
+    COMMUNITY: 'Cộng đồng',
+  };
+  const STATUS_LABEL = {
+    DRAFT: 'Nháp',
+    SCHEDULED: 'Đã lên lịch',
+    SENT: 'Đã gửi',
+    CANCELLED: 'Đã hủy',
+  };
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -289,22 +309,36 @@ const SystemNotifications = () => {
 
         {/* LIST */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a] lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-[#333333]">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-[#333333]">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
                 Danh sách Thông báo
               </h2>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-[#333333] dark:text-[#999999]">
-                {notifications.length}
+                {filteredNotifications.length}
               </span>
             </div>
-            <button
-              onClick={fetchNotifications}
-              className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#004785] dark:hover:bg-[#333333] dark:hover:text-blue-400"
-              title="Làm mới"
-            >
-              <Icon name="sync" size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                className="rounded-lg border border-slate-200 bg-transparent px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-[#004785] dark:border-[#333333] dark:text-[#d4d4d4]"
+                title="Lọc theo trạng thái"
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="DRAFT">Nháp</option>
+                <option value="SCHEDULED">Đã lên lịch</option>
+                <option value="SENT">Đã gửi</option>
+                <option value="CANCELLED">Đã hủy</option>
+              </select>
+              <button
+                onClick={fetchNotifications}
+                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#004785] dark:hover:bg-[#333333] dark:hover:text-blue-400"
+                title="Làm mới"
+              >
+                <Icon name="sync" size={18} />
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto p-4">
             {loading ? (
@@ -314,10 +348,12 @@ const SystemNotifications = () => {
               </div>
             ) : error ? (
               <div className="py-12 text-center font-bold text-red-600 dark:text-red-500">{error}</div>
-            ) : notifications.length === 0 ? (
+            ) : filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-[#808080]">
                 <Icon name="campaign" size={40} className="mb-2 opacity-50" />
-                <p className="text-sm font-semibold">Không có thông báo nào.</p>
+                <p className="text-sm font-semibold">
+                  {statusFilter === 'ALL' ? 'Không có thông báo nào.' : `Không có thông báo ở trạng thái "${STATUS_LABEL[statusFilter] || statusFilter}".`}
+                </p>
               </div>
             ) : (
               <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
@@ -330,12 +366,16 @@ const SystemNotifications = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
-                  {pagedNotifications.map((n) => {
+                  {pagedFiltered.map((n) => {
                     const isDraft = n.status === 'DRAFT' || n.status === 'SCHEDULED';
                     const isSent = n.status === 'SENT';
                     const isCancelled = n.status === 'CANCELLED';
                     return (
-                      <tr key={n.notificationId} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]">
+                      <tr
+                        key={n.notificationId}
+                        onClick={() => setDetailNotif(n)}
+                        className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]"
+                      >
                         <td className="px-4 py-3">
                           <div className="max-w-xs truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]" title={n.title}>
                             {n.title}
@@ -430,7 +470,7 @@ const SystemNotifications = () => {
                 </select>
               </div>
               <span>
-                {notifications.length === 0 ? 0 : (page - 1) * pageSize + 1} - {Math.min(page * pageSize, notifications.length)} trong tổng số {notifications.length} thông báo
+                {filteredNotifications.length === 0 ? 0 : (page - 1) * pageSize + 1} - {Math.min(page * pageSize, filteredNotifications.length)} trong tổng số {filteredNotifications.length} thông báo
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -443,12 +483,12 @@ const SystemNotifications = () => {
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
               <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
-                Trang {page} / {totalPages}
+                Trang {page} / {filteredTotalPages}
               </div>
               <button
                 type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(filteredTotalPages, p + 1))}
+                disabled={page >= filteredTotalPages}
                 className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
               >
                 <Icon name="chevron_right" className="text-[18px]" />
@@ -457,6 +497,93 @@ const SystemNotifications = () => {
           </div>
         </div>
       </div>
+
+      {/* DETAIL MODAL */}
+      <Modal
+        isOpen={!!detailNotif}
+        onClose={() => setDetailNotif(null)}
+        title="Chi tiết thông báo"
+        size="2xl"
+      >
+        {detailNotif && (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
+                  {detailNotif.title || '(Không có tiêu đề)'}
+                </h3>
+                <p className="mt-1 text-xs text-slate-500 dark:text-[#999999]">
+                  Tạo lúc {detailNotif.createdAt ? new Date(detailNotif.createdAt).toLocaleString('vi-VN') : '—'}
+                  {detailNotif.createdByName ? ` bởi ${detailNotif.createdByName}` : ''}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                    detailNotif.status === 'SENT'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : detailNotif.status === 'CANCELLED'
+                        ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        : detailNotif.status === 'SCHEDULED'
+                          ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                          : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  }`}
+                >
+                  {STATUS_LABEL[detailNotif.status] || detailNotif.status || '—'}
+                </span>
+                {detailNotif.isUrgent && (
+                  <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                    Khẩn cấp
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#0f0f0f]">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-[#d4d4d4]">
+                {detailNotif.content || '(Không có nội dung)'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Đối tượng</div>
+                <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                  {TARGET_LABEL[detailNotif.target] || detailNotif.target || '—'}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Cửa hàng</div>
+                <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                  {detailNotif.branchName || (detailNotif.branchId ? detailNotif.branchId.slice(0, 8) + '…' : 'Tất cả cửa hàng')}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Lên lịch gửi</div>
+                <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                  {detailNotif.scheduledAt ? new Date(detailNotif.scheduledAt).toLocaleString('vi-VN') : 'Gửi ngay khi bấm Gửi'}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                <div className="font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Đã gửi lúc</div>
+                <div className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+                  {detailNotif.sentAt ? new Date(detailNotif.sentAt).toLocaleString('vi-VN') : '—'}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-[#333333]">
+              <button
+                type="button"
+                onClick={() => setDetailNotif(null)}
+                className="rounded-lg bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-200 dark:bg-[#272727] dark:text-[#e5e5e5] dark:hover:bg-[#333333]"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

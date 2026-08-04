@@ -332,7 +332,7 @@ const AdminBranchManagement = () => {
                               className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
                               title="Khôi phục"
                             >
-                              <Icon name="refresh" size={16} />
+                              <Icon name="restore" size={16} />
                             </button>
                             <button
                               onClick={() => handleHardDelete(b)}
