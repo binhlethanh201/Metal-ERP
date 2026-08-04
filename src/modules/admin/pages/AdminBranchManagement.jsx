@@ -16,16 +16,58 @@ const AdminBranchManagement = () => {
 
   // Modals state
   const [showModal, setShowModal] = useState(false);
-  
+
   // Form state
   const [editingBranch, setEditingBranch] = useState(null);
   const [formData, setFormData] = useState({
     branchName: '',
     phone: '',
     address: '',
+    city: '',
+    type: '',
     managerUserId: '',
     isActive: 1,
   });
+  const [formErrors, setFormErrors] = useState({});
+
+  const validateBranchForm = (data) => {
+    const errors = {};
+    const trimmedBranchName = (data.branchName || '').trim();
+    const trimmedPhone = (data.phone || '').trim();
+    const trimmedAddress = (data.address || '').trim();
+    const trimmedType = (data.type || '').trim();
+    const trimmedManagerUserId = (data.managerUserId || '').trim();
+
+    if (!trimmedBranchName) {
+      errors.branchName = 'Tên cửa hàng là bắt buộc.';
+    } else if (trimmedBranchName.length > 100) {
+      errors.branchName = 'Tên cửa hàng không được vượt quá 100 ký tự.';
+    }
+
+    if (!trimmedPhone) {
+      errors.phone = 'Số điện thoại là bắt buộc.';
+    } else if (!/^(03|05|07|08|09)\d{8}$/.test(trimmedPhone)) {
+      errors.phone = 'Số điện thoại phải là số Việt Nam hợp lệ (10 số, bắt đầu bằng 03/05/07/08/09).';
+    }
+
+    if (!trimmedAddress) {
+      errors.address = 'Địa chỉ là bắt buộc.';
+    } else if (trimmedAddress.length < 5 || trimmedAddress.length > 255) {
+      errors.address = 'Địa chỉ phải có từ 5 đến 255 ký tự.';
+    }
+
+    if (!trimmedType) {
+      errors.type = 'Loại cửa hàng là bắt buộc.';
+    } else if (trimmedType.length < 2 || trimmedType.length > 50) {
+      errors.type = 'Loại cửa hàng phải có từ 2 đến 50 ký tự.';
+    }
+
+    if (!trimmedManagerUserId) {
+      errors.managerUserId = 'Chủ cửa hàng là bắt buộc.';
+    }
+
+    return errors;
+  };
 
   const fetchBranchesAndOwners = useCallback(async () => {
     setLoading(true);
@@ -59,7 +101,8 @@ const AdminBranchManagement = () => {
 
   const openCreateModal = () => {
     setEditingBranch(null);
-    setFormData({ branchName: '', phone: '', address: '', managerUserId: '', isActive: 1 });
+    setFormData({ branchName: '', phone: '', address: '', city: '', type: '', managerUserId: '', isActive: 1 });
+    setFormErrors({});
     setShowModal(true);
   };
 
@@ -69,22 +112,40 @@ const AdminBranchManagement = () => {
       branchName: branch.branchName || '',
       phone: branch.phone || '',
       address: branch.address || '',
+      city: branch.city || '',
+      type: branch.type || '',
       managerUserId: branch.managerUserId || '',
       isActive: branch.isActive !== undefined ? branch.isActive : 1,
     });
+    setFormErrors({});
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.branchName) return alert('Vui lòng nhập tên cửa hàng');
-    
+
+    const errors = validateBranchForm(formData);
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    const payload = {
+      branchName: formData.branchName.trim(),
+      phone: formData.phone.trim(),
+      address: formData.address.trim(),
+      city: formData.city.trim(),
+      type: formData.type.trim(),
+      managerUserId: formData.managerUserId || undefined,
+      isActive: Number(formData.isActive),
+    };
+
     try {
       if (editingBranch) {
-        await updateAdminBranch(editingBranch.branchId, formData);
+        await updateAdminBranch(editingBranch.branchId, payload);
         alert('Cập nhật cửa hàng thành công');
       } else {
-        await createAdminBranch(formData);
+        await createAdminBranch(payload);
         alert('Tạo cửa hàng thành công');
       }
       setShowModal(false);
@@ -136,7 +197,7 @@ const AdminBranchManagement = () => {
             <Icon name="refresh" size={18} />
           </button>
         </div>
-        
+
         <div className="overflow-x-auto p-0">
           {loading ? (
             <div className="p-8 text-center text-xs text-slate-500">Đang tải...</div>
@@ -147,7 +208,9 @@ const AdminBranchManagement = () => {
               <thead>
                 <tr className="border-b border-slate-200 bg-white text-[10px] font-bold uppercase text-slate-500 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]">
                   <th className="px-4 py-3">Tên Cửa Hàng</th>
+                  <th className="px-4 py-3">Chủ Cửa Hàng</th>
                   <th className="px-4 py-3">Thông Tin Liên Hệ</th>
+                  <th className="px-4 py-3">Địa Chỉ</th>
                   <th className="px-4 py-3 text-center">Trạng Thái</th>
                   <th className="px-4 py-3 text-right">Thao Tác</th>
                 </tr>
@@ -156,10 +219,9 @@ const AdminBranchManagement = () => {
                 {branches.map((b) => (
                   <tr key={b.branchId} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#1a1a1a]">
                     <td className="px-4 py-3 font-bold">{b.branchName}</td>
-                    <td className="px-4 py-3">
-                      <div>{b.phone || '-'}</div>
-                      <div className="text-slate-500">{b.email || '-'}</div>
-                    </td>
+                    <td className="px-4 py-3">{b.managerFullName || b.managerEmail || '-'}</td>
+                    <td className="px-4 py-3">{b.phone || '-'}</td>
+                    <td className="px-4 py-3">{b.address || '-'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`rounded px-2 py-1 text-[10px] font-bold ${b.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {b.isActive ? 'Hoạt động' : 'Đã khóa'}
@@ -187,7 +249,7 @@ const AdminBranchManagement = () => {
                 ))}
                 {branches.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan="6" className="px-4 py-8 text-center text-slate-500">
                       Không có cửa hàng nào.
                     </td>
                   </tr>
@@ -214,11 +276,11 @@ const AdminBranchManagement = () => {
                   value={formData.branchName}
                   onChange={handleInputChange}
                   className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
-                  required
                 />
+                {formErrors.branchName && <p className="mt-1 text-[10px] text-red-600">{formErrors.branchName}</p>}
               </div>
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Số điện thoại</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">Số điện thoại *</label>
                 <input
                   type="text"
                   name="phone"
@@ -226,9 +288,32 @@ const AdminBranchManagement = () => {
                   onChange={handleInputChange}
                   className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
                 />
+                {formErrors.phone && <p className="mt-1 text-[10px] text-red-600">{formErrors.phone}</p>}
               </div>
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Địa chỉ</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">Thành phố *</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
+                />
+                {formErrors.city && <p className="mt-1 text-[10px] text-red-600">{formErrors.city}</p>}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-bold text-slate-500">Loại cửa hàng *</label>
+                <input
+                  type="text"
+                  name="type"
+                  value={formData.type}
+                  onChange={handleInputChange}
+                  className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
+                />
+                {formErrors.type && <p className="mt-1 text-[10px] text-red-600">{formErrors.type}</p>}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-bold text-slate-500">Địa chỉ *</label>
                 <textarea
                   name="address"
                   value={formData.address}
@@ -236,6 +321,7 @@ const AdminBranchManagement = () => {
                   rows={3}
                   className="w-full rounded border border-slate-200 bg-transparent p-2 text-xs text-slate-900 dark:border-[#333333] dark:text-[#e5e5e5]"
                 />
+                {formErrors.address && <p className="mt-1 text-[10px] text-red-600">{formErrors.address}</p>}
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <input
@@ -251,7 +337,7 @@ const AdminBranchManagement = () => {
                 </label>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Chủ cửa hàng</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">Chủ cửa hàng *</label>
                 <select
                   name="managerUserId"
                   value={formData.managerUserId}
@@ -265,6 +351,7 @@ const AdminBranchManagement = () => {
                     </option>
                   ))}
                 </select>
+                {formErrors.managerUserId && <p className="mt-1 text-[10px] text-red-600">{formErrors.managerUserId}</p>}
                 <p className="mt-1 text-[10px] text-slate-400">Chọn một Chủ cửa hàng (Owner) để quản lý cửa hàng này.</p>
               </div>
               <div className="mt-4 flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-[#333333]">

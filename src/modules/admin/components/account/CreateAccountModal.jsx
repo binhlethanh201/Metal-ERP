@@ -84,13 +84,25 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     // Set username = email
     let mappedRoleName = formData.roleName;
     if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
     if (mappedRoleName === 'Inventory Staff') mappedRoleName = 'InventoryStaff';
 
-    const dataToSave = { ...formData, username: formData.email, roleName: mappedRoleName };
+    const normalizedBranchId = formData.branchId && formData.branchId !== 'null' ? formData.branchId : undefined;
+    const normalizedBranchName = formData.branchName?.trim() || undefined;
+    const normalizedPhoneNumber = formData.phoneNumber?.trim() || undefined;
+
+    const dataToSave = {
+      ...formData,
+      username: formData.email,
+      roleName: mappedRoleName,
+      branchId: normalizedBranchId,
+      branchName: normalizedBranchName,
+      phoneNumber: normalizedPhoneNumber,
+    };
+
     onSave(dataToSave);
   };
 
