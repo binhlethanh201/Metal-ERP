@@ -272,7 +272,6 @@ const AdminRoleManagement = () => {
 
                 // Không hiển thị Owner
                 return [
-                  'staff',
                   'salesstaff',
                   'inventorystaff',
                 ].includes(roleName);
