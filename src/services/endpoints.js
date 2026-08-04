@@ -224,7 +224,7 @@ export const ENDPOINTS = {
     ACCOUNT_RESTORE: (id) => `/api/admin/accounts/${id}/restore`,
     ACCOUNT_PERMANENT_DELETE: (id) => `/api/admin/accounts/${id}/permanent`,
     ACCOUNT_CHECK_RELATIONS: (id) => `/api/admin/accounts/${id}/check-relations`,
-    
+
     // Legacy Users (Keep for compatibility)
     USER_ACTIVITIES: (id) => `/api/admin/accounts/${id}/activities`,
 
@@ -265,6 +265,8 @@ export const ENDPOINTS = {
     BRANCH_DETAIL: (id) => `/api/admin/branches/${id}`,
     BRANCH_UPDATE: (id) => `/api/admin/branches/${id}`,
     BRANCH_DELETE: (id) => `/api/admin/branches/${id}`,
+    BRANCH_RESTORE: (id) => `/api/admin/branches/${id}/restore`,
+    BRANCH_HARD_DELETE: (id) => `/api/admin/branches/${id}/permanent`,
     BRANCH_ASSIGN_USER: (id) => `/api/admin/branches/${id}/assign-user`,
   },
 
