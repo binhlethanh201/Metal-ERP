@@ -16,7 +16,7 @@ const AdminBranchManagement = () => {
 
   // Modals state
   const [showModal, setShowModal] = useState(false);
-
+  
   // Form state
   const [editingBranch, setEditingBranch] = useState(null);
   const [formData, setFormData] = useState({
@@ -78,19 +78,13 @@ const AdminBranchManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.branchName) return alert('Vui lòng nhập tên cửa hàng');
-
-    const payload = {
-      ...formData,
-      managerUserId: formData.managerUserId || undefined,
-      isActive: Number(formData.isActive),
-    };
-
+    
     try {
       if (editingBranch) {
-        await updateAdminBranch(editingBranch.branchId, payload);
+        await updateAdminBranch(editingBranch.branchId, formData);
         alert('Cập nhật cửa hàng thành công');
       } else {
-        await createAdminBranch(payload);
+        await createAdminBranch(formData);
         alert('Tạo cửa hàng thành công');
       }
       setShowModal(false);
@@ -142,7 +136,7 @@ const AdminBranchManagement = () => {
             <Icon name="refresh" size={18} />
           </button>
         </div>
-
+        
         <div className="overflow-x-auto p-0">
           {loading ? (
             <div className="p-8 text-center text-xs text-slate-500">Đang tải...</div>

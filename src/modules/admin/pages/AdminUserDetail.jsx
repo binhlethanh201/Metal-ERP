@@ -51,8 +51,7 @@ const AdminUserDetail = () => {
         getAdminBranches({ pageSize: 1000 }),
       ]);
       setUser(userData);
-      // The API returns a paginated result { items: [...] } so we need to extract items
-      setActivities(activityData?.items || (Array.isArray(activityData) ? activityData : []));
+      setActivities(Array.isArray(activityData) ? activityData : []);
       setRoles(Array.isArray(roleData) ? roleData : []);
       setBranches(branchData?.items || []);
       setEditFormData({
@@ -157,7 +156,7 @@ const AdminUserDetail = () => {
       {/* Nút quay lại */}
       <button
         onClick={() => navigate('/admin/users')}
-        className="flex items-center gap-2 text-sm font-bold text-[#004785] dark:text-blue-400 transition-colors hover:text-[#003566] dark:hover:text-blue-300"
+        className="hover:text-[#004785] dark:text-blue-400-variant flex items-center gap-2 text-sm font-bold text-[#004785] dark:text-blue-400 transition-colors"
       >
         <Icon name="arrow_back" size={18} /> QUAY LẠI DANH SÁCH
       </button>
@@ -165,7 +164,7 @@ const AdminUserDetail = () => {
       {/* HEADER CHI TIẾT */}
       <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-6 shadow-sm md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#004785] text-2xl font-bold uppercase text-white shadow-inner">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#004785] dark:bg-blue-600-container text-2xl font-bold uppercase text-white-container shadow-inner">
             {(user.fullName || user.email).charAt(0)}
           </div>
           <div>
@@ -188,19 +187,12 @@ const AdminUserDetail = () => {
                     ? 'ĐANG HOẠT ĐỘNG'
                     : 'ĐÃ BỊ KHÓA'}
               </span>
-              {Array.from(
-                new Map(
-                  (user.roles || []).map((r) => [
-                    r.roleName.replace(/\s+/g, ''),
-                    { ...r, displayName: r.roleName === 'SalesStaff' ? 'Sales Staff' : r.roleName === 'InventoryStaff' ? 'Inventory Staff' : r.roleName }
-                  ])
-                ).values()
-              ).map((r) => (
+              {(user.roles || []).map((r) => (
                 <span
                   key={r.roleId}
-                  className="rounded-full border border-[#004785]/20 bg-[#004785]/10 dark:border-blue-400/20 dark:bg-blue-400/10 px-3 py-1 text-xs font-bold text-[#004785] dark:text-blue-400"
+                  className="rounded-full border border-secondary-container/50 bg-secondary-container px-3 py-1 text-xs font-bold text-on-secondary-container"
                 >
-                  {r.displayName}
+                  {r.roleName}
                 </span>
               ))}
               
@@ -213,33 +205,36 @@ const AdminUserDetail = () => {
           </div>
         </div>
 
-        {/* CÁC NÚT THAO TÁC */}
-        <div className="flex flex-wrap gap-2">
+        {/* CÁC NÚT THAO TÁC IN ĐẬM RÕ RÀNG */}
+        <div className="flex flex-wrap gap-3">
           {user.status !== 'DELETED' && user.status !== 'PERMANENT_DELETED' && (
             <>
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
-                <Icon name="edit" size={16} /> Sửa
+                <Icon name="edit" size={18} /> Sửa Thông Tin
               </button>
+
               <button
                 onClick={() => setIsAssignModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
-                <Icon name="manage_accounts" size={16} /> Phân Quyền
+                <Icon name="manage_accounts" size={18} /> Phân Quyền
               </button>
+
               <button
                 onClick={() => setIsAssignBranchModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
-                <Icon name="storefront" size={16} /> Gán Cửa Hàng
+                <Icon name="storefront" size={18} /> Gán Cửa Hàng
               </button>
+
               <button
                 onClick={handleResetPassword}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-[#004785] hover:text-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-blue-400 dark:hover:text-blue-400"
+                className="flex items-center gap-2 rounded-lg border-2 border-outline bg-slate-50 dark:bg-[#1a1a1a] px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:border-primary hover:text-[#004785] dark:text-blue-400"
               >
-                <Icon name="key" size={16} /> Cấp Lại MK
+                <Icon name="key" size={18} /> Cấp Lại Mật Khẩu
               </button>
 
               <button
@@ -251,14 +246,13 @@ const AdminUserDetail = () => {
                     message: `Bạn có chắc chắn muốn ${isActive ? 'khóa' : 'mở khóa'} tài khoản này?`,
                   })
                 }
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'border-red-300 bg-white text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-[#1a1a1a] dark:text-red-400 dark:hover:bg-red-950/30'
-                    : 'border-green-300 bg-white text-green-600 hover:bg-green-50 dark:border-green-800 dark:bg-[#1a1a1a] dark:text-green-400 dark:hover:bg-green-950/30'
-                }`}
+                className={`flex items-center gap-2 rounded-lg border-2 px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all ${isActive
+                  ? 'border-error text-red-600 dark:text-red-500 hover:bg-red-50 dark:bg-red-900/30/30'
+                  : 'border-green-600 text-green-600 hover:bg-green-100/50'
+                  }`}
               >
-                <Icon name={isActive ? 'lock' : 'lock_open'} size={16} />
-                {isActive ? 'Khóa' : 'Mở Khóa'}
+                <Icon name={isActive ? 'lock' : 'lock_open'} size={18} />{' '}
+                {isActive ? 'Khóa Tài Khoản' : 'Mở Khóa'}
               </button>
 
               <button
@@ -267,12 +261,12 @@ const AdminUserDetail = () => {
                     isOpen: true,
                     type: 'soft_delete',
                     title: 'XÓA TÀI KHOẢN',
-                    message: 'Bạn có chắc chắn muốn xóa tài khoản này?',
+                    message: 'Bạn có chắc chắn muốn xóa tài khoản này? Tài khoản sẽ chuyển sang trạng thái ĐÃ XÓA và có thể khôi phục.',
                   })
                 }
-                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+                className="flex items-center gap-2 rounded-lg border-2 border-error bg-error text-on-error px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-error/90"
               >
-                <Icon name="delete" size={16} /> Xóa
+                <Icon name="delete" size={18} /> Xóa
               </button>
             </>
           )}
@@ -288,22 +282,23 @@ const AdminUserDetail = () => {
                     message: 'Khôi phục tài khoản này để tiếp tục sử dụng?',
                   })
                 }
-                className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+                className="flex items-center gap-2 rounded-lg border-2 border-green-600 bg-green-600 text-white px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-green-700"
               >
-                <Icon name="restore" size={16} /> Khôi Phục
+                <Icon name="restore" size={18} /> Khôi Phục
               </button>
+
               <button
                 onClick={() =>
                   setConfirmModal({
                     isOpen: true,
                     type: 'permanent_delete',
                     title: 'XÓA VĨNH VIỄN',
-                    message: 'Bạn có chắc chắn xóa VĨNH VIỄN tài khoản này?',
+                    message: 'Bạn có chắc chắn xóa VĨNH VIỄN tài khoản này? Dữ liệu cá nhân sẽ bị ẩn danh hoàn toàn.',
                   })
                 }
-                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+                className="flex items-center gap-2 rounded-lg border-2 border-error bg-error text-on-error px-5 py-3 text-xs font-black uppercase tracking-wider shadow-sm transition-all hover:bg-error/90"
               >
-                <Icon name="delete_forever" size={16} /> Xóa Vĩnh Viễn
+                <Icon name="delete_forever" size={18} /> Xóa Vĩnh Viễn
               </button>
             </>
           )}
@@ -324,88 +319,18 @@ const AdminUserDetail = () => {
             </div>
           ) : (
             <div className="relative ml-4 space-y-8 border-l-2 border-slate-200 dark:border-[#333333] pb-4">
-              {activities.map((log, idx) => {
-                const translateAction = (actionCode) => {
-                  if (!actionCode) return 'KHÔNG XÁC ĐỊNH';
-                  const exactMap = {
-                    'LOGIN': 'Đăng nhập hệ thống',
-                    'LOGOUT': 'Đăng xuất hệ thống',
-                    'ASSIGN_ROLE': 'Cấp quyền / Vai trò',
-                    'RESET_PASSWORD': 'Cấp lại mật khẩu',
-                    'INVENTORY_CHECK_RECONCILIATION': 'Cân bằng kho (Kiểm kê)',
-                    'RECORD_PAYMENT': 'Ghi nhận thanh toán',
-                    'FINALIZE_INVOICE': 'Hoàn tất hóa đơn',
-                    'HOLD_INVOICE': 'Lưu tạm hóa đơn',
-                    'START_SHIFT': 'Mở ca làm việc',
-                    'END_SHIFT': 'Đóng ca làm việc',
-                    'IMPORT_DATA': 'Nhập dữ liệu',
-                    'EXPORT_DATA': 'Xuất dữ liệu'
-                  };
-                  if (exactMap[actionCode]) return exactMap[actionCode];
-
-                  let translated = actionCode;
-                  const prefixes = {
-                    'CREATE_': 'Tạo mới ',
-                    'UPDATE_': 'Cập nhật ',
-                    'DELETE_': 'Xóa ',
-                    'PERMANENT_DELETE_': 'Xóa vĩnh viễn ',
-                    'RESTORE_': 'Khôi phục ',
-                    'CONFIRM_': 'Xác nhận ',
-                    'CANCEL_': 'Hủy bỏ ',
-                    'APPROVE_': 'Phê duyệt ',
-                    'REJECT_': 'Từ chối '
-                  };
-                  const entities = {
-                    'INWARD_INVENTORY': 'phiếu nhập kho',
-                    'OUTWARD_INVENTORY': 'phiếu xuất kho',
-                    'INVENTORY_CHECK': 'phiếu kiểm kê',
-                    'USER': 'tài khoản',
-                    'OWNER': 'chủ cửa hàng',
-                    'STAFF': 'nhân viên',
-                    'CUSTOMER': 'khách hàng',
-                    'SUPPLIER': 'nhà cung cấp',
-                    'PRODUCT': 'sản phẩm',
-                    'EXPENSE_VOUCHER': 'phiếu chi',
-                    'RECEIPT_VOUCHER': 'phiếu thu',
-                    'ORDER': 'đơn hàng',
-                    'INVOICE': 'hóa đơn',
-                    'RETURN': 'phiếu trả hàng',
-                    'ROLE': 'vai trò',
-                    'BRANCH': 'chi nhánh'
-                  };
-
-                  for (const [prefix, preTrans] of Object.entries(prefixes)) {
-                    if (translated.startsWith(prefix)) {
-                      let entityStr = translated.replace(prefix, '');
-                      let entityTrans = entities[entityStr] || entityStr.replace(/_/g, ' ').toLowerCase();
-                      return preTrans + entityTrans;
-                    }
-                  }
-                  return actionCode.replace(/_/g, ' ');
-                };
-
-                const displayAction = translateAction(log.action);
-                
-                return (
-                  <div key={idx} className="relative pl-6">
-                    <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-[#004785] dark:bg-blue-600 ring-4 ring-white dark:ring-[#0f0f0f]"></div>
-                    <div className="text-sm font-black uppercase text-slate-900 dark:text-[#e5e5e5]">{displayAction}</div>
-                    <div className="mt-1 flex items-center gap-2 text-xs font-bold text-[#004785] dark:text-blue-400">
-                      <Icon name="schedule" size={14} />
-                      {new Date(log.timestamp).toLocaleString('vi-VN')}
-                      
-                      {log.ipAddress && (
-                        <span className="ml-2 rounded bg-slate-100 dark:bg-[#272727] px-2 py-0.5 text-[10px] text-slate-500 dark:text-[#999999]">
-                          IP: {log.ipAddress}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-2 rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-3 text-sm font-medium text-slate-500 dark:text-[#999999] shadow-sm">
-                      {log.description || 'Không có mô tả chi tiết'}
-                    </div>
+              {activities.map((log, idx) => (
+                <div key={idx} className="relative pl-6">
+                  <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-[#004785] dark:bg-blue-600 ring-4 ring-white dark:ring-[#0f0f0f]"></div>
+                  <div className="text-sm font-black uppercase text-slate-900 dark:text-[#e5e5e5]">{log.action}</div>
+                  <div className="mt-1 text-xs font-bold text-[#004785] dark:text-blue-400">
+                    {new Date(log.createdAt).toLocaleString('vi-VN')}
                   </div>
-                );
-              })}
+                  <div className="mt-2 rounded-lg border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] p-3 text-sm font-medium text-slate-500 dark:text-[#999999] shadow-sm">
+                    {log.description}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

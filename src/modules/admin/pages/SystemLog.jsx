@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
 import { getLogList, getLogDetail, exportLogs } from '../services/adminService';
 import LogFilterBar from '../components/log/LogFilterBar';
-import LogTable, { translateAction } from '../components/log/LogTable';
+import LogTable from '../components/log/LogTable';
 import LogDetailModal from '../components/log/LogDetailModal';
 
 const SystemLog = () => {
@@ -12,10 +12,6 @@ const SystemLog = () => {
   const [selectedLog, setSelectedLog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const fetchLogs = useCallback(() => {
     setLoading(true);
@@ -39,16 +35,11 @@ const SystemLog = () => {
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
-      const searchLower = searchTerm.toLowerCase();
-      
-      const cleanDescription = (log.description || '').replace(/( - Branch: | tại chi nhánh )[a-f0-9-]{36}/gi, '');
-      const translatedAction = translateAction(log.action);
-
+      // 1. Filter by Search Term
       const matchesSearch =
-        cleanDescription.toLowerCase().includes(searchLower) ||
-        (log.userName || '').toLowerCase().includes(searchLower) ||
-        translatedAction.toLowerCase().includes(searchLower) ||
-        (log.source || '').toLowerCase().includes(searchLower);
+        (log.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (log.source || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (log.action || '').toLowerCase().includes(searchTerm.toLowerCase());
 
       // 2. Filter by Level (Client-side fallback)
       const logLvl = log.level ? log.level.toUpperCase() : 'INFO'; // Default empty level to INFO
@@ -57,14 +48,6 @@ const SystemLog = () => {
       return matchesSearch && matchesLevel;
     });
   }, [logs, searchTerm, filterLevel]);
-
-  // Reset to page 1 when search or filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterLevel]);
-
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-  const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleExportData = async (format) => {
     try {
@@ -129,52 +112,7 @@ const SystemLog = () => {
           {error}
         </div>
       )}
-      {!loading && !error && (
-        <div className="flex flex-col space-y-4">
-          <LogTable logs={paginatedLogs} onRowClick={handleRowClick} />
-          {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] px-4 py-3">
-          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-[#999999]">
-            <div className="flex items-center gap-2">
-              <span>Hiển thị</span>
-              <select 
-                value={itemsPerPage}
-                onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="rounded border border-slate-200 dark:border-[#333333] bg-transparent py-1 px-2 text-xs text-slate-900 dark:text-[#e5e5e5] outline-none focus:border-[#004785]"
-              >
-                <option value={10}>10 dòng</option>
-                <option value={20}>20 dòng</option>
-                <option value={50}>50 dòng</option>
-                <option value={100}>100 dòng</option>
-              </select>
-            </div>
-            <span>
-              {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredLogs.length)} trong tổng số {filteredLogs.length} dòng
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-xs">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:hover:bg-[#272727]"
-            >
-              <Icon name="chevron_left" size={16} />
-            </button>
-            <span className="font-medium text-slate-600 dark:text-[#999999]">
-              Trang {currentPage} / {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:hover:bg-[#272727]"
-            >
-              <Icon name="chevron_right" size={16} />
-            </button>
-          </div>
-        </div>
-          )}
-        </div>
-      )}
+      {!loading && !error && <LogTable logs={filteredLogs} onRowClick={handleRowClick} />}
 
       <LogDetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />
     </div>

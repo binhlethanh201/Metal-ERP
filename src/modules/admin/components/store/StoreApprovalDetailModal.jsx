@@ -4,7 +4,7 @@ import Icon from '../../../../shared/components/Icon';
 const STATUS_META = {
   PENDING: { label: 'Chá» duyá»‡t', bg: 'bg-secondary-container', fg: 'text-on-secondary-container' },
   APPROVED: { label: 'ÄÃ£ duyá»‡t', bg: 'bg-tertiary-container', fg: 'text-on-tertiary-container' },
-  REJECTED: { label: 'Bị từ chối', bg: 'bg-red-50 dark:bg-red-900/30', fg: 'text-red-600 dark:text-red-500' },
+  REJECTED: { label: 'Bá»‹ tá»« chá»‘i', bg: 'bg-red-50 dark:bg-red-900/30', fg: 'text-red-600 dark:text-red-500' },
 };
 
 const CopyChip = ({ value, label }) => {
@@ -282,7 +282,7 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                     Owner chÆ°a upload tÃ i liá»‡u nÃ o.
                   </p>
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-[#666666]">
-                    Nếu cần bổ sung, liên hệ Owner qua email {data.ownerEmail}
+                    Náº¿u cáº§n bá»• sung, liÃªn há»‡ Owner qua email {data.ownerEmail}
                   </p>
                 </div>
               ) : (
@@ -346,7 +346,7 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                   </div>
                   <p className="text-xs font-semibold text-slate-900 dark:text-[#e5e5e5]">Há»“ sÆ¡ Ä‘Æ°á»£c gá»­i</p>
                   <p className="text-[11px] text-slate-500 dark:text-[#999999]">
-                    {formatDateTime(data.createdAt)} · bởi{' '}
+                    {formatDateTime(data.createdAt)} Â· bá»Ÿi{' '}
                     <span className="font-semibold">{data.ownerName}</span>
                   </p>
                   <p className="mt-0.5 font-mono text-[10px] text-slate-400 dark:text-[#666666]">
@@ -366,10 +366,10 @@ const StoreApprovalDetailModal = ({ data, onClose }) => {
                       <Icon name={data.status === 'APPROVED' ? 'check' : 'x'} size={11} />
                     </div>
                     <p className="text-xs font-semibold text-slate-900 dark:text-[#e5e5e5]">
-                      Hồ sơ {data.status === 'APPROVED' ? 'ĐÃ DUYỆT' : 'BỊ TỪ CHỐI'}
+                      Há»“ sÆ¡ {data.status === 'APPROVED' ? 'ÄÃƒ DUYá»†T' : 'Bá»Š Tá»ª CHá»I'}
                     </p>
                     <p className="text-[11px] text-slate-500 dark:text-[#999999]">
-                      {formatDateTime(data.reviewedAt)} · bởi{' '}
+                      {formatDateTime(data.reviewedAt)} Â· bá»Ÿi{' '}
                       <span className="font-semibold">
                         {data.reviewerName || `#${String(data.reviewedBy).slice(0, 8)}`}
                       </span>

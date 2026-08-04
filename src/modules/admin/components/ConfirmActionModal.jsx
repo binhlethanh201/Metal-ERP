@@ -42,7 +42,7 @@ const ConfirmActionModal = ({
             onClick={onClose}
             className="rounded-md px-4 py-2 text-sm font-semibold text-slate-500 dark:text-[#999999] transition-colors hover:bg-slate-100 dark:bg-[#272727]"
           >
-            Hủy bỏ
+            Há»§y bá»
           </button>
           <button
             onClick={onConfirm}

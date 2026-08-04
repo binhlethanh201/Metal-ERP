@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const BroadcastForm = ({ onBroadcast }) => {

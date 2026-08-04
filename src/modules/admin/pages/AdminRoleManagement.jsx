@@ -155,13 +155,8 @@ const AdminRoleManagement = () => {
           ? parts[0].toUpperCase()
           : 'OTHER';
 
-      // Bỏ toàn bộ quyền thuộc Owner và các module không dành cho Staff
-      if (
-        prefix === 'OWNER' ||
-        prefix === 'STAFF' ||
-        prefix === 'SYSTEM' ||
-        prefix === 'REPORT'
-      ) {
+      // Bỏ toàn bộ quyền thuộc Owner
+      if (prefix === 'OWNER') {
         return;
       }
 
@@ -275,8 +270,9 @@ const AdminRoleManagement = () => {
                 const roleName =
                   role.roleName?.toLowerCase() || '';
 
-                // Chỉ hiển thị 2 loại nhân viên (không hiển thị Owner, Staff chung, Admin)
+                // Không hiển thị Owner
                 return [
+                  'staff',
                   'salesstaff',
                   'inventorystaff',
                 ].includes(roleName);
@@ -317,7 +313,7 @@ const AdminRoleManagement = () => {
                             : 'text-slate-900 dark:text-[#e5e5e5]'
                         }`}
                       >
-                        {role.roleName === 'InventoryStaff' ? 'Nhân viên Kho' : role.roleName === 'SalesStaff' ? 'Nhân viên Bán hàng' : role.roleName === 'Owner' ? 'Chủ cửa hàng' : role.roleName}
+                        {role.roleName}
                       </span>
 
                       <span
@@ -371,7 +367,7 @@ const AdminRoleManagement = () => {
                   <h2 className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
                     Quyền hạn của:{' '}
                     <span className="text-[#004785] dark:text-blue-400">
-                      {selectedRole?.roleName === 'InventoryStaff' ? 'Nhân viên Kho' : selectedRole?.roleName === 'SalesStaff' ? 'Nhân viên Bán hàng' : selectedRole?.roleName === 'Owner' ? 'Chủ cửa hàng' : selectedRole?.roleName}
+                      {selectedRole?.roleName}
                     </span>
                   </h2>
 
@@ -489,12 +485,21 @@ const AdminRoleManagement = () => {
                                           ? 'text-[#004785] dark:text-blue-400'
                                           : 'text-slate-900 group-hover:text-[#004785] dark:text-[#e5e5e5] dark:group-hover:text-blue-400'
                                       }`}
-                                      title={permission.permissionName || permission.permissionCode}
                                     >
-                                      {permission.permissionName || permission.permissionCode}
+                                      {
+                                        permission.permissionCode
+                                      }
                                     </div>
 
-
+                                    <div
+                                      className="w-32 truncate text-[10px] leading-tight text-slate-500 dark:text-[#999999] md:w-48"
+                                      title={
+                                        permission.permissionName
+                                      }
+                                    >
+                                      {permission.permissionName ||
+                                        'Cấp quyền truy cập'}
+                                    </div>
                                   </div>
                                 </label>
                               );

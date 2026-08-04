@@ -15,10 +15,6 @@ const SystemNotifications = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-
   // Form states
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -290,17 +286,12 @@ const SystemNotifications = () => {
             <h2 className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
               Danh sách Thông báo
             </h2>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-500 dark:text-[#999999]">
-                {notifications.length} kết quả
-              </span>
-              <button
-                onClick={fetchNotifications}
-                className="text-[#004785] dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-              >
-                <Icon name="sync" size={18} />
-              </button>
-            </div>
+            <button
+              onClick={fetchNotifications}
+              className="text-[#004785] dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+            >
+              <Icon name="refresh" size={18} />
+            </button>
           </div>
           <div className="overflow-x-auto p-0">
             {loading ? (
@@ -308,7 +299,6 @@ const SystemNotifications = () => {
             ) : error ? (
               <div className="p-8 text-center font-bold text-red-600 dark:text-red-500">{error}</div>
             ) : (
-              <div className="flex flex-col">
               <table className="w-full text-left text-xs text-slate-900 dark:text-[#e5e5e5]">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] text-[10px] font-bold uppercase text-slate-500 dark:text-[#999999]">
@@ -319,9 +309,7 @@ const SystemNotifications = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-[#333333]">
-                  {notifications
-                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                    .map((n) => {
+                  {notifications.map((n) => {
                     const isDraft = n.status === 'DRAFT' || n.status === 'SCHEDULED';
                     return (
                       <tr
@@ -376,7 +364,7 @@ const SystemNotifications = () => {
                                   className="rounded p-1 text-slate-400 dark:text-[#666666] hover:bg-red-50 dark:bg-red-900/30 hover:text-red-600 dark:text-red-500"
                                   title="Hủy lịch"
                                 >
-                                  <Icon name="close" size={16} />
+                                  <Icon name="cancel" size={16} />
                                 </button>
                               </>
                             )}
@@ -403,48 +391,6 @@ const SystemNotifications = () => {
                   )}
                 </tbody>
               </table>
-              {Math.ceil(notifications.length / itemsPerPage) > 1 && (
-        <div className="flex items-center justify-between border-t border-slate-200 dark:border-[#333333] bg-white dark:bg-[#0f0f0f] px-4 py-3">
-          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-[#999999]">
-            <div className="flex items-center gap-2">
-              <span>Hiển thị</span>
-              <select 
-                value={itemsPerPage}
-                onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="rounded border border-slate-200 dark:border-[#333333] bg-transparent py-1 px-2 text-xs text-slate-900 dark:text-[#e5e5e5] outline-none focus:border-[#004785]"
-              >
-                <option value={10}>10 dòng</option>
-                <option value={20}>20 dòng</option>
-                <option value={50}>50 dòng</option>
-                <option value={100}>100 dòng</option>
-              </select>
-            </div>
-            <span>
-              {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, notifications.length)} trong tổng số {notifications.length} dòng
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-xs">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:hover:bg-[#272727]"
-            >
-              <Icon name="chevron_left" size={16} />
-            </button>
-            <span className="font-medium text-slate-600 dark:text-[#999999]">
-              Trang {currentPage} / {Math.ceil(notifications.length / itemsPerPage)}
-            </span>
-            <button
-              onClick={() => setCurrentPage(p => Math.min(Math.ceil(notifications.length / itemsPerPage), p + 1))}
-              disabled={currentPage === Math.ceil(notifications.length / itemsPerPage)}
-              className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 dark:border-[#333333] bg-white dark:bg-[#1a1a1a] text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:hover:bg-[#272727]"
-            >
-              <Icon name="chevron_right" size={16} />
-            </button>
-          </div>
-        </div>
-              )}
-              </div>
             )}
           </div>
         </div>
