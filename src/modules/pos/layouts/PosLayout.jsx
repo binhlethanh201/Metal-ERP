@@ -9,9 +9,11 @@ import PosSidebar from '../components/layout/PosSidebar';
 import PosHeader from '../components/layout/PosHeader';
 import PosFooter from '../components/layout/PosFooter';
 import Icon from '../../../shared/components/Icon';
+import { useAuth } from '../../../shared/hooks/useAuth';
 
 const API_BASE = process.env.REACT_APP_API_URL;
-const HUB_URL = `${API_BASE}/r/mepHub`;
+const MEP_HUB_URL = `${API_BASE}/r/mepHub`;
+const POS_HUB_URL = `${API_BASE}/r/posHub`;
 
 const ROUTE_TO_MENU = {
   '/pos': 'Máy bán hàng',
@@ -26,6 +28,25 @@ const DRAFTS_STORAGE_KEY = 'pos_drafts';
 const PosLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+
+  // Lấy branchId: ưu tiên user object, fallback decode JWT
+  const getBranchId = () => {
+    if (user?.branchId) return String(user.branchId);
+    if (user?.BranchId) return String(user.BranchId);
+    if (user?.defaultBranchId) return String(user.defaultBranchId);
+    // Decode JWT để lấy branchId claim
+    try {
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.branchId) return String(payload.branchId);
+        if (payload.BranchId) return String(payload.BranchId);
+      }
+    } catch {}
+    return '';
+  };
+  const branchId = getBranchId();
 
   const [toasts, setToasts] = useState([]);
   const [search, setSearch] = useState('');
@@ -72,22 +93,22 @@ const PosLayout = () => {
     }, type === 'warning' || type === 'error' ? 8000 : 5000);
   }, []);
 
-  const hubRef = useRef(null);
+  const mepHubRef = useRef(null);
+  const posHubRef = useRef(null);
 
-  // ---- SignalR real-time connection ----
+  // ---- mepHub: SystemNotification ----
   useEffect(() => {
     const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
     if (!token) return;
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(HUB_URL, { accessTokenFactory: () => token })
+      .withUrl(MEP_HUB_URL, { accessTokenFactory: () => token })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(signalR.LogLevel.Warning)
       .build();
 
-    hubRef.current = connection;
+    mepHubRef.current = connection;
 
-    // Lắng nghe Thông báo hệ thống từ Admin
     connection.on('SystemNotification', (data) => {
       addToast(
         `${data.title || 'Thông báo hệ thống mới'}`,
@@ -97,13 +118,64 @@ const PosLayout = () => {
     });
 
     connection.start().catch((err) => {
-      console.warn('SignalR không thể kết nối từ POS:', err.message);
+      console.warn('mepHub không thể kết nối:', err.message);
     });
 
     return () => {
       connection.stop().catch(() => {});
     };
   }, [addToast]);
+
+  // ---- posHub: Shift events (cần join branch group) ----
+  useEffect(() => {
+    const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    if (!token || !branchId) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(POS_HUB_URL, { accessTokenFactory: () => token })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    posHubRef.current = connection;
+
+    connection.on('ShiftOpened', (data) => {
+      console.log('[posHub] ShiftOpened:', data);
+      addToast(
+        `Ca bán ${data.shiftCode || ''} đã được mở`,
+        'info'
+      );
+      window.dispatchEvent(new CustomEvent('shift-state-changed', { detail: { type: 'opened', ...data } }));
+    });
+
+    connection.on('ShiftClosed', (data) => {
+      console.log('[posHub] ShiftClosed:', data);
+      localStorage.removeItem('pos_active_shift');
+      const summary = data.summary || data;
+      const forceMsg = summary.forceClosed ? ' (chốt hộ)' : '';
+      const closedBy = summary.closedBy || '';
+      addToast(
+        `Ca bán đã được chốt${forceMsg}${closedBy ? ' bởi ' + closedBy : ''}. Tổng doanh thu: ${(summary.totalRevenue || 0).toLocaleString('vi-VN')} VNĐ`,
+        'warning'
+      );
+      window.dispatchEvent(new CustomEvent('shift-state-changed', { detail: { type: 'closed', ...data } }));
+    });
+
+    connection.start().then(() => {
+      console.log('[posHub] Đã kết nối, joining branch group:', branchId);
+      connection.invoke('JoinBranchGroup', String(branchId)).then(() => {
+        console.log('[posHub] Đã join branch group:', branchId);
+      }).catch((err) => {
+        console.warn('[posHub] JoinBranchGroup thất bại:', err.message);
+      });
+    }).catch((err) => {
+      console.warn('[posHub] Không thể kết nối:', err.message);
+    });
+
+    return () => {
+      connection.stop().catch(() => {});
+    };
+  }, [addToast, branchId]);
 
   const TOAST_STYLES = {
     info: 'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200',
@@ -162,7 +234,7 @@ const PosLayout = () => {
       />
 
       {/* Body: sidebar + content */}
-      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+      <div className="flex flex-1 gap-3 p-3 min-h-0">
         <PosSidebar
           activeMenu={activeMenu}
           onMenuSelect={handleMenuSelect}
@@ -171,7 +243,7 @@ const PosLayout = () => {
           onToggle={() => setSidebarOpen((v) => !v)}
         />
 
-        <main className="flex flex-1 flex-col overflow-hidden">
+        <main className="flex flex-1 flex-col overflow-auto min-h-0">
           <Outlet
             context={{
               search,
