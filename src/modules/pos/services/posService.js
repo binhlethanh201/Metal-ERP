@@ -146,6 +146,10 @@ export const updateCustomer = (customerId, data) => {
   return apiPosPut(ENDPOINTS.POS.UPDATE_CUSTOMER(customerId), data);
 };
 
+export const deleteCustomer = (customerId) => {
+  return apiPosDelete(ENDPOINTS.POS.DELETE_CUSTOMER(customerId));
+};
+
 export const getCustomerOrders = (customerId) => {
   return apiPosGet(ENDPOINTS.POS.GET_CUSTOMER_ORDERS(customerId));
 };
@@ -177,11 +181,7 @@ export const getCategoryReturnPolicies = (branchId) => {
 // Return: { id, name } hoặc '' nếu không tìm thấy
 export const getProductCategory = async (productId, productCode, productName) => {
   const extractId = (obj) =>
-    obj?.categoryId ||
-    obj?.CategoryId ||
-    obj?.category?.id ||
-    obj?.category?.categoryId ||
-    '';
+    obj?.categoryId || obj?.CategoryId || obj?.category?.id || obj?.category?.categoryId || '';
 
   const extractName = (obj) =>
     obj?.categoryName ||
@@ -198,14 +198,15 @@ export const getProductCategory = async (productId, productCode, productName) =>
       console.log('[getProductCategory] Searching Inventory with productCode:', productCode);
       const res = await apiGet(`/api/products?productCode=${encodeURIComponent(productCode)}`);
       const invData = res?.data || res;
-      const invItems = Array.isArray(invData)
-        ? invData
-        : (invData?.items ?? invData?.data ?? []);
+      const invItems = Array.isArray(invData) ? invData : (invData?.items ?? invData?.data ?? []);
       console.log('[getProductCategory] Inventory search results:', invItems?.length);
       if (Array.isArray(invItems) && invItems.length > 0) {
         // Ưu tiên item có productId khớp chính xác
         const matched = productId
-          ? invItems.find(i => i.productId === productId || i.id === productId || i.branchProductId === productId)
+          ? invItems.find(
+              (i) =>
+                i.productId === productId || i.id === productId || i.branchProductId === productId
+            )
           : null;
         const invProduct = matched || invItems[0];
         console.log('[getProductCategory] Inventory product keys:', Object.keys(invProduct));
@@ -222,11 +223,7 @@ export const getProductCategory = async (productId, productCode, productName) =>
   }
 
   // 2. Fallback: search POS products
-  const searchTerms = [
-    productCode,
-    productName,
-    productId,
-  ].filter(Boolean);
+  const searchTerms = [productCode, productName, productId].filter(Boolean);
 
   for (const term of searchTerms) {
     try {
@@ -235,13 +232,28 @@ export const getProductCategory = async (productId, productCode, productName) =>
       console.log('[getProductCategory] POS search raw response:', response);
       const raw = Array.isArray(response)
         ? response
-        : (response?.Items ?? response?.items ?? response?.data?.items ?? response?.data?.data ?? []);
+        : (response?.Items ??
+          response?.items ??
+          response?.data?.items ??
+          response?.data?.data ??
+          []);
       const items = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
-      console.log('[getProductCategory] POS search items count:', items?.length, 'isArray:', Array.isArray(items));
+      console.log(
+        '[getProductCategory] POS search items count:',
+        items?.length,
+        'isArray:',
+        Array.isArray(items)
+      );
       if (items.length > 0) {
         const p = items[0];
         const id = p.CategoryId ?? p.categoryId ?? p.category?.id ?? '';
-        const name = p.CategoryName ?? p.categoryName ?? p.category ?? p.ProductCategory ?? p.productCategory ?? '';
+        const name =
+          p.CategoryName ??
+          p.categoryName ??
+          p.category ??
+          p.ProductCategory ??
+          p.productCategory ??
+          '';
         if (id || name) {
           console.log('[getProductCategory] Found via POS search:', { id, name });
           return { id, name };
@@ -252,7 +264,11 @@ export const getProductCategory = async (productId, productCode, productName) =>
     }
   }
 
-  console.log('[getProductCategory] All lookups failed for:', { productId, productCode, productName });
+  console.log('[getProductCategory] All lookups failed for:', {
+    productId,
+    productCode,
+    productName,
+  });
   return '';
 };
 
@@ -302,6 +318,7 @@ const posService = {
   getCustomer,
   createCustomer,
   updateCustomer,
+  deleteCustomer,
   getCustomerOrders,
   // Returns
   getReturns,

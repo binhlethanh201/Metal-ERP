@@ -48,9 +48,17 @@ export const useActiveShift = ({ enabled = true } = {}) => {
     if (!enabled) return null;
     setLoading(true);
     try {
-      const res = await getShifts({ status: 'OPEN', pageSize: 10 });
+      const userStr = localStorage.getItem('user');
+      const userId = userStr ? JSON.parse(userStr).id : null;
+      
+      const params = { status: 'OPEN', pageSize: 10 };
+      if (userId) {
+        params.filterUserId = userId;
+      }
+      
+      const res = await getShifts(params);
       const items = res?.data?.items || res?.items || res?.data || [];
-      // Ca OPEN của chính user hiện tại (BE đã filter theo user)
+      // Ca OPEN của chính user hiện tại (đã filter theo filterUserId)
       // Bỏ qua ca quá 24 giờ (coi như kẹt)
       const fresh = Array.isArray(items) ? items.filter((s) => isFreshShift(s.startedAt)) : [];
       const open = fresh.length > 0 ? fresh[0] : null;

@@ -187,6 +187,7 @@ export const ENDPOINTS = {
     GET_CUSTOMER: (customerId) => `/pos/customers/${customerId}`,
     CREATE_CUSTOMER: '/pos/customers',
     UPDATE_CUSTOMER: (customerId) => `/pos/customers/${customerId}`,
+    DELETE_CUSTOMER: (customerId) => `/pos/customers/${customerId}`,
     GET_CUSTOMER_ORDERS: (customerId) => `/pos/customers/${customerId}/orders`,
 
     // --- Returns (Đổi trả) ---

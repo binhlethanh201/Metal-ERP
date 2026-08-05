@@ -29,7 +29,11 @@ import {
   finalizeInvoice,
   confirmTransfer,
   cancelPayment,
+  cancelInvoice,
 } from '../services/posService';
+import { getCustomerPoints } from '../../../modules/customers/services/customerService';
+import { getStorePolicy } from '../../settings/services/storePolicyService';
+import * as signalR from '@microsoft/signalr';
 import { apiPosGet } from '../../../services/apiClient';
 
 const PAYMENT_LABELS = { cash: 'Tiền mặt', transfer: 'Chuyển khoản' };
@@ -66,7 +70,7 @@ const mapToPosProduct = (p) => {
 };
 
 const POSScreen = () => {
-  const { search, setSearch, showNotice, quickAddCust, drafts, setDrafts, setFooterInfo } =
+  const { search, setSearch, showNotice, quickAddCust, drafts, setDrafts, setFooterInfo, addToast } =
     useOutletContext();
   const location = useLocation();
   const draftData = location.state?.draft;
@@ -148,6 +152,43 @@ const POSScreen = () => {
 
   // Đồng bộ ca đang mở từ BE về localStorage để tránh MSG-76 khi sang máy khác / clear cache
   const { refresh: refreshActiveShift } = useActiveShift({ enabled: !!user });
+
+  useEffect(() => {
+    refreshActiveShift();
+  }, [refreshActiveShift]);
+
+  // ---- SignalR real-time connection cho Màn hình Bán hàng (posHub) ----
+  useEffect(() => {
+    const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    if (!token) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${process.env.REACT_APP_API_URL}/r/posHub`, { accessTokenFactory: () => token })
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on('InvoiceFinalized', (data) => {
+      console.log('SignalR InvoiceFinalized:', data);
+      refetchProducts(); // Tải lại danh sách sản phẩm để cập nhật tồn kho mới nhất
+    });
+
+    connection.start()
+      .then(() => {
+        // Lấy branchId từ localStorage (nếu có)
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        if (user && user.branchId) {
+          connection.invoke('JoinBranchGroup', user.branchId).catch(() => {});
+        } else if (user && user.defaultBranchId) {
+          connection.invoke('JoinBranchGroup', user.defaultBranchId).catch(() => {});
+        }
+      })
+      .catch((err) => console.warn('PosHub connection err:', err));
+
+    return () => {
+      connection.stop().catch(() => {});
+    };
+  }, [refetchProducts]);
 
   // Tự động revalidate giá/tồn kho của các sản phẩm đang nằm trong giỏ hàng hiện tại khi danh sách posProducts thay đổi
   useEffect(() => {
@@ -456,14 +497,17 @@ const POSScreen = () => {
       try {
         await finalizeInvoice(invoice.invoiceId);
       } catch (finalErr) {
-        console.warn('[POS] finalizeInvoice error:', finalErr);
-        console.warn('[DEBUG finalizeInvoice] chi tiết lỗi:', {
-          message: finalErr.message,
-          data: finalErr.data,
-          response: finalErr.response,
-          status: finalErr.status,
-          errors: finalErr.errors,
-        });
+        console.error('[POS] finalizeInvoice error:', finalErr);
+        const errorMsg = finalErr.data?.message || finalErr.message || 'Thanh toán thất bại, vui lòng thử lại.';
+        if (addToast) addToast(errorMsg, 'error');
+        
+        // Cố gắng hủy hóa đơn Draft nếu có thể
+        try {
+          await cancelInvoice(invoice.invoiceId);
+        } catch (_) {}
+        
+        setCheckingOut(false);
+        return; // DỪNG LUỒNG THANH TOÁN TẠI ĐÂY, không clear cart!
       }
 
       // Cập nhật realtime cho ca đang mở (cộng dồn vào sessionStorage)
