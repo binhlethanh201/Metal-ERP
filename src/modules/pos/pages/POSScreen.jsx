@@ -31,8 +31,6 @@ import {
   cancelPayment,
   cancelInvoice,
 } from '../services/posService';
-import { getCustomerPoints } from '../../../modules/customers/services/customerService';
-import { getStorePolicy } from '../../settings/services/storePolicyService';
 import * as signalR from '@microsoft/signalr';
 import { apiPosGet } from '../../../services/apiClient';
 
@@ -506,7 +504,7 @@ const POSScreen = () => {
           await cancelInvoice(invoice.invoiceId);
         } catch (_) {}
         
-        setCheckingOut(false);
+        setPaying(false);
         return; // DỪNG LUỒNG THANH TOÁN TẠI ĐÂY, không clear cart!
       }
 
