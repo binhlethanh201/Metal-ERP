@@ -282,7 +282,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={() => !isSubmitting && onClose()} title="Tạo phiếu nhập kho" size="7xl">
+      <Modal isOpen={isOpen} onClose={() => !isSubmitting && onClose()} title="Tạo phiếu nhập kho" size="8xl">
         <div className="mb-4 flex items-center gap-2">
           <input type="file" ref={fileInputRef} accept=".xlsx,.xls" onChange={handleImportExcel} className="hidden" />
           <Button variant="secondary" size="sm" onClick={handleDownloadTemplate} disabled={importing} className="flex items-center gap-1.5">
@@ -306,7 +306,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               isCustomerReturn={isCustomerReturn}
             />
           </div>
-          <div className="w-full shrink-0 xl:w-[300px]">
+          <div className="w-full shrink-0 xl:w-[400px]">
             <ImportTicketForm
               inwardType={inwardType}
               onChangeInwardType={setInwardType}
