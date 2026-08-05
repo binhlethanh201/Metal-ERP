@@ -27,7 +27,7 @@ import IconButton from '../../../../shared/components/IconButton';
 import { Input } from '../../../../shared/components/Input';
 import { Textarea } from '../../../../shared/components/Textarea';
 import { Badge } from '../../../../shared/components/Badge';
-import { CancelTicketModal } from './CancelTicketModal';
+import CancelTicketModal from './CancelTicketModal';
 
 const formatCurrency = (val) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(val || 0));
@@ -69,8 +69,9 @@ export const TicketDetailModal = ({
   const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  const [isCancelOpen, setIsCancelOpen] = useState(false);
-  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+  // Cancel modal (dùng chung pattern như table Lịch sử phiếu nhập)
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const notifyRef = useRef(onNotify);
   const closeRef = useRef(onClose);
@@ -94,7 +95,9 @@ export const TicketDetailModal = ({
         const data = res?.data || res;
         if (active && data) {
           setDetail(data);
-          setEditReason(data.reason || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : ''));
+          setEditReason(
+            data.reason || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : '')
+          );
           setEditNote(data.note || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : ''));
 
           // Tra cứu tên nhà cung cấp từ supplierId
@@ -223,348 +226,378 @@ export const TicketDetailModal = ({
   const canEditNote = isPending || isCompleted;
   const canConfirm = detail?.canConfirm ?? isPending;
 
+  const handleCancelDraft = () => {
+    setShowCancelModal(true);
+  };
+
   const handleConfirmCancel = async (reason) => {
-    setIsSubmittingCancel(true);
+    setIsCancelling(true);
     try {
       if (type === 'INWARD') await cancelInwardInventory(ticketId, reason);
       else await cancelOutwardInventory(ticketId, reason);
 
-      onNotify &&
-        onNotify({
-          type: 'success',
-          message: `Đã hủy phiếu ${detail?.ticketCode || ticketId} thành công!`,
-        });
+      setShowCancelModal(false);
+      onNotify && onNotify({ type: 'success', message: 'Đã hủy phiếu nháp thành công!' });
       onReload && onReload();
       onClose();
     } catch (e) {
-      onNotify && onNotify({ type: 'error', message: 'Không thể hủy phiếu này' });
+      onNotify && onNotify({ type: 'error', message: 'Không thể hủy phiếu nháp này' });
     } finally {
-      setIsSubmittingCancel(false);
-      setIsCancelOpen(false);
+      setIsCancelling(false);
     }
   };
 
   return (
     <>
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="4xl"
-      title={
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 font-bold text-[#004785] dark:bg-blue-900/50">
-            <Package size={20} />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
-              Chi tiết phiếu {type === 'INWARD' ? 'Nhập kho' : 'Xuất kho'}
-            </span>
-            <span className="rounded-md bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-[#272727] dark:text-[#b3b3b3]">
-              {detail?.ticketCode || ticketId}
-            </span>
-          </div>
-        </div>
-      }
-      footer={
-        <>
-          {isPending && (
-            <Button
-              variant="danger"
-              onClick={() => setIsCancelOpen(true)}
-              disabled={isConfirming || isSavingEdit || isSubmittingCancel}
-            >
-              Hủy phiếu
-            </Button>
-          )}
-          {canConfirm && isPending && (
-            <Button
-              variant="success"
-              onClick={handleConfirm}
-              disabled={isConfirming}
-              className="flex items-center gap-2"
-            >
-              <CheckCircle2 size={18} />
-              {isConfirming ? 'Đang duyệt kho...' : 'Xác nhận duyệt kho ngay'}
-            </Button>
-          )}
-        </>
-      }
-    >
-      <div className="space-y-6">
-        {isLoading ? (
-          <div className="py-16 text-center text-slate-400 dark:text-[#808080]">
-            Đang tải thông tin chi tiết phiếu...
-          </div>
-        ) : !detail ? (
-          <div className="py-16 text-center text-red-500 dark:text-red-400">Không tìm thấy dữ liệu phiếu kho.</div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm sm:grid-cols-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
-              <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Trạng thái
-                </span>
-                <div className="mt-1">
-                  {isCompleted && (
-                    <Badge variant="success" size="sm" className="inline-flex items-center gap-1">
-                      <CheckCircle2 size={14} /> Hoàn tất
-                    </Badge>
-                  )}
-                  {isPending && (
-                    <Badge
-                      variant="warning"
-                      size="sm"
-                      className="inline-flex animate-pulse items-center gap-1"
-                    >
-                      <Clock size={14} /> Chờ duyệt kho
-                    </Badge>
-                  )}
-                  {isCancelled && (
-                    <Badge variant="secondary" size="sm" className="inline-flex items-center gap-1">
-                      <XCircle size={14} /> Đã hủy
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Người lập phiếu
-                </span>
-                <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                  <User size={14} className="text-slate-400 dark:text-[#808080]" /> {detail.userName || 'Hệ thống'}
-                </div>
-              </div>
-              <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Thời gian
-                </span>
-                <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                  <CalendarClock size={14} className="text-slate-400 dark:text-[#808080]" />
-                  {detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '---'}
-                </div>
-              </div>
-              <div>
-                <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                  Phân loại
-                </span>
-                <div className="mt-1 font-bold text-[#004785]">
-                  {renderTicketTypeLabel(detail.ticketType, type)}
-                </div>
-              </div>
-              {type === 'OUTWARD' && (
-                <div className="sm:col-span-4">
-                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                    Đối tượng
-                  </span>
-                  <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                    {detail._partyName || '---'}
-                  </div>
-                </div>
-              )}
-              {type === 'INWARD' && (
-                <div className="sm:col-span-4">
-                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
-                    Nhà cung cấp
-                  </span>
-                  <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                    {detail._partyName || '---'}
-                  </div>
-                </div>
-              )}
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="4xl"
+        title={
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 font-bold text-[#004785] dark:bg-blue-900/50">
+              <Package size={20} />
             </div>
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 p-4 dark:border-[#333333]">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-b-[#333333]">
-                <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-[#d4d4d4]">
-                  <FileText size={16} className="text-slate-500 dark:text-[#999999]" /> Ghi chú & Lý do giải trình
-                </span>
-                {!isCancelled && !isEditing && (
-                  <IconButton
-                    icon={Edit3}
-                    variant="outline"
-                    space="customer"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    title="Chỉnh sửa ghi chú"
-                  />
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">
+                Chi tiết phiếu {type === 'INWARD' ? 'Nhập kho' : 'Xuất kho'}
+              </span>
+              <span className="rounded-md bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-[#272727] dark:text-[#b3b3b3]">
+                {detail?.ticketCode || ticketId}
+              </span>
+            </div>
+          </div>
+        }
+        footer={
+          <>
+            {isPending && (
+              <Button
+                variant="danger"
+                onClick={handleCancelDraft}
+                disabled={isConfirming || isSavingEdit}
+              >
+                Hủy phiếu nháp
+              </Button>
+            )}
+            {canConfirm && isPending && (
+              <Button
+                variant="success"
+                onClick={handleConfirm}
+                disabled={isConfirming}
+                className="flex items-center gap-2"
+              >
+                <CheckCircle2 size={18} />
+                {isConfirming ? 'Đang duyệt kho...' : 'Xác nhận duyệt kho ngay'}
+              </Button>
+            )}
+          </>
+        }
+      >
+        <div className="space-y-6">
+          {isLoading ? (
+            <div className="py-16 text-center text-slate-400 dark:text-[#808080]">
+              Đang tải thông tin chi tiết phiếu...
+            </div>
+          ) : !detail ? (
+            <div className="py-16 text-center text-red-500 dark:text-red-400">
+              Không tìm thấy dữ liệu phiếu kho.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-[#333333] dark:bg-[#1a1a1a] sm:grid-cols-4">
+                <div>
+                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
+                    Trạng thái
+                  </span>
+                  <div className="mt-1">
+                    {isCompleted && (
+                      <Badge variant="success" size="sm" className="inline-flex items-center gap-1">
+                        <CheckCircle2 size={14} /> Hoàn tất
+                      </Badge>
+                    )}
+                    {isPending && (
+                      <Badge
+                        variant="warning"
+                        size="sm"
+                        className="inline-flex animate-pulse items-center gap-1"
+                      >
+                        <Clock size={14} /> Chờ duyệt kho
+                      </Badge>
+                    )}
+                    {isCancelled && (
+                      <Badge
+                        variant="secondary"
+                        size="sm"
+                        className="inline-flex items-center gap-1"
+                      >
+                        <XCircle size={14} /> Đã hủy
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
+                    Người lập phiếu
+                  </span>
+                  <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                    <User size={14} className="text-slate-400 dark:text-[#808080]" />{' '}
+                    {detail.userName || 'Hệ thống'}
+                  </div>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
+                    Thời gian
+                  </span>
+                  <div className="mt-1 flex items-center gap-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                    <CalendarClock size={14} className="text-slate-400 dark:text-[#808080]" />
+                    {detail.createdAt ? new Date(detail.createdAt).toLocaleString('vi-VN') : '---'}
+                  </div>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
+                    Phân loại
+                  </span>
+                  <div className="mt-1 font-bold text-[#004785]">
+                    {renderTicketTypeLabel(detail.ticketType, type)}
+                  </div>
+                </div>
+                {type === 'OUTWARD' && (
+                  <div className="sm:col-span-4">
+                    <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
+                      Đối tượng
+                    </span>
+                    <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                      {detail._partyName || '---'}
+                    </div>
+                  </div>
+                )}
+                {type === 'INWARD' && (
+                  <div className="sm:col-span-4">
+                    <span className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">
+                      Nhà cung cấp
+                    </span>
+                    <div className="mt-1 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                      {detail._partyName || '---'}
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {isEditing ? (
-                <div className="space-y-3 pt-1">
-                  <Input
-                    label={`Lý do nghiệp vụ ${canEditReason ? '' : '(Phiếu đã hoàn tất - Không được sửa Lý do)'}`}
-                    disabled={!canEditReason || isSavingEdit}
-                    value={editReason}
-                    onChange={(e) => setEditReason(e.target.value)}
-                  />
-                  <Textarea
-                    label={`Ghi chú bổ sung ${canEditNote ? '' : '(Không được phép sửa)'}`}
-                    rows={2}
-                    disabled={!canEditNote || isSavingEdit}
-                    value={editNote}
-                    onChange={(e) => setEditNote(e.target.value)}
-                  />
-                  <div className="flex justify-end gap-2 pt-1">
-                    <Button
-                      variant="secondary"
+              <div className="space-y-3 rounded-2xl border border-slate-200 p-4 dark:border-[#333333]">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-b-[#333333]">
+                  <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-[#d4d4d4]">
+                    <FileText size={16} className="text-slate-500 dark:text-[#999999]" /> Ghi chú &
+                    Lý do giải trình
+                  </span>
+                  {!isCancelled && !isEditing && (
+                    <IconButton
+                      icon={Edit3}
+                      variant="outline"
+                      space="customer"
                       size="sm"
-                      onClick={() => setIsEditing(false)}
-                      disabled={isSavingEdit}
-                    >
-                      Hủy bỏ
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleSaveEdit}
-                      disabled={isSavingEdit}
-                      className="flex items-center gap-1"
-                    >
-                      <Save size={13} /> {isSavingEdit ? 'Đang lưu...' : 'Lưu thay đổi'}
-                    </Button>
-                  </div>
+                      onClick={() => setIsEditing(true)}
+                      title="Chỉnh sửa ghi chú"
+                    />
+                  )}
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                  <div>
-                    <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Lý do phiếu:</span>
-                    <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                      {(() => {
-                        const raw = detail.reason || '';
-                        if (isCustomerReturn && (!raw || raw === 'Nhập kho')) return 'Khách hàng trả';
-                        return raw || 'Không có lý do';
-                      })()}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Ghi chú thêm:</span>
-                    <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                      {(() => {
-                        const raw = detail.note || '';
-                        if (isCustomerReturn && (!raw || raw === 'Nhập kho')) return 'Khách hàng trả';
-                        return raw || 'Không có ghi chú';
-                      })()}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <h4 className="text-sm font-bold text-slate-800 dark:text-[#d4d4d4]">Danh sách hàng hóa trong phiếu</h4>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-[#333333]">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-600 dark:border-b-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
-                      <th className="px-3 py-3">Mã hàng</th>
-                      <th className="px-3 py-3">Tên sản phẩm</th>
-                      <th className="w-16 px-3 py-3 text-center">ĐVT</th>
-                      {type === 'INWARD' && !hidePriceFields && <th className="px-3 py-3 text-right">Đơn giá nhập</th>}
-                      {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Đơn giá</th>}
-                      {isCompleted && (
-                        <th className="px-3 py-3 text-right text-slate-500 dark:text-[#999999]">Tồn trước</th>
-                      )}
-                      <th className="px-3 py-3 text-right font-extrabold text-[#004785]">
-                        {type === 'INWARD' ? '+ Nhập vào' : 'Xuất đi'}
-                      </th>
-                      {isCompleted && (
-                        <th className="px-3 py-3 text-right text-green-700">Tồn sau</th>
-                      )}
-                      {type === 'INWARD' && !hidePriceFields && <th className="px-3 py-3 text-right">Thành tiền</th>}
-                      {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Thành tiền</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
-                    {!detail.items || detail.items.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} className="py-6 text-center text-slate-400 dark:text-[#808080]">
-                          Không có sản phẩm nào
-                        </td>
-                      </tr>
-                    ) : (
-                      detail.items.map((item, idx) => {
-                        const qty = Number(item.quantity || 0);
-                        const sysQty = Number(item.systemQuantity ?? item.actualQuantity ?? 0);
-                        const afterQty =
-                          item.actualQuantity !== undefined
-                            ? Number(item.actualQuantity)
-                            : type === 'INWARD'
-                              ? sysQty + qty
-                              : sysQty - qty;
-
-                        return (
-                          <tr key={item.ticketItemId || idx} className="hover:bg-slate-50/60 dark:hover:bg-[#272727]/60">
-                            <td className="px-3 py-3 font-bold text-slate-800 dark:text-[#d4d4d4]">
-                              {item.productCode || 'N/A'}
-                            </td>
-                            <td className="px-3 py-3 font-medium text-slate-800 dark:text-[#d4d4d4]">
-                              {item.productName || 'Sản phẩm'}
-                            </td>
-                            <td className="px-3 py-3 text-center text-slate-600 dark:text-[#999999]">
-                              {item.unit || item.Unit || item.unitName || item.UnitName || '---'}
-                            </td>
-                            {type === 'INWARD' && !hidePriceFields && (
-                              <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
-                                {formatCurrency(item.costPrice)}
-                              </td>
-                            )}
-                            {type === 'OUTWARD' && (
-                              <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
-                                {formatCurrency(item.unitPrice || item.UnitPrice || 0)}
-                              </td>
-                            )}
-                            {isCompleted && (
-                              <td className="px-3 py-3 text-right font-medium text-slate-500 dark:text-[#999999]">
-                                {item.systemQuantity !== undefined ? item.systemQuantity : '---'}
-                              </td>
-                            )}
-                            <td className="px-3 py-3 text-right font-extrabold text-[#004785]">
-                              {qty}
-                            </td>
-                            {isCompleted && (
-                              <td className="px-3 py-3 text-right font-bold text-green-700">
-                                {afterQty}
-                              </td>
-                            )}
-                            {type === 'INWARD' && !hidePriceFields && (
-                              <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                {formatCurrency(qty * Number(item.costPrice || 0))}
-                              </td>
-                            )}
-                            {type === 'OUTWARD' && (
-                              <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                {formatCurrency(
-                                  qty * Number(item.unitPrice || item.UnitPrice || 0)
-                                )}
-                              </td>
-                            )}
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                {isEditing ? (
+                  <div className="space-y-3 pt-1">
+                    <Input
+                      label={`Lý do nghiệp vụ ${canEditReason ? '' : '(Phiếu đã hoàn tất - Không được sửa Lý do)'}`}
+                      disabled={!canEditReason || isSavingEdit}
+                      value={editReason}
+                      onChange={(e) => setEditReason(e.target.value)}
+                    />
+                    <Textarea
+                      label={`Ghi chú bổ sung ${canEditNote ? '' : '(Không được phép sửa)'}`}
+                      rows={2}
+                      disabled={!canEditNote || isSavingEdit}
+                      value={editNote}
+                      onChange={(e) => setEditNote(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                        disabled={isSavingEdit}
+                      >
+                        Hủy bỏ
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleSaveEdit}
+                        disabled={isSavingEdit}
+                        className="flex items-center gap-1"
+                      >
+                        <Save size={13} /> {isSavingEdit ? 'Đang lưu...' : 'Lưu thay đổi'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">
+                        Lý do phiếu:
+                      </span>
+                      <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                        {(() => {
+                          const raw = detail.reason || '';
+                          if (isCustomerReturn && (!raw || raw === 'Nhập kho'))
+                            return 'Khách hàng trả';
+                          return raw || 'Không có lý do';
+                        })()}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">
+                        Ghi chú thêm:
+                      </span>
+                      <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                        {(() => {
+                          const raw = detail.note || '';
+                          if (isCustomerReturn && (!raw || raw === 'Nhập kho'))
+                            return 'Khách hàng trả';
+                          return raw || 'Không có ghi chú';
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
 
-            <div className="text-xs text-slate-500 dark:text-[#999999]">
-              {isPending && '💡 Phiếu đang lưu nháp. Cần xác nhận để cập nhật vào tồn kho thực tế.'}
-              {isCompleted && '💡 Phiếu đã hoàn tất. Tồn kho đã được hạch toán vào hệ thống.'}
-              {isCancelled && '💡 Phiếu đã bị hủy bỏ và vô hiệu lực.'}
-            </div>
-          </>
-        )}
-      </div>
-    </Modal>
+              <div className="space-y-2">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-[#d4d4d4]">
+                  Danh sách hàng hóa trong phiếu
+                </h4>
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-[#333333]">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase text-slate-600 dark:border-b-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
+                        <th className="px-3 py-3">Mã hàng</th>
+                        <th className="px-3 py-3">Tên sản phẩm</th>
+                        <th className="w-16 px-3 py-3 text-center">ĐVT</th>
+                        {type === 'INWARD' && !hidePriceFields && (
+                          <th className="px-3 py-3 text-right">Đơn giá nhập</th>
+                        )}
+                        {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Đơn giá</th>}
+                        {isCompleted && (
+                          <th className="px-3 py-3 text-right text-slate-500 dark:text-[#999999]">
+                            Tồn trước
+                          </th>
+                        )}
+                        <th className="px-3 py-3 text-right font-extrabold text-[#004785]">
+                          {type === 'INWARD' ? '+ Nhập vào' : 'Xuất đi'}
+                        </th>
+                        {isCompleted && (
+                          <th className="px-3 py-3 text-right text-green-700">Tồn sau</th>
+                        )}
+                        {type === 'INWARD' && !hidePriceFields && (
+                          <th className="px-3 py-3 text-right">Thành tiền</th>
+                        )}
+                        {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Thành tiền</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
+                      {!detail.items || detail.items.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={10}
+                            className="py-6 text-center text-slate-400 dark:text-[#808080]"
+                          >
+                            Không có sản phẩm nào
+                          </td>
+                        </tr>
+                      ) : (
+                        detail.items.map((item, idx) => {
+                          const qty = Number(item.quantity || 0);
+                          const sysQty = Number(item.systemQuantity ?? item.actualQuantity ?? 0);
+                          const afterQty =
+                            item.actualQuantity !== undefined
+                              ? Number(item.actualQuantity)
+                              : type === 'INWARD'
+                                ? sysQty + qty
+                                : sysQty - qty;
 
+                          return (
+                            <tr
+                              key={item.ticketItemId || idx}
+                              className="hover:bg-slate-50/60 dark:hover:bg-[#272727]/60"
+                            >
+                              <td className="px-3 py-3 font-bold text-slate-800 dark:text-[#d4d4d4]">
+                                {item.productCode || 'N/A'}
+                              </td>
+                              <td className="px-3 py-3 font-medium text-slate-800 dark:text-[#d4d4d4]">
+                                {item.productName || 'Sản phẩm'}
+                              </td>
+                              <td className="px-3 py-3 text-center text-slate-600 dark:text-[#999999]">
+                                {item.unit || item.Unit || item.unitName || item.UnitName || '---'}
+                              </td>
+                              {type === 'INWARD' && !hidePriceFields && (
+                                <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
+                                  {formatCurrency(item.costPrice)}
+                                </td>
+                              )}
+                              {type === 'OUTWARD' && (
+                                <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
+                                  {formatCurrency(item.unitPrice || item.UnitPrice || 0)}
+                                </td>
+                              )}
+                              {isCompleted && (
+                                <td className="px-3 py-3 text-right font-medium text-slate-500 dark:text-[#999999]">
+                                  {item.systemQuantity !== undefined ? item.systemQuantity : '---'}
+                                </td>
+                              )}
+                              <td className="px-3 py-3 text-right font-extrabold text-[#004785]">
+                                {qty}
+                              </td>
+                              {isCompleted && (
+                                <td className="px-3 py-3 text-right font-bold text-green-700">
+                                  {afterQty}
+                                </td>
+                              )}
+                              {type === 'INWARD' && !hidePriceFields && (
+                                <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
+                                  {formatCurrency(qty * Number(item.costPrice || 0))}
+                                </td>
+                              )}
+                              {type === 'OUTWARD' && (
+                                <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
+                                  {formatCurrency(
+                                    qty * Number(item.unitPrice || item.UnitPrice || 0)
+                                  )}
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-500 dark:text-[#999999]">
+                {isPending &&
+                  '💡 Phiếu đang lưu nháp. Cần xác nhận để cập nhật vào tồn kho thực tế.'}
+                {isCompleted && '💡 Phiếu đã hoàn tất. Tồn kho đã được hạch toán vào hệ thống.'}
+                {isCancelled && '💡 Phiếu đã bị hủy bỏ và vô hiệu lực.'}
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Modal xác nhận hủy phiếu với lý do (dùng chung pattern như table Lịch sử) */}
       <CancelTicketModal
-        isOpen={isCancelOpen}
-        onClose={() => setIsCancelOpen(false)}
+        isOpen={showCancelModal}
+        onClose={() => !isCancelling && setShowCancelModal(false)}
         onConfirm={handleConfirmCancel}
         ticketCode={detail?.ticketCode || ticketId}
         ticketStatus={detail?.status}
-        isSubmitting={isSubmittingCancel}
+        isSubmitting={isCancelling}
       />
     </>
   );

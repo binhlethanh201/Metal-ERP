@@ -55,6 +55,8 @@ export const useActiveShift = ({ enabled = true } = {}) => {
     try {
       const res = await getShifts({ status: 'OPEN', pageSize: 10 });
       const items = res?.data?.items || res?.items || res?.data || [];
+      // Ca OPEN của chi nhánh hiện tại (Cash Session model - BE filter theo branch)
+      // Bỏ qua ca quá 24 giờ (coi như kẹt)
       const fresh = Array.isArray(items) ? items.filter((s) => isFreshShift(s.startedAt)) : [];
       const open = fresh.length > 0 ? fresh[0] : null;
       if (open) {

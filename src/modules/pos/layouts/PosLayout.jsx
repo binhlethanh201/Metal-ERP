@@ -253,6 +253,7 @@ const PosLayout = () => {
               drafts,
               setDrafts,
               setFooterInfo,
+              addToast,
             }}
           />
         </main>
