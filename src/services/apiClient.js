@@ -279,4 +279,7 @@ export const apiPosPut = (endpoint, body, options = {}) =>
 export const apiPosPatch = (endpoint, body, options = {}) =>
   apiClient(endpoint, { ...options, method: 'PATCH', body, baseURL: POS_BASE_URL });
 
+export const apiPosDelete = (endpoint, options = {}) =>
+  apiClient(endpoint, { ...options, method: 'DELETE', baseURL: POS_BASE_URL });
+
 export default apiClient;
