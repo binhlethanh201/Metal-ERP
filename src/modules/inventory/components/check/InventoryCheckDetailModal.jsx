@@ -141,14 +141,22 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   const isCompleted = detailData?.status === 'Completed';
 
   const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
-  const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
+  const canApprovePermission = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const canCancelPermission = hasPermission(user, 'STOCK_CHECK_CANCEL');
 
-  const canFill = isDraft && (canCreate || currentUserId === detailData?.assigneeUserId);
-  const canModify = isDraft && (canCreate || currentUserId === detailData?.createdByUserId);
-  const canApproveReject = canApprove && isWaiting;
+  const isOwnerOrAdmin = user?.role === 'Owner' || user?.role === 'Admin' || user?.roles?.includes('Owner') || user?.roles?.includes('Admin');
+  const isCreator = currentUserId === detailData?.createdByUserId;
+  const isAssignee = currentUserId === detailData?.assigneeUserId;
+
+  // Cho phép edit/fill nếu là Owner/Admin, hoặc là người được gán, hoặc là người tạo (khi chưa gán cho ai khác)
+  const isCreatorNotAssignedToOther = isCreator && (!detailData?.assigneeUserId || isAssignee);
+  const canFill = isDraft && (isOwnerOrAdmin || isAssignee || isCreatorNotAssignedToOther);
+  const canModify = isDraft && (isOwnerOrAdmin || isAssignee || isCreatorNotAssignedToOther);
+  
+  // Không cho phép người được phân công tự duyệt phiếu của mình (trừ khi là Owner/Admin)
+  const canApproveReject = isWaiting && (isOwnerOrAdmin || (canApprovePermission && !isAssignee));
   const canCancel = canCancelPermission && (isDraft || isWaiting);
-  const canEditReasons = canApprove && (isWaiting || isCompleted);
+  const canEditReasons = canApprovePermission && (isWaiting || isCompleted);
 
   // ==================== ACTION HANDLERS ====================
   const handleFill = async () => {
@@ -355,12 +363,14 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                   : 'border-slate-300 text-[#004785] dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                   }`}
                 value={currentActualRaw}
-                onChange={(e) =>
+                onChange={(e) => {
+                  let val = e.target.value;
+                  if (val.length > 9) val = val.slice(0, 9);
                   setActualValues((prev) => ({
                     ...prev,
-                    [item.detailId]: e.target.value,
-                  }))
-                }
+                    [item.detailId]: val,
+                  }));
+                }}
               />
             </div>
           );

@@ -1256,13 +1256,17 @@ export const ShiftManagement = () => {
               inputMode="numeric"
               value={
                 startForm.openingBalance
-                  ? Number(startForm.openingBalance).toLocaleString('vi-VN')
+                  ? (isNaN(Number(startForm.openingBalance))
+                      ? ''
+                      : Number(startForm.openingBalance).toLocaleString('vi-VN'))
                   : ''
               }
               onChange={(e) => {
-                const raw = e.target.value.replace(/\./g, '');
+                const raw = e.target.value.replace(/[^\d]/g, '');
+                if (raw.length > 12) return;
                 setStartForm((f) => ({ ...f, openingBalance: raw }));
               }}
+              maxLength={15}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-lg font-bold focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
             />
           </div>
