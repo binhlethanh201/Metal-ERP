@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getShifts } from '../services/posService';
 
 const STORAGE_KEY = 'pos_active_shift';
@@ -21,9 +21,10 @@ const isFreshShift = (startedAt) => !isStaleShift(startedAt);
  * Tránh lỗi MSG-76 khi user đăng nhập lại hoặc sang máy khác mà
  * localStorage 'pos_active_shift' đã hết hạn/bị xóa trong khi ca BE còn mở.
  *
- * Logic:
+ * Cash Session Model (1 Branch = 1 OPEN Shift = N Users):
  *   - Lấy GET /pos/shifts?status=OPEN
- *   - Lọc ca có UserId khớp với currentUser (BE lọc giúp rồi)
+ *   - BE trả về ca OPEN của chi nhánh hiện tại (không filter theo user)
+ *   - Bất kỳ user nào trong chi nhánh đều có thể bán hàng trong ca này
  *   - Bỏ qua ca quá 24 giờ (coi như kẹt, không dùng)
  *   - Lưu object { id, shiftCode, openingBalance } vào localStorage
  *   - Nếu không có ca nào → set null
@@ -32,7 +33,6 @@ export const useActiveShift = ({ enabled = true } = {}) => {
   const [activeShift, setActiveShift] = useState(() => {
     try {
       const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      // Cache cũ / quá hạn → không dùng
       if (cached && !isFreshShift(cached.startedAt)) {
         localStorage.removeItem(STORAGE_KEY);
         return null;
@@ -44,21 +44,18 @@ export const useActiveShift = ({ enabled = true } = {}) => {
   });
   const [loading, setLoading] = useState(false);
 
+  // Dùng ref để refresh không phụ thuộc vào activeShift (tránh vòng lặp:
+  // clear → activeShift đổi → refresh chạy → re-fetch từ BE → set lại shift)
+  const activeShiftRef = useRef(activeShift);
+  activeShiftRef.current = activeShift;
+
   const refresh = useCallback(async () => {
     if (!enabled) return null;
     setLoading(true);
     try {
-      const userStr = localStorage.getItem('user');
-      const userId = userStr ? JSON.parse(userStr).id : null;
-      
-      const params = { status: 'OPEN', pageSize: 10 };
-      if (userId) {
-        params.filterUserId = userId;
-      }
-      
-      const res = await getShifts(params);
+      const res = await getShifts({ status: 'OPEN', pageSize: 10 });
       const items = res?.data?.items || res?.items || res?.data || [];
-      // Ca OPEN của chính user hiện tại (đã filter theo filterUserId)
+      // Ca OPEN của chi nhánh hiện tại (Cash Session model - BE filter theo branch)
       // Bỏ qua ca quá 24 giờ (coi như kẹt)
       const fresh = Array.isArray(items) ? items.filter((s) => isFreshShift(s.startedAt)) : [];
       const open = fresh.length > 0 ? fresh[0] : null;
@@ -68,32 +65,64 @@ export const useActiveShift = ({ enabled = true } = {}) => {
           shiftCode: open.shiftCode,
           openingBalance: open.openingBalance || 0,
           startedAt: open.startedAt,
-          userName: open.userName,
+          userName: open.userName || open.openedByUserName,
+          userId: open.userId || open.openedByUserId,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
         setActiveShift(mapped);
         return mapped;
       }
-      // Không có ca hợp lệ → xóa cache (kể cả cache cũ)
       localStorage.removeItem(STORAGE_KEY);
       setActiveShift(null);
       return null;
     } catch (err) {
       console.warn('Không thể refresh active shift:', err?.message || err);
-      return activeShift;
+      return activeShiftRef.current;
     } finally {
       setLoading(false);
     }
-  }, [enabled, activeShift]);
+  }, [enabled]); // Không phụ thuộc activeShift nữa
 
   const clear = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setActiveShift(null);
   }, []);
 
+  // Chỉ refresh khi mount hoặc enabled thay đổi (vd: login user khác)
   useEffect(() => {
     refresh();
-  }, [refresh]);
+  }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Giữ ref tới refresh để event listener luôn dùng được hàm mới nhất
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+
+  // Lắng nghe sự kiện shift-state-changed (từ SignalR / handleEndShift)
+  // Chỉ register 1 lần, dùng ref để gọi refresh mới nhất
+  useEffect(() => {
+    const handleShiftStateChanged = (e) => {
+      const { type } = e.detail || {};
+      console.log('[useActiveShift] shift-state-changed:', type);
+      if (type === 'closed') {
+        localStorage.removeItem(STORAGE_KEY);
+        setActiveShift(null);
+      } else if (type === 'opened') {
+        refreshRef.current();
+      }
+    };
+    window.addEventListener('shift-state-changed', handleShiftStateChanged);
+    return () => window.removeEventListener('shift-state-changed', handleShiftStateChanged);
+  }, []);
+
+  // Polling fallback 30s: phòng khi SignalR không kết nối được giữa 2 máy
+  // Chỉ poll khi đang có activeShift (có ca mở) để kiểm tra ca còn OPEN không
+  useEffect(() => {
+    if (!activeShift || !enabled) return;
+    const interval = setInterval(() => {
+      refreshRef.current();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [activeShift, enabled]);
 
   return { activeShift, loading, refresh, clear };
 };

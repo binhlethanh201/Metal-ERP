@@ -4,6 +4,7 @@
  */
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../shared/utils/permissions';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
@@ -53,7 +54,7 @@ const mapShift = (s) => {
   // Ghi đè userName từ localStorage nếu API không trả về
   const shiftId = s.shiftId || s.id;
   const saved = getSavedCashiers();
-  const cashierName = s.userName || s.cashier || saved[shiftId] || 'Thu ngân';
+  const cashierName = s.userName || s.openedByUserName || s.cashier || saved[shiftId] || 'Thu ngân';
   return {
     id: shiftId,
     date: startDate ? toLocalDateStr(startDate) : '-',
@@ -78,6 +79,14 @@ const mapShift = (s) => {
     orderCount: parseInt(s.totalOrders || s.orderCount || 0, 10),
     status: s.status === 'OPEN' ? 'open' : s.status === 'CLOSED' ? 'closed' : s.status || 'open',
     note: s.note || '',
+    // Cash Session model fields
+    userId: s.userId || s.openedByUserId || '',
+    openedByUserName: s.openedByUserName || s.userName || '',
+    closedByUserId: s.closedByUserId || '',
+    closedByUserName: s.closedByUserName || '',
+    forceCloseReason: s.forceCloseReason || '',
+    paymentBreakdown: s.paymentBreakdown || [],
+    salesByUser: s.salesByUser || [],
     shiftData: s,
   };
 };
@@ -85,6 +94,11 @@ const mapShift = (s) => {
 export const ShiftManagement = () => {
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.email || 'Thu ngân';
+  const currentUserId = user?.id || user?.userId || user?.sub || '';
+
+  // Permission checks cho Cash Session model
+  const canCreateShift = hasPermission(user, 'SHIFT_CREATE');
+  const canEndShift = hasPermission(user, 'SHIFT_UPDATE');
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -92,6 +106,9 @@ export const ShiftManagement = () => {
   // Ca đang mở
   const openShift = useMemo(() => shifts.find((s) => s.status === 'open'), [shifts]);
   const isShiftActive = !!openShift;
+
+  // Derived: current user is the one who opened this Cash Session
+  const isCurrentUserOpener = openShift?.userId === currentUserId;
 
   // Summary + orders của ca đang mở
   const [shiftSummary, setShiftSummary] = useState(null);
@@ -106,28 +123,37 @@ export const ShiftManagement = () => {
   const [selectedShiftOrders, setSelectedShiftOrders] = useState([]);
   const [selectedShiftReturns, setSelectedShiftReturns] = useState([]);
   const [detailOrdersLoading, setDetailOrdersLoading] = useState(false);
+  const [expandedSalesUser, setExpandedSalesUser] = useState(null); // user được chọn để xem chi tiết đơn
   const [dateFilter, setDateFilter] = useState(() => toLocalDateStr(new Date()));
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter]);
+  }, [dateFilter, pageSize]);
 
   const [startForm, setStartForm] = useState({ openingBalance: '1000000' });
-  const [endForm, setEndForm] = useState({ actualCashCount: '', note: '' });
+  const [endForm, setEndForm] = useState({ actualCashCount: '', note: '', forceClose: false, forceCloseReason: '' });
 
-  // Load shifts từ API
+  // Load shifts từ API (có phân trang server-side)
   const fetchShifts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[ShiftManagement] Fetching shifts...');
-      const data = await getShifts();
+      const params = { page: currentPage, pageSize };
+      if (dateFilter) {
+        params.from = dateFilter + 'T00:00:00Z';
+        params.to = dateFilter + 'T23:59:59Z';
+      }
+      console.log('[ShiftManagement] Fetching shifts with params:', params);
+      const data = await getShifts(params);
       console.log('[ShiftManagement] getShifts response:', data);
       const rawItems = Array.isArray(data) ? data : data?.items || data?.data || [];
       const items = Array.isArray(rawItems) ? rawItems : [];
-      console.log('[ShiftManagement] shifts items:', items.length);
+      const serverTotal = data?.totalCount ?? data?.total ?? items.length;
+      setTotalCount(serverTotal);
+      console.log('[ShiftManagement] shifts items:', items.length, 'total:', serverTotal);
       if (items.length > 0) {
         const mapped = items.map(mapShift);
         console.log('[ShiftManagement] mapped shifts:', mapped);
@@ -169,7 +195,7 @@ export const ShiftManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, pageSize, dateFilter]);
 
   // Load shift summary và orders khi có ca đang mở
   const fetchShiftSummary = useCallback(async () => {
@@ -469,6 +495,16 @@ export const ShiftManagement = () => {
     return () => document.removeEventListener('visibilitychange', onFocus);
   }, [fetchShifts]);
 
+  // Lắng nghe sự kiện shift-state-changed từ SignalR (PosLayout)
+  // Khi Owner/Manager chốt ca từ xa → tự động refresh danh sách
+  useEffect(() => {
+    const handleShiftStateChanged = () => {
+      fetchShifts();
+    };
+    window.addEventListener('shift-state-changed', handleShiftStateChanged);
+    return () => window.removeEventListener('shift-state-changed', handleShiftStateChanged);
+  }, [fetchShifts]);
+
   useEffect(() => {
     if (openShift) {
       fetchShiftSummary();
@@ -528,7 +564,8 @@ export const ShiftManagement = () => {
   };
 
   const handleOpenEndModal = () => {
-    setEndForm({ actualCashCount: '', note: '' });
+    setEndForm({ actualCashCount: '', note: '', forceClose: false, forceCloseReason: '' });
+    setExpandedSalesUser(null);
     setShowEndModal(true);
   };
 
@@ -543,11 +580,20 @@ export const ShiftManagement = () => {
       alert('Số tiền thực tế chênh lệch so với dự kiến. Vui lòng nhập ghi chú giải thích lý do.');
       return;
     }
+    // Chốt hộ bắt buộc nhập lý do
+    if (!isCurrentUserOpener && !endForm.forceCloseReason.trim()) {
+      alert('Bạn đang chốt hộ. Vui lòng nhập lý do chốt hộ.');
+      return;
+    }
     try {
-      console.log('[ShiftManagement] Ending shift:', openShift.id);
+      // Backend tự xác định forceClose dựa trên userId gửi request vs userId mở ca
+      const isNotOpener = !isCurrentUserOpener;
+      console.log('[ShiftManagement] Ending shift:', openShift.id, 'khongPhaiNguoiMoCa:', isNotOpener);
       const result = await endShift(openShift.id, {
         actualCash: parseFloat(endForm.actualCashCount) || 0,
         note: endForm.note,
+        forceClose: isNotOpener,
+        forceCloseReason: isNotOpener ? (endForm.forceCloseReason || `Chốt hộ bởi ${staffName}`) : null,
       });
       console.log('[ShiftManagement] endShift response:', result);
       const endResult = result?.data || result;
@@ -577,6 +623,9 @@ export const ShiftManagement = () => {
 
       // Xóa shift khỏi localStorage
       localStorage.removeItem('pos_active_shift');
+
+      // Báo cho tất cả component (ShiftBadge, POSScreen...) biết ca đã chốt
+      window.dispatchEvent(new CustomEvent('shift-state-changed', { detail: { type: 'closed' } }));
     } catch (err) {
       console.error('[ShiftManagement] Error ending shift:', err);
       alert('Lỗi chốt ca: ' + (err.message || 'Không xác định'));
@@ -587,6 +636,7 @@ export const ShiftManagement = () => {
     setSelectedShift(shift);
     setSelectedShiftOrders([]);
     setSelectedShiftReturns([]);
+    setExpandedSalesUser(null);
     setShowDetailModal(true);
     setDetailOrdersLoading(true);
 
@@ -615,6 +665,7 @@ export const ShiftManagement = () => {
           customerName: o.customerName || o.customer || 'Khách lẻ',
           totalAmount: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
           paymentMethod: o.paymentMethod || '',
+          cashier: o.userName || o.cashier || o.createdBy || '',
         }));
       setSelectedShiftOrders(orders);
       // Lọc returns trong khoảng thời gian của ca
@@ -664,16 +715,10 @@ export const ShiftManagement = () => {
   };
 
   // ---- Lọc & thống kê ----
-  const filteredShifts = useMemo(() => {
-    if (!dateFilter) return shifts;
-    return shifts.filter((s) => s.date === dateFilter);
-  }, [shifts, dateFilter]);
-
-  const totalPages = Math.ceil(filteredShifts.length / pageSize);
-  const paginatedShifts = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredShifts.slice(start, start + pageSize);
-  }, [filteredShifts, currentPage, pageSize]);
+  // Server-side pagination: shifts đã được lọc + phân trang từ API
+  const filteredShifts = shifts; // Backend đã lọc theo dateFilter
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const paginatedShifts = shifts; // Backend đã phân trang sẵn
 
   // Thống kê dựa theo ngày đã chọn
   const statsShifts = filteredShifts.filter((s) => s.status === 'closed');
@@ -751,11 +796,11 @@ export const ShiftManagement = () => {
         </div>
         <div className="flex gap-3">
           {!isShiftActive ? (
-            <Button variant="success" onClick={handleOpenStartModal}>
+            <Button variant="success" onClick={handleOpenStartModal} disabled={!canCreateShift}>
               Mở ca mới
             </Button>
           ) : (
-            <Button variant="danger" onClick={handleOpenEndModal}>
+            <Button variant="danger" onClick={handleOpenEndModal} disabled={!canEndShift}>
               Chốt ca
             </Button>
           )}
@@ -865,6 +910,7 @@ export const ShiftManagement = () => {
                           customerName: r.customerName || 'Khách lẻ',
                           createdAt: r.createdAt || r.created_at || '',
                           amount: parseFloat(r.refundAmount || r.refund_amount || 0),
+                          cashier: r.staffName || r.userName || r.cashier || r.processedBy || '',
                         };
                       });
                     const sales = shiftOrders.map((o) => ({
@@ -877,6 +923,7 @@ export const ShiftManagement = () => {
                       createdAt: o.createdAt,
                       amount: o.totalAmount,
                       paymentMethod: o.paymentMethod,
+                      cashier: o.cashier || '',
                     }));
                     return [...sales, ...returns]
                       .sort((a, b) => b._time - a._time)
@@ -922,6 +969,11 @@ export const ShiftManagement = () => {
                                 <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                   {act.customerName}
                                 </span>
+                                {act.cashier && (
+                                  <span className="shrink-0 text-[10px] text-slate-400 dark:text-[#808080]">
+                                    - {act.cashier}
+                                  </span>
+                                )}
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
                                 <span className="text-xs font-bold text-green-600">
@@ -1014,6 +1066,11 @@ export const ShiftManagement = () => {
                               <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                 {act.customerName}
                               </span>
+                              {act.cashier && (
+                                <span className="shrink-0 text-[10px] text-slate-400 dark:text-[#808080]">
+                                  - {act.cashier}
+                                </span>
+                              )}
                             </div>
                             <div className="flex shrink-0 items-center gap-2">
                               <span
@@ -1082,7 +1139,7 @@ export const ShiftManagement = () => {
         </Card>
         <Card padding="p-5">
           <div className="text-center">
-            <div className="text-2xl font-extrabold text-orange-600">{filteredShifts.length}</div>
+            <div className="text-2xl font-extrabold text-orange-600">{totalCount}</div>
             <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
               Tổng số ca
             </p>
@@ -1126,7 +1183,7 @@ export const ShiftManagement = () => {
           loading={loading}
           emptyMessage={error ? `Lỗi: ${error}` : 'Chưa có ca làm việc nào'}
         />
-        {filteredShifts.length > 0 && (
+        {totalCount > 0 && (
           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="flex items-center gap-4 text-sm text-slate-600">
               <div className="flex items-center gap-2">
@@ -1142,9 +1199,9 @@ export const ShiftManagement = () => {
                 </select>
               </div>
               <span>
-                {filteredShifts.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
-                {Math.min(currentPage * pageSize, filteredShifts.length)} trong tổng số{' '}
-                {filteredShifts.length} ca
+                {totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+                {Math.min(currentPage * pageSize, totalCount)} trong tổng số{' '}
+                {totalCount} ca
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -1273,7 +1330,9 @@ export const ShiftManagement = () => {
               Chốt ca làm việc
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-[#999999]">
-              Kiểm tra số liệu và xác nhận kết thúc ca
+              {!isCurrentUserOpener
+                ? `Người mở ca: ${displayShift?.openedByUserName || displayShift?.cashier || '?'}. Bạn đang chốt hộ.`
+                : 'Kiểm tra số liệu và xác nhận kết thúc ca'}
             </p>
           </div>
 
@@ -1396,6 +1455,88 @@ export const ShiftManagement = () => {
               </div>
             </div>
           </div>
+
+          {/* Sales By User - Cash Session model */}
+          {displayShift?.salesByUser && displayShift.salesByUser.length > 0 && (
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+              <div className="mb-2.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                DOANH SỐ THEO NHÂN VIÊN
+                <span className="ml-1.5 h-px flex-1 bg-slate-200 dark:bg-[#272727]" />
+              </div>
+              <div className="space-y-1.5">
+                {displayShift.salesByUser.map((u, idx) => {
+                  const isExpanded = expandedSalesUser === u.userName;
+                  const userOrders = shiftOrders.filter((o) => (o.cashier || '') === (u.userName || ''));
+                  const userReturns = shiftReturns.filter((r) => {
+                    const name = r.staffName || r.userName || r.cashier || r.processedBy || '';
+                    return name === (u.userName || '');
+                  });
+                  return (
+                    <div key={u.userId || idx}>
+                      <div
+                        onClick={() => setExpandedSalesUser(isExpanded ? null : u.userName)}
+                        className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20 ${isExpanded ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-slate-50 dark:bg-[#1a1a1a]/50'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                            {u.userName || 'NV #' + (idx + 1)}
+                          </span>
+                          <svg className={`h-3 w-3 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                        <div className="flex items-center gap-3 text-right">
+                          <span className="text-xs text-slate-400">{u.invoiceCount || 0} đơn</span>
+                          <span className="text-sm font-bold text-green-600">{formatCurrency(u.totalAmount || 0)}</span>
+                        </div>
+                      </div>
+                      {isExpanded && (
+                        <div className="mt-1.5 space-y-1 pl-8">
+                          {userOrders.length === 0 && userReturns.length === 0 && (
+                            <p className="py-2 text-center text-xs text-slate-400">Không có hoạt động nào</p>
+                          )}
+                          {userOrders.map((o) => (
+                            <div key={'usr-order-' + o.id} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
+                              <div className="flex items-center gap-2">
+                                <span className="rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700">Bán</span>
+                                <span className="font-mono text-slate-600 dark:text-[#999999]">{o.invoiceCode}</span>
+                                <span className="text-slate-400">{o.customerName}</span>
+                              </div>
+                              <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
+                            </div>
+                          ))}
+                          {userReturns.map((r) => {
+                            const rType = String(r.returnType || r.return_type || '').toUpperCase();
+                            const isRefund = rType === 'REFUND';
+                            return (
+                              <div key={'usr-ret-' + (r.returnCode || r.returnOrderId || r.returnId || r.id)} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
+                                <div className="flex items-center gap-2">
+                                  <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    {isRefund ? 'Trả' : 'Đổi'}
+                                  </span>
+                                  <span className="font-mono text-slate-500">{r.returnCode || r.returnOrderId || r.returnId || r.id || ''}</span>
+                                  <span className="text-slate-400">{r.customerName || 'Khách lẻ'}</span>
+                                </div>
+                                <span className={`font-bold ${isRefund ? 'text-red-600' : ''}`}>
+                                  {isRefund && (r.refundAmount || r.refund_amount || 0) > 0 ? `-${formatCurrency(r.refundAmount || r.refund_amount || 0)}` : ''}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Nhập liệu */}
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
@@ -1560,6 +1701,20 @@ export const ShiftManagement = () => {
                   })()}`}
                 />
               </div>
+              {!isCurrentUserOpener && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-red-600">
+                    Lý do chốt hộ <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Nhập lý do bắt buộc (vd: Nhân viên nghỉ ốm, về sớm, đổi ca...)"
+                    value={endForm.forceCloseReason}
+                    onChange={(e) => setEndForm((f) => ({ ...f, forceCloseReason: e.target.value }))}
+                    className="w-full rounded-xl border-2 border-red-300 px-4 py-3 text-sm transition-all focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 dark:border-red-700 dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1581,8 +1736,8 @@ export const ShiftManagement = () => {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Thu ngân</p>
-                <p className="mt-1 font-semibold">{selectedShift.cashier}</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Người mở ca</p>
+                <p className="mt-1 font-semibold">{selectedShift.openedByUserName || selectedShift.cashier}</p>
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Giờ làm</p>
@@ -1600,6 +1755,18 @@ export const ShiftManagement = () => {
                   </Badge>
                 </p>
               </div>
+              {selectedShift.closedByUserName && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Người chốt ca</p>
+                  <p className="mt-1 font-semibold">{selectedShift.closedByUserName}</p>
+                </div>
+              )}
+              {selectedShift.forceCloseReason && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Lý do chốt hộ</p>
+                  <p className="mt-1 text-sm text-red-600">{selectedShift.forceCloseReason}</p>
+                </div>
+              )}
             </div>
             <div className="border-t pt-4">
               <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
@@ -1632,6 +1799,79 @@ export const ShiftManagement = () => {
                 </div>
               </div>
             </div>
+            {selectedShift.salesByUser && selectedShift.salesByUser.length > 0 && (
+              <div className="border-t pt-4">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
+                  Doanh số theo nhân viên
+                </h3>
+                <div className="space-y-1.5">
+                  {selectedShift.salesByUser.map((u, idx) => {
+                    const isExpanded = expandedSalesUser === u.userName;
+                    const userOrders = selectedShiftOrders.filter((o) => (o.cashier || '') === (u.userName || ''));
+                    const userReturns = selectedShiftReturns.filter((r) => {
+                      const name = r.staffName || r.userName || r.cashier || r.processedBy || '';
+                      return name === (u.userName || '');
+                    });
+                    return (
+                      <div key={u.userId || idx}>
+                        <div
+                          onClick={() => setExpandedSalesUser(isExpanded ? null : u.userName)}
+                          className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20 ${isExpanded ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-slate-50 dark:bg-[#1a1a1a]/50'}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                              {u.userName || 'NV #' + (idx + 1)}
+                            </span>
+                            <svg className={`h-3 w-3 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-slate-400">{u.invoiceCount || 0} đơn</span>
+                            <span className="text-sm font-bold text-green-600">{formatCurrency(u.totalAmount || 0)}</span>
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="mt-1.5 space-y-1 pl-6">
+                            {userOrders.length === 0 && userReturns.length === 0 && (
+                              <p className="py-2 text-center text-xs text-slate-400">Không có hoạt động nào</p>
+                            )}
+                            {userOrders.map((o) => (
+                              <div key={'det-usr-order-' + o.id} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
+                                <div className="flex items-center gap-2">
+                                  <span className="rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700">Bán</span>
+                                  <span className="font-mono text-slate-600 dark:text-[#999999]">{o.invoiceCode}</span>
+                                  <span className="text-slate-400">{o.customerName}</span>
+                                </div>
+                                <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
+                              </div>
+                            ))}
+                            {userReturns.map((r) => {
+                              const rType = String(r.returnType || r.return_type || '').toUpperCase();
+                              const isRefund = rType === 'REFUND';
+                              return (
+                                <div key={'det-usr-ret-' + (r.returnCode || r.returnOrderId || r.returnId || r.id)} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                      {isRefund ? 'Trả' : 'Đổi'}
+                                    </span>
+                                    <span className="font-mono text-slate-500">{r.returnCode || r.returnOrderId || r.returnId || r.id || ''}</span>
+                                    <span className="text-slate-400">{r.customerName || 'Khách lẻ'}</span>
+                                  </div>
+                                  <span className={`font-bold ${isRefund ? 'text-red-600' : ''}`}>
+                                    {isRefund && (r.refundAmount || r.refund_amount || 0) > 0 ? `-${formatCurrency(r.refundAmount || r.refund_amount || 0)}` : ''}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {selectedShift.note && (
               <div className="border-t pt-4">
                 <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">
@@ -1672,6 +1912,7 @@ export const ShiftManagement = () => {
                         customerName: r.customerName || 'Khách lẻ',
                         createdAt: r.createdAt || r.created_at || '',
                         amount: parseFloat(r.refundAmount || r.refund_amount || 0),
+                        cashier: r.userName || r.cashier || r.processedBy || '',
                       };
                     });
                     const sales = selectedShiftOrders.map((o) => ({
@@ -1684,6 +1925,7 @@ export const ShiftManagement = () => {
                       createdAt: o.createdAt,
                       amount: o.totalAmount,
                       paymentMethod: o.paymentMethod,
+                      cashier: o.cashier || '',
                     }));
                     return [...sales, ...returns]
                       .sort((a, b) => b._time - a._time)
@@ -1725,6 +1967,11 @@ export const ShiftManagement = () => {
                                 <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                   {act.customerName}
                                 </span>
+                                {act.cashier && (
+                                  <span className="shrink-0 text-[10px] text-slate-400 dark:text-[#808080]">
+                                    - {act.cashier}
+                                  </span>
+                                )}
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
                                 <span className="text-xs font-bold text-green-600">
@@ -1810,6 +2057,11 @@ export const ShiftManagement = () => {
                               <span className="truncate text-xs text-slate-600 dark:text-[#999999]">
                                 {act.customerName}
                               </span>
+                              {act.cashier && (
+                                <span className="shrink-0 text-[10px] text-slate-400 dark:text-[#808080]">
+                                  - {act.cashier}
+                                </span>
+                              )}
                             </div>
                             <div className="flex shrink-0 items-center gap-2">
                               <span
