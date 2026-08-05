@@ -38,11 +38,18 @@ export const useAuth = () => {
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    // Clear POS-related state (shift from previous user) để tránh shift cũ
-    // "carry-over" sang user mới
-    localStorage.removeItem('pos_active_shift');
+    // Keep theme
+    const theme = localStorage.getItem('theme');
+    
+    // Clear all state to avoid leaking data (like cart, shift, etc) across users
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Restore theme
+    if (theme) {
+      localStorage.setItem('theme', theme);
+    }
+    
     setUser(null);
     setToken(null);
   };
