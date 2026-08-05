@@ -27,6 +27,7 @@ import IconButton from '../../../../shared/components/IconButton';
 import { Input } from '../../../../shared/components/Input';
 import { Textarea } from '../../../../shared/components/Textarea';
 import { Badge } from '../../../../shared/components/Badge';
+import { CancelTicketModal } from './CancelTicketModal';
 
 const formatCurrency = (val) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(val || 0));
@@ -67,6 +68,9 @@ export const TicketDetailModal = ({
   const [editReason, setEditReason] = useState('');
   const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
 
   const notifyRef = useRef(onNotify);
   const closeRef = useRef(onClose);
@@ -219,22 +223,29 @@ export const TicketDetailModal = ({
   const canEditNote = isPending || isCompleted;
   const canConfirm = detail?.canConfirm ?? isPending;
 
-  const handleCancelDraft = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy phiếu nháp này không?')) return;
+  const handleConfirmCancel = async (reason) => {
+    setIsSubmittingCancel(true);
     try {
-      if (type === 'INWARD')
-        await cancelInwardInventory(ticketId, 'Hủy phiếu nháp từ Modal chi tiết');
-      else await cancelOutwardInventory(ticketId, 'Hủy phiếu nháp từ Modal chi tiết');
+      if (type === 'INWARD') await cancelInwardInventory(ticketId, reason);
+      else await cancelOutwardInventory(ticketId, reason);
 
-      onNotify && onNotify({ type: 'success', message: 'Đã hủy phiếu nháp thành công!' });
+      onNotify &&
+        onNotify({
+          type: 'success',
+          message: `Đã hủy phiếu ${detail?.ticketCode || ticketId} thành công!`,
+        });
       onReload && onReload();
       onClose();
     } catch (e) {
-      onNotify && onNotify({ type: 'error', message: 'Không thể hủy phiếu nháp này' });
+      onNotify && onNotify({ type: 'error', message: 'Không thể hủy phiếu này' });
+    } finally {
+      setIsSubmittingCancel(false);
+      setIsCancelOpen(false);
     }
   };
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -259,10 +270,10 @@ export const TicketDetailModal = ({
           {isPending && (
             <Button
               variant="danger"
-              onClick={handleCancelDraft}
-              disabled={isConfirming || isSavingEdit}
+              onClick={() => setIsCancelOpen(true)}
+              disabled={isConfirming || isSavingEdit || isSubmittingCancel}
             >
-              Hủy phiếu nháp
+              Hủy phiếu
             </Button>
           )}
           {canConfirm && isPending && (
@@ -546,6 +557,16 @@ export const TicketDetailModal = ({
         )}
       </div>
     </Modal>
+
+      <CancelTicketModal
+        isOpen={isCancelOpen}
+        onClose={() => setIsCancelOpen(false)}
+        onConfirm={handleConfirmCancel}
+        ticketCode={detail?.ticketCode || ticketId}
+        ticketStatus={detail?.status}
+        isSubmitting={isSubmittingCancel}
+      />
+    </>
   );
 };
 

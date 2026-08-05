@@ -126,7 +126,8 @@ export const ImportTicketForm = ({
               className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
             >
               <span
-                className={`truncate ${selectedSupplier ? 'text-slate-900 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}`}
+                className={`break-words text-left leading-snug ${selectedSupplier ? 'text-slate-900 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}`}
+                title={selectedSupplier ? selectedSupplier.name : undefined}
               >
                 {selectedSupplier ? selectedSupplier.name : '-- Chọn nhà cung cấp --'}
               </span>
@@ -171,12 +172,9 @@ export const ImportTicketForm = ({
                             setSupplierPopupOpen(false);
                             setSupplierSearch('');
                           }}
-                          className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/50 ${selectedSupplier?.id === sup.id ? 'bg-blue-50 font-semibold text-[#004785] dark:bg-blue-900/50' : 'text-slate-700 dark:text-[#b3b3b3]'}`}
+                          className={`flex w-full items-center px-3 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/50 ${selectedSupplier?.id === sup.id ? 'bg-blue-50 font-semibold text-[#004785] dark:bg-blue-900/50' : 'text-slate-700 dark:text-[#b3b3b3]'}`}
                         >
-                          <span className="truncate">{sup.name}</span>
-                          <span className="ml-2 shrink-0 text-xs text-slate-400 dark:text-[#808080]">
-                            {sup.code || sup.phone || ''}
-                          </span>
+                          <span className="break-words leading-snug">{sup.name}</span>
                         </button>
                       ))
                     )}

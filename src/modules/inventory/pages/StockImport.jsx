@@ -453,7 +453,7 @@ export const StockImport = () => {
         isOpen={isModalOpen}
         onClose={() => !isSubmitting && setIsModalOpen(false)}
         title="Tạo phiếu nhập kho"
-        size="7xl"
+        size="8xl"
       >
         <div className="flex flex-col gap-6 xl:flex-row">
           <div className="min-w-0 flex-1">
@@ -470,7 +470,7 @@ export const StockImport = () => {
             />
           </div>
 
-          <div className="w-full shrink-0 xl:w-[300px]">
+          <div className="w-full shrink-0 xl:w-[400px]">
             <ImportTicketForm
               inwardType={inwardType}
               onChangeInwardType={setInwardType}
