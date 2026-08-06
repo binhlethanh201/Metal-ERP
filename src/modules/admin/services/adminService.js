@@ -2,7 +2,6 @@ import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../../services/
 import ENDPOINTS from '../../../services/endpoints';
 
 // ============ Dashboard ============
-export const getDashboardStats = () => apiGet(ENDPOINTS.ADMIN.DASHBOARD_STATS);
 export const getOverview = () => apiGet('/api/admin/dashboard/overview');
 export const getRevenueChart = (year) =>
   apiGet(`${ENDPOINTS.ADMIN.DASHBOARD_REVENUE}?year=${year}`);
