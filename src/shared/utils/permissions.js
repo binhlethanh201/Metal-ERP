@@ -1,5 +1,10 @@
 const normalizePermission = (value) => (typeof value === 'string' ? value.trim().toUpperCase() : '');
 
+export const hasRole = (userRoles = [], roleToCheck) =>
+  userRoles.some(
+    (r) => r?.replace(/\s+/g, '').toLowerCase() === roleToCheck.replace(/\s+/g, '').toLowerCase()
+  );
+
 const normalizePermissionList = (user) => {
   if (!user) return [];
 
@@ -42,8 +47,11 @@ export const hasPermission = (user, permission) => {
 
   const roles = Array.isArray(user?.roles) ? user.roles : user?.role ? [user.role] : [];
   const isOwner = roles.some((role) => normalizePermission(role) === 'OWNER');
+  const isAdmin = roles.some((role) => normalizePermission(role) === 'ADMIN');
 
   if (isOwner) return true;
+  // Admin được mặc định cấp quyền quản trị hệ thống khi API không trả mảng permissions
+  if (isAdmin && normalizedPermission === 'SYSTEM_MANAGE') return true;
 
   const permissions = normalizePermissionList(user);
   return permissions.includes(normalizedPermission);

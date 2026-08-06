@@ -1,7 +1,14 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './shared/hooks/useAuth';
-import { hasRole } from './shared/utils/roleRedirect';
+import { hasAnyPermission } from './shared/utils/permissions';
+import {
+  POS_PERMISSIONS,
+  INVENTORY_PERMISSIONS,
+  ADMIN_PERMISSIONS,
+  OWNER_PERMISSIONS,
+  ROUTE_PERMISSIONS,
+} from './shared/utils/routeAccess';
 import { ThemeProvider } from './shared/contexts/ThemeContext';
 
 // Layouts
@@ -86,9 +93,10 @@ const OwnerReports = lazy(() => import('./modules/report/pages/OwnerReports'));
 
 const InventoryRedirect = () => {
   const { user } = useAuth();
-  const roles = Array.isArray(user?.roles) ? user.roles : user?.role ? [user.role] : [];
-  const isOwner = hasRole(roles, 'Owner');
-  return <Navigate to={isOwner ? 'owner-dashboard' : 'dashboard'} replace />;
+  if (hasAnyPermission(user, OWNER_PERMISSIONS)) {
+    return <Navigate to="owner-dashboard" replace />;
+  }
+  return <Navigate to="dashboard" replace />;
 };
 
 function App() {
@@ -114,18 +122,14 @@ function App() {
 
           {/* PRIVATE & PROTECTED ROUTES */}
           {/* ACCOUNT SETTINGS ROUTE */}
-          <Route
-            element={
-              <PrivateRoute allowedRoles={['Owner', 'SalesStaff', 'InventoryStaff', 'Admin']} />
-            }
-          >
+          <Route element={<PrivateRoute />}>
             <Route path="/account-settings" element={<AccountSettingsLayout />}>
               <Route index element={<AccountSettingsPage />} />
             </Route>
           </Route>
 
           {/* MODULE POS */}
-          <Route element={<PrivateRoute allowedRoles={['Owner', 'SalesStaff']} />}>
+          <Route element={<PrivateRoute allowedPermissions={[...POS_PERMISSIONS, ...OWNER_PERMISSIONS]} />}>
             <Route path="/pos" element={<PosLayout />}>
               <Route index element={<PosScreen />} />
               <Route path="checkout" element={<CheckoutPage />} />
@@ -137,17 +141,17 @@ function App() {
           </Route>
 
           {/* MODULE INVENTORY */}
-          <Route element={<PrivateRoute allowedRoles={['Owner', 'InventoryStaff']} />}>
+          <Route element={<PrivateRoute allowedPermissions={[...INVENTORY_PERMISSIONS, ...OWNER_PERMISSIONS]} />}>
             <Route path="/inventory" element={<InventoryLayout />}>
               <Route index element={<InventoryRedirect />} />
 
               {/* --- ROUTE INVENTORY STAFF & OWNER --- */}
-              <Route element={<PrivateRoute allowedRoles={['Owner', 'InventoryStaff']} />}>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryDashboard} />}>
                 <Route path="dashboard" element={<InventoryDashboard />} />
               </Route>
 
               {/* --- ROUTE OWNER --- */}
-              <Route element={<PrivateRoute allowedRoles={['Owner']} />}>
+              <Route element={<PrivateRoute allowedPermissions={OWNER_PERMISSIONS} />}>
                 <Route path="owner-dashboard" element={<OwnerDashboard />} />
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="store-settings" element={<StoreSettings />} />
@@ -156,31 +160,61 @@ function App() {
                 <Route path="owner-reports" element={<OwnerReports />} />
                 <Route path="shift-history" element={<ShiftHistory />} />
                 <Route path="return-history" element={<ReturnHistory />} />
-                <Route path="suppliers" element={<SupplierManagement />} />
-                <Route path="supplier-debt" element={<SupplierDebtManagement />} />
-                <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
-                <Route path="expenses" element={<ExpenseManagement />} />
-                <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
                 <Route path="audit-logs" element={<OwnerAuditLogsPage />} />
                 <Route path="outward-excel" element={<OwnerOutwardExcelPage />} />
                 <Route path="transactions" element={<InventoryTransactionManagement />} />
                 <Route path="audit-logs" element={<OwnerAuditLog />} />
               </Route>
 
+              {/* --- ROUTE SUPPLIER --- */}
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.suppliers} />}>
+                <Route path="suppliers" element={<SupplierManagement />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.supplierDebt} />}>
+                <Route path="supplier-debt" element={<SupplierDebtManagement />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.supplierPayments} />}>
+                <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
+              </Route>
+
+              {/* --- ROUTE EXPENSE --- */}
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.expenses} />}>
+                <Route path="expenses" element={<ExpenseManagement />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.expenseCategories} />}>
+                <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
+              </Route>
+
               {/* --- ROUTE OWNER & STAFF --- */}
-              <Route path="products" element={<InventoryProduct />} />
-              <Route path="import" element={<StockImport />} />
-              <Route path="export" element={<StockExport />} />
-              <Route path="reports" element={<InventoryReports />} />
-              <Route path="inventory-check" element={<InventoryCheckList />} />
-              <Route path="goods-issue" element={<GoodsIssueList />} />
-              <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
-              <Route path="orders" element={<OrderList />} />
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryProducts} />}>
+                <Route path="products" element={<InventoryProduct />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryImport} />}>
+                <Route path="import" element={<StockImport />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryExport} />}>
+                <Route path="export" element={<StockExport />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryReports} />}>
+                <Route path="reports" element={<InventoryReports />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryCheck} />}>
+                <Route path="inventory-check" element={<InventoryCheckList />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.goodsIssueList} />}>
+                <Route path="goods-issue" element={<GoodsIssueList />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.goodsIssue} />}>
+                <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
+              </Route>
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.orderList} />}>
+                <Route path="orders" element={<OrderList />} />
+              </Route>
             </Route>
           </Route>
 
           {/* MODULE ADMIN  */}
-          <Route element={<PrivateRoute allowedRoles={['Admin']} />}>
+          <Route element={<PrivateRoute allowedPermissions={ADMIN_PERMISSIONS} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUserManagement />} />

@@ -5,7 +5,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import { useAuth } from '../../../../shared/hooks/useAuth';
-import { hasRole } from '../../../../shared/utils/roleRedirect';
+import { hasAnyPermission } from '../../../../shared/utils/permissions';
+import { INVENTORY_PERMISSIONS, ROUTE_PERMISSIONS } from '../../../../shared/utils/routeAccess';
 
 const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onToggle }) => {
   const navigate = useNavigate();
@@ -13,8 +14,7 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
   const [isSwitching, setIsSwitching] = useState(false);
   const { user } = useAuth();
 
-  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = hasRole(userRoles, 'Owner');
+  const canAccessWarehouse = hasAnyPermission(user, INVENTORY_PERMISSIONS);
 
   const MENU_ROUTES = {
     'Máy bán hàng': '/pos',
@@ -25,12 +25,12 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
   };
 
   const menuItems = [
-    ['shopping_cart', 'Máy bán hàng'],
-    ['assignment', 'Đơn hàng'],
-    ['groups', 'Khách'],
-    ['assessment', 'Quản lý ca bán'],
-    ['swap_horiz', 'Đổi trả'],
-  ];
+    { icon: 'shopping_cart', label: 'Máy bán hàng', permissions: ROUTE_PERMISSIONS.pos },
+    { icon: 'assignment', label: 'Đơn hàng', permissions: ROUTE_PERMISSIONS.posOrders },
+    { icon: 'groups', label: 'Khách', permissions: ROUTE_PERMISSIONS.posCustomers },
+    { icon: 'assessment', label: 'Quản lý ca bán', permissions: ROUTE_PERMISSIONS.posShift },
+    { icon: 'swap_horiz', label: 'Đổi trả', permissions: ROUTE_PERMISSIONS.posReturns },
+  ].filter((item) => hasAnyPermission(user, item.permissions));
 
   const handleSwitchToWarehouse = () => {
     setIsSwitching(true);
@@ -73,7 +73,7 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
         {open && (
           <div className="flex h-full flex-col">
             <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
-              {menuItems.map(([icon, label]) => {
+              {menuItems.map(({ icon, label }) => {
                 const active = location.pathname === MENU_ROUTES[label];
                 return (
                   <button
@@ -93,7 +93,7 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
               })}
             </nav>
 
-            {isOwner && (
+            {canAccessWarehouse && (
               <div className="shrink-0 border-t border-slate-100 px-3 py-3 dark:border-[#333333]">
                 <button
                   type="button"

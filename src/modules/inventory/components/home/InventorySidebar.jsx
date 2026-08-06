@@ -3,8 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../../../../shared/components/Icon';
 import { sidebarItems } from '../../data/inventoryPageData';
 import { useAuth } from '../../../../shared/hooks/useAuth';
-import { hasRole } from '../../../../shared/utils/roleRedirect';
-import { hasPermission } from '../../../../shared/utils/permissions';
+import { hasAnyPermission } from '../../../../shared/utils/permissions';
 
 const InventorySidebar = ({ open = true, onToggle }) => {
   const navigate = useNavigate();
@@ -25,14 +24,10 @@ const InventorySidebar = ({ open = true, onToggle }) => {
     return initial;
   });
 
-  const userRoles = user?.roles || (user?.role ? [user.role] : []);
-  const isOwner = hasRole(userRoles, 'Owner');
-
   const visibleMenuItems = useMemo(() => {
     const checkPermission = (item) => {
-      if (item.ownerOnly && !isOwner) return false;
-      if (item.staffOnly && isOwner) return false;
-      if (item.permission && !hasPermission(user, item.permission)) return false;
+      if (item.permissions && !hasAnyPermission(user, item.permissions)) return false;
+      if (item.permission && !hasAnyPermission(user, [item.permission])) return false;
       return true;
     };
 
@@ -45,7 +40,7 @@ const InventorySidebar = ({ open = true, onToggle }) => {
       }
       return item;
     });
-  }, [isOwner, user]);
+  }, [user]);
 
   useEffect(() => {
     visibleMenuItems.forEach((item) => {

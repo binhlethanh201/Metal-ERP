@@ -5,7 +5,8 @@ import Logo from '../../../../shared/components/Logo';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import InventoryNotificationDropdown from './InventoryNotificationDropdown';
 import { useTheme } from '../../../../shared/contexts/ThemeContext';
-import { hasRole } from '../../../../shared/utils/roleRedirect';
+import { hasAnyPermission } from '../../../../shared/utils/permissions';
+import { POS_PERMISSIONS } from '../../../../shared/utils/routeAccess';
 
 const InventoryHeader = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const InventoryHeader = () => {
   }, []);
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = hasRole(userRoles, 'Owner');
+  const canAccessPos = hasAnyPermission(user, POS_PERMISSIONS);
 
   const handleLogout = () => {
     logout();
@@ -74,7 +75,7 @@ const InventoryHeader = () => {
         {/* HÀNH ĐỘNG & USER */}
         <div className="flex items-center gap-3">
           {/* NÚT MÁY BÁN HÀNG: Đã đổi style giống nút Quét Mã của PosHeader */}
-          {isOwner && (
+          {canAccessPos && (
             <button
               type="button"
               onClick={handleSwitchToPos}

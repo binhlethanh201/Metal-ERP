@@ -5,7 +5,7 @@ import { loginRequest } from '../../services/authService';
 import Logo from '../../shared/components/Logo';
 import LoginForm from './components/LoginForm';
 import loginBg from '../../assets/images/auth-bg.png';
-import { getDefaultRouteByRole } from '../../shared/utils/roleRedirect';
+import { getDefaultRouteByUser } from '../../shared/utils/roleRedirect';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const LoginPage = () => {
         throw new Error('Hệ thống không trả về thông tin tài khoản hợp lệ.');
       }
       login(userInfo, response.token);
-      navigate(getDefaultRouteByRole(userInfo));
+      navigate(getDefaultRouteByUser(userInfo));
     } catch (err) {
       if (err?.status === 429 || err?.message?.includes('429')) {
         setError('Vui lòng chờ 1 phút rồi thử lại để đảm bảo an toàn cho tài khoản của bạn.');
