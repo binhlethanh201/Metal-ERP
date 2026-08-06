@@ -209,12 +209,8 @@ export const useProductList = (queryParams) => {
         alert('Tên sản phẩm và Đơn vị tính là bắt buộc!');
         return;
       }
-      if (payload.costPrice < 0 || payload.salePrice < 0) {
-        alert('Giá vốn và giá bán không được âm!');
-        return;
-      }
-      if (!isUpdate && payload.costPrice <= 0) {
-        alert('Giá vốn khi tạo mới phải lớn hơn 0!');
+      if (payload.costPrice <= 0 || payload.salePrice <= 0) {
+        alert('Giá vốn và giá bán phải lớn hơn 0!');
         return;
       }
       if (payload.salePrice < payload.costPrice) {

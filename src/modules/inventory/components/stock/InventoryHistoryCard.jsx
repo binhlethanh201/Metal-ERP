@@ -224,13 +224,11 @@ export const InventoryHistoryCard = ({
     } catch (error) {
       let msg = error?.message || 'Lỗi khi hủy phiếu';
       msg = msg.replace(/[.;,]?\s*Sản phẩm bị ảnh hưởng.*$/i, '');
-      msg = msg.replace(/\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '');
-      const status = error?.status || 0;
-      if (status >= 400 && status < 500) {
-        window.alert(msg);
-      } else {
-        onNotify && onNotify({ type: 'error', message: msg });
-      }
+      msg = msg.replace(
+        /\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+        ''
+      );
+      onNotify && onNotify({ type: 'error', message: msg });
       if (onReload) onReload();
     } finally {
       setIsSubmittingCancel(false);

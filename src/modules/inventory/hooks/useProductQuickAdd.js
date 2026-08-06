@@ -404,6 +404,10 @@ export const useProductQuickAdd = (onSave) => {
         alert('Vui lòng nhập Tên hàng hóa');
         return false;
       }
+      if (Number(form.purchasePrice || 0) <= 0 || Number(form.salePriceBeforeTax || 0) <= 0) {
+        alert('Giá mua và giá bán phải lớn hơn 0');
+        return false;
+      }
       setSaving(true);
       try {
         const payload = buildPayload();
