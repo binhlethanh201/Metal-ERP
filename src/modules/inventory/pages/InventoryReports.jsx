@@ -220,10 +220,8 @@ export const InventoryReports = () => {
   const loadReport = async () => {
     switch (selectedReport) {
       case 'stock-movement': {
-        const movementPayload = { fromDate, toDate };
-        if (categoryId) movementPayload.categoryId = categoryId;
-        if (productId) movementPayload.productId = productId;
-
+        const movementPayload = { fromDate, toDate, productId: productId || null };
+        if (categoryId) movementPayload.categoryName = categoryId;
         await fetchStockMovement(movementPayload);
         break;
       }

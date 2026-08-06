@@ -206,7 +206,6 @@ export const ENDPOINTS = {
   // ============ ADMIN (Quản trị hệ thống) ============
   ADMIN: {
     // Dashboard
-    DASHBOARD_STATS: '/api/admin/dashboard/stats',
     DASHBOARD_REVENUE: '/api/admin/dashboard/revenue-chart',
     DASHBOARD_EVENTS: '/api/admin/dashboard/recent-events',
     DASHBOARD_EXPORT: '/api/admin/dashboard/export',

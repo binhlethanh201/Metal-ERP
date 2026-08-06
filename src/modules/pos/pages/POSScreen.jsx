@@ -673,8 +673,8 @@ const POSScreen = () => {
     }
 
     const lines = payLines.filter((l) => l.amount > 0);
-    const hasTransfer = lines.some((l) => l.method === 'Transfer');
-    const hasCash = lines.some((l) => l.method === 'Cash');
+    const hasTransfer = lines.some((l) => l.method?.toLowerCase() === 'transfer');
+    const hasCash = lines.some((l) => l.method?.toLowerCase() === 'cash');
     const isCombined = hasTransfer && hasCash;
 
     if (isCombined) {

@@ -669,8 +669,8 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
     },
     {
       key: 'actions',
-      header: '',
-      width: '70px',
+      header: 'Hành động',
+      width: '90px',
       render: (_, row) => (
         <button
           type="button"

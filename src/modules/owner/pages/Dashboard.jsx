@@ -386,7 +386,7 @@ const OwnerDashboard = () => {
               <MiniMetric
                 icon="local_shipping"
                 label="Nợ Nhà Cung Cấp"
-                value={fmtVND((data?.totalSupplierDebt ?? 0) - (data?.supplierDebtPaidLast30Days ?? 0), true)}
+                value={fmtVND(data?.totalSupplierDebt ?? 0, true)}
                 color="text-blue-900 dark:text-blue-400"
                 bg="bg-blue-50 dark:bg-blue-950/30"
               />

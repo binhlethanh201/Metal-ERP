@@ -183,6 +183,7 @@ export const useStaffManager = () => {
       if (response?.success) {
         alert(response.message || 'Cập nhật nhân viên thành công!');
         fetchActiveStaffs();
+        fetchHiddenStaffs();
         onSuccess?.();
       }
     } catch (err) {
