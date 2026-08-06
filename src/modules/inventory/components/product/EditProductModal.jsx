@@ -733,7 +733,8 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
               <div className="col-span-12 space-y-5 lg:col-span-9">
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <Input
-                    label="Mã hàng (Duy nhất)"
+                    label="Mã hàng (Để trống sẽ tự động tạo)"
+                    placeholder="Tự động tạo nếu để trống"
                     disabled={!!product}
                     value={f.form.productCode || f.form.id || ''}
                     onChange={(e) => f.handleChange('productCode', e.target.value)}

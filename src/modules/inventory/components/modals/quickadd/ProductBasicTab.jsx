@@ -6,12 +6,6 @@ import UnitConversionSection from './UnitConversionSection';
 
 const TAX_OPTIONS = ['KCT', '0%', '5%', '8%', '10%'];
 
-const MOCK_SUPPLIERS = [
-  { id: 'NCC001', name: 'Công ty Hòa Phát' },
-  { id: 'NCC002', name: 'Thép Việt Nhật' },
-  { id: 'NCC003', name: 'Kim khí Sài Gòn' },
-  { id: 'NCC004', name: 'Tôn Hoa Sen' },
-];
 
 const ProductBasicTab = ({ p }) => (
   <div className="space-y-5">
@@ -228,26 +222,6 @@ const ProductBasicTab = ({ p }) => (
               />
               <span className="text-sm text-slate-600">Serial / IMEI</span>
             </label>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-slate-200 p-4">
-          <span className="text-sm font-semibold text-slate-700">Nhà cung cấp mặc định</span>
-          <div className="mt-2 max-h-[160px] space-y-1 overflow-y-auto">
-            {MOCK_SUPPLIERS.map((s) => (
-              <label
-                key={s.id}
-                className="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 hover:bg-slate-50"
-              >
-                <input
-                  type="checkbox"
-                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary"
-                  checked={p.supplierIds.includes(s.id)}
-                  onChange={() => p.toggleSupplier(s.id)}
-                />
-                <span className="text-sm text-slate-600">{s.name}</span>
-              </label>
-            ))}
           </div>
         </div>
       </div>

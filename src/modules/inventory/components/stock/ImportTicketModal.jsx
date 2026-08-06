@@ -9,15 +9,6 @@ import { getSuppliers } from '../../services/supplierService';
 import { createProduct } from '../../services/productService';
 import { EditProductModal } from '../product/EditProductModal';
 
-const fallbackProducts = [
-  { id: 'prod-001', productCode: 'SP-001', productName: 'Thép tấm 10mm', unitName: 'Tấm', costPrice: 50000 },
-  { id: 'prod-002', productCode: 'SP-002', productName: 'Inox 304 tấm 1.5mm', unitName: 'Tấm', costPrice: 76000 },
-];
-
-const fallbackSuppliers = [
-  { id: 'sup-001', name: 'Công ty Hòa Phát', phone: '0901234567' },
-  { id: 'sup-002', name: 'Công ty Nam Kim', phone: '0912345678' },
-];
 
 const formatCurrency = (val) => {
   const num = Number(val || 0);
@@ -35,8 +26,8 @@ const extractList = (res) => {
 const getItemKey = (item) => item?.branchProductId || item?.productId || item?.productCode || item?.id || '';
 
 export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
-  const [products, setProducts] = useState(fallbackProducts);
-  const [suppliers, setSuppliers] = useState(fallbackSuppliers);
+  const [products, setProducts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [items, setItems] = useState([]);
   const [inwardType, setInwardType] = useState(1);
