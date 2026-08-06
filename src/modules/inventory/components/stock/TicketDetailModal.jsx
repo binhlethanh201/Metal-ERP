@@ -489,7 +489,7 @@ export const TicketDetailModal = ({
                           </th>
                         )}
                         <th className="px-3 py-3 text-right font-extrabold text-[#004785]">
-                          {type === 'INWARD' ? '+ Nhập vào' : 'Xuất đi'}
+                          {type === 'INWARD' ? 'Nhập vào' : 'Xuất đi'}
                         </th>
                         {isCompleted && (
                           <th className="px-3 py-3 text-right text-green-700">Tồn sau</th>

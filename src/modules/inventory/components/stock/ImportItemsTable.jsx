@@ -40,12 +40,54 @@ export const ImportItemsTable = ({
 
     const importRows = [];
     const notFoundList = [];
+    const nameMismatchErrors = [];
+    const unitMismatchErrors = [];
+    const duplicateNameErrors = [];
 
     for (const row of result.data) {
       const matchedProduct = products.find(
         (p) =>
           p.productCode?.toLowerCase() === row.productCode.toLowerCase()
       );
+
+      if (matchedProduct) {
+        // Bước 2: Kiểm tra bất nhất Mã hàng vs Tên hàng giữa Excel và DB
+        const excelName = (row.productName || '').trim().toLowerCase();
+        const dbName = (matchedProduct.productName || '').trim().toLowerCase();
+        if (excelName && dbName && excelName !== dbName) {
+          nameMismatchErrors.push(
+            `Dòng có mã ${row.productCode}: Trong hệ thống là "${matchedProduct.productName}", ` +
+            `nhưng file Excel ghi là "${row.productName}". ` +
+            `Vui lòng kiểm tra lại mã hoặc tên sản phẩm.`
+          );
+        }
+
+        // Bước 2: Kiểm tra ĐVT trong Excel khớp với ĐVT chuẩn trong DB
+        const excelUnit = (row.unitName || row.unit || '').trim().toLowerCase();
+        const dbUnit = (matchedProduct.unitName || matchedProduct.baseUnit || matchedProduct.unit || '').trim().toLowerCase();
+        if (excelUnit && dbUnit && excelUnit !== dbUnit) {
+          unitMismatchErrors.push(
+            `Dòng có mã ${row.productCode}: Sản phẩm "${matchedProduct.productName}" ` +
+            `có ĐVT trên hệ thống là "${matchedProduct.unitName || matchedProduct.baseUnit || matchedProduct.unit}", ` +
+            `nhưng file Excel ghi là "${row.unitName || row.unit}". Vui lòng đồng nhất ĐVT trước khi import.`
+          );
+        }
+      } else {
+        // Bước 3: Mã chưa có trong DB -> kiểm tra Tên có bị trùng với sản phẩm khác không
+        const excelName = (row.productName || '').trim().toLowerCase();
+        if (excelName) {
+          const existingByName = products.find(
+            (p) => (p.productName || '').trim().toLowerCase() === excelName
+          );
+          if (existingByName) {
+            duplicateNameErrors.push(
+              `Dòng có mã ${row.productCode}: Tên sản phẩm "${row.productName}" ` +
+              `đã tồn tại trên hệ thống với mã "${existingByName.productCode}". ` +
+              `Vui lòng kiểm tra lại mã "${row.productCode}" trong file Excel xem có phải gõ nhầm mã hay không.`
+            );
+          }
+        }
+      }
 
       importRows.push({
         productCode: row.productCode,
@@ -59,6 +101,33 @@ export const ImportItemsTable = ({
       if (!matchedProduct) {
         notFoundList.push(row.productCode || row.productName);
       }
+    }
+
+    // Chặn import nếu có dòng bất nhất mã vs tên
+    if (nameMismatchErrors.length > 0) {
+      setImportError(
+        'Phát hiện bất nhất giữa Mã hàng và Tên hàng:\n\n' + nameMismatchErrors.join('\n\n')
+      );
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // Chặn import nếu có dòng sai ĐVT so với hệ thống
+    if (unitMismatchErrors.length > 0) {
+      setImportError(
+        'Phát hiện sai Đơn vị tính (ĐVT):\n\n' + unitMismatchErrors.join('\n\n')
+      );
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // Bước 3: Chặn import nếu mã mới nhưng tên trùng với sản phẩm đã có trong DB
+    if (duplicateNameErrors.length > 0) {
+      setImportError(
+        'Phát hiện trùng tên sản phẩm với mã khác trong hệ thống:\n\n' + duplicateNameErrors.join('\n\n')
+      );
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
 
     onImportRows?.(importRows);

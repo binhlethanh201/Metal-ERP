@@ -92,9 +92,72 @@ const parseNumber = (raw) => {
   return Number(s);
 };
 
+const formatCurrency = (val) => {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+};
+
+/**
+ * Bước 1: Kiểm tra tính nhất quán nội bộ file Excel.
+ * Cùng 1 Mã hàng bắt buộc chỉ có duy nhất 1 Tên hàng, 1 ĐVT và 1 Đơn giá.
+ * Nếu phát hiện bất nhất -> chặn import, báo lỗi chi tiết từng dòng.
+ * Trả về null nếu không có lỗi, hoặc mảng lỗi.
+ */
+const validateInternalFileConsistency = (rawRowsByCode) => {
+  const errors = [];
+
+  for (const [code, rows] of Object.entries(rawRowsByCode)) {
+    if (rows.length < 2) continue;
+
+    // 1. Kiểm tra Tên hàng: 1 mã không được gắn cho nhiều tên khác nhau
+    const names = rows.map((r) => (r.productName || '').trim().toLowerCase());
+    const uniqueNames = [...new Set(names)].filter(Boolean);
+    if (uniqueNames.length > 1) {
+      const nameDetails = rows
+        .map((r) => `  - Dòng ${r.lineNum}: "${r.productName}"`)
+        .join('\n');
+      errors.push(
+        `Mã hàng ${code} đang bị đặt cho nhiều tên sản phẩm khác nhau:\n${nameDetails}\n` +
+        `→ Vui lòng sửa lại mã hàng trong file Excel.`
+      );
+      continue; // đã có lỗi tên thì không cần check tiếp giá và ĐVT
+    }
+
+    // 2. Kiểm tra ĐVT: 1 mã không được có nhiều ĐVT khác nhau
+    const units = rows.map((r) => (r.unit || '').trim().toLowerCase());
+    const uniqueUnits = [...new Set(units)].filter(Boolean);
+    if (uniqueUnits.length > 1) {
+      const unitDetails = rows
+        .map((r) => `  - Dòng ${r.lineNum}: ${r.quantity} ${r.unit || '---'}`)
+        .join('\n');
+      errors.push(
+        `Mã hàng ${code} (${rows[0].productName}) đang khai báo nhiều ĐVT khác nhau:\n${unitDetails}\n` +
+        `→ Vui lòng đồng nhất ĐVT cho sản phẩm này trong file Excel trước khi import.`
+      );
+      continue;
+    }
+
+    // 3. Kiểm tra Đơn giá: 1 mã không được có nhiều đơn giá khác nhau
+    const prices = rows.map((r) => r.costPrice);
+    const uniquePrices = [...new Set(prices)];
+    if (uniquePrices.length > 1) {
+      const priceDetails = rows
+        .map((r) => `  - Dòng ${r.lineNum}: ${r.quantity} x ${formatCurrency(r.costPrice)}`)
+        .join('\n');
+      const productName = rows[0].productName || code;
+      errors.push(
+        `Sản phẩm ${code} (${productName}) xuất hiện ${rows.length} lần với đơn giá khác nhau:\n${priceDetails}\n` +
+        `→ Vui lòng thống nhất đơn giá cho sản phẩm này trong file Excel trước khi import.`
+      );
+    }
+  }
+
+  return errors.length > 0 ? errors : null;
+};
+
 /**
  * Parse file Excel/CSV người dùng upload, validate đúng định dạng mẫu.
- * Trả về { success: true, data: [...] } hoặc { success: false, error: '...' }
+ * Trả về { success: true, data: [...] }
+ * hoặc { success: false, error: '...' }
  */
 export const parseImportExcelFile = async (file) => {
   const XLSX = await ensureXlsxLoaded();
@@ -149,7 +212,9 @@ export const parseImportExcelFile = async (file) => {
           return;
         }
 
-        const parsed = [];
+        // Lưu tất cả dòng raw theo ProductCode để phát hiện chênh lệch giá
+        const rawRowsByCode = {};
+
         for (let i = 0; i < dataRows.length; i++) {
           const row = dataRows[i];
           const lineNum = i + 2;
@@ -185,14 +250,54 @@ export const parseImportExcelFile = async (file) => {
             return;
           }
 
-          parsed.push({
+          if (!rawRowsByCode[productCode]) {
+            rawRowsByCode[productCode] = [];
+          }
+          rawRowsByCode[productCode].push({
+            lineNum,
             productCode,
             productName,
-            unitName: unit,
             unit,
             quantity,
             costPrice,
           });
+        }
+
+        // Bước 1: Kiểm tra tính nhất quán nội bộ file Excel (Tên, ĐVT, Đơn giá)
+        const internalErrors = validateInternalFileConsistency(rawRowsByCode);
+        if (internalErrors) {
+          resolve({
+            success: false,
+            error: 'File Excel chứa dữ liệu không nhất quán:\n\n' + internalErrors.join('\n\n'),
+          });
+          return;
+        }
+
+        // Cộng dồn các dòng trùng mã SP (chỉ khi đã xác nhận cùng giá)
+        const parsed = [];
+        for (const [code, rows] of Object.entries(rawRowsByCode)) {
+          if (rows.length === 1) {
+            const r = rows[0];
+            parsed.push({
+              productCode: r.productCode,
+              productName: r.productName,
+              unitName: r.unit,
+              unit: r.unit,
+              quantity: r.quantity,
+              costPrice: r.costPrice,
+            });
+          } else {
+            // Cùng giá -> cộng dồn số lượng
+            const totalQty = rows.reduce((s, r) => s + r.quantity, 0);
+            parsed.push({
+              productCode: code,
+              productName: rows[0].productName,
+              unitName: rows[0].unit,
+              unit: rows[0].unit,
+              quantity: totalQty,
+              costPrice: rows[0].costPrice,
+            });
+          }
         }
 
         resolve({ success: true, data: parsed });
