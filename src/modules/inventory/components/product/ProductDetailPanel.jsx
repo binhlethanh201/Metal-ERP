@@ -24,8 +24,6 @@ const normalizeDetailStatus = (data = {}) => {
   if (isInactiveValue(data.IsActive)) return 'inactive';
   if (isInactiveValue(data.status)) return 'inactive';
   if (isInactiveValue(data.Status)) return 'inactive';
-  if (isInactiveValue(data.directSale)) return 'inactive';
-  if (isInactiveValue(data.DirectSale)) return 'inactive';
   return 'active';
 };
 
@@ -277,7 +275,7 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
         open={statusModalOpen}
         onClose={() => setStatusModalOpen(false)}
         isActive={currentActive}
-        onConfirm={() => onToggleStatus?.(row.id || row.productId, currentActive)}
+        onConfirm={() => onToggleStatus?.(row.id || row.productId, !currentActive)}
       />
     </div>
   );

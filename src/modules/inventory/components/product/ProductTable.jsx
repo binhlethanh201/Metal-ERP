@@ -240,7 +240,7 @@ export const ProductTable = ({
                   <div onClick={(e) => e.stopPropagation()}>
                     <Toggle
                       checked={rowActive}
-                      onChange={() => onToggleStatus?.(currentId, rowActive)}
+                      onChange={(newChecked) => onToggleStatus?.(currentId, newChecked)}
                     />
                   </div>
                 </td>

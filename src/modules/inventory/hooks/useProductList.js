@@ -99,12 +99,11 @@ export const useProductList = (queryParams) => {
     };
   }, [token, queryParams, refreshTrigger]);
 
-  const handleToggleStatus = async (id, currentIsActive) => {
-    const newStatus = !currentIsActive;
+  const handleToggleStatus = async (id, newStatus) => {
     setProducts((prev) =>
       prev.map((p) =>
         p.productId === id || p.id === id
-          ? { ...p, isActive: newStatus, productStatus: newStatus ? 'active' : 'inactive' }
+          ? { ...p, isActive: newStatus, productStatus: newStatus ? 'active' : 'inactive', directSale: newStatus }
           : p
       )
     );
@@ -118,8 +117,9 @@ export const useProductList = (queryParams) => {
           p.productId === id || p.id === id
             ? {
                 ...p,
-                isActive: currentIsActive,
-                productStatus: currentIsActive ? 'active' : 'inactive',
+                isActive: !newStatus,
+                productStatus: !newStatus ? 'active' : 'inactive',
+                directSale: !newStatus,
               }
             : p
         )
@@ -136,7 +136,7 @@ export const useProductList = (queryParams) => {
     setProducts((prev) =>
       prev.map((p) =>
         selectedIds.includes(p.productId || p.id)
-          ? { ...p, isActive: targetStatus, productStatus: targetStatus ? 'active' : 'inactive' }
+          ? { ...p, isActive: targetStatus, productStatus: targetStatus ? 'active' : 'inactive', directSale: targetStatus }
           : p
       )
     );

@@ -43,7 +43,16 @@ const isInactiveValue = (value) => {
   );
 };
 
-export const isProductActive = (row = {}) => row.productStatus !== 'inactive';
+export const isProductActive = (row = {}) => {
+  // Dùng productStatus làm nguồn chính (đã được normalizeProduct chuẩn hóa)
+  if (row.productStatus === 'inactive') return false;
+  if (row.productStatus === 'active') return true;
+  // Fallback: kiểm tra isActive boolean
+  if (row.isActive === true) return true;
+  if (row.isActive === false) return false;
+  // Cuối cùng fallback về active (an toàn)
+  return true;
+};
 
 export const normalizeProduct = (product = {}, index = 0) => {
   const id = product.id || product.productId || `API-${index + 1}`;
