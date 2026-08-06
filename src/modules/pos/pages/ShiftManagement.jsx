@@ -83,7 +83,7 @@ const mapShift = (s) => {
     userId: s.userId || s.openedByUserId || '',
     openedByUserName: s.openedByUserName || s.userName || '',
     closedByUserId: s.closedByUserId || '',
-    closedByUserName: s.closedByUserName || '',
+    closedByUserName: s.closedByUserName || (s.status === 'CLOSED' ? (s.openedByUserName || s.userName || '') : ''),
     forceCloseReason: s.forceCloseReason || '',
     paymentBreakdown: s.paymentBreakdown || [],
     salesByUser: s.salesByUser || [],
@@ -594,6 +594,7 @@ export const ShiftManagement = () => {
         note: endForm.note,
         forceClose: isNotOpener,
         forceCloseReason: isNotOpener ? (endForm.forceCloseReason || `Chốt hộ bởi ${staffName}`) : null,
+        closedByUserName: staffName,
       });
       console.log('[ShiftManagement] endShift response:', result);
       const endResult = result?.data || result;
@@ -613,6 +614,7 @@ export const ShiftManagement = () => {
         startedAt:
           endResult.startedAt || endResult.startTime || endResult.createdAt || openShift.startedAt,
         userName: openShift.cashier,
+        closedByUserName: endResult.closedByUserName || staffName,
       });
       setShifts((prev) => prev.map((s) => (s.id === openShift.id ? updatedShift : s)));
       setShiftSummary(null);
