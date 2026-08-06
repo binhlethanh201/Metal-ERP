@@ -34,6 +34,7 @@ const fallbackProducts = [
   },
 ];
 
+// eslint-disable-next-line 
 const fallbackSuppliers = [
   { id: 'sup-001', name: 'Công ty Hòa Phát', phone: '0901234567' },
   { id: 'sup-002', name: 'Công ty Nam Kim', phone: '0912345678' },

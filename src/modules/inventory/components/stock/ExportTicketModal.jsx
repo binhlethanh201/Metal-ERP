@@ -7,7 +7,7 @@ import {
   confirmOutwardInventory,
   getProducts,
 } from '../../services/inventoryService';
-import { getSuppliers } from '../../services/supplierService';
+// import { getSuppliers } from '../../services/supplierService';
 
 const extractList = (response) => {
   if (Array.isArray(response)) return response;
@@ -73,6 +73,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const [exportTime, setExportTime] = useState(today.time);
   const [targetType, setTargetType] = useState('Nhà cung cấp');
   const [targetName, setTargetName] = useState('');
+  // eslint-disable-next-line 
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
@@ -496,7 +497,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={(e) => {
                   const val = e.target.value;
                   if (!val) { setSelectedSupplier(null); return; }
-                  const s = suppliers.find(x => (x.id || x.supplierId) == val);
+                  const s = suppliers.find(x => (x.id || x.supplierId) === val);
                   setSelectedSupplier(s || null);
                   setFieldErrors(prev => ({ ...prev, targetName: false }));
                 }}>

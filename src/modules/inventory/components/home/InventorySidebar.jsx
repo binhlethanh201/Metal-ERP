@@ -26,6 +26,7 @@ const InventorySidebar = ({ open = true, onToggle }) => {
 
   const visibleMenuItems = useMemo(() => {
     const checkPermission = (item) => {
+      if (item.hideWhenPermissions && hasAnyPermission(user, item.hideWhenPermissions)) return false;
       if (item.permissions && !hasAnyPermission(user, item.permissions)) return false;
       if (item.permission && !hasAnyPermission(user, [item.permission])) return false;
       return true;

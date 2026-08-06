@@ -7,6 +7,7 @@ export const sidebarItems = [
     icon: 'dashboard',
     path: '/inventory/dashboard',
     permissions: ['STOCK_VIEW'],
+    hideWhenPermissions: ['OWNER_MANAGE'],
   },
   {
     label: 'Tổng quan',

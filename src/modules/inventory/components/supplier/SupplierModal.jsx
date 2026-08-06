@@ -21,6 +21,7 @@ const emptyForm = {
 
 const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// eslint-disable-next-line 
 const isValidTaxCode = (code) => /^[0-9]{10,14}$/.test(code);
 
 const validateForm = (data) => {
