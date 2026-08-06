@@ -140,7 +140,7 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   const isWaiting = detailData?.status === 'WaitingForApproval';
   const isCompleted = detailData?.status === 'Completed';
 
-  const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
+  // const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprovePermission = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const canCancelPermission = hasPermission(user, 'STOCK_CHECK_CANCEL');
 
