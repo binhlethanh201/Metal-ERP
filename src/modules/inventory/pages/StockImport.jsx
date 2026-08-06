@@ -75,7 +75,7 @@ const normalizeInwardRow = (item, index) => {
 
 export const StockImport = () => {
   const [products, setProducts] = useState(fallbackProducts);
-  const [suppliers, setSuppliers] = useState(fallbackSuppliers);
+  const [suppliers, setSuppliers] = useState([]);
 
   const [selectedSupplier, setSelectedSupplier] = useState(null);
 

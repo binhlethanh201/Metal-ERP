@@ -35,10 +35,6 @@ const validateForm = (data) => {
     errors.contactEmail = 'Email là bắt buộc';
   else if (!isValidEmail(data.contactEmail))
     errors.contactEmail = 'Email không đúng định dạng';
-  if (!data.taxCode.trim())
-    errors.taxCode = 'Mã số thuế là bắt buộc';
-  else if (!isValidTaxCode(data.taxCode))
-    errors.taxCode = 'Mã số thuế phải từ 10-14 chữ số';
   if (!data.bankAccount.trim())
     errors.bankAccount = 'Số tài khoản là bắt buộc';
   else if (!/^[0-9]+$/.test(data.bankAccount))
@@ -218,7 +214,6 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
             />
             <Input
               label="Mã số thuế"
-              required
               name="taxCode"
               value={formData.taxCode}
               onChange={handleChange}

@@ -7,6 +7,7 @@ import {
   confirmOutwardInventory,
   getProducts,
 } from '../../services/inventoryService';
+import { getSuppliers } from '../../services/supplierService';
 
 const extractList = (response) => {
   if (Array.isArray(response)) return response;
@@ -72,6 +73,8 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const [exportTime, setExportTime] = useState(today.time);
   const [targetType, setTargetType] = useState('Nhà cung cấp');
   const [targetName, setTargetName] = useState('');
+  const [suppliers, setSuppliers] = useState([]);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
   const [note, setNote] = useState('');
 
@@ -299,9 +302,11 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       fields.exportDate = true;
     }
 
-    if (!targetName.trim()) {
-      const label = targetType === 'Nhà cung cấp' ? 'tên nhà cung cấp'
-        : targetType === 'Nội bộ' ? 'tên đơn vị / bộ phận' : 'tên đối tượng xuất';
+    if (targetType === 'Nhà cung cấp' && !selectedSupplier) {
+      errors.push('Chưa chọn nhà cung cấp');
+      fields.targetName = true;
+    } else if (targetType !== 'Nhà cung cấp' && !targetName.trim()) {
+      const label = targetType === 'Nội bộ' ? 'tên đơn vị / bộ phận' : 'tên đối tượng xuất';
       errors.push(`Chưa nhập ${label}`);
       fields.targetName = true;
     }
@@ -342,6 +347,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         reason: reasonText,
         note: note || reasonText,
         ...(ticketCode.trim() && { ticketCode: ticketCode.trim() }),
+        ...(selectedSupplier && { supplierId: selectedSupplier.id || selectedSupplier.supplierId }),
         items: items.map((i) => ({
           branchProductId: getItemKey(i),
           quantity: Number(i.quantity || 0),
@@ -479,24 +485,49 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Tên đối tượng */}
-          {targetType !== '__other__' ? (
+          {targetType === 'Nhà cung cấp' ? (
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
-                {targetType === 'Nhà cung cấp' ? 'Tên nhà cung cấp' : 'Tên đơn vị / bộ phận'} <span className="text-red-500">*</span>
+                Tên nhà cung cấp <span className="text-red-500">*</span>
+              </label>
+              <select
+                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'}`}
+                value={selectedSupplier ? (selectedSupplier.id || selectedSupplier.supplierId || '') : ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) { setSelectedSupplier(null); return; }
+                  const s = suppliers.find(x => (x.id || x.supplierId) == val);
+                  setSelectedSupplier(s || null);
+                  setFieldErrors(prev => ({ ...prev, targetName: false }));
+                }}>
+                <option value="">-- Chọn nhà cung cấp --</option>
+                {suppliers.map(s => (
+                  <option key={s.id || s.supplierId} value={s.id || s.supplierId}>
+                    {s.supplierName || s.name || s.fullName || s.companyName || 'NCC'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : targetType === 'Nội bộ' ? (
+            <div className="mt-3">
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                Tên đơn vị / bộ phận <span className="text-red-500">*</span>
               </label>
               <input type="text"
-                placeholder={targetType === 'Nhà cung cấp' ? 'VD: Công ty Hòa Phát' : 'VD: Xưởng sản xuất số 1'}
-                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
-                value={targetName} onChange={(e) => { setTargetName(e.target.value); setFieldErrors((prev) => ({ ...prev, targetName: false })); }} />
+                placeholder="VD: Xưởng sản xuất số 1"
+                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'}`}
+                value={targetName}
+                onChange={(e) => { setTargetName(e.target.value); setFieldErrors(prev => ({ ...prev, targetName: false })); }}
+              />
             </div>
           ) : (
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Nhập đối tượng xuất <span className="text-red-500">*</span></label>
               <input type="text" placeholder="VD: Đối tác vận chuyển, Bảo hành..."
-                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
-                value={targetName} onChange={(e) => { setTargetName(e.target.value); setFieldErrors((prev) => ({ ...prev, targetName: false })); }} />
+                className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'}`}
+                value={targetName}
+                onChange={(e) => { setTargetName(e.target.value); setFieldErrors(prev => ({ ...prev, targetName: false })); }}
+              />
             </div>
           )}
         </div>
