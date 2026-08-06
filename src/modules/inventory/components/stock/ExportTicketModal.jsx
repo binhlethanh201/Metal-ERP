@@ -7,7 +7,7 @@ import {
   confirmOutwardInventory,
   getProducts,
 } from '../../services/inventoryService';
-// import { getSuppliers } from '../../services/supplierService';
+import { getSuppliers } from '../../services/supplierService';
 
 const extractList = (response) => {
   if (Array.isArray(response)) return response;
@@ -22,17 +22,20 @@ const REASON_OPTIONS = [
   {
     value: 'Xuất trả nhà cung cấp',
     label: 'Xuất trả nhà cung cấp',
-    description: 'Sử dụng khi xuất trả lại hàng hóa bị lỗi, hỏng hoặc không đúng cam kết cho Nhà cung cấp.',
+    description:
+      'Sử dụng khi xuất trả lại hàng hóa bị lỗi, hỏng hoặc không đúng cam kết cho Nhà cung cấp.',
   },
   {
     value: 'Xuất hủy / Hao hụt',
     label: 'Xuất hủy / Hao hụt',
-    description: 'Sử dụng khi xuất loại bỏ hàng hóa bị hết hạn sử dụng, hỏng hóc, vỡ nát trong quá trình lưu kho.',
+    description:
+      'Sử dụng khi xuất loại bỏ hàng hóa bị hết hạn sử dụng, hỏng hóc, vỡ nát trong quá trình lưu kho.',
   },
   {
     value: 'Xuất sử dụng nội bộ',
     label: 'Xuất sử dụng nội bộ',
-    description: 'Sử dụng khi xuất hàng hóa để làm hàng mẫu (sample), tặng nhân viên, hoặc phục vụ hoạt động nội bộ công ty.',
+    description:
+      'Sử dụng khi xuất hàng hóa để làm hàng mẫu (sample), tặng nhân viên, hoặc phục vụ hoạt động nội bộ công ty.',
   },
 ];
 
@@ -43,7 +46,12 @@ const TARGET_OPTIONS = [
 ];
 
 const getOutwardType = (reason) => {
-  if (reason === 'Xuất trả nhà cung cấp' || reason === 'Trả hàng nhà cung cấp' || reason === 'Xuất trả NCC') return 1;
+  if (
+    reason === 'Xuất trả nhà cung cấp' ||
+    reason === 'Trả hàng nhà cung cấp' ||
+    reason === 'Xuất trả NCC'
+  )
+    return 1;
   if (reason === 'Xuất hủy / Hao hụt' || reason === 'Xuất hủy') return 2;
   if (reason === 'Xuất sử dụng nội bộ' || reason === 'Xuất nội bộ / Điều chuyển') return 3;
   return 3;
@@ -73,7 +81,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const [exportTime, setExportTime] = useState(today.time);
   const [targetType, setTargetType] = useState('Nhà cung cấp');
   const [targetName, setTargetName] = useState('');
-  // eslint-disable-next-line 
+  // eslint-disable-next-line
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
@@ -140,18 +148,36 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       }
     };
     loadProducts();
+
+    const loadSuppliers = async () => {
+      try {
+        const res = await getSuppliers({ pageNumber: 1, pageSize: 200 });
+        setSuppliers(extractList(res));
+      } catch {
+        setSuppliers([]);
+      }
+    };
+    loadSuppliers();
   }, [isOpen]);
 
   const resolvedReason = reasonType;
 
   const getProductStock = (product) => {
-    const stock = product.actualStock ?? product.availableStock ?? product.stock ?? product.quantity ?? 0;
+    const stock =
+      product.actualStock ?? product.availableStock ?? product.stock ?? product.quantity ?? 0;
     return Number(stock);
   };
 
   const getUnit = (p) =>
-    p.baseUnit?.name || p.baseUnit?.Name || p.BaseUnit?.name || p.BaseUnit?.Name ||
-    p.unit || p.Unit || p.unitName || p.UnitName || '';
+    p.baseUnit?.name ||
+    p.baseUnit?.Name ||
+    p.BaseUnit?.name ||
+    p.BaseUnit?.Name ||
+    p.unit ||
+    p.Unit ||
+    p.unitName ||
+    p.UnitName ||
+    '';
 
   const addItem = useCallback(() => {
     const id = selectedProductId;
@@ -171,23 +197,28 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       const newQty = currentQty + qty;
 
       if (newQty > stock) {
-        setStatusMessage(`Lỗi: Vượt tồn kho! "${product.productName || product.ProductName}" chỉ còn ${stock} ${getUnit(product)}`);
+        setStatusMessage(
+          `Lỗi: Vượt tồn kho! "${product.productName || product.ProductName}" chỉ còn ${stock} ${getUnit(product)}`
+        );
         return prev;
       }
 
       if (existing) {
         return prev.map((i) => (getItemKey(i) === key ? { ...i, quantity: newQty } : i));
       }
-      return [...prev, {
-        branchProductId: product.branchProductId || null,
-        productId: getItemKey(product),
-        productCode: product.productCode || product.ProductCode || '',
-        productName: product.productName || product.ProductName || '',
-        unit: getUnit(product),
-        quantity: qty,
-        maxStock: stock,
-        unitPrice: 0,
-      }];
+      return [
+        ...prev,
+        {
+          branchProductId: product.branchProductId || null,
+          productId: getItemKey(product),
+          productCode: product.productCode || product.ProductCode || '',
+          productName: product.productName || product.ProductName || '',
+          unit: getUnit(product),
+          quantity: qty,
+          maxStock: stock,
+          unitPrice: 0,
+        },
+      ];
     });
 
     setSelectedProductId('');
@@ -230,9 +261,12 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const handleDownloadTemplate = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/outwardinventoryexcel/template`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/outwardinventoryexcel/template`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!res.ok) throw new Error('Tải template thất bại');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -270,16 +304,36 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
             const matchedProduct = products.find((p) => String(getItemKey(p)) === String(pid));
             const stock = matchedProduct ? getProductStock(matchedProduct) : 0;
             const unit = matchedProduct ? getUnit(matchedProduct) : '';
-            return { branchProductId: pid, productId: pid, productCode: row.maSanPham || '', productName: row.tenSanPham || '', unit, quantity: Number(row.soLuong || 0), unitPrice: Number(row.donGiaXuat || 0), maxStock: stock };
+            return {
+              branchProductId: pid,
+              productId: pid,
+              productCode: row.maSanPham || '',
+              productName: row.tenSanPham || '',
+              unit,
+              quantity: Number(row.soLuong || 0),
+              unitPrice: Number(row.donGiaXuat || 0),
+              maxStock: stock,
+            };
           });
           setItems(mappedItems);
           if (groups?.length === 1) {
             const lyDo = groups[0].lyDo;
-            if (lyDo === 'Trả NCC' || lyDo === 'Tra NCC') { setTargetType('Nhà cung cấp'); setReasonType('Xuất trả nhà cung cấp'); }
-            else if (lyDo === 'Xuất hủy' || lyDo === 'Xuat huy') { setTargetType('Nội bộ'); setReasonType('Xuất hủy / Hao hụt'); }
-            else if (lyDo === 'Điều chuyển' || lyDo === 'Dieu chuyen') { setTargetType('Nội bộ'); setReasonType('Xuất sử dụng nội bộ'); }
+            if (lyDo === 'Trả NCC' || lyDo === 'Tra NCC') {
+              setTargetType('Nhà cung cấp');
+              setReasonType('Xuất trả nhà cung cấp');
+            } else if (lyDo === 'Xuất hủy' || lyDo === 'Xuat huy') {
+              setTargetType('Nội bộ');
+              setReasonType('Xuất hủy / Hao hụt');
+            } else if (lyDo === 'Điều chuyển' || lyDo === 'Dieu chuyen') {
+              setTargetType('Nội bộ');
+              setReasonType('Xuất sử dụng nội bộ');
+            }
           }
-          setStatusMessage(errors?.length > 0 ? `Đã nạp ${mappedItems.length} dòng hợp lệ. ${errors.length} dòng lỗi.` : `Đã nạp ${mappedItems.length} sản phẩm từ Excel.`);
+          setStatusMessage(
+            errors?.length > 0
+              ? `Đã nạp ${mappedItems.length} dòng hợp lệ. ${errors.length} dòng lỗi.`
+              : `Đã nạp ${mappedItems.length} sản phẩm từ Excel.`
+          );
         } else if (errors?.length > 0) {
           setStatusMessage('File có lỗi, không có dòng nào hợp lệ.');
         }
@@ -362,7 +416,9 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       const newTicketCode = createRes?.data?.ticketCode || ticketId;
 
       if (newTicketCode && targetName.trim()) {
-        try { localStorage.setItem(`outward_party_${newTicketCode}`, targetName.trim()); } catch { }
+        try {
+          localStorage.setItem(`outward_party_${newTicketCode}`, targetName.trim());
+        } catch {}
       }
 
       if (ticketId && !isDraft) {
@@ -377,7 +433,9 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       let msg;
       if (errors) {
         if (typeof errors === 'object' && !Array.isArray(errors)) {
-          msg = Object.entries(errors).map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`).join(' | ');
+          msg = Object.entries(errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join(' | ');
         } else {
           msg = String(errors);
         }
@@ -391,9 +449,20 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={() => !isSubmitting && onClose()} title="Tạo phiếu xuất kho" size="5xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={() => !isSubmitting && onClose()}
+      title="Tạo phiếu xuất kho"
+      size="5xl"
+    >
       <div className="mb-4 flex items-center gap-2">
-        <input type="file" ref={fileInputRef} accept=".xlsx,.xls" onChange={handleImportExcel} className="hidden" />
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".xlsx,.xls"
+          onChange={handleImportExcel}
+          className="hidden"
+        />
         <button
           type="button"
           onClick={handleDownloadTemplate}
@@ -410,46 +479,77 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         >
           <Icon name="upload_file" size={16} /> {importing ? 'Đang import...' : 'Nhập từ Excel'}
         </button>
-        {importing && <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>}
+        {importing && (
+          <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>
+        )}
       </div>
       <form className="space-y-5" onSubmit={handleSubmit}>
         {/* Status Banner */}
         {importResult && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-            <div className="flex items-center justify-between mb-3">
+            <div className="mb-3 flex items-center justify-between">
               <h3 className="font-bold text-amber-800 dark:text-amber-300">
-                Kết quả import: {importResult.validRows?.length || 0} dòng hợp lệ, {importResult.errors?.length || 0} lỗi
+                Kết quả import: {importResult.validRows?.length || 0} dòng hợp lệ,{' '}
+                {importResult.errors?.length || 0} lỗi
               </h3>
-              <Button variant="secondary" size="sm" onClick={() => setImportResult(null)}>Đóng</Button>
+              <Button variant="secondary" size="sm" onClick={() => setImportResult(null)}>
+                Đóng
+              </Button>
             </div>
             {importResult.errors?.length > 0 && (
-              <div className="max-h-40 overflow-y-auto space-y-1">
+              <div className="max-h-40 space-y-1 overflow-y-auto">
                 {importResult.errors.map((err, i) => (
-                  <p key={i} className="text-sm text-red-600 dark:text-red-400">Dòng {err.rowNumber}: {err.errorMessage}</p>
+                  <p key={i} className="text-sm text-red-600 dark:text-red-400">
+                    Dòng {err.rowNumber}: {err.errorMessage}
+                  </p>
                 ))}
               </div>
             )}
-            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">Các dòng hợp lệ đã được nạp vào form bên dưới.</p>
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              Các dòng hợp lệ đã được nạp vào form bên dưới.
+            </p>
           </div>
         )}
-        {statusMessage && (
+        {statusMessage &&
           (() => {
             const msg = statusMessage.toLowerCase();
-            const isError = msg.includes('lỗi') || msg.includes('chưa') || msg.includes('tối thiểu') || msg.includes('không hợp lệ') || msg.includes('vượt');
+            const isError =
+              msg.includes('lỗi') ||
+              msg.includes('chưa') ||
+              msg.includes('tối thiểu') ||
+              msg.includes('không hợp lệ') ||
+              msg.includes('vượt');
             return (
-              <div className={`flex items-start gap-3 rounded-lg border p-4 ${isError
-                  ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-                }`}>
-                <Icon name={isError ? 'error' : 'check_circle'} size={20} className="mt-0.5 shrink-0" />
-                <div className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800 dark:text-red-300' : 'text-emerald-800 dark:text-emerald-400'}`}>{statusMessage}</div>
-                <button type="button" onClick={() => { setStatusMessage(''); setFieldErrors({}); }} className="shrink-0 rounded p-1 opacity-60 hover:opacity-100">
+              <div
+                className={`flex items-start gap-3 rounded-lg border p-4 ${
+                  isError
+                    ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
+                }`}
+              >
+                <Icon
+                  name={isError ? 'error' : 'check_circle'}
+                  size={20}
+                  className="mt-0.5 shrink-0"
+                />
+                <div
+                  className={`flex-1 text-sm font-semibold ${isError ? 'text-red-800 dark:text-red-300' : 'text-emerald-800 dark:text-emerald-400'}`}
+                >
+                  {statusMessage}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusMessage('');
+                    setFieldErrors({});
+                  }}
+                  className="shrink-0 rounded p-1 opacity-60 hover:opacity-100"
+                >
                   <Icon name="close" size={16} />
                 </button>
               </div>
             );
-          })()
-        )}
+          })()}
 
         {/* THÔNG TIN CHỨNG TỪ */}
         <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
@@ -458,29 +558,63 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Số phiếu xuất</label>
-              <input type="text" className="w-full rounded-lg border border-slate-300 bg-blue-50/40 px-3 py-2 font-mono text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-blue-950/30 dark:text-[#b3b3b3]"
-                value={ticketCode} onChange={(e) => setTicketCode(e.target.value)} />
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                Số phiếu xuất
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-slate-300 bg-blue-50/40 px-3 py-2 font-mono text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-blue-950/30 dark:text-[#b3b3b3]"
+                value={ticketCode}
+                onChange={(e) => setTicketCode(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Ngày xuất <span className="text-red-500">*</span></label>
-              <input type="date" required
-                className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.exportDate ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
-                value={exportDate} onChange={(e) => { setExportDate(e.target.value); setFieldErrors((prev) => ({ ...prev, exportDate: false })); }} />
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                Ngày xuất <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                required
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
+                  fieldErrors.exportDate
+                    ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
+                    : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                }`}
+                value={exportDate}
+                onChange={(e) => {
+                  setExportDate(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, exportDate: false }));
+                }}
+              />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Giờ xuất</label>
-              <input type="time"
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                Giờ xuất
+              </label>
+              <input
+                type="time"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                value={exportTime} onChange={(e) => setExportTime(e.target.value)} />
+                value={exportTime}
+                onChange={(e) => setExportTime(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Đối tượng xuất <span className="text-red-500">*</span></label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                Đối tượng xuất <span className="text-red-500">*</span>
+              </label>
               <select
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                value={targetType} onChange={(e) => { setTargetType(e.target.value); setTargetName(''); }}>
-                {TARGET_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                value={targetType}
+                onChange={(e) => {
+                  setTargetType(e.target.value);
+                  setTargetName('');
+                }}
+              >
+                {TARGET_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -493,16 +627,22 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               </label>
               <select
                 className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'}`}
-                value={selectedSupplier ? (selectedSupplier.id || selectedSupplier.supplierId || '') : ''}
+                value={
+                  selectedSupplier ? selectedSupplier.id || selectedSupplier.supplierId || '' : ''
+                }
                 onChange={(e) => {
                   const val = e.target.value;
-                  if (!val) { setSelectedSupplier(null); return; }
-                  const s = suppliers.find(x => (x.id || x.supplierId) === val);
+                  if (!val) {
+                    setSelectedSupplier(null);
+                    return;
+                  }
+                  const s = suppliers.find((x) => (x.id || x.supplierId) === val);
                   setSelectedSupplier(s || null);
-                  setFieldErrors(prev => ({ ...prev, targetName: false }));
-                }}>
+                  setFieldErrors((prev) => ({ ...prev, targetName: false }));
+                }}
+              >
                 <option value="">-- Chọn nhà cung cấp --</option>
-                {suppliers.map(s => (
+                {suppliers.map((s) => (
                   <option key={s.id || s.supplierId} value={s.id || s.supplierId}>
                     {s.supplierName || s.name || s.fullName || s.companyName || 'NCC'}
                   </option>
@@ -514,20 +654,31 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
                 Tên đơn vị / bộ phận <span className="text-red-500">*</span>
               </label>
-              <input type="text"
+              <input
+                type="text"
                 placeholder="VD: Xưởng sản xuất số 1"
                 className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'}`}
                 value={targetName}
-                onChange={(e) => { setTargetName(e.target.value); setFieldErrors(prev => ({ ...prev, targetName: false })); }}
+                onChange={(e) => {
+                  setTargetName(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, targetName: false }));
+                }}
               />
             </div>
           ) : (
             <div className="mt-3">
-              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Nhập đối tượng xuất <span className="text-red-500">*</span></label>
-              <input type="text" placeholder="VD: Đối tác vận chuyển, Bảo hành..."
+              <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                Nhập đối tượng xuất <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="VD: Đối tác vận chuyển, Bảo hành..."
                 className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'}`}
                 value={targetName}
-                onChange={(e) => { setTargetName(e.target.value); setFieldErrors(prev => ({ ...prev, targetName: false })); }}
+                onChange={(e) => {
+                  setTargetName(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, targetName: false }));
+                }}
               />
             </div>
           )}
@@ -536,21 +687,38 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         {/* LÝ DO XUẤT */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Lý do xuất kho <span className="text-red-500">*</span></label>
+            <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+              Lý do xuất kho <span className="text-red-500">*</span>
+            </label>
             <select
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-              value={reasonType} onChange={(e) => { setReasonType(e.target.value); }}>
-              {REASON_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+              value={reasonType}
+              onChange={(e) => {
+                setReasonType(e.target.value);
+              }}
+            >
+              {REASON_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
             <p className="mt-2 text-xs text-slate-500 dark:text-[#999999]">
-              {REASON_OPTIONS.find((opt) => opt.value === reasonType)?.description || 'Vui lòng chọn một lý do phù hợp với quy trình xuất kho.'}
+              {REASON_OPTIONS.find((opt) => opt.value === reasonType)?.description ||
+                'Vui lòng chọn một lý do phù hợp với quy trình xuất kho.'}
             </p>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">Ghi chú thêm</label>
-            <input type="text" placeholder="Ghi chú chi tiết (không bắt buộc)"
+            <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+              Ghi chú thêm
+            </label>
+            <input
+              type="text"
+              placeholder="Ghi chú chi tiết (không bắt buộc)"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-              value={note} onChange={(e) => setNote(e.target.value)} />
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
           </div>
         </div>
 
@@ -559,60 +727,113 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="flex items-center justify-between">
             <label className="text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">
               Danh sách sản phẩm xuất <span className="text-red-500">*</span>
-              {fieldErrors.items && <span className="ml-2 text-xs font-normal text-red-500">— Vui lòng thêm ít nhất 1 sản phẩm</span>}
+              {fieldErrors.items && (
+                <span className="ml-2 text-xs font-normal text-red-500">
+                  — Vui lòng thêm ít nhất 1 sản phẩm
+                </span>
+              )}
             </label>
-            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">{items.length} mặt hàng</span>
+            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+              {items.length} mặt hàng
+            </span>
           </div>
 
           {/* Dòng thêm mới + combobox */}
           <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-r from-blue-50/60 to-white p-4 dark:border-blue-800 dark:from-blue-950/30 dark:to-[#1a1a1a]">
             <div className="flex items-end gap-3">
               <div className="relative min-w-0 flex-1">
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Chọn sản phẩm</label>
-                <button type="button"
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                  Chọn sản phẩm
+                </label>
+                <button
+                  type="button"
                   className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                  onClick={() => setDropdownOpen((o) => !o)}>
-                  <span className={selectedProductId ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}>
+                  onClick={() => setDropdownOpen((o) => !o)}
+                >
+                  <span
+                    className={
+                      selectedProductId
+                        ? 'text-slate-800 dark:text-[#e5e5e5]'
+                        : 'text-slate-400 dark:text-[#808080]'
+                    }
+                  >
                     {selectedProductId
                       ? (() => {
-                        const p = products.find((x) => getItemKey(x) === selectedProductId);
-                        return p ? `${p.productCode || p.ProductCode || ''} - ${p.productName || p.ProductName || ''}` : '-- Chọn sản phẩm --';
-                      })()
+                          const p = products.find((x) => getItemKey(x) === selectedProductId);
+                          return p
+                            ? `${p.productCode || p.ProductCode || ''} - ${p.productName || p.ProductName || ''}`
+                            : '-- Chọn sản phẩm --';
+                        })()
                       : '-- Chọn sản phẩm --'}
                   </span>
-                  <Icon name="expand_more" size={18} className={`text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                  <Icon
+                    name="expand_more"
+                    size={18}
+                    className={`text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
                 {dropdownOpen && (
                   <>
-                    <div className="fixed inset-0 z-10" onClick={() => { setDropdownOpen(false); setProductSearch(''); }} />
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        setProductSearch('');
+                      }}
+                    />
                     <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
                       <div className="border-b border-slate-100 p-3 dark:border-[#333333]">
                         <div className="relative">
-                          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#808080]" />
-                          <input type="text" placeholder="Tìm theo tên hoặc mã sản phẩm..."
+                          <Icon
+                            name="search"
+                            size={16}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#808080]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Tìm theo tên hoặc mã sản phẩm..."
                             className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5] dark:focus:bg-[#272727]"
-                            value={productSearch} onChange={(e) => setProductSearch(e.target.value)} autoFocus onClick={(e) => e.stopPropagation()} />
+                            value={productSearch}
+                            onChange={(e) => setProductSearch(e.target.value)}
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          />
                         </div>
                       </div>
                       <div className="max-h-52 overflow-y-auto">
                         {filteredProducts.length === 0 ? (
                           <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-[#808080]">
-                            {productSearch.trim() ? 'Không tìm thấy sản phẩm phù hợp' : isLoadingProducts ? 'Đang tải...' : 'Tất cả sản phẩm đã được thêm'}
+                            {productSearch.trim()
+                              ? 'Không tìm thấy sản phẩm phù hợp'
+                              : isLoadingProducts
+                                ? 'Đang tải...'
+                                : 'Tất cả sản phẩm đã được thêm'}
                           </div>
                         ) : (
                           filteredProducts.map((product) => {
                             const idValue = getItemKey(product);
                             const stock = getProductStock(product);
                             return (
-                              <button key={idValue} type="button"
-                                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-[#333333] text-slate-700 dark:text-[#b3b3b3]"
-                                onClick={() => { setSelectedProductId(idValue); setDropdownOpen(false); setProductSearch(''); }}>
+                              <button
+                                key={idValue}
+                                type="button"
+                                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-blue-50 dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+                                onClick={() => {
+                                  setSelectedProductId(idValue);
+                                  setDropdownOpen(false);
+                                  setProductSearch('');
+                                }}
+                              >
                                 <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
                                   {product.productCode || product.ProductCode || '-'}
                                 </span>
-                                <span className="flex-1 truncate dark:text-[#d4d4d4]">{product.productName || product.ProductName}</span>
-                                <span className={`shrink-0 text-xs font-medium ${stock <= 0 ? 'text-red-500' : stock < 10 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                <span className="flex-1 truncate dark:text-[#d4d4d4]">
+                                  {product.productName || product.ProductName}
+                                </span>
+                                <span
+                                  className={`shrink-0 text-xs font-medium ${stock <= 0 ? 'text-red-500' : stock < 10 ? 'text-amber-600' : 'text-emerald-600'}`}
+                                >
                                   {stock <= 0 ? 'Hết hàng' : `Còn ${stock} ${getUnit(product)}`}
                                 </span>
                               </button>
@@ -626,49 +847,96 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               <div className="w-36">
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">Số lượng</label>
-                <input type="text" inputMode="numeric" placeholder="SL"
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                  Số lượng
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="SL"
                   className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                   value={selectedQuantity}
                   onChange={(e) => {
                     const raw = e.target.value.replace(/[^0-9]/g, '');
-                    if (!raw) { setSelectedQuantity(''); setStatusMessage(''); return; }
+                    if (!raw) {
+                      setSelectedQuantity('');
+                      setStatusMessage('');
+                      return;
+                    }
                     if (selectedProductId) {
                       const prod = products.find((p) => getItemKey(p) === selectedProductId);
                       if (prod) {
                         const stock = getProductStock(prod);
                         const num = Number(raw);
-                        if (num > stock) { setSelectedQuantity(String(stock)); setStatusMessage(`Đã chạm tồn kho tối đa: ${stock} ${prod.unit || prod.unitName || ''}`); return; }
-                        setStatusMessage(''); setSelectedQuantity(raw); return;
+                        if (num > stock) {
+                          setSelectedQuantity(String(stock));
+                          setStatusMessage(
+                            `Đã chạm tồn kho tối đa: ${stock} ${prod.unit || prod.unitName || ''}`
+                          );
+                          return;
+                        }
+                        setStatusMessage('');
+                        setSelectedQuantity(raw);
+                        return;
                       }
                     }
                     setSelectedQuantity(raw);
                   }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } }} />
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addItem();
+                    }
+                  }}
+                />
               </div>
 
-              <button type="button" onClick={addItem}
-                className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg bg-[#004785] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#003566] active:scale-95">
+              <button
+                type="button"
+                onClick={addItem}
+                className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg bg-[#004785] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#003566] active:scale-95"
+              >
                 <Icon name="add" size={18} /> Thêm
               </button>
             </div>
 
-            {selectedProductId && (() => {
-              const prod = products.find((p) => getItemKey(p) === selectedProductId);
-              if (!prod) return null;
-              const stock = getProductStock(prod);
-              const unit = getUnit(prod);
-              const isOver = selectedQuantity && Number(selectedQuantity) > stock;
-              return (
-                <div className="mt-2 flex items-center gap-2 text-[11px]">
-                  <Icon name="inventory_2" size={14} className={stock <= 0 ? 'text-red-400' : stock < 10 ? 'text-amber-400' : 'text-emerald-400'} />
-                  <span className={stock <= 0 ? 'font-semibold text-red-500' : stock < 10 ? 'font-semibold text-amber-600' : 'text-slate-500 dark:text-[#999999]'}>
-                    Tồn kho: {stock} {unit}
-                  </span>
-                  {isOver && <span className="font-semibold text-red-500">(đã chạm giới hạn)</span>}
-                </div>
-              );
-            })()}
+            {selectedProductId &&
+              (() => {
+                const prod = products.find((p) => getItemKey(p) === selectedProductId);
+                if (!prod) return null;
+                const stock = getProductStock(prod);
+                const unit = getUnit(prod);
+                const isOver = selectedQuantity && Number(selectedQuantity) > stock;
+                return (
+                  <div className="mt-2 flex items-center gap-2 text-[11px]">
+                    <Icon
+                      name="inventory_2"
+                      size={14}
+                      className={
+                        stock <= 0
+                          ? 'text-red-400'
+                          : stock < 10
+                            ? 'text-amber-400'
+                            : 'text-emerald-400'
+                      }
+                    />
+                    <span
+                      className={
+                        stock <= 0
+                          ? 'font-semibold text-red-500'
+                          : stock < 10
+                            ? 'font-semibold text-amber-600'
+                            : 'text-slate-500 dark:text-[#999999]'
+                      }
+                    >
+                      Tồn kho: {stock} {unit}
+                    </span>
+                    {isOver && (
+                      <span className="font-semibold text-red-500">(đã chạm giới hạn)</span>
+                    )}
+                  </div>
+                );
+              })()}
           </div>
 
           {/* Bảng sản phẩm đã thêm */}
@@ -677,19 +945,37 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               <table className="w-full table-fixed text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white dark:border-[#333333] dark:from-[#1a1a1a] dark:to-[#1a1a1a]">
-                    <th className="w-10 py-3 pl-5 pr-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">#</th>
-                    <th className="w-24 px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">Mã SP</th>
-                    <th className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">Tên sản phẩm</th>
-                    <th className="w-16 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">ĐVT</th>
-                    <th className="w-20 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">Tồn kho</th>
-                    <th className="w-32 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">Số lượng xuất</th>
+                    <th className="w-10 py-3 pl-5 pr-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                      #
+                    </th>
+                    <th className="w-24 px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                      Mã SP
+                    </th>
+                    <th className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                      Tên sản phẩm
+                    </th>
+                    <th className="w-16 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                      ĐVT
+                    </th>
+                    <th className="w-20 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                      Tồn kho
+                    </th>
+                    <th className="w-32 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                      Số lượng xuất
+                    </th>
                     {isSale && (
                       <>
-                        <th className="w-28 px-2 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">Đơn giá</th>
-                        <th className="w-28 px-2 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">Thành tiền</th>
+                        <th className="w-28 px-2 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                          Đơn giá
+                        </th>
+                        <th className="w-28 px-2 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                          Thành tiền
+                        </th>
                       </>
                     )}
-                    <th className="w-10 py-3 pl-1 pr-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">Xóa</th>
+                    <th className="w-10 py-3 pl-1 pr-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
+                      Xóa
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
@@ -698,55 +984,113 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
                     const maxStock = item.maxStock ?? 999999;
                     const isOverStock = item.quantity > maxStock;
                     return (
-                      <tr key={key} className={`group transition-colors ${isOverStock ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/40' : 'hover:bg-blue-50/30 dark:hover:bg-[#333333]'}`}>
+                      <tr
+                        key={key}
+                        className={`group transition-colors ${isOverStock ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/40' : 'hover:bg-blue-50/30 dark:hover:bg-[#333333]'}`}
+                      >
                         <td className="py-3 pl-5 pr-2 text-center">
-                          <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${isOverStock ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#b3b3b3]'}`}>{idx + 1}</span>
+                          <span
+                            className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${isOverStock ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#b3b3b3]'}`}
+                          >
+                            {idx + 1}
+                          </span>
                         </td>
                         <td className="w-24 truncate px-3 py-3">
-                          <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]">{item.productCode || 'N/A'}</span>
+                          <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-600 dark:bg-[#272727] dark:text-[#b3b3b3]">
+                            {item.productCode || 'N/A'}
+                          </span>
                         </td>
                         <td className="truncate px-3 py-3">
                           <div className="flex items-center gap-2.5">
-                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isOverStock ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-400 dark:bg-[#272727] dark:text-[#808080]'}`}>
+                            <div
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isOverStock ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-400 dark:bg-[#272727] dark:text-[#808080]'}`}
+                            >
                               <Icon name="inventory_2" size={16} />
                             </div>
-                            <span className="truncate text-[13px] font-semibold text-slate-800 dark:text-[#e5e5e5]">{item.productName}</span>
+                            <span className="truncate text-[13px] font-semibold text-slate-800 dark:text-[#e5e5e5]">
+                              {item.productName}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-3 py-3 text-center"><span className="text-[12px] text-slate-500 dark:text-[#999999]">{item.unit || '---'}</span></td>
                         <td className="px-3 py-3 text-center">
-                          <span className={`text-[12px] font-semibold ${maxStock <= 0 ? 'text-red-600' : maxStock < 10 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          <span className="text-[12px] text-slate-500 dark:text-[#999999]">
+                            {item.unit || '---'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <span
+                            className={`text-[12px] font-semibold ${maxStock <= 0 ? 'text-red-600' : maxStock < 10 ? 'text-amber-600' : 'text-emerald-600'}`}
+                          >
                             {maxStock <= 0 ? 'Hết' : maxStock}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-center">
-                          <div className={`inline-flex items-center rounded-lg border shadow-sm ${isOverStock ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-200 bg-white dark:border-[#404040] dark:bg-[#272727]'}`}>
-                            <button type="button" onClick={() => updateItemQty(key, Math.max(0, (item.quantity || 0) - 1))}
-                              className="flex h-7 w-7 items-center justify-center rounded-l-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"><Icon name="remove" size={14} /></button>
-                            <input type="number" min="0"
+                          <div
+                            className={`inline-flex items-center rounded-lg border shadow-sm ${isOverStock ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-slate-200 bg-white dark:border-[#404040] dark:bg-[#272727]'}`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateItemQty(key, Math.max(0, (item.quantity || 0) - 1))
+                              }
+                              className="flex h-7 w-7 items-center justify-center rounded-l-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
+                            >
+                              <Icon name="remove" size={14} />
+                            </button>
+                            <input
+                              type="number"
+                              min="0"
                               className={`h-7 w-14 border-x border-slate-200 bg-transparent text-center text-[13px] font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isOverStock ? 'text-red-600' : 'text-slate-800 dark:text-[#e5e5e5]'} dark:border-[#404040]`}
-                              value={item.quantity} onChange={(e) => updateItemQty(key, e.target.value)} />
-                            <button type="button" onClick={() => updateItemQty(key, (item.quantity || 0) + 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-r-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"><Icon name="add" size={14} /></button>
+                              value={item.quantity}
+                              onChange={(e) => updateItemQty(key, e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => updateItemQty(key, (item.quantity || 0) + 1)}
+                              className="flex h-7 w-7 items-center justify-center rounded-r-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
+                            >
+                              <Icon name="add" size={14} />
+                            </button>
                           </div>
-                          {isOverStock && <p className="mt-1 text-[10px] font-semibold text-red-500">Vượt {item.quantity - maxStock}</p>}
+                          {isOverStock && (
+                            <p className="mt-1 text-[10px] font-semibold text-red-500">
+                              Vượt {item.quantity - maxStock}
+                            </p>
+                          )}
                         </td>
                         {isSale && (
                           <>
                             <td className="px-2 py-3 text-center">
-                              <input type="text" inputMode="numeric" placeholder="0"
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="0"
                                 className="h-8 w-24 rounded-lg border border-slate-200 bg-white px-2 text-right text-[13px] font-semibold text-slate-800 outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                                value={item.unitPrice ? Number(item.unitPrice).toLocaleString('vi-VN') : ''}
-                                onChange={(e) => updateItemPrice(key, e.target.value.replace(/[^0-9]/g, ''))} />
+                                value={
+                                  item.unitPrice
+                                    ? Number(item.unitPrice).toLocaleString('vi-VN')
+                                    : ''
+                                }
+                                onChange={(e) =>
+                                  updateItemPrice(key, e.target.value.replace(/[^0-9]/g, ''))
+                                }
+                              />
                             </td>
                             <td className="max-w-[160px] truncate px-2 py-3 text-right font-semibold text-blue-700 dark:text-blue-400">
-                              {(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toLocaleString('vi-VN')}
+                              {(
+                                Number(item.quantity || 0) * Number(item.unitPrice || 0)
+                              ).toLocaleString('vi-VN')}
                             </td>
                           </>
                         )}
                         <td className="py-3 pl-1 pr-3 text-center">
-                          <button type="button" onClick={() => removeItem(key)}
-                            className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-[#808080] dark:hover:bg-red-900/30 dark:hover:text-red-400"><Icon name="delete" size={16} /></button>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(key)}
+                            className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-[#808080] dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                          >
+                            <Icon name="delete" size={16} />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -755,8 +1099,13 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               </table>
             </div>
           ) : (
-            <div className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${fieldErrors.items ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20' : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
-              }`}>
+            <div
+              className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
+                fieldErrors.items
+                  ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20'
+                  : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
+              }`}
+            >
               <Icon name="inventory_2" size={32} className="mb-2 opacity-40" />
               <p className="text-sm font-medium">Chưa có sản phẩm nào</p>
               <p className="mt-1 text-xs">Thêm sản phẩm ở trên để tạo phiếu xuất</p>
@@ -766,14 +1115,28 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
 
         {/* Footer */}
         <div className="flex justify-end gap-2 border-t border-slate-200 pt-4 dark:border-[#333333]">
-          <button type="button" disabled={isSubmitting}
+          <button
+            type="button"
+            disabled={isSubmitting}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-[#404040] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
-            onClick={() => !isSubmitting && onClose()}>Hủy</button>
-          <button type="button" disabled={isSubmitting || items.length === 0}
+            onClick={() => !isSubmitting && onClose()}
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            disabled={isSubmitting || items.length === 0}
             className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-400 dark:hover:bg-sky-900/30"
-            onClick={(e) => handleSubmit(e, true)}>Lưu chờ duyệt</button>
-          <Button type="button" variant="primary" disabled={isSubmitting || items.length === 0}
-            onClick={(e) => handleSubmit(e, false)}>
+            onClick={(e) => handleSubmit(e, true)}
+          >
+            Lưu chờ duyệt
+          </button>
+          <Button
+            type="button"
+            variant="primary"
+            disabled={isSubmitting || items.length === 0}
+            onClick={(e) => handleSubmit(e, false)}
+          >
             {isSubmitting ? 'Đang xử lý...' : 'Xác nhận xuất kho'}
           </Button>
         </div>
