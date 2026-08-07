@@ -12,6 +12,8 @@ export const ENDPOINTS = {
     LOW_STOCK: '/api/reports/low-stock',
     PRODUCT_PROFIT: '/api/reports/product-profit',
     SUPPLIER_DETAIL: '/api/reports/supplier-detail',
+    STOCK_LEDGER: (branchProductId) => `/api/reports/stock-ledger/${branchProductId}`,
+    SNAPSHOT_DAILY: '/api/reports/snapshot-daily',
   },
 
   // ============ OWNER (Quản lý) ============

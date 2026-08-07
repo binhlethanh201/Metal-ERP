@@ -21,13 +21,7 @@ import { RevenueByTimeReport } from '../components/RevenueByTimeReport';
 import { LowStockReport } from '../components/LowStockReport';
 import { ProductProfitReport } from '../components/ProductProfitReport';
 import { SupplierDetailReport } from '../components/SupplierDetailReport';
-import { exportToCSV } from '../utils/reportUtils';
-import {
-  STOCK_COLUMNS,
-  LOW_STOCK_COLUMNS,
-  PRODUCT_PROFIT_COLUMNS,
-  PURCHASE_COLUMNS,
-} from '../constraints/reportConstants';
+import { exportStockReportToExcel } from '../utils/reportUtils';
 
 export const OwnerReports = () => {
   const defaultToDate = new Date().toISOString().split('T')[0];
@@ -212,24 +206,17 @@ export const OwnerReports = () => {
 
   // ============ HANDLERS ============
   const handleDownload = () => {
+    const info = { fromDate, toDate };
     if (selectedReport === 'stock-movement' && movementData?.items) {
-      exportToCSV(movementData.items, STOCK_COLUMNS, 'Bao_Cao_Xuat_Nhap_Ton');
+      exportStockReportToExcel(movementData.items, info, 'Bao_Cao_Xuat_Nhap_Ton');
     } else if (selectedReport === 'revenue-by-time' && revenueData?.tableData) {
-      const revColumns = [
-        { key: 'date', header: 'Ngày' },
-        { key: 'timeKey', header: 'Thời gian' },
-        { key: 'revenue', header: 'Doanh thu' },
-        { key: 'totalCost', header: 'Tổng giá vốn' },
-        { key: 'grossProfit', header: 'Lợi nhuận gộp' },
-        { key: 'profitMargin', header: 'Tỷ suất lợi nhuận (%)' },
-      ];
-      exportToCSV(revenueData.tableData, revColumns, 'Bao_Cao_Doanh_Thu_Theo_Thoi_Gian');
+      exportStockReportToExcel(revenueData.tableData, info, 'Bao_Cao_Doanh_Thu');
     } else if (selectedReport === 'low-stock' && lowStockData?.items) {
-      exportToCSV(lowStockData.items, LOW_STOCK_COLUMNS, 'Bao_Cao_Ton_Kho_Sap_Het');
+      exportStockReportToExcel(lowStockData.items, info, 'Bao_Cao_Ton_Kho_Sap_Het');
     } else if (selectedReport === 'product-profit' && productProfitItems?.length > 0) {
-      exportToCSV(productProfitItems, PRODUCT_PROFIT_COLUMNS, 'Bao_Cao_Loi_Nhuan_San_Pham');
+      exportStockReportToExcel(productProfitItems, info, 'Bao_Cao_Loi_Nhuan_SP');
     } else if (selectedReport === 'supplier-detail' && supplierPurchaseHistory?.length > 0) {
-      exportToCSV(supplierPurchaseHistory, PURCHASE_COLUMNS, 'Lich_Su_Nhap_Hang_NCC');
+      exportStockReportToExcel(supplierPurchaseHistory, info, 'Lich_Su_Nhap_Hang_NCC');
     }
   };
 
@@ -449,7 +436,7 @@ export const OwnerReports = () => {
       <div className="space-y-6">
         {selectedReport === 'daily-end' && <DailyEndReport data={dailyEndData} />}
         {selectedReport === 'stock-movement' && (
-          <StockMovementReport data={movementData} isLoading={loadingStockMovement} />
+          <StockMovementReport data={movementData} isLoading={loadingStockMovement} fromDate={fromDate} toDate={toDate} />
         )}
         {selectedReport === 'revenue-by-time' && (
           <RevenueByTimeReport data={revenueData} isLoading={loadingRevenue} />
