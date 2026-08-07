@@ -664,15 +664,21 @@ export const ShiftManagement = () => {
 
     // Fetch orders + returns trong khoảng thời gian của ca
     try {
+      const shiftStart = new Date(shift.startedAt);
+      const shiftEnd = shift.endedAt ? new Date(shift.endedAt) : new Date();
+      const params = {
+        dateFrom: shiftStart.toISOString(),
+        dateTo: shiftEnd.toISOString(),
+        pageSize: 1000
+      };
       const [ordersData, returnsRaw] = await Promise.all([
-        getOrders({ status: 'Completed' }),
-        getReturns({}).catch(() => []),
+        getOrders({ status: 'Completed', ...params }),
+        getReturns({ ...params }).catch(() => []),
       ]);
       const rawOrders = Array.isArray(ordersData)
         ? ordersData
         : ordersData?.items || ordersData?.data || [];
-      const shiftStart = new Date(shift.startedAt);
-      const shiftEnd = shift.endedAt ? new Date(shift.endedAt) : new Date();
+
 
       const orders = rawOrders
         .filter((o) => {
