@@ -19,11 +19,9 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
   const variance = summary?.variance;
   const isNeg = typeof variance === 'number' && variance < 0;
   const isZero = variance === 0;
-
   const closerName = summary?.closedByUserName || (summary?.endedAt ? (summary?.openedByUserName || '—') : '—');
   const isForceClose = summary?.closedByUserName && summary?.closedByUserId !== summary?.openedByUserId;
 
-  // ==================== CẤU HÌNH HEADER TITLE ====================
   const modalTitle = (
     <div className="flex flex-col gap-1 pr-10">
       <div className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
@@ -73,8 +71,6 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
         <p className="py-10 text-center text-sm italic text-slate-400 dark:text-[#808080]">Không có dữ liệu.</p>
       ) : (
         <div className="space-y-6">
-          {/* ==================== THÔNG TIN CHUNG ==================== */}
-          {/* Nhóm lại theo cụm dọc: Cột 1 cho Thời gian, Cột 2 cho Quỹ đầu/cuối */}
           <div className="grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
             <div className="flex flex-col">
               <InfoRow label="Bắt đầu ca" value={formatDateTime(summary.startedAt)} />
@@ -98,7 +94,6 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* ==================== DOANH THU ==================== */}
             <div>
               <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                 <Receipt size={16} /> Doanh thu ca
@@ -114,7 +109,6 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
               </div>
             </div>
 
-            {/* ==================== KIỂM QUỸ ==================== */}
             <div>
               <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
                 <Wallet size={16} /> Kiểm quỹ tiền mặt
@@ -133,7 +127,6 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
             </div>
           </div>
 
-          {/* ==================== CHI TIẾT THANH TOÁN ==================== */}
           {Array.isArray(summary.paymentBreakdown) && summary.paymentBreakdown.length > 0 && (
             <div>
               <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
@@ -166,11 +159,11 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
             </div>
           )}
 
-          {/* ==================== ĐƠN BÁN TRONG CA ==================== */}
+          {/* SalesByUser expandable */}
           {Array.isArray(summary.salesByUser) && summary.salesByUser.length > 0 && (
             <div>
               <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
-                <User size={16} /> Đơn bán trong ca
+                <User size={16} /> Doanh số theo nhân viên
               </h4>
               <div className="space-y-1.5">
                 {summary.salesByUser.map((u, idx) => {
@@ -185,9 +178,6 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
                         className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20 ${isExpanded ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-slate-50 dark:bg-[#1a1a1a]/50'}`}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700">
-                            {idx + 1}
-                          </span>
                           <span className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
                             {u.userName || 'NV #' + (idx + 1)}
                           </span>
@@ -201,7 +191,7 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
                         </div>
                       </div>
                       {isExpanded && (
-                        <div className="mt-1.5 space-y-1 pl-8">
+                        <div className="mt-1.5 space-y-1 pl-6">
                           {ordersLoading ? (
                             <p className="py-2 text-center text-xs text-slate-400">Đang tải đơn hàng...</p>
                           ) : userOrders.length === 0 ? (
@@ -212,19 +202,18 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
                                 <div className="flex items-center gap-2">
                                   <span className="rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700">Bán</span>
                                   <span className="font-mono text-slate-600 dark:text-[#999999]">{o.invoiceCode}</span>
-                                  <span className="text-slate-400">{new Date(o.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                                   <span className="text-slate-400">{o.customerName}</span>
+                                  {o.paymentMethod && (
+                                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
+                                      {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash' || o.paymentMethod === 'Tiền mặt'
+                                        ? 'Tiền mặt'
+                                        : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer' || o.paymentMethod === 'Chuyển khoản'
+                                          ? 'CK'
+                                          : o.paymentMethod}
+                                    </span>
+                                  )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                                    {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash' || o.paymentMethod === 'Tiền mặt'
-                                      ? 'Tiền mặt'
-                                      : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer' || o.paymentMethod === 'Chuyển khoản'
-                                        ? 'CK'
-                                        : o.paymentMethod || '-'}
-                                  </span>
-                                  <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
-                                </div>
+                                <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
                               </div>
                             ))
                           )}
@@ -237,32 +226,30 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
             </div>
           )}
 
-          {/* ==================== HOAT DONG TRONG CA ==================== */}
+          {/* Hoạt động trong ca */}
           {orders.length > 0 && (
             <div>
               <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
-                <Receipt size={16} /> Hoat dong trong ca ({orders.length})
+                <Receipt size={16} /> Hoạt động trong ca ({orders.length})
               </h4>
               <div className="max-h-60 space-y-1.5 overflow-y-auto">
                 {orders.map((o) => (
                   <div key={'act-' + o.id} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2 text-xs dark:bg-[#1a1a1a]/50">
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700">Ban</span>
+                      <span className="rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700">Bán</span>
                       <span className="font-mono text-slate-600 dark:text-[#999999]">{o.invoiceCode}</span>
-                      <span className="text-slate-400">{new Date(o.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                       <span className="text-slate-400">{o.customerName}</span>
-                      {o.cashier && <span className="text-slate-400">- {o.cashier}</span>}
+                      {o.paymentMethod && (
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
+                          {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash' || o.paymentMethod === 'Tiền mặt'
+                            ? 'Tiền mặt'
+                            : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer' || o.paymentMethod === 'Chuyển khoản'
+                              ? 'CK'
+                              : o.paymentMethod}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                        {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash' || o.paymentMethod === 'Tien mat'
-                          ? 'Tien mat'
-                          : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer' || o.paymentMethod === 'Chuyen khoan'
-                            ? 'CK'
-                            : o.paymentMethod || '-'}
-                      </span>
-                      <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
-                    </div>
+                    <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
                   </div>
                 ))}
               </div>

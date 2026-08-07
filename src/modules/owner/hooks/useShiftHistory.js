@@ -40,7 +40,6 @@ export const useShiftHistory = () => {
   const setDateRange = (from, to) => setFilters((f) => ({ ...f, from, to, page: 1 }));
   const resetFilters = () => setFilters(DEFAULT_FILTERS);
 
-  // Chi tiết/tóm tắt ca — tải on-demand khi mở modal
   const [shiftSummary, setShiftSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [shiftOrders, setShiftOrders] = useState([]);
@@ -54,16 +53,20 @@ export const useShiftHistory = () => {
     try {
       const res = await getShiftSummary(shiftId);
       setShiftSummary(res);
-      // Fetch orders trong khoảng thời gian của ca
       if (res?.startedAt) {
         try {
-          const ordersData = await getOrders({ status: 'Completed' });
-          const rawOrders = Array.isArray(ordersData)
-            ? ordersData
-            : ordersData?.items || ordersData?.data || [];
           const shiftStart = new Date(res.startedAt);
           const shiftEnd = res.endedAt ? new Date(res.endedAt) : new Date();
-          const filtered = rawOrders
+          const ordersData = await getOrders({
+            status: 'Completed',
+            fromDate: shiftStart.toISOString(),
+            toDate: shiftEnd.toISOString(),
+            pageSize: 500,
+          });
+          const rawOrders = Array.isArray(ordersData)
+            ? ordersData
+            : ordersData?.items || ordersData?.data?.items || ordersData?.data || [];
+          const filtered = (Array.isArray(rawOrders) ? rawOrders : [])
             .filter((o) => {
               const d = new Date(o.createdAt || o.date || o.invoiceDate || '');
               return !isNaN(d.getTime()) && d >= shiftStart && d <= shiftEnd;
