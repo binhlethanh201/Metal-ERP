@@ -93,6 +93,8 @@ export const ENDPOINTS = {
     GET_INWARD_INVENTORY: (id) => `/api/InwardInventory/${id}`,
     UPDATE_INWARD_INVENTORY: (id) => `/api/InwardInventory/${id}`,
     DELETE_INWARD_INVENTORY: (id) => `/api/InwardInventory/${id}`,
+    GET_INWARD_BY_SUPPLIER: (supplierId) => `/api/InwardInventory/by-supplier/${supplierId}`,
+    GET_INWARD_RETURNABLE_ITEMS: (id) => `/api/InwardInventory/${id}/returnable-items`,
 
     // ================= Outward Inventory =================
     GET_OUTWARD_INVENTORIES: '/api/OutwardInventory',

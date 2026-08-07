@@ -75,7 +75,6 @@ export const ROUTE_PERMISSIONS = {
     'STOCK_OUTWARD_DELETE',
     'STOCK_OUTWARD_CONFIRM',
   ],
-  inventoryReports: ['REPORT_VIEW'],
   inventoryTransactions: ['STOCK_VIEW'],
   inventoryCheck: ['STOCK_CHECK_VIEW', 'STOCK_CHECK_CREATE', 'STOCK_CHECK_APPROVE', 'STOCK_CHECK_CANCEL'],
   goodsIssue: ['STOCK_OUTWARD_CREATE', 'STOCK_OUTWARD_CONFIRM'],

@@ -14,6 +14,8 @@ import {
   confirmOutwardInventory,
   getOutwardInventories,
   getProducts,
+  getInwardBySupplier,
+  getInwardReturnableItems,
 } from '../services/inventoryService';
 import { getSuppliers } from '../services/supplierService';
 import { InventoryHistoryCard } from '../components/stock/InventoryHistoryCard';
@@ -41,7 +43,7 @@ const normalizeExportRows = (item, index) => {
   let partyName = '';
   try {
     partyName = localStorage.getItem(`outward_party_${ticketCode}`) || '';
-  } catch {}
+  } catch { }
 
   return [
     {
@@ -135,6 +137,12 @@ export const StockExport = () => {
   const [targetType, setTargetType] = useState('Nhà cung cấp');
   const [targetName, setTargetName] = useState('');
   const [suppliers, setSuppliers] = useState([]);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [inwardTickets, setInwardTickets] = useState([]);
+  const [selectedInwardTicket, setSelectedInwardTicket] = useState(null);
+  const [loadingInwardTickets, setLoadingInwardTickets] = useState(false);
+  const [inwardTicketSearch, setInwardTicketSearch] = useState('');
+  const [inwardDropdownOpen, setInwardDropdownOpen] = useState(false);
   const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
   const [note, setNote] = useState('');
 
@@ -220,6 +228,10 @@ export const StockExport = () => {
     setExportTime(t.time);
     setTargetType('Nhà cung cấp');
     setTargetName('');
+    setSelectedSupplier(null);
+    setInwardTickets([]);
+    setSelectedInwardTicket(null);
+    setInwardTicketSearch('');
     setReasonType('Xuất trả nhà cung cấp');
     setNote('');
     setItems([]);
@@ -234,6 +246,73 @@ export const StockExport = () => {
   const closeModal = () => {
     if (!isSubmitting) setIsModalOpen(false);
   };
+
+  // Fetch inward tickets when supplier is selected (for Return to Supplier)
+  useEffect(() => {
+    if (!selectedSupplier || targetType !== 'Nhà cung cấp') {
+      setInwardTickets([]);
+      setSelectedInwardTicket(null);
+      return;
+    }
+    const supplierId = selectedSupplier.id || selectedSupplier.supplierId;
+    if (!supplierId) return;
+
+    const fetchInwardTickets = async () => {
+      setLoadingInwardTickets(true);
+      try {
+        const res = await getInwardBySupplier(supplierId);
+        setInwardTickets(extractList(res));
+      } catch {
+        setInwardTickets([]);
+      } finally {
+        setLoadingInwardTickets(false);
+      }
+    };
+    fetchInwardTickets();
+  }, [selectedSupplier, targetType]);
+
+  const handleInwardTicketChange = async (ticketId) => {
+    if (!ticketId) {
+      setSelectedInwardTicket(null);
+      setItems((prev) => prev.filter((i) => !i.inwardTicketItemId));
+      return;
+    }
+    try {
+      const res = await getInwardReturnableItems(ticketId);
+      const returnableItems = res?.data?.items || res?.data || [];
+      if (!Array.isArray(returnableItems) || returnableItems.length === 0) {
+        setStatusMessage('Phiếu nhập này không còn sản phẩm nào có thể trả.');
+        return;
+      }
+      setSelectedInwardTicket({ ticketId });
+      const autoItems = returnableItems.map((ri) => ({
+        branchProductId: ri.branchProductId,
+        productId: ri.branchProductId,
+        productCode: ri.productCode || '',
+        productName: ri.productName || '',
+        unit: ri.unitName || '',
+        quantity: 0,
+        maxStock: Math.min(ri.maxReturnableQuantity, ri.actualStock || 0),
+        unitPrice: ri.unitPrice || 0,
+        inwardTicketItemId: ri.inwardTicketItemId,
+        priceLocked: true,
+      }));
+      setItems(autoItems);
+      setStatusMessage('');
+    } catch {
+      setStatusMessage('Lỗi: Không thể tải danh sách sản phẩm có thể trả.');
+    }
+  };
+
+  const filteredInwardTickets = useMemo(() => {
+    const kw = inwardTicketSearch.toLowerCase().trim();
+    return inwardTickets.filter((t) => {
+      if (!kw) return true;
+      const code = (t.ticketCode || t.TicketCode || '').toLowerCase();
+      const date = t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : '';
+      return code.includes(kw) || date.includes(kw);
+    });
+  }, [inwardTickets, inwardTicketSearch]);
 
   const resolvedReason = reasonType;
 
@@ -392,7 +471,7 @@ export const StockExport = () => {
               const allItems = extractList(allRes);
               availableProducts = allItems;
               if (allItems.length > products.length) setProducts(allItems);
-            } catch {}
+            } catch { }
           }
 
           const mappedItems = validRows.map((row) => {
@@ -412,7 +491,7 @@ export const StockExport = () => {
               productName: row.tenSanPham || '',
               unit,
               quantity: Number(row.soLuong || 0),
-              unitPrice: Number(row.donGiaXuat || 0),
+              unitPrice: 0,
               maxStock: stock,
             };
           });
@@ -534,11 +613,13 @@ export const StockExport = () => {
         reason: reasonText,
         note: note || reasonText,
         ...(ticketCode.trim() && { ticketCode: ticketCode.trim() }),
-        ...(targetType === 'Nhà cung cấp' && targetName && { supplierId: targetName }),
+        ...(selectedSupplier && { supplierId: selectedSupplier.id || selectedSupplier.supplierId }),
+        ...(selectedInwardTicket && { inwardTicketId: selectedInwardTicket.ticketId }),
         items: items.map((i) => ({
-          branchProductId: i.productId,
+          branchProductId: i.productId || i.branchProductId,
           quantity: Number(i.quantity || 0),
           unitPrice: Number(i.unitPrice || 0),
+          ...(i.inwardTicketItemId && { inwardTicketItemId: i.inwardTicketItemId }),
         })),
       };
       setStatusMessage('Đang tạo phiếu xuất kho...');
@@ -549,7 +630,7 @@ export const StockExport = () => {
       if (newTicketCode && targetName.trim()) {
         try {
           localStorage.setItem(`outward_party_${newTicketCode}`, targetName.trim());
-        } catch {} // eslint-disable-line no-empty
+        } catch { } // eslint-disable-line no-empty
       }
 
       if (ticketId) {
@@ -689,34 +770,36 @@ export const StockExport = () => {
 
       {/* ==================== MODAL TẠO PHIẾU XUẤT ==================== */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Tạo phiếu xuất kho" size="5xl">
-        <div className="mb-4 flex items-center gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept=".xlsx,.xls"
-            onChange={handleImportExcel}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={handleDownloadTemplate}
-            disabled={importing}
-            className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Icon name="download" size={16} /> Tải file Excel mẫu
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
-          >
-            <Icon name="upload_file" size={16} /> {importing ? 'Đang import...' : 'Nhập từ Excel'}
-          </button>
-          {importing && (
-            <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>
-          )}
-        </div>
+        {reasonType !== 'Xuất trả nhà cung cấp' && (
+          <div className="mb-4 flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".xlsx,.xls"
+              onChange={handleImportExcel}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              disabled={importing}
+              className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Icon name="download" size={16} /> Tải file Excel mẫu
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+            >
+              <Icon name="upload_file" size={16} /> {importing ? 'Đang import...' : 'Nhập từ Excel'}
+            </button>
+            {importing && (
+              <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>
+            )}
+          </div>
+        )}
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* Error / Status Banner */}
           {statusMessage &&
@@ -730,11 +813,10 @@ export const StockExport = () => {
                 msg.includes('vượt');
               return (
                 <div
-                  className={`flex items-start gap-3 rounded-lg border p-4 ${
-                    isError
+                  className={`flex items-start gap-3 rounded-lg border p-4 ${isError
                       ? 'border-red-300 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-950/30 dark:text-red-300'
                       : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-                  }`}
+                    }`}
                 >
                   <Icon
                     name={isError ? 'error' : 'check_circle'}
@@ -762,14 +844,11 @@ export const StockExport = () => {
 
           {importResult && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3">
                 <h3 className="font-bold text-amber-800 dark:text-amber-300">
                   Kết quả import: {importResult.validRows?.length || 0} dòng hợp lệ,{' '}
                   {importResult.errors?.length || 0} lỗi
                 </h3>
-                <Button variant="secondary" size="sm" onClick={() => setImportResult(null)}>
-                  Đóng
-                </Button>
               </div>
               {importResult.errors?.length > 0 && (
                 <div className="max-h-40 space-y-1 overflow-y-auto">
@@ -792,10 +871,11 @@ export const StockExport = () => {
                   ))}
                 </div>
               )}
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Các dòng hợp lệ đã được nạp vào form bên dưới. Kiểm tra lại và bấm Xác nhận xuất
-                kho.
-              </p>
+              {importResult.validRows?.length > 0 && (
+                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                  Các dòng hợp lệ đã được nạp vào form bên dưới.
+                </p>
+              )}
             </div>
           )}
 
@@ -829,11 +909,10 @@ export const StockExport = () => {
                 <input
                   type="date"
                   required
-                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.exportDate
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.exportDate
                       ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                       : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
+                    }`}
                   value={exportDate}
                   onChange={(e) => {
                     setExportDate(e.target.value);
@@ -891,34 +970,165 @@ export const StockExport = () => {
                   <span className="text-red-500">*</span>
                 </label>
                 {targetType === 'Nhà cung cấp' ? (
-                  <select
-                    className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                      fieldErrors.targetName
-                        ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
-                        : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                    }`}
-                    value={targetName}
-                    onChange={(e) => {
-                      setTargetName(e.target.value);
-                      setFieldErrors((prev) => ({ ...prev, targetName: false }));
-                    }}
-                  >
-                    <option value="">-- Chọn nhà cung cấp --</option>
-                    {suppliers.map((s) => (
-                      <option key={s.id || s.supplierId} value={s.id || s.supplierId || ''}>
-                        {s.supplierName || s.name || s.fullName || s.companyName || 'NCC'}
-                      </option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName
+                          ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
+                          : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                        }`}
+                      value={
+                        selectedSupplier ? selectedSupplier.id || selectedSupplier.supplierId || '' : ''
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setSelectedSupplier(null);
+                          setTargetName('');
+                          return;
+                        }
+                        const s = suppliers.find((x) => (x.id || x.supplierId) === val);
+                        setSelectedSupplier(s || null);
+                        setTargetName(s ? (s.supplierName || s.name || s.fullName || s.companyName || '') : '');
+                        setFieldErrors((prev) => ({ ...prev, targetName: false }));
+                      }}
+                    >
+                      <option value="">-- Chọn nhà cung cấp --</option>
+                      {suppliers.map((s) => (
+                        <option
+                          key={s.id || s.supplierId}
+                          value={s.id || s.supplierId}
+                        >
+                          {s.supplierName || s.name || s.fullName || s.companyName || 'NCC'}
+                        </option>
+                      ))}
+                    </select>
+                    {/* Đơn nhập hàng tham chiếu */}
+                    {reasonType === 'Xuất trả nhà cung cấp' && selectedSupplier && (
+                      <div className="mt-3">
+                        <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                          Đơn nhập hàng tham chiếu
+                        </label>
+                        <div className="relative mt-1.5">
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
+                            onClick={() => {
+                              if (!loadingInwardTickets) {
+                                setInwardDropdownOpen((o) => !o);
+                                setInwardTicketSearch('');
+                              }
+                            }}
+                            disabled={loadingInwardTickets}
+                          >
+                            <span className={selectedInwardTicket ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}>
+                              {loadingInwardTickets
+                                ? 'Đang tải...'
+                                : selectedInwardTicket
+                                  ? (() => {
+                                    const t = inwardTickets.find(
+                                      (x) => (x.stockTicketId || x.ticketId) === selectedInwardTicket.ticketId
+                                    );
+                                    return t
+                                      ? `${t.ticketCode || t.TicketCode} - ${t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : ''} (${t.itemsCount || t.ItemsCount || 0} SP)`
+                                      : '-- Chọn đơn nhập hàng --';
+                                  })()
+                                  : inwardTickets.length === 0
+                                    ? '-- Không có đơn nhập nào --'
+                                    : '-- Chọn đơn nhập hàng của NCC này --'}
+                            </span>
+                            <Icon
+                              name="expand_more"
+                              size={18}
+                              className={`text-slate-400 transition-transform ${inwardDropdownOpen ? 'rotate-180' : ''}`}
+                            />
+                          </button>
+
+                          {inwardDropdownOpen && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => {
+                                  setInwardDropdownOpen(false);
+                                  setInwardTicketSearch('');
+                                }}
+                              />
+                              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
+                                <div className="border-b border-slate-100 p-3 dark:border-[#333333]">
+                                  <div className="relative">
+                                    <Icon
+                                      name="search"
+                                      size={16}
+                                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
+                                    <input
+                                      type="text"
+                                      placeholder="Tìm theo mã phiếu hoặc ngày..."
+                                      className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
+                                      value={inwardTicketSearch}
+                                      onChange={(e) => setInwardTicketSearch(e.target.value)}
+                                      autoFocus
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="max-h-52 overflow-y-auto">
+                                  {filteredInwardTickets.length === 0 ? (
+                                    <div className="px-4 py-6 text-center text-sm text-slate-400">
+                                      {inwardTicketSearch.trim()
+                                        ? 'Không tìm thấy phiếu nhập phù hợp'
+                                        : 'Không có phiếu nhập nào'}
+                                    </div>
+                                  ) : (
+                                    filteredInwardTickets.map((t) => {
+                                      const tId = t.stockTicketId || t.ticketId;
+                                      const isSelected = selectedInwardTicket?.ticketId === tId;
+                                      return (
+                                        <button
+                                          key={tId}
+                                          type="button"
+                                          className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-blue-50 dark:hover:bg-[#333333] ${isSelected ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400' : 'text-slate-700 dark:text-[#e5e5e5]'
+                                            }`}
+                                          onClick={() => {
+                                            handleInwardTicketChange(tId);
+                                            setInwardDropdownOpen(false);
+                                            setInwardTicketSearch('');
+                                          }}
+                                        >
+                                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500 dark:bg-[#272727] dark:text-[#b3b3b3]">
+                                            <Icon name="receipt_long" size={16} />
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <div className="truncate font-medium">
+                                              {t.ticketCode || t.TicketCode}
+                                            </div>
+                                            <div className="text-xs text-slate-400">
+                                              {t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : ''} - {t.itemsCount || t.ItemsCount || 0} sản phẩm
+                                            </div>
+                                          </div>
+                                          {isSelected && (
+                                            <Icon name="check" size={18} className="shrink-0 text-blue-600" />
+                                          )}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <input
                     type="text"
                     placeholder="VD: Xưởng sản xuất số 1"
-                    className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                      fieldErrors.targetName
+                    className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName
                         ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                         : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                    }`}
+                      }`}
                     value={targetName}
                     onChange={(e) => {
                       setTargetName(e.target.value);
@@ -937,11 +1147,10 @@ export const StockExport = () => {
                 <input
                   type="text"
                   placeholder="VD: Đối tác vận chuyển, Bảo hành..."
-                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
-                    fieldErrors.targetName
+                  className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName
                       ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                       : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
+                    }`}
                   value={targetName}
                   onChange={(e) => {
                     setTargetName(e.target.value);
@@ -1017,211 +1226,212 @@ export const StockExport = () => {
               </span>
             </div>
 
-            {/* Dòng thêm mới + combobox tìm kiếm */}
-            <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-r from-blue-50/60 to-white p-4 dark:border-blue-800 dark:from-blue-950/30 dark:to-[#1a1a1a]">
-              <div className="flex items-end gap-3">
-                <div className="relative min-w-0 flex-1">
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
-                    Chọn sản phẩm
-                  </label>
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                    onClick={() => setDropdownOpen((o) => !o)}
-                  >
-                    <span
-                      className={
-                        selectedProductId
-                          ? 'text-slate-800 dark:text-[#e5e5e5]'
-                          : 'text-slate-400 dark:text-[#808080]'
-                      }
+            {/* Dòng thêm mới + combobox tìm kiếm - ẩn khi xuất trả NCC */}
+            {reasonType !== 'Xuất trả nhà cung cấp' && (
+              <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-r from-blue-50/60 to-white p-4 dark:border-blue-800 dark:from-blue-950/30 dark:to-[#1a1a1a]">
+                <div className="flex items-end gap-3">
+                  <div className="relative min-w-0 flex-1">
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                      Chọn sản phẩm
+                    </label>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
+                      onClick={() => setDropdownOpen((o) => !o)}
                     >
-                      {selectedProductId
-                        ? (() => {
+                      <span
+                        className={
+                          selectedProductId
+                            ? 'text-slate-800 dark:text-[#e5e5e5]'
+                            : 'text-slate-400 dark:text-[#808080]'
+                        }
+                      >
+                        {selectedProductId
+                          ? (() => {
                             const p = products.find((x) => getItemKey(x) === selectedProductId);
                             return p
                               ? `${p.productCode || p.ProductCode || ''} - ${p.productName || p.ProductName || ''}`
                               : '-- Chọn sản phẩm --';
                           })()
-                        : '-- Chọn sản phẩm --'}
-                    </span>
-                    <Icon
-                      name="expand_more"
-                      size={18}
-                      className={`text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                          : '-- Chọn sản phẩm --'}
+                      </span>
+                      <Icon
+                        name="expand_more"
+                        size={18}
+                        className={`text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
 
-                  {dropdownOpen && (
-                    <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
-                      <div className="border-b border-slate-100 p-3 dark:border-[#333333]">
-                        <div className="relative">
-                          <Icon
-                            name="search"
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#808080]"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Tìm theo tên hoặc mã sản phẩm..."
-                            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5] dark:focus:bg-[#272727]"
-                            value={productSearch}
-                            onChange={(e) => setProductSearch(e.target.value)}
-                            autoFocus
-                            onClick={(e) => e.stopPropagation()}
-                          />
+                    {dropdownOpen && (
+                      <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
+                        <div className="border-b border-slate-100 p-3 dark:border-[#333333]">
+                          <div className="relative">
+                            <Icon
+                              name="search"
+                              size={16}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#808080]"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Tìm theo tên hoặc mã sản phẩm..."
+                              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5] dark:focus:bg-[#272727]"
+                              value={productSearch}
+                              onChange={(e) => setProductSearch(e.target.value)}
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-52 overflow-y-auto">
+                          {filteredProducts.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-[#808080]">
+                              {productSearch.trim()
+                                ? 'Không tìm thấy sản phẩm phù hợp'
+                                : 'Tất cả sản phẩm đã được thêm'}
+                            </div>
+                          ) : (
+                            filteredProducts.map((product) => {
+                              const idValue = getItemKey(product);
+                              const isActive = selectedProductId === idValue;
+                              const stock = getProductStock(product);
+                              return (
+                                <button
+                                  key={idValue}
+                                  type="button"
+                                  className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-[#333333] ${isActive
+                                      ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-[#272727] dark:text-blue-300'
+                                      : 'text-slate-700 dark:text-[#b3b3b3]'
+                                    }`}
+                                  onClick={() => {
+                                    setSelectedProductId(idValue);
+                                    setDropdownOpen(false);
+                                    setProductSearch('');
+                                  }}
+                                >
+                                  <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
+                                    {product.productCode || product.ProductCode || '-'}
+                                  </span>
+                                  <span className="flex-1 truncate dark:text-[#d4d4d4]">
+                                    {product.productName || product.ProductName}
+                                  </span>
+                                  <span
+                                    className={`shrink-0 text-xs font-medium ${stock <= 0 ? 'text-red-500' : stock < 10 ? 'text-amber-600' : 'text-emerald-600'}`}
+                                  >
+                                    {stock <= 0 ? 'Hết hàng' : `Còn ${stock} ${getUnit(product)}`}
+                                  </span>
+                                </button>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
-                      <div className="max-h-52 overflow-y-auto">
-                        {filteredProducts.length === 0 ? (
-                          <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-[#808080]">
-                            {productSearch.trim()
-                              ? 'Không tìm thấy sản phẩm phù hợp'
-                              : 'Tất cả sản phẩm đã được thêm'}
-                          </div>
-                        ) : (
-                          filteredProducts.map((product) => {
-                            const idValue = getItemKey(product);
-                            const isActive = selectedProductId === idValue;
-                            const stock = getProductStock(product);
-                            return (
-                              <button
-                                key={idValue}
-                                type="button"
-                                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 dark:hover:bg-[#333333] ${
-                                  isActive
-                                    ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-[#272727] dark:text-blue-300'
-                                    : 'text-slate-700 dark:text-[#b3b3b3]'
-                                }`}
-                                onClick={() => {
-                                  setSelectedProductId(idValue);
-                                  setDropdownOpen(false);
-                                  setProductSearch('');
-                                }}
-                              >
-                                <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                                  {product.productCode || product.ProductCode || '-'}
-                                </span>
-                                <span className="flex-1 truncate dark:text-[#d4d4d4]">
-                                  {product.productName || product.ProductName}
-                                </span>
-                                <span
-                                  className={`shrink-0 text-xs font-medium ${stock <= 0 ? 'text-red-500' : stock < 10 ? 'text-amber-600' : 'text-emerald-600'}`}
-                                >
-                                  {stock <= 0 ? 'Hết hàng' : `Còn ${stock} ${getUnit(product)}`}
-                                </span>
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    )}
 
-                  {dropdownOpen && (
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setProductSearch('');
-                      }}
-                    />
-                  )}
-                </div>
+                    {dropdownOpen && (
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          setProductSearch('');
+                        }}
+                      />
+                    )}
+                  </div>
 
-                <div className="w-36">
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
-                    Số lượng
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="SL"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-                    value={selectedQuantity}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/[^0-9]/g, '');
-                      if (!raw) {
-                        setSelectedQuantity('');
-                        setStatusMessage('');
-                        return;
-                      }
-                      if (selectedProductId) {
-                        const prod = products.find((p) => getItemKey(p) === selectedProductId);
-                        if (prod) {
-                          const stock = getProductStock(prod);
-                          const num = Number(raw);
-                          if (num > stock) {
-                            setSelectedQuantity(String(stock));
-                            setStatusMessage(
-                              `Đã chạm tồn kho tối đa: ${stock} ${prod.unit || prod.unitName || ''}`
-                            );
-                            return;
-                          }
+                  <div className="w-36">
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                      Số lượng
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="SL"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
+                      value={selectedQuantity}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        if (!raw) {
+                          setSelectedQuantity('');
                           setStatusMessage('');
-                          setSelectedQuantity(raw);
                           return;
                         }
-                      }
-                      setSelectedQuantity(raw);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addItem();
-                      }
-                    }}
-                  />
+                        if (selectedProductId) {
+                          const prod = products.find((p) => getItemKey(p) === selectedProductId);
+                          if (prod) {
+                            const stock = getProductStock(prod);
+                            const num = Number(raw);
+                            if (num > stock) {
+                              setSelectedQuantity(String(stock));
+                              setStatusMessage(
+                                `Đã chạm tồn kho tối đa: ${stock} ${prod.unit || prod.unitName || ''}`
+                              );
+                              return;
+                            }
+                            setStatusMessage('');
+                            setSelectedQuantity(raw);
+                            return;
+                          }
+                        }
+                        setSelectedQuantity(raw);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addItem();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg bg-[#004785] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#003566] active:scale-95"
+                  >
+                    <Icon name="add" size={18} />
+                    Thêm
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={addItem}
-                  className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg bg-[#004785] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#003566] active:scale-95"
-                >
-                  <Icon name="add" size={18} />
-                  Thêm
-                </button>
+                {selectedProductId &&
+                  (() => {
+                    const prod = products.find((p) => getItemKey(p) === selectedProductId);
+                    if (!prod) return null;
+                    const stock = getProductStock(prod);
+                    const unit = getUnit(prod);
+                    const isOver = selectedQuantity && Number(selectedQuantity) > stock;
+                    return (
+                      <div className="mt-2 flex items-center gap-2 text-[11px]">
+                        <Icon
+                          name="inventory_2"
+                          size={14}
+                          className={
+                            stock <= 0
+                              ? 'text-red-400'
+                              : stock < 10
+                                ? 'text-amber-400'
+                                : 'text-emerald-400'
+                          }
+                        />
+                        <span
+                          className={
+                            stock <= 0
+                              ? 'font-semibold text-red-500'
+                              : stock < 10
+                                ? 'font-semibold text-amber-600'
+                                : 'text-slate-500 dark:text-[#999999]'
+                          }
+                        >
+                          Tồn kho: {stock} {unit}
+                        </span>
+                        {isOver && (
+                          <span className="font-semibold text-red-500">(đã chạm giới hạn)</span>
+                        )}
+                      </div>
+                    );
+                  })()}
               </div>
-
-              {selectedProductId &&
-                (() => {
-                  const prod = products.find((p) => getItemKey(p) === selectedProductId);
-                  if (!prod) return null;
-                  const stock = getProductStock(prod);
-                  const unit = getUnit(prod);
-                  const isOver = selectedQuantity && Number(selectedQuantity) > stock;
-                  return (
-                    <div className="mt-2 flex items-center gap-2 text-[11px]">
-                      <Icon
-                        name="inventory_2"
-                        size={14}
-                        className={
-                          stock <= 0
-                            ? 'text-red-400'
-                            : stock < 10
-                              ? 'text-amber-400'
-                              : 'text-emerald-400'
-                        }
-                      />
-                      <span
-                        className={
-                          stock <= 0
-                            ? 'font-semibold text-red-500'
-                            : stock < 10
-                              ? 'font-semibold text-amber-600'
-                              : 'text-slate-500 dark:text-[#999999]'
-                        }
-                      >
-                        Tồn kho: {stock} {unit}
-                      </span>
-                      {isOver && (
-                        <span className="font-semibold text-red-500">(đã chạm giới hạn)</span>
-                      )}
-                    </div>
-                  );
-                })()}
-            </div>
+            )}
 
             {/* Bảng sản phẩm đã thêm */}
             {items.length > 0 ? (
@@ -1384,11 +1594,10 @@ export const StockExport = () => {
               </div>
             ) : (
               <div
-                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${
-                  fieldErrors.items
+                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 ${fieldErrors.items
                     ? 'border-red-300 bg-red-50/30 text-red-400 dark:border-red-700 dark:bg-red-950/20'
                     : 'border-slate-200 text-slate-400 dark:border-[#333333] dark:text-[#808080]'
-                }`}
+                  }`}
               >
                 <Icon name="inventory_2" size={32} className="mb-2 opacity-40" />
                 <p className="text-sm font-medium">Chưa có sản phẩm nào</p>

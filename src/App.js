@@ -36,7 +36,6 @@ const InventoryDashboard = lazy(() => import('./modules/inventory/pages/Inventor
 const InventoryProduct = lazy(() => import('./modules/inventory/pages/InventoryProduct'));
 const StockImport = lazy(() => import('./modules/inventory/pages/StockImport'));
 const StockExport = lazy(() => import('./modules/inventory/pages/StockExport'));
-const InventoryReports = lazy(() => import('./modules/inventory/pages/InventoryReports'));
 const InventoryTransactionManagement = lazy(
   () => import('./modules/inventory/pages/InventoryTransactionManagement')
 );
@@ -194,9 +193,6 @@ function App() {
               </Route>
               <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryExport} />}>
                 <Route path="export" element={<StockExport />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryReports} />}>
-                <Route path="reports" element={<InventoryReports />} />
               </Route>
               <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryCheck} />}>
                 <Route path="inventory-check" element={<InventoryCheckList />} />

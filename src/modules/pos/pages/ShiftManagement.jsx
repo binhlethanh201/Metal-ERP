@@ -543,15 +543,12 @@ export const ShiftManagement = () => {
         userName: staffName,
       });
       console.log('[ShiftManagement] startShift raw:', raw);
-      // API có thể trả về { data: {...} } hoặc trực tiếp {...}
       const result = raw?.data || raw;
       console.log('[ShiftManagement] startShift result:', result);
       const newShift = mapShift({ ...result, userName: staffName });
       console.log('[ShiftManagement] mapped new shift:', newShift);
 
-      // Lưu tên thu ngân cho shift này
       saveCashier(newShift.id, staffName);
-      // Lưu shift đang hoạt động vào localStorage để POSScreen dùng
       localStorage.setItem('pos_active_shift', JSON.stringify(newShift));
 
       setShifts((prev) => [newShift, ...prev]);
@@ -559,6 +556,29 @@ export const ShiftManagement = () => {
       setShowStartModal(false);
     } catch (err) {
       console.error('[ShiftManagement] Error starting shift:', err);
+      // Nếu 409 - có ca đang mở, tự fetch ca đó về
+      if (err?.status === 409 || (err?.message && err.message.includes('đang có ca bán hoạt động'))) {
+        try {
+          const openRes = await getShifts({ status: 'OPEN' });
+          const openItems = Array.isArray(openRes) ? openRes : openRes?.items || openRes?.data || [];
+          const openShiftData = Array.isArray(openItems) ? openItems[0] : null;
+          if (openShiftData) {
+            const existingOpen = mapShift(openShiftData);
+            saveCashier(existingOpen.id, staffName);
+            localStorage.setItem('pos_active_shift', JSON.stringify(existingOpen));
+            setShiftSummary(existingOpen);
+            setShifts((prev) => {
+              if (prev.find((s) => s.id === existingOpen.id)) return prev;
+              return [existingOpen, ...prev];
+            });
+            setShowStartModal(false);
+            alert('Đã phát hiện ca bán đang mở. Bạn có thể tiếp tục bán hàng hoặc chốt ca.');
+            return;
+          }
+        } catch (fetchErr) {
+          console.error('[ShiftManagement] Error fetching open shift:', fetchErr);
+        }
+      }
       alert('Lỗi mở ca: ' + (err.message || 'Không xác định'));
     }
   };
