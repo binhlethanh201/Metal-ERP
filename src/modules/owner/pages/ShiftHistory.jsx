@@ -22,6 +22,8 @@ const ShiftHistory = () => {
     resetFilters,
     shiftSummary,
     summaryLoading,
+    shiftOrders,
+    ordersLoading,
     loadShiftSummary,
     clearShiftSummary,
   } = useShiftHistory();
@@ -239,6 +241,8 @@ const ShiftHistory = () => {
         onClose={closeSummary}
         summary={shiftSummary}
         loading={summaryLoading}
+        orders={shiftOrders}
+        ordersLoading={ordersLoading}
       />
     </div>
   );

@@ -83,6 +83,22 @@ const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
       ),
     },
     {
+      key: 'closedBy',
+      header: 'Người kết thúc',
+      render: (_, s) => {
+        const closer = s.closedByUserName || (s.status === 'CLOSED' ? (s.userName || '—') : '—');
+        const isForceClose = s.closedByUserName && s.closedByUserId !== s.userId;
+        return (
+          <div className="text-sm text-slate-700 dark:text-[#b3b3b3]">
+            {closer}
+            {isForceClose && (
+              <span className="ml-1 text-xs text-amber-600">(chốt hộ)</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: 'status',
       header: <div className="text-center">Trạng thái</div>,
       render: (_, s) => <div className="flex justify-center">{renderStatusBadge(s.status)}</div>,
