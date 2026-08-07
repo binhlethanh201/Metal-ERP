@@ -42,7 +42,7 @@ const SupplierPaymentManagement = () => {
     fetchActiveSuppliers,
     handleUpdateNote,
     handleCancel,
-    refetch,
+    // refetch,
   } = useSupplierPayment();
 
   useEffect(() => {
