@@ -5,7 +5,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../shared/hooks/useAuth';
-import { hasRole } from '../../../shared/utils/roleRedirect';
 import { hasPermission } from '../../../shared/utils/permissions';
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
@@ -196,7 +195,6 @@ const POSScreen = () => {
     }
   }, [posProducts]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const hasSaleCreate = hasPermission(user, 'SALE_CREATE');
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
