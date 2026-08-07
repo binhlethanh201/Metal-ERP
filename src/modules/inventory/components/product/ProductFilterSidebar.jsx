@@ -9,6 +9,7 @@ export const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters })
     setGroupKeyword,
     brandKeyword,
     setBrandKeyword,
+    // eslint-disable-next-line
     supplierKeyword,
     setSupplierKeyword,
     productStatusFilter,
@@ -18,7 +19,9 @@ export const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters })
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [brandOptions, setBrandOptions] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(false);
+  // eslint-disable-next-line
   const [supplierOptions, setSupplierOptions] = useState([]);
+  // eslint-disable-next-line
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   // Tải danh sách nhóm hàng & thương hiệu từ API
