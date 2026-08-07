@@ -4,11 +4,14 @@ import { Button } from '../../../../shared/components/Button';
 import Icon from '../../../../shared/components/Icon';
 import { ImportItemsTable } from './ImportItemsTable';
 import { ImportTicketForm } from './ImportTicketForm';
-import { createInwardInventory, confirmInwardInventory, getProducts } from '../../services/inventoryService';
+import {
+  createInwardInventory,
+  confirmInwardInventory,
+  getProducts,
+} from '../../services/inventoryService';
 import { getSuppliers } from '../../services/supplierService';
 import { createProduct } from '../../services/productService';
 import { EditProductModal } from '../product/EditProductModal';
-
 
 const formatCurrency = (val) => {
   const num = Number(val || 0);
@@ -23,7 +26,8 @@ const extractList = (res) => {
   return [];
 };
 
-const getItemKey = (item) => item?.branchProductId || item?.productId || item?.productCode || item?.id || '';
+const getItemKey = (item) =>
+  item?.branchProductId || item?.productId || item?.productCode || item?.id || '';
 
 export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const [products, setProducts] = useState([]);
@@ -70,25 +74,40 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     loadInitData();
   }, [isOpen]);
 
-  const addProductToTicket = useCallback((product) => {
-    setItems((current) => {
-      const key = getItemKey(product);
-      if (!key) return current;
-      const existing = current.find((i) => getItemKey(i) === key);
-      if (existing) {
-        return current.map((i) =>
-          getItemKey(i) === key ? { ...i, quantity: Number(i.quantity) + 1 } : i
-        );
-      }
-      return [...current, { ...product, id: key, quantity: 1, costPrice: product.costPrice || 0 }];
-    });
-  }, []);
+  const addProductToTicket = useCallback(
+    (product) => {
+      setItems((current) => {
+        const key = getItemKey(product);
+        if (!key) return current;
+        const existing = current.find((i) => getItemKey(i) === key);
+        if (existing) {
+          return current.map((i) =>
+            getItemKey(i) === key ? { ...i, quantity: Number(i.quantity) + 1 } : i
+          );
+        }
+        return [
+          ...current,
+          {
+            ...product,
+            id: key,
+            quantity: 1,
+            costPrice: product.costPrice || 0,
+            supplierId: selectedSupplier?.id || null,
+          },
+        ];
+      });
+    },
+    [selectedSupplier]
+  );
 
   const updateItem = (id, field, value) => {
     setItems((curr) =>
       curr.map((item) =>
         getItemKey(item) === id
-          ? { ...item, [field]: field === 'quantity' || field === 'costPrice' ? Number(value || 0) : value }
+          ? {
+              ...item,
+              [field]: field === 'quantity' || field === 'costPrice' ? Number(value || 0) : value,
+            }
           : item
       )
     );
@@ -108,19 +127,32 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         let key, importItem;
         if (matched) {
           key = getItemKey(matched);
-          importItem = { ...matched, id: key, quantity: Number(row.quantity || 0), costPrice: Number(row.costPrice || 0) };
+          importItem = {
+            ...matched,
+            id: key,
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
         } else {
           key = row.productCode || `new-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
           importItem = {
-            id: key, _isNew: true,
-            productCode: row.productCode || '', productName: row.productName || '',
-            unitName: row.unitName || row.unit || '', unit: row.unitName || row.unit || '',
-            quantity: Number(row.quantity || 0), costPrice: Number(row.costPrice || 0),
+            id: key,
+            _isNew: true,
+            productCode: row.productCode || '',
+            productName: row.productName || '',
+            unitName: row.unitName || row.unit || '',
+            unit: row.unitName || row.unit || '',
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
           };
         }
-        const existingIdx = updated.findIndex((i) => key ? getItemKey(i) === key : false);
+        const existingIdx = updated.findIndex((i) => (key ? getItemKey(i) === key : false));
         if (existingIdx >= 0) {
-          updated[existingIdx] = { ...updated[existingIdx], quantity: Number(row.quantity || 0), costPrice: Number(row.costPrice || 0) };
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            quantity: Number(row.quantity || 0),
+            costPrice: Number(row.costPrice || 0),
+          };
         } else {
           updated.push(importItem);
         }
@@ -129,17 +161,20 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     });
   }, []);
 
-  const totals = useMemo(() => ({
-    totalLines: items.length,
-    totalQuantity: items.reduce((sum, i) => sum + Number(i.quantity || 0), 0),
-    totalAmount: items.reduce((sum, i) => {
-      const qty = Number(i.quantity || 0);
-      const price = Number(i.costPrice || 0);
-      if (qty > 999999 || price > 999999999) return sum;
-      const lineTotal = qty * price;
-      return sum + (lineTotal > 1e15 ? 0 : lineTotal);
-    }, 0),
-  }), [items]);
+  const totals = useMemo(
+    () => ({
+      totalLines: items.length,
+      totalQuantity: items.reduce((sum, i) => sum + Number(i.quantity || 0), 0),
+      totalAmount: items.reduce((sum, i) => {
+        const qty = Number(i.quantity || 0);
+        const price = Number(i.costPrice || 0);
+        if (qty > 999999 || price > 999999999) return sum;
+        const lineTotal = qty * price;
+        return sum + (lineTotal > 1e15 ? 0 : lineTotal);
+      }, 0),
+    }),
+    [items]
+  );
 
   const handleFinish = async (isDraft = false) => {
     if (!items.length) {
@@ -157,7 +192,12 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       items: items.map((i) => {
         const isNewProduct = i._isNew === true;
         const systemId = parseId(i.branchProductId || i.productId || i.id);
-        const item = { quantity: Number(i.quantity || 0), costPrice: Number(i.costPrice || 0), note: '' };
+        const item = {
+          quantity: Number(i.quantity || 0),
+          costPrice: Number(i.costPrice || 0),
+          note: '',
+          supplierId: parseId(i.supplierId),
+        };
 
         if (!isNewProduct && systemId) {
           item.id = systemId;
@@ -171,6 +211,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
             categoryName: i.categoryName || '',
             barcode: i.barcode || null,
             salePrice: i.salePrice ?? 0,
+            supplierId: parseId(i.supplierId),
           };
         }
         return item;
@@ -178,7 +219,10 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     };
 
     setIsSubmitting(true);
-    setStatus({ type: 'info', message: isDraft ? 'Đang tạo phiếu nháp...' : 'Đang tạo và duyệt phiếu kho...' });
+    setStatus({
+      type: 'info',
+      message: isDraft ? 'Đang tạo phiếu nháp...' : 'Đang tạo và duyệt phiếu kho...',
+    });
 
     try {
       const res = await createInwardInventory(payload);
@@ -198,7 +242,9 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       if (errors) {
         if (Array.isArray(errors)) msg = errors.join(' | ');
         else if (typeof errors === 'object')
-          msg = Object.entries(errors).map(([f, ms]) => `${f}: ${Array.isArray(ms) ? ms.join(', ') : ms}`).join(' | ');
+          msg = Object.entries(errors)
+            .map(([f, ms]) => `${f}: ${Array.isArray(ms) ? ms.join(', ') : ms}`)
+            .join(' | ');
         else msg = String(errors);
       } else {
         msg = error?.message || 'Lỗi khi tạo phiếu';
@@ -212,9 +258,12 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   const handleDownloadTemplate = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/inwardinventoryexcel/template`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/inwardinventoryexcel/template`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!res.ok) throw new Error('Tải template thất bại');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -256,7 +305,10 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
           handleImportRows(mapped);
         }
         if (errors?.length > 0) {
-          setStatus({ type: 'error', message: `${errors.length} dòng lỗi. ${count} dòng hợp lệ đã được nạp.` });
+          setStatus({
+            type: 'error',
+            message: `${errors.length} dòng lỗi. ${count} dòng hợp lệ đã được nạp.`,
+          });
         } else {
           setStatus({ type: 'success', message: `Đã nạp ${count} sản phẩm từ Excel.` });
         }
@@ -273,13 +325,36 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={() => !isSubmitting && onClose()} title="Tạo phiếu nhập kho" size="8xl">
+      <Modal
+        isOpen={isOpen}
+        onClose={() => !isSubmitting && onClose()}
+        title="Tạo phiếu nhập kho"
+        size="8xl"
+      >
         <div className="mb-4 flex items-center gap-2">
-          <input type="file" ref={fileInputRef} accept=".xlsx,.xls" onChange={handleImportExcel} className="hidden" />
-          <Button variant="secondary" size="sm" onClick={handleDownloadTemplate} disabled={importing} className="flex items-center gap-1.5">
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".xlsx,.xls"
+            onChange={handleImportExcel}
+            className="hidden"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleDownloadTemplate}
+            disabled={importing}
+            className="flex items-center gap-1.5"
+          >
             <Icon name="download" size={16} /> Tải file Excel mẫu
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} className="flex items-center gap-1.5">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-1.5"
+          >
             <Icon name="upload_file" size={16} /> {importing ? 'Đang import...' : 'Nhập từ Excel'}
           </Button>
         </div>

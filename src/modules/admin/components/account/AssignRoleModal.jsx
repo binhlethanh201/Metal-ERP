@@ -2,25 +2,21 @@ import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 
 const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
-  const [roleIds, setRoleIds] = useState([]);
+  const [roleId, setRoleId] = useState('');
 
   useEffect(() => {
     if (isOpen && user) {
-      setRoleIds((user.roles || []).map((r) => r.roleId));
+      const current = (user.roles || [])[0]?.roleId || '';
+      setRoleId(current);
     }
   }, [isOpen, user]);
 
   if (!isOpen || !user) return null;
 
-  const handleRoleToggle = (roleId) => {
-    setRoleIds((prev) =>
-      prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]
-    );
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(user.userId, roleIds);
+    if (!roleId) return;
+    onSave(user.userId, roleId);
   };
 
   const assignableRoles = roles.filter(
@@ -50,10 +46,12 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
                 className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50 dark:border-[#333333] dark:hover:bg-[#1a1a1a]"
               >
                 <input
-                  type="checkbox"
-                  checked={roleIds.includes(role.roleId)}
-                  onChange={() => handleRoleToggle(role.roleId)}
-                  className="h-4 w-4 rounded accent-[#004785]"
+                  type="radio"
+                  name="role"
+                  value={role.roleId}
+                  checked={roleId === role.roleId}
+                  onChange={() => setRoleId(role.roleId)}
+                  className="h-4 w-4 accent-[#004785]"
                 />
                 <div>
                   <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{role.roleName}</div>
@@ -75,7 +73,8 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              disabled={!roleId}
+              className="rounded-lg bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700"
             >
               Lưu thay đổi
             </button>

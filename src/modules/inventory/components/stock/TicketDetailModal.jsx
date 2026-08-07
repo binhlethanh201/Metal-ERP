@@ -161,6 +161,7 @@ export const TicketDetailModal = ({
       }
     };
     fetchReturnable();
+    // eslint-disable-next-line react-hooks/exhaustive-deps 
   }, [detail?.inwardTicketId, detail?.ticketType]);
 
   const handleConfirm = async () => {

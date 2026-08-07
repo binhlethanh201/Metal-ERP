@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import Drawer from '../../../../shared/components/Drawer';
 import Button from '../../../../shared/components/Button';
 import { getCategories, getBrands } from '../../services/productService';
-import { getSuppliers } from '../../services/supplierService';
 
 // Style select đồng bộ với input trong Input.jsx (border-slate-200, focus:border-[#004785])
 const selectClass =
@@ -21,8 +20,6 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
     setGroupKeyword,
     brandKeyword,
     setBrandKeyword,
-    supplierKeyword,
-    setSupplierKeyword,
     productStatusFilter,
     setProductStatusFilter,
   } = filters;
@@ -30,8 +27,6 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [brandOptions, setBrandOptions] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(false);
-  const [supplierOptions, setSupplierOptions] = useState([]);
-  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   // Tải danh sách nhóm hàng & thương hiệu từ API (chỉ tải khi drawer từng mở lần đầu)
   useEffect(() => {
@@ -59,36 +54,9 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
     };
   }, []);
 
-  // Tải danh sách nhà cung cấp — hiển thị tên, gửi GUID (id) lên server
-  useEffect(() => {
-    let active = true;
-    const loadSuppliers = async () => {
-      setLoadingSuppliers(true);
-      try {
-        const res = await getSuppliers({ pageSize: 1000, status: 'active' });
-        if (!active) return;
-        const items = res?.data?.items || (Array.isArray(res?.data) ? res.data : []);
-        if (Array.isArray(items)) {
-          setSupplierOptions(
-            items.map((s) => ({ id: s.id, name: s.name })).filter((s) => s.id && s.name)
-          );
-        }
-      } catch (err) {
-        console.error('Lỗi tải danh sách nhà cung cấp:', err);
-      } finally {
-        if (active) setLoadingSuppliers(false);
-      }
-    };
-    loadSuppliers();
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const handleReset = () => {
     setGroupKeyword('');
     setBrandKeyword('');
-    setSupplierKeyword('');
     setProductStatusFilter('all');
   };
 
@@ -152,30 +120,6 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
               </option>
             ))}
           </select>
-        </FilterField>
-
-        <FilterField label="Nhà cung cấp">
-          <select
-            className={selectClass}
-            value={supplierKeyword}
-            onChange={(e) => setSupplierKeyword(e.target.value)}
-            disabled={loadingSuppliers}
-          >
-            <option value="">-- Tất cả nhà cung cấp --</option>
-            {supplierOptions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          {loadingSuppliers && (
-            <p className="text-xs text-slate-400 dark:text-[#808080]">Đang tải danh sách nhà cung cấp...</p>
-          )}
-          {!loadingSuppliers && supplierOptions.length === 0 && (
-            <p className="text-xs text-slate-400 dark:text-[#808080]">
-              Chưa có nhà cung cấp nào hoặc API chưa sẵn sàng.
-            </p>
-          )}
         </FilterField>
       </div>
     </Drawer>

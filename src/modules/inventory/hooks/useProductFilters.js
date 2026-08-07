@@ -5,7 +5,6 @@ export const useProductFilters = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'createdat', direction: 'desc' });
   const [groupKeyword, setGroupKeyword] = useState('');
   const [brandKeyword, setBrandKeyword] = useState('');
-  const [supplierKeyword, setSupplierKeyword] = useState('');
   // Mặc định 'all' = không lọc gì (khớp option "Tất cả" trong UI select).
   const [productStatusFilter, setProductStatusFilter] = useState('all');
   const [pageSize, setPageSize] = useState(20);
@@ -26,23 +25,12 @@ export const useProductFilters = () => {
     // ProductFilterSidebar dùng <select> từ API nên đảm bảo luôn đúng.
     if (groupKeyword.trim()) params.categoryName = groupKeyword.trim();
     if (brandKeyword.trim()) params.brandName = brandKeyword.trim();
-    // supplierId: API nhận GUID, ProductFilterSidebar gửi s.id (GUID) làm value.
-    if (supplierKeyword.trim()) params.supplierId = supplierKeyword.trim();
     // status chỉ gửi khi là 'active' hoặc 'inactive'; 'all' = bỏ param (không lọc).
     if (productStatusFilter === 'active' || productStatusFilter === 'inactive') {
       params.status = productStatusFilter;
     }
     return params;
-  }, [
-    currentPage,
-    pageSize,
-    search,
-    groupKeyword,
-    brandKeyword,
-    supplierKeyword,
-    productStatusFilter,
-    sortConfig,
-  ]);
+  }, [currentPage, pageSize, search, groupKeyword, brandKeyword, productStatusFilter, sortConfig]);
 
   const toggleSort = (key) => {
     setSortConfig((prev) => {
@@ -72,8 +60,6 @@ export const useProductFilters = () => {
     setGroupKeyword,
     brandKeyword,
     setBrandKeyword,
-    supplierKeyword,
-    setSupplierKeyword,
     productStatusFilter,
     setProductStatusFilter,
     pageSize,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import Modal from '../../../../shared/components/Modal';
 import Button from '../../../../shared/components/Button';
@@ -24,9 +24,25 @@ const PERMISSION_GROUPS = [
   { label: 'Kho hàng & Kiểm kê (Stock / Inventory)', prefixes: ['STOCK_'] },
   { label: 'Sản phẩm (Product)', prefixes: ['PRODUCT_'] },
   { label: 'Nhà cung cấp & Công nợ (Supplier)', prefixes: ['SUPPLIER_'] },
-  { label: 'Nhân sự & Phân quyền (Staff)', prefixes: ['STAFF_'] },
-  { label: 'Hệ thống & Báo cáo (System / Owner)', prefixes: ['OWNER_', 'SYSTEM_', 'REPORT_'] },
+  { label: 'Nhân sự & Phân quyền (Staff)', prefixes: ['STAFF_', 'REPORT_'] },
 ];
+
+// Ghi đè tên hiển thị khi backend trả về tên thiếu dấu tiếng Việt
+const PERMISSION_NAME_OVERRIDES = {
+  SHIFT_CREATE: 'Mở ca làm việc',
+  SHIFT_DELETE: 'Xóa ca làm việc',
+  SHIFT_UPDATE: 'Cập nhật ca làm việc',
+  REPORT_VIEW: 'Báo cáo',
+};
+
+// Thứ tự ưu tiên hiển thị trong mỗi nhóm: Read → Create → Update → Delete
+const PERMISSION_ACTION_ORDER = ['VIEW', 'CREATE', 'UPDATE', 'DELETE'];
+
+const permissionActionPriority = (code) => {
+  const upper = (code || '').toUpperCase();
+  const idx = PERMISSION_ACTION_ORDER.findIndex((action) => upper.endsWith(`_${action}`));
+  return idx === -1 ? PERMISSION_ACTION_ORDER.length : idx;
+};
 
 const DEFAULT_ROLE_PERMISSIONS = {
   SalesStaff: [
@@ -63,6 +79,27 @@ const DEFAULT_ROLE_PERMISSIONS = {
   Staff: [],
 };
 
+// Checkbox chọn tất cả theo nhóm, hỗ trợ trạng thái "chọn một phần" (indeterminate)
+const GroupSelectCheckbox = ({ codes, selectedCodes, onToggle }) => {
+  const ref = useRef(null);
+  const allChecked = codes.length > 0 && codes.every((c) => selectedCodes.includes(c));
+  const someChecked = codes.length > 0 && codes.some((c) => selectedCodes.includes(c)) && !allChecked;
+
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = someChecked;
+  }, [someChecked]);
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 transition-colors focus:ring-blue-500 dark:border-[#404040]"
+      checked={allChecked}
+      onChange={() => onToggle(codes, allChecked)}
+    />
+  );
+};
+
 const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminContext = false }) => {
   const [form, setForm] = useState(initialFormState);
   const [isCustomizing, setIsCustomizing] = useState(false);
@@ -94,12 +131,23 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
   const groupedPermissions = useMemo(() => {
     if (!permissions.length) return [];
     return PERMISSION_GROUPS.map((group) => {
-      const items = permissions.filter((p) =>
-        group.prefixes.some((prefix) => p.permissionCode.startsWith(prefix))
-      );
+      const items = permissions
+        .filter((p) => group.prefixes.some((prefix) => p.permissionCode.startsWith(prefix)))
+        .sort((a, b) => {
+          // Sắp theo thứ tự prefix (SALE_ → CUSTOMER_ → ...) trước
+          const prefixDiff =
+            group.prefixes.findIndex((prefix) => (a.permissionCode || '').startsWith(prefix)) -
+            group.prefixes.findIndex((prefix) => (b.permissionCode || '').startsWith(prefix));
+          if (prefixDiff !== 0) return prefixDiff;
+          // Trong cùng prefix, sắp theo Read → Create → Update → Delete
+          const actionDiff =
+            permissionActionPriority(a.permissionCode) - permissionActionPriority(b.permissionCode);
+          if (actionDiff !== 0) return actionDiff;
+          return (a.permissionCode || '').localeCompare(b.permissionCode || '');
+        });
       return { ...group, items };
     }).filter((g) => g.items.length > 0);
-  }, [permissions]);
+  }, [permissions, isAdminContext]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -138,6 +186,20 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
       const current = prev.permissionCodes;
       const next = current.includes(code) ? current.filter((c) => c !== code) : [...current, code];
       return { ...prev, permissionCodes: next };
+    });
+  };
+
+  const handleToggleGroup = (group, currentlyAllChecked) => {
+    setIsCustomizing(true);
+    const codes = group.items.map((p) => p.permissionCode);
+    setForm((prev) => {
+      const nextSet = new Set(prev.permissionCodes);
+      if (currentlyAllChecked) {
+        codes.forEach((c) => nextSet.delete(c));
+      } else {
+        codes.forEach((c) => nextSet.add(c));
+      }
+      return { ...prev, permissionCodes: [...nextSet] };
     });
   };
 
@@ -362,9 +424,21 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
             <div className="space-y-6">
               {groupedPermissions.map((group) => (
                 <div key={group.label}>
-                  <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-[#999999]">
-                    {group.label}
-                  </h4>
+                  <div className="mb-2.5 flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-[#999999]">
+                      {group.label}
+                    </h4>
+                    <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-blue-600 dark:text-[#808080] dark:hover:text-blue-400">
+                      <GroupSelectCheckbox
+                        codes={group.items.map((p) => p.permissionCode)}
+                        selectedCodes={form.permissionCodes}
+                        onToggle={(codes, currentlyAllChecked) =>
+                          handleToggleGroup(group, currentlyAllChecked)
+                        }
+                      />
+                      Chọn tất cả
+                    </label>
+                  </div>
                   <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-slate-200/80 bg-white p-4 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f] sm:grid-cols-2 lg:grid-cols-3">
                     {group.items.map((perm) => {
                       const isChecked = form.permissionCodes.includes(perm.permissionCode);
@@ -383,7 +457,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
                             <span
                               className={`text-sm font-medium transition-colors ${isChecked ? 'font-semibold text-blue-700 dark:text-blue-400' : 'text-slate-700 group-hover:text-black dark:text-[#b3b3b3] dark:group-hover:text-[#e5e5e5]'}`}
                             >
-                              {perm.permissionName || perm.permissionCode}
+                              {PERMISSION_NAME_OVERRIDES[perm.permissionCode] || perm.permissionName || perm.permissionCode}
                             </span>
                             <span className="font-mono text-[11px] text-slate-400 dark:text-[#808080]">
                               {perm.permissionCode}
