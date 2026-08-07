@@ -25,7 +25,6 @@ import ErrorToast from './shared/components/ErrorToast';
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 
-
 // Account settings
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettings/AccountSettingsPage'));
 const AccountSettingsLayout = lazy(() => import('./pages/AccountSettings/AccountSettingsLayout'));
@@ -76,7 +75,6 @@ const SystemLog = lazy(() => import('./modules/admin/pages/SystemLog'));
 const AdminBranchManagement = lazy(() => import('./modules/admin/pages/AdminBranchManagement'));
 
 // Owner Module
-const OwnerAuditLog = lazy(() => import('./modules/owner/pages/OwnerAuditLog'));
 const OwnerDashboard = lazy(() => import('./modules/owner/pages/Dashboard'));
 const BranchManagement = lazy(() => import('./modules/owner/pages/BranchManagement'));
 const StaffManagement = lazy(() => import('./modules/owner/pages/StaffManagement'));
@@ -103,7 +101,9 @@ function App() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0f0f0f]">
       <div className="text-center">
         <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[#004785]" />
-        <p className="text-sm font-semibold text-slate-600 dark:text-[#999999]">Đang tải dữ liệu...</p>
+        <p className="text-sm font-semibold text-slate-600 dark:text-[#999999]">
+          Đang tải dữ liệu...
+        </p>
       </div>
     </div>
   );
@@ -114,123 +114,176 @@ function App() {
         <IdleTimeout timeoutMinutes={30} />
         <Suspense fallback={LoadingSpinner}>
           <Routes>
-          {/* PUBLIC ROUTE */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            {/* PUBLIC ROUTE */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          {/* PRIVATE & PROTECTED ROUTES */}
-          {/* ACCOUNT SETTINGS ROUTE */}
-          <Route element={<PrivateRoute />}>
-            <Route path="/account-settings" element={<AccountSettingsLayout />}>
-              <Route index element={<AccountSettingsPage />} />
-            </Route>
-          </Route>
-
-          {/* MODULE POS */}
-          <Route element={<PrivateRoute allowedPermissions={[...POS_PERMISSIONS, ...OWNER_PERMISSIONS]} />}>
-            <Route path="/pos" element={<PosLayout />}>
-              <Route index element={<PosScreen />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="orders" element={<OrderHistory />} />
-              <Route path="shift" element={<ShiftManagement />} />
-              <Route path="customers" element={<CustomerManagement />} />
-              <Route path="returns" element={<ReturnOrderPage />} />
-            </Route>
-          </Route>
-
-          {/* MODULE INVENTORY */}
-          <Route element={<PrivateRoute allowedPermissions={[...INVENTORY_PERMISSIONS, ...OWNER_PERMISSIONS]} />}>
-            <Route path="/inventory" element={<InventoryLayout />}>
-              <Route index element={<InventoryRedirect />} />
-
-              {/* --- ROUTE INVENTORY STAFF & OWNER --- */}
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryDashboard} />}>
-                <Route path="dashboard" element={<InventoryDashboard />} />
-              </Route>
-
-              {/* --- ROUTE OWNER --- */}
-              <Route element={<PrivateRoute allowedPermissions={OWNER_PERMISSIONS} />}>
-                <Route path="owner-dashboard" element={<OwnerDashboard />} />
-                <Route path="branches" element={<BranchManagement />} />
-                <Route path="store-settings" element={<StoreSettings />} />
-                <Route path="print-templates" element={<PrintTemplateSettings />} />
-                <Route path="employees" element={<StaffManagement />} />
-                <Route path="owner-reports" element={<OwnerReports />} />
-                <Route path="shift-history" element={<ShiftHistory />} />
-                <Route path="return-history" element={<ReturnHistory />} />
-                <Route path="audit-logs" element={<OwnerAuditLogsPage />} />
-                <Route path="outward-excel" element={<OwnerOutwardExcelPage />} />
-                <Route path="audit-logs" element={<OwnerAuditLog />} />
-              </Route>
-
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryTransactions} />}>
-                <Route path="transactions" element={<InventoryTransactionManagement />} />
-              </Route>
-
-              {/* --- ROUTE SUPPLIER --- */}
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.suppliers} />}>
-                <Route path="suppliers" element={<SupplierManagement />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.supplierDebt} />}>
-                <Route path="supplier-debt" element={<SupplierDebtManagement />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.supplierPayments} />}>
-                <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
-              </Route>
-
-              {/* --- ROUTE EXPENSE --- */}
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.expenses} />}>
-                <Route path="expenses" element={<ExpenseManagement />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.expenseCategories} />}>
-                <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
-              </Route>
-
-              {/* --- ROUTE OWNER & STAFF --- */}
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryProducts} />}>
-                <Route path="products" element={<InventoryProduct />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryImport} />}>
-                <Route path="import" element={<StockImport />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryExport} />}>
-                <Route path="export" element={<StockExport />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryCheck} />}>
-                <Route path="inventory-check" element={<InventoryCheckList />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.goodsIssueList} />}>
-                <Route path="goods-issue" element={<GoodsIssueList />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.goodsIssue} />}>
-                <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
-              </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.orderList} />}>
-                <Route path="orders" element={<OrderList />} />
+            {/* PRIVATE & PROTECTED ROUTES */}
+            {/* ACCOUNT SETTINGS ROUTE */}
+            <Route element={<PrivateRoute />}>
+              <Route path="/account-settings" element={<AccountSettingsLayout />}>
+                <Route index element={<AccountSettingsPage />} />
               </Route>
             </Route>
-          </Route>
 
-          {/* MODULE ADMIN  */}
-          <Route element={<PrivateRoute allowedPermissions={ADMIN_PERMISSIONS} />}>
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<AdminUserManagement />} />
-              <Route path="users/:id" element={<AdminUserDetail />} />
-              <Route path="roles" element={<AdminRoleManagement />} />
-              <Route path="branches" element={<AdminBranchManagement />} />
-              <Route path="approvals" element={<StoreApprovals />} />
-              <Route path="notifications" element={<SystemNotifications />} />
-              <Route path="logs" element={<SystemLog />} />
+            {/* MODULE POS */}
+            <Route
+              element={
+                <PrivateRoute allowedPermissions={[...POS_PERMISSIONS, ...OWNER_PERMISSIONS]} />
+              }
+            >
+              <Route path="/pos" element={<PosLayout />}>
+                <Route index element={<PosScreen />} />
+                <Route path="checkout" element={<CheckoutPage />} />
+                <Route path="orders" element={<OrderHistory />} />
+                <Route path="shift" element={<ShiftManagement />} />
+                <Route path="customers" element={<CustomerManagement />} />
+                <Route path="returns" element={<ReturnOrderPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* ROUTE ERROR - redirect kèm toast */}
-          <Route path="/403" element={<ErrorToast message="Bạn không có quyền truy cập trang này!" redirectTo="/" />} />
-          <Route path="/500" element={<ErrorToast message="Lỗi máy chủ! Vui lòng thử lại sau." redirectTo="/" />} />
-          <Route path="*" element={<ErrorToast message="Không tìm thấy trang yêu cầu!" redirectTo="/" />} />
-        </Routes>
+            {/* MODULE INVENTORY */}
+            <Route
+              element={
+                <PrivateRoute
+                  allowedPermissions={[...INVENTORY_PERMISSIONS, ...OWNER_PERMISSIONS]}
+                />
+              }
+            >
+              <Route path="/inventory" element={<InventoryLayout />}>
+                <Route index element={<InventoryRedirect />} />
+
+                {/* --- ROUTE INVENTORY STAFF & OWNER --- */}
+                <Route
+                  element={
+                    <PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryDashboard} />
+                  }
+                >
+                  <Route path="dashboard" element={<InventoryDashboard />} />
+                </Route>
+
+                {/* --- ROUTE OWNER --- */}
+                <Route element={<PrivateRoute allowedPermissions={OWNER_PERMISSIONS} />}>
+                  <Route path="owner-dashboard" element={<OwnerDashboard />} />
+                  <Route path="branches" element={<BranchManagement />} />
+                  <Route path="store-settings" element={<StoreSettings />} />
+                  <Route path="print-templates" element={<PrintTemplateSettings />} />
+                  <Route path="owner-reports" element={<OwnerReports />} />
+                  <Route path="shift-history" element={<ShiftHistory />} />
+                  <Route path="return-history" element={<ReturnHistory />} />
+                  <Route path="audit-logs" element={<OwnerAuditLogsPage />} />
+                  <Route path="outward-excel" element={<OwnerOutwardExcelPage />} />
+                </Route>
+
+                <Route
+                  element={<PrivateRoute allowedPermissions={['OWNER_MANAGE', 'STAFF_VIEW']} />}
+                >
+                  <Route path="employees" element={<StaffManagement />} />
+                </Route>
+
+                <Route
+                  element={
+                    <PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryTransactions} />
+                  }
+                >
+                  <Route path="transactions" element={<InventoryTransactionManagement />} />
+                </Route>
+
+                {/* --- ROUTE SUPPLIER --- */}
+                <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.suppliers} />}>
+                  <Route path="suppliers" element={<SupplierManagement />} />
+                </Route>
+                <Route
+                  element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.supplierDebt} />}
+                >
+                  <Route path="supplier-debt" element={<SupplierDebtManagement />} />
+                </Route>
+                <Route
+                  element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.supplierPayments} />}
+                >
+                  <Route path="supplier-payments" element={<SupplierPaymentManagement />} />
+                </Route>
+
+                {/* --- ROUTE EXPENSE --- */}
+                <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.expenses} />}>
+                  <Route path="expenses" element={<ExpenseManagement />} />
+                </Route>
+                <Route
+                  element={
+                    <PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.expenseCategories} />
+                  }
+                >
+                  <Route path="expense-categories" element={<ExpenseCategoryManagement />} />
+                </Route>
+
+                {/* --- ROUTE OWNER & STAFF --- */}
+                <Route
+                  element={
+                    <PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryProducts} />
+                  }
+                >
+                  <Route path="products" element={<InventoryProduct />} />
+                </Route>
+                <Route
+                  element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryImport} />}
+                >
+                  <Route path="import" element={<StockImport />} />
+                </Route>
+                <Route
+                  element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryExport} />}
+                >
+                  <Route path="export" element={<StockExport />} />
+                </Route>
+                <Route
+                  element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryCheck} />}
+                >
+                  <Route path="inventory-check" element={<InventoryCheckList />} />
+                </Route>
+                <Route
+                  element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.goodsIssueList} />}
+                >
+                  <Route path="goods-issue" element={<GoodsIssueList />} />
+                </Route>
+                <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.goodsIssue} />}>
+                  <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
+                </Route>
+                <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.orderList} />}>
+                  <Route path="orders" element={<OrderList />} />
+                </Route>
+              </Route>
+            </Route>
+
+            {/* MODULE ADMIN  */}
+            <Route element={<PrivateRoute allowedPermissions={ADMIN_PERMISSIONS} />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<AdminUserManagement />} />
+                <Route path="users/:id" element={<AdminUserDetail />} />
+                <Route path="roles" element={<AdminRoleManagement />} />
+                <Route path="branches" element={<AdminBranchManagement />} />
+                <Route path="approvals" element={<StoreApprovals />} />
+                <Route path="notifications" element={<SystemNotifications />} />
+                <Route path="logs" element={<SystemLog />} />
+              </Route>
+            </Route>
+
+            {/* ROUTE ERROR - redirect kèm toast */}
+            <Route
+              path="/403"
+              element={
+                <ErrorToast message="Bạn không có quyền truy cập trang này!" redirectTo="/" />
+              }
+            />
+            <Route
+              path="/500"
+              element={<ErrorToast message="Lỗi máy chủ! Vui lòng thử lại sau." redirectTo="/" />}
+            />
+            <Route
+              path="*"
+              element={<ErrorToast message="Không tìm thấy trang yêu cầu!" redirectTo="/" />}
+            />
+          </Routes>
         </Suspense>
       </ThemeProvider>
     </BrowserRouter>

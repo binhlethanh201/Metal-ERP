@@ -18,7 +18,13 @@ export const sidebarItems = [
   {
     label: 'Hàng hóa & Kho',
     icon: 'inventory_2',
-    permissions: ['STOCK_VIEW', 'PRODUCT_VIEW', 'STOCK_INWARD_CREATE', 'STOCK_OUTWARD_CREATE', 'STOCK_CHECK_VIEW'],
+    permissions: [
+      'STOCK_VIEW',
+      'PRODUCT_VIEW',
+      'STOCK_INWARD_CREATE',
+      'STOCK_OUTWARD_CREATE',
+      'STOCK_CHECK_VIEW',
+    ],
     children: [
       {
         label: 'Danh sách hàng hóa',
@@ -33,12 +39,22 @@ export const sidebarItems = [
       {
         label: 'Xuất kho',
         path: '/inventory/export',
-        permissions: ['STOCK_OUTWARD_CREATE', 'STOCK_OUTWARD_UPDATE', 'STOCK_OUTWARD_DELETE', 'STOCK_OUTWARD_CONFIRM'],
+        permissions: [
+          'STOCK_OUTWARD_CREATE',
+          'STOCK_OUTWARD_UPDATE',
+          'STOCK_OUTWARD_DELETE',
+          'STOCK_OUTWARD_CONFIRM',
+        ],
       },
       {
         label: 'Kiểm kê kho',
         path: '/inventory/inventory-check',
-        permissions: ['STOCK_CHECK_CREATE', 'STOCK_CHECK_VIEW', 'STOCK_CHECK_APPROVE', 'STOCK_CHECK_CANCEL'],
+        permissions: [
+          'STOCK_CHECK_CREATE',
+          'STOCK_CHECK_VIEW',
+          'STOCK_CHECK_APPROVE',
+          'STOCK_CHECK_CANCEL',
+        ],
       },
       {
         label: 'Lịch sử Xuất/Nhập',
@@ -64,7 +80,11 @@ export const sidebarItems = [
     icon: 'shopping_bag',
     permissions: ['SUPPLIER_VIEW', 'SUPPLIER_CREATE', 'SUPPLIER_UPDATE', 'SUPPLIER_DELETE'],
     children: [
-      { label: 'Nhà cung cấp', path: '/inventory/suppliers', permissions: ['SUPPLIER_VIEW', 'SUPPLIER_CREATE', 'SUPPLIER_UPDATE', 'SUPPLIER_DELETE'] },
+      {
+        label: 'Nhà cung cấp',
+        path: '/inventory/suppliers',
+        permissions: ['SUPPLIER_VIEW', 'SUPPLIER_CREATE', 'SUPPLIER_UPDATE', 'SUPPLIER_DELETE'],
+      },
       // { label: 'Đặt hàng mua', path: '/inventory/purchasing/orders' },
       // { label: 'Nhập hàng mua', path: '/inventory/purchasing/import' },
       // { label: 'Trả lại hàng mua', path: '/inventory/purchasing/returns' },
@@ -95,8 +115,16 @@ export const sidebarItems = [
     icon: 'request_quote',
     permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE', 'SUPPLIER_PAYMENT_VIEW'],
     children: [
-      { label: 'Quản lý chi phí', path: '/inventory/expenses', permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE', 'SUPPLIER_PAYMENT_VIEW'] },
-      { label: 'Loại chi phí', path: '/inventory/expense-categories', permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE'] },
+      {
+        label: 'Quản lý chi phí',
+        path: '/inventory/expenses',
+        permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE', 'SUPPLIER_PAYMENT_VIEW'],
+      },
+      {
+        label: 'Loại chi phí',
+        path: '/inventory/expense-categories',
+        permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE'],
+      },
     ],
   },
   {
@@ -104,11 +132,27 @@ export const sidebarItems = [
     icon: 'UserCog',
     permissions: ['OWNER_MANAGE', 'STAFF_VIEW', 'SHIFT_VIEW', 'PRINT_VIEW', 'SYSTEM_MANAGE'],
     children: [
-      { label: 'Quản lý nhân viên', path: '/inventory/employees', permissions: ['STAFF_VIEW', 'STAFF_CREATE', 'STAFF_UPDATE', 'STAFF_DELETE', 'STAFF_ASSIGN_BRANCH'] },
+      {
+        label: 'Quản lý nhân viên',
+        path: '/inventory/employees',
+        permissions: ['STAFF_VIEW', 'OWNER_MANAGE'],
+      },
       { label: 'Lịch sử ca bán', path: '/inventory/shift-history', permissions: ['SHIFT_VIEW'] },
-      { label: 'Cài đặt cửa hàng', path: '/inventory/store-settings', permissions: ['OWNER_MANAGE'] },
-      { label: 'Cấu hình mẫu in', path: '/inventory/print-templates', permissions: ['PRINT_VIEW'] },
-      { label: 'Nhật ký hoạt động', path: '/inventory/audit-logs', permissions: ['SYSTEM_MANAGE', 'OWNER_MANAGE'] },
+      {
+        label: 'Cài đặt cửa hàng',
+        path: '/inventory/store-settings',
+        permissions: ['OWNER_MANAGE'],
+      },
+      {
+        label: 'Cấu hình mẫu in',
+        path: '/inventory/print-templates',
+        permissions: ['PRINT_VIEW', 'OWNER_MANAGE'],
+      },
+      {
+        label: 'Nhật ký hoạt động',
+        path: '/inventory/audit-logs',
+        permissions: ['SYSTEM_MANAGE', 'OWNER_MANAGE'],
+      },
     ],
   },
   {
@@ -117,7 +161,11 @@ export const sidebarItems = [
     permissions: ['REPORT_VIEW'],
     children: [
       // { label: 'Báo cáo kho', path: '/inventory/reports', permissions: ['REPORT_VIEW'] },
-      { label: 'Báo cáo Tổng hợp', path: '/inventory/owner-reports', permissions: ['REPORT_VIEW', 'OWNER_MANAGE'] },
+      {
+        label: 'Báo cáo Tổng hợp',
+        path: '/inventory/owner-reports',
+        permissions: ['REPORT_VIEW', 'OWNER_MANAGE'],
+      },
     ],
   },
 ];

@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import Icon from '../../../shared/components/Icon';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useProductList } from '../hooks/useProductList';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../shared/utils/permissions';
 
 import { ProductFilterDrawer } from '../components/product/ProductFilterDrawer';
 import { ProductTable } from '../components/product/ProductTable';
@@ -21,6 +23,7 @@ export const ProductManagement = () => {
   const [initialEditTab, setInitialEditTab] = useState('info');
   const [selectedIds, setSelectedIds] = useState([]);
   const [successMsg, setSuccessMsg] = useState('');
+  const { user } = useAuth();
 
   // Draft state — chỉ apply khi bấm "Áp dụng"
   const [draftSearch, setDraftSearch] = useState('');
@@ -162,32 +165,34 @@ export const ProductManagement = () => {
             <div className="flex items-center gap-2 text-sm font-semibold text-blue-800 dark:text-blue-300">
               <Icon name="check_circle" size={20} /> Đã chọn {selectedIds.length} hàng hóa
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-[#1a1a1a] dark:text-blue-400 dark:hover:bg-[#333333]"
-                onClick={async () => {
-                  if (window.confirm(`Mở bán ${selectedIds.length} sản phẩm?`)) {
-                    const ok = await handleBulkToggleStatus(selectedIds, true);
-                    if (ok) setSelectedIds([]);
-                  }
-                }}
-              >
-                <Icon name="play_circle" size={18} /> Mở bán
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700"
-                onClick={async () => {
-                  if (window.confirm(`Ngừng bán ${selectedIds.length} sản phẩm?`)) {
-                    const ok = await handleBulkToggleStatus(selectedIds, false);
-                    if (ok) setSelectedIds([]);
-                  }
-                }}
-              >
-                <Icon name="Ban" size={18} /> Ngừng bán
-              </button>
-            </div>
+            {hasPermission(user, 'PRODUCT_UPDATE') && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-[#1a1a1a] dark:text-blue-400 dark:hover:bg-[#333333]"
+                  onClick={async () => {
+                    if (window.confirm(`Mở bán ${selectedIds.length} sản phẩm?`)) {
+                      const ok = await handleBulkToggleStatus(selectedIds, true);
+                      if (ok) setSelectedIds([]);
+                    }
+                  }}
+                >
+                  <Icon name="play_circle" size={18} /> Mở bán
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700"
+                  onClick={async () => {
+                    if (window.confirm(`Ngừng bán ${selectedIds.length} sản phẩm?`)) {
+                      const ok = await handleBulkToggleStatus(selectedIds, false);
+                      if (ok) setSelectedIds([]);
+                    }
+                  }}
+                >
+                  <Icon name="Ban" size={18} /> Ngừng bán
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -221,33 +226,40 @@ export const ProductManagement = () => {
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
-              onClick={() => setCategoryModalOpen(true)}
-            >
-              <Icon name="Bookmark" className="text-sm text-slate-500 dark:text-[#999999]" />
-              Nhóm hàng & Thương hiệu
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
-              onClick={() => setLocationAttrModalOpen(true)}
-            >
-              <Icon name="location_on" className="text-sm text-slate-500 dark:text-[#999999]" />
-              Vị trí & Thuộc tính
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#1a1a1a] dark:text-emerald-400 dark:hover:bg-[#333333]"
-              onClick={() => setImportModalOpen(true)}
-            >
-              <Icon name="upload_file" className="text-sm" /> Nhập từ Excel
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-1 rounded-lg bg-[#004785] px-4 py-2 text-sm font-bold text-white hover:bg-black"
-              onClick={() => {
+            {hasPermission(user, 'PRODUCT_CREATE') && ( // actually it's just PRODUCT_CATEGORY? No, category manage requires PRODUCT_CREATE mostly or we can use PRODUCT_CREATE
+              <button
+                type="button"
+                className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+                onClick={() => setCategoryModalOpen(true)}
+              >
+                <Icon name="Bookmark" className="text-sm text-slate-500 dark:text-[#999999]" />
+                Nhóm hàng & Thương hiệu
+              </button>
+            )}
+            {hasPermission(user, 'LOCATION_VIEW') && (
+              <button
+                type="button"
+                className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+                onClick={() => setLocationAttrModalOpen(true)}
+              >
+                <Icon name="location_on" className="text-sm text-slate-500 dark:text-[#999999]" />
+                Vị trí & Thuộc tính
+              </button>
+            )}
+            {hasPermission(user, 'PRODUCT_CREATE') && (
+              <button
+                type="button"
+                className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#1a1a1a] dark:text-emerald-400 dark:hover:bg-[#333333]"
+                onClick={() => setImportModalOpen(true)}
+              >
+                <Icon name="upload_file" className="text-sm" /> Nhập từ Excel
+              </button>
+            )}
+            {hasPermission(user, 'PRODUCT_CREATE') && (
+              <button
+                type="button"
+                className="flex items-center gap-1 rounded-lg bg-[#004785] px-4 py-2 text-sm font-bold text-white hover:bg-black"
+                onClick={() => {
                 setProductToEdit(null);
                 setEditModalOpen(true);
               }}

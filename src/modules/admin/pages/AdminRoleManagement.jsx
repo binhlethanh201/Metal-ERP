@@ -9,88 +9,81 @@ import {
 // Mapping đầy đủ tên quyền tiếng Việt theo permissionCode.
 // Ưu tiên lookup theo code (chính xác), fallback về permissionName từ BE, cuối cùng mới dùng chuỗi chung.
 const PERMISSION_NAME_VI = {
-  // Bán hàng & Thu ngân
-  SALE_VIEW: 'Xem đơn bán hàng',
-  SALE_CREATE: 'Tạo đơn bán hàng',
-  SALE_EDIT: 'Sửa đơn bán hàng',
-  SALE_CANCEL: 'Hủy đơn bán hàng',
-  SALE_FINALIZE: 'Chốt đơn bán hàng',
-  SALE_RETURN: 'Trả hàng / Hoàn tiền',
-  SALE_DISCOUNT: 'Áp dụng giảm giá',
+  // === EXPENSE / PHIẾU CHI TIỀN ===
+  EXPENSE_VIEW: 'Xem danh sách phiếu chi',
+  EXPENSE_CREATE: 'Tạo phiếu chi mới',
+  EXPENSE_CONFIRM: 'Xác nhận phiếu chi',
+  EXPENSE_CANCEL: 'Huỷ phiếu chi',
+  EXPENSE_CATEGORY_MANAGE: 'Quản lý danh mục chi phí',
 
-  PAYMENT_CREATE: 'Tạo thanh toán',
-  PAYMENT_CONFIRM: 'Xác nhận chuyển khoản',
-  PAYMENT_REFUND: 'Hoàn tiền thanh toán',
-  PAYMENT_HISTORY: 'Xem lịch sử thanh toán',
-
-  SHIFT_OPEN: 'Mở ca làm việc',
-  SHIFT_CLOSE: 'Đóng ca làm việc',
-  SHIFT_VIEW: 'Xem ca làm việc',
-
-  PRINT_INVOICE: 'In hóa đơn',
-  PRINT_REPORT: 'In báo cáo',
-
-  // Quản lý kho bãi & Sản phẩm
-  STOCK_VIEW: 'Xem tồn kho',
-  STOCK_ADJUST: 'Điều chỉnh tồn kho',
-  STOCK_TRANSFER: 'Chuyển kho giữa các cửa hàng',
-
-  INVENTORY_VIEW: 'Xem phiếu kiểm kho',
-  INVENTORY_CREATE: 'Tạo phiếu kiểm kho',
-  INVENTORY_APPROVE: 'Duyệt phiếu kiểm kho',
-  INVENTORY_EXPORT: 'Xuất báo cáo kiểm kho',
-
-  PRODUCT_VIEW: 'Xem sản phẩm',
-  PRODUCT_CREATE: 'Tạo sản phẩm mới',
-  PRODUCT_EDIT: 'Sửa thông tin sản phẩm',
-  PRODUCT_DELETE: 'Xóa sản phẩm',
-  PRODUCT_CATEGORY: 'Quản lý nhóm hàng / thương hiệu',
-  PRODUCT_BARCODE: 'In mã vạch sản phẩm',
-
-  INWARD_VIEW: 'Xem phiếu nhập kho',
-  INWARD_CREATE: 'Tạo phiếu nhập kho',
-  INWARD_APPROVE: 'Duyệt phiếu nhập kho',
-
+  // === SUPPLIER (Nhà cung cấp) ===
   SUPPLIER_VIEW: 'Xem nhà cung cấp',
   SUPPLIER_CREATE: 'Tạo nhà cung cấp',
-  SUPPLIER_EDIT: 'Sửa nhà cung cấp',
+  SUPPLIER_UPDATE: 'Sửa nhà cung cấp',
   SUPPLIER_DELETE: 'Xóa nhà cung cấp',
-  SUPPLIER_DEBT: 'Xem công nợ nhà cung cấp',
 
-  // Chăm sóc khách hàng
+  // === SUPPLIER PAYMENT (Thanh toán / Công nợ NCC) ===
+  SUPPLIER_PAYMENT_VIEW: 'Xem thanh toán nhà cung cấp',
+  SUPPLIER_PAYMENT_CREATE: 'Tạo thanh toán nhà cung cấp',
+  SUPPLIER_PAYMENT_UPDATE: 'Cập nhật thanh toán NCC',
+  SUPPLIER_PAYMENT_DELETE: 'Xoá thanh toán NCC',
+
+  // === PRODUCT (Sản phẩm) ===
+  PRODUCT_VIEW: 'Xem sản phẩm',
+  PRODUCT_CREATE: 'Tạo sản phẩm',
+  PRODUCT_UPDATE: 'Sửa sản phẩm',
+  PRODUCT_DELETE: 'Xóa sản phẩm',
+
+  // === LOCATION (Vị trí kho) ===
+  LOCATION_VIEW: 'Xem vị trí kho',
+  LOCATION_CREATE: 'Tạo vị trí kho',
+  LOCATION_UPDATE: 'Cập nhật vị trí kho',
+  LOCATION_DELETE: 'Xoá vị trí kho',
+
+  // === STOCK / INVENTORY (Xuất nhập kho) ===
+  STOCK_VIEW: 'Xem tồn kho',
+  STOCK_INWARD_CREATE: 'Tạo phiếu nhập kho',
+  STOCK_INWARD_UPDATE: 'Cập nhật phiếu nhập kho',
+  STOCK_INWARD_DELETE: 'Xoá phiếu nhập kho',
+  STOCK_OUTWARD_CREATE: 'Tạo phiếu xuất kho',
+  STOCK_OUTWARD_UPDATE: 'Cập nhật phiếu xuất kho',
+  STOCK_OUTWARD_DELETE: 'Xoá phiếu xuất kho',
+  STOCK_OUTWARD_CONFIRM: 'Xác nhận xuất kho',
+  STOCK_CHECK_VIEW: 'Xem phiếu kiểm kho',
+  STOCK_CHECK_CREATE: 'Tạo phiếu kiểm kho',
+  STOCK_CHECK_APPROVE: 'Duyệt phiếu kiểm kho',
+  STOCK_CHECK_CANCEL: 'Hủy kiểm kho',
+
+  // === SALE / POS ===
   CUSTOMER_VIEW: 'Xem khách hàng',
-  CUSTOMER_CREATE: 'Tạo khách hàng mới',
-  CUSTOMER_EDIT: 'Sửa thông tin khách hàng',
-  CUSTOMER_DELETE: 'Xóa khách hàng',
-  CUSTOMER_DEBT: 'Xem công nợ khách hàng',
+  CUSTOMER_CREATE: 'Tạo khách hàng',
+  CUSTOMER_UPDATE: 'Cập nhật khách hàng',
+  CUSTOMER_DELETE: 'Xoá khách hàng',
+  SALE_VIEW: 'Xem đơn hàng',
+  SALE_CREATE: 'Tạo đơn hàng',
+  SALE_UPDATE: 'Cập nhật đơn hàng',
+  SALE_DELETE: 'Xoá đơn hàng',
+  PAYMENT_VIEW: 'Xem thanh toán',
+  PAYMENT_CREATE: 'Tạo thanh toán',
+  PRINT_VIEW: 'Xem mẫu in',
+  PROMOTION_VIEW: 'Xem khuyến mãi',
+  SHIFT_VIEW: 'Xem ca làm việc',
+  SHIFT_CREATE: 'Tạo ca làm việc',
+  SHIFT_UPDATE: 'Cập nhật ca làm việc',
+  SHIFT_DELETE: 'Xoá ca làm việc',
+  SHIFT_FORCE_CLOSE: 'Đóng ca bắt buộc',
 
-  LOYALTY_VIEW: 'Xem chương trình khách hàng thân thiết',
-  LOYALTY_EDIT: 'Cấu hình điểm thưởng',
+  // === SYSTEM / OWNER ===
+  OWNER_MANAGE: 'Quản lý cửa hàng (Chủ)',
+  SYSTEM_MANAGE: 'Quản lý hệ thống (Admin)',
+  REPORT_VIEW: 'Xem báo cáo',
 
-  PROMOTION_VIEW: 'Xem chương trình khuyến mãi',
-  PROMOTION_CREATE: 'Tạo khuyến mãi',
-  PROMOTION_EDIT: 'Sửa khuyến mãi',
-  PROMOTION_DELETE: 'Xóa khuyến mãi',
-
-  // Quản lý nhân sự
-  STAFF_VIEW: 'Xem danh sách nhân viên',
-  STAFF_CREATE: 'Tạo tài khoản nhân viên',
-  STAFF_EDIT: 'Sửa thông tin nhân viên',
-  STAFF_DELETE: 'Khóa / Xóa nhân viên',
-  STAFF_ASSIGN: 'Phân công nhân viên vào cửa hàng',
-  STAFF_SCHEDULE: 'Xem lịch làm việc',
-
-  // Báo cáo & Hệ thống
-  REPORT_SALE: 'Xem báo cáo bán hàng',
-  REPORT_INVENTORY: 'Xem báo cáo tồn kho',
-  REPORT_REVENUE: 'Xem báo cáo doanh thu',
-  REPORT_PROFIT: 'Xem báo cáo lợi nhuận',
-  REPORT_EXPORT: 'Xuất báo cáo',
-
-  SYSTEM_LOG: 'Xem nhật ký hệ thống',
-  SYSTEM_SETTINGS: 'Cấu hình hệ thống',
-  SYSTEM_BACKUP: 'Sao lưu / Phục hồi dữ liệu',
-  SYSTEM_AUDIT: 'Truy vết thay đổi dữ liệu',
+  // === STAFF / EMPLOYEE (Nhân viên) ===
+  STAFF_VIEW: 'Xem nhân viên',
+  STAFF_CREATE: 'Tạo nhân viên',
+  STAFF_UPDATE: 'Sửa nhân viên',
+  STAFF_DELETE: 'Xóa nhân viên',
+  STAFF_ASSIGN_BRANCH: 'Phân công cửa hàng',
 };
 
 const getPermissionLabel = (permission) => {

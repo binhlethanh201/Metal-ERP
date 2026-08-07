@@ -6,6 +6,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import { hasRole } from '../../../shared/utils/roleRedirect';
+import { hasPermission } from '../../../shared/utils/permissions';
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
@@ -197,7 +198,7 @@ const POSScreen = () => {
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
   const isOwner = hasRole(userRoles, 'Owner');
-  const hasSaleCreate = user?.permissions?.includes('SALE_CREATE') || isOwner;
+  const hasSaleCreate = hasPermission(user, 'SALE_CREATE');
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
   // Calculate discount info based on subtotal
