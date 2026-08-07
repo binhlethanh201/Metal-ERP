@@ -7,31 +7,52 @@ import {
 } from '../../services/inventoryCheckService';
 import { useNavigate } from 'react-router-dom';
 
+const STORAGE_KEY = 'inventory_notif_read_ids';
+
+const getReadIds = () => {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+};
+
+const addReadIds = (ids) => {
+  try {
+    const current = getReadIds();
+    const merged = [...new Set([...current, ...ids])];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    return merged;
+  } catch { return ids; }
+};
+
 const InventoryNotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [panelStyle, setPanelStyle] = useState({});
   const btnRef = useRef(null);
   const panelRef = useRef(null);
   const navigate = useNavigate();
 
+  // Derived tu local state, khong bi polling ghi de
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
       const invRes = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 }).catch(() => null);
-      
-      let invItems = [];
-      let newUnreadCount = 0;
 
       if (invRes?.success && invRes.data) {
-        invItems = invRes.data.items || [];
-        newUnreadCount = invRes.data.unreadCount || 0;
+        const invItems = invRes.data.items || [];
+        const readIds = getReadIds();
+        // Merge voi localStorage de giu isRead qua cac lan F5
+        setNotifications((prev) => {
+          const prevMap = new Map(prev.map((n) => [n.notificationId, n]));
+          return invItems.map((n) => {
+            const existing = prevMap.get(n.notificationId);
+            if (existing?.isRead) return { ...n, isRead: true };
+            if (readIds.includes(n.notificationId)) return { ...n, isRead: true };
+            return n;
+          });
+        });
       }
-
-      setNotifications(invItems);
-      setUnreadCount(newUnreadCount);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -103,11 +124,13 @@ const InventoryNotificationDropdown = () => {
 
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) return;
+    const allIds = notifications.filter((n) => !n.isRead).map((n) => n.notificationId);
+    // Cap nhat localStorage truoc de ton tai qua F5
+    addReadIds(allIds);
     try {
       const res = await markNotificationsAsRead(null, true);
       if (res?.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        setUnreadCount(0);
       }
     } catch (error) {
       console.error('Failed to mark all as read:', error);
@@ -118,12 +141,12 @@ const InventoryNotificationDropdown = () => {
 
     // For inventory notifications
     if (!notif.isRead) {
+      addReadIds([notif.notificationId]);
       try {
         await markNotificationsAsRead([notif.notificationId], false);
         setNotifications((prev) =>
           prev.map((n) => (n.notificationId === notif.notificationId ? { ...n, isRead: true } : n))
         );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
       } catch (error) {
         console.error('Failed to mark as read:', error);
       }

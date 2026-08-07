@@ -202,7 +202,7 @@ const AdminDashboard = () => {
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {loading ? (
-            Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)
+            Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-24" />)
           ) : (
             <>
               <KPICardAdmin
@@ -217,42 +217,6 @@ const AdminDashboard = () => {
                 label="Tài khoản hoạt động"
                 value={formatNumber(overview?.activeTenants)}
                 unit="tài khoản"
-                tone="green"
-              />
-              <KPICardAdmin
-                icon="inventory_2"
-                label="Sản phẩm trong catalog"
-                value={formatNumber(overview?.activeProducts)}
-                unit="sản phẩm"
-                tone="slate"
-              />
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* TỔNG QUAN TÀI CHÍNH — Row 2: subscription + commission */}
-      <section>
-        <h3 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.06em] text-slate-500 dark:text-[#999999]">
-          Tài chính nền tảng (30 ngày)
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
-          {loading ? (
-            Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-24" />)
-          ) : (
-            <>
-              <KPICardAdmin
-                icon="payments"
-                label="Doanh thu subscription"
-                value={formatNumber(overview?.subscriptionRevenue)}
-                unit="VNĐ"
-                tone="navy"
-              />
-              <KPICardAdmin
-                icon="percent"
-                label="Hoa hồng B2B (1% Transfer)"
-                value={formatNumber(overview?.b2bCommission)}
-                unit="VNĐ"
                 tone="green"
               />
             </>

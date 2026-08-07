@@ -585,14 +585,17 @@ export const InventoryTransactionManagement = () => {
               { value: 'COMPLETED', label: 'Đã hoàn thành' },
               { value: 'CANCELLED', label: 'Đã hủy' },
             ].map((item) => {
-              const isActive = draftStatus === item.value;
+              const isActive = statusFilter === item.value;
               return (
                 <Button
                   key={item.value}
                   type="button"
                   variant={isActive ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setDraftStatus(item.value)}
+                  onClick={() => {
+                    setStatusFilter(item.value);
+                    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+                  }}
                 >
                   {item.label}
                 </Button>
