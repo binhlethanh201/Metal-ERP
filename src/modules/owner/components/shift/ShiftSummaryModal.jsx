@@ -225,36 +225,6 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
               </div>
             </div>
           )}
-
-          {/* Hoạt động trong ca */}
-          {orders.length > 0 && (
-            <div>
-              <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
-                <Receipt size={16} /> Hoạt động trong ca ({orders.length})
-              </h4>
-              <div className="max-h-60 space-y-1.5 overflow-y-auto">
-                {orders.map((o) => (
-                  <div key={'act-' + o.id} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2 text-xs dark:bg-[#1a1a1a]/50">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700">Bán</span>
-                      <span className="font-mono text-slate-600 dark:text-[#999999]">{o.invoiceCode}</span>
-                      <span className="text-slate-400">{o.customerName}</span>
-                      {o.paymentMethod && (
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                          {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash' || o.paymentMethod === 'Tiền mặt'
-                            ? 'Tiền mặt'
-                            : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer' || o.paymentMethod === 'Chuyển khoản'
-                              ? 'CK'
-                              : o.paymentMethod}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </Modal>
