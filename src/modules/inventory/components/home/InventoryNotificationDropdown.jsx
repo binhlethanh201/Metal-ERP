@@ -10,28 +10,31 @@ import { useNavigate } from 'react-router-dom';
 const InventoryNotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [panelStyle, setPanelStyle] = useState({});
   const btnRef = useRef(null);
   const panelRef = useRef(null);
   const navigate = useNavigate();
 
+  // Derived tu local state, khong bi polling ghi de
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
       const invRes = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 }).catch(() => null);
-      
-      let invItems = [];
-      let newUnreadCount = 0;
 
       if (invRes?.success && invRes.data) {
-        invItems = invRes.data.items || [];
-        newUnreadCount = invRes.data.unreadCount || 0;
+        const invItems = invRes.data.items || [];
+        // Merge voi local state de giu isRead cua cac notification da duoc danh dau
+        setNotifications((prev) => {
+          const prevMap = new Map(prev.map((n) => [n.notificationId, n]));
+          return invItems.map((n) => {
+            const existing = prevMap.get(n.notificationId);
+            return existing?.isRead ? { ...n, isRead: true } : n;
+          });
+        });
       }
-
-      setNotifications(invItems);
-      setUnreadCount(newUnreadCount);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -107,7 +110,6 @@ const InventoryNotificationDropdown = () => {
       const res = await markNotificationsAsRead(null, true);
       if (res?.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        setUnreadCount(0);
       }
     } catch (error) {
       console.error('Failed to mark all as read:', error);
@@ -123,7 +125,6 @@ const InventoryNotificationDropdown = () => {
         setNotifications((prev) =>
           prev.map((n) => (n.notificationId === notif.notificationId ? { ...n, isRead: true } : n))
         );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
       } catch (error) {
         console.error('Failed to mark as read:', error);
       }

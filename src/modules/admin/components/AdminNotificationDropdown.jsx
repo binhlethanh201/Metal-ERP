@@ -10,19 +10,31 @@ const getLastSeen = () => {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
 };
 
-const setLastSeen = (value) => {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch { /* ignore */ }
-};
-
 const AdminNotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [panelStyle, setPanelStyle] = useState({});
+  const [lastSeen, setLastSeenState] = useState(getLastSeen);
   const btnRef = useRef(null);
   const panelRef = useRef(null);
   const navigate = useNavigate();
+
+  const persistLastSeen = (value) => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch { /* ignore */ }
+    setLastSeenState(value);
+  };
+
+  const isUnread = (notif) => {
+    if (!lastSeen) return true;
+    const createdAt = notif.createdAt
+      ? new Date(notif.createdAt.endsWith('Z') || notif.createdAt.includes('+') ? notif.createdAt : notif.createdAt + 'Z')
+      : null;
+    return createdAt && !isNaN(createdAt.getTime()) && createdAt > new Date(lastSeen);
+  };
+
+  // Derived tu local state, khong bi polling ghi de
+  const unreadCount = notifications.filter((n) => isUnread(n)).length;
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -30,16 +42,6 @@ const AdminNotificationDropdown = () => {
       const res = await getNotificationList({ page: 1, pageSize: 20 });
       const items = res?.items || res?.data?.items || [];
       setNotifications(items);
-      const lastSeen = getLastSeen();
-      if (lastSeen) {
-        const count = items.filter((n) => {
-          const createdAt = n.createdAt ? new Date(n.createdAt.endsWith('Z') || n.createdAt.includes('+') ? n.createdAt : n.createdAt + 'Z') : null;
-          return createdAt && createdAt > new Date(lastSeen);
-        }).length;
-        setUnreadCount(count);
-      } else {
-        setUnreadCount(items.length);
-      }
     } catch (error) {
       console.error('Failed to fetch admin notifications:', error);
     } finally {
@@ -102,11 +104,23 @@ const AdminNotificationDropdown = () => {
   };
 
   const handleMarkAllAsRead = () => {
-    setLastSeen(new Date().toISOString());
-    setUnreadCount(0);
+    persistLastSeen(new Date().toISOString());
   };
 
-  const handleNotificationClick = () => {
+  const handleNotificationClick = (notif) => {
+    // Cap nhat lastSeen de danh dau notification nay da doc
+    if (notif?.createdAt) {
+      const notifTime = new Date(
+        notif.createdAt.endsWith('Z') || notif.createdAt.includes('+')
+          ? notif.createdAt
+          : notif.createdAt + 'Z'
+      );
+      if (!lastSeen || notifTime > new Date(lastSeen)) {
+        persistLastSeen(notifTime.toISOString());
+      }
+    } else {
+      persistLastSeen(new Date().toISOString());
+    }
     setIsOpen(false);
     navigate('/admin/notifications');
   };
@@ -133,15 +147,6 @@ const AdminNotificationDropdown = () => {
       case 'COMMUNITY': return { name: 'groups', color: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' };
       default: return { name: 'notifications', color: 'text-slate-500 dark:text-[#999999]', bg: 'bg-slate-100 dark:bg-[#272727]' };
     }
-  };
-
-  const lastSeen = getLastSeen();
-  const isUnread = (notif) => {
-    if (!lastSeen) return true;
-    const createdAt = notif.createdAt
-      ? new Date(notif.createdAt.endsWith('Z') || notif.createdAt.includes('+') ? notif.createdAt : notif.createdAt + 'Z')
-      : null;
-    return createdAt && !isNaN(createdAt.getTime()) && createdAt > new Date(lastSeen);
   };
 
   const dropdownPanel = isOpen && (
