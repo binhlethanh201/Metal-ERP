@@ -266,6 +266,7 @@ export const ProductManagement = () => {
             >
               <Icon name="add" className="text-sm" /> Thêm mới
             </button>
+            )}
           </div>
         </div>
 

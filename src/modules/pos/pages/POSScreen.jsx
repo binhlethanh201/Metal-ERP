@@ -197,7 +197,6 @@ const POSScreen = () => {
   }, [posProducts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const userRoles = Array.isArray(user?.roles) ? user?.roles : user?.role ? [user?.role] : [];
-  const isOwner = hasRole(userRoles, 'Owner');
   const hasSaleCreate = hasPermission(user, 'SALE_CREATE');
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
