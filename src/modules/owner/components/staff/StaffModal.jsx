@@ -147,7 +147,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
         });
       return { ...group, items };
     }).filter((g) => g.items.length > 0);
-  }, [permissions, isAdminContext]);
+  }, [permissions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (e) => {
     e.preventDefault();
