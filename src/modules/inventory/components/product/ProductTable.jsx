@@ -255,7 +255,6 @@ export const ProductTable = ({
                       row={row}
                       onEdit={(r, tab) => onEdit?.(r, tab)}
                       onDelete={onDelete}
-                      onToggleStatus={onToggleStatus}
                     />
                   </td>
                 </tr>

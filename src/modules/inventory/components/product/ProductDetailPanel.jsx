@@ -5,28 +5,6 @@ import { formatMoney, isProductActive } from '../../utils/productUtils';
 
 const fmtMoney = (v) => formatMoney(v);
 
-const isInactiveValue = (value) => {
-  const normalized = String(value ?? '').trim().toLowerCase();
-  return (
-    value === false ||
-    value === 0 ||
-    value === -1 ||
-    normalized === '0' ||
-    normalized === '-1' ||
-    normalized === 'inactive' ||
-    normalized === 'false'
-  );
-};
-
-const normalizeDetailStatus = (data = {}) => {
-  if (isInactiveValue(data.productStatus)) return 'inactive';
-  if (isInactiveValue(data.isActive)) return 'inactive';
-  if (isInactiveValue(data.IsActive)) return 'inactive';
-  if (isInactiveValue(data.status)) return 'inactive';
-  if (isInactiveValue(data.Status)) return 'inactive';
-  return 'active';
-};
-
 const SummaryBar = ({ row }) => {
   const items = [
     { label: 'Mã SP', value: row.productCode || row.id },
@@ -175,54 +153,7 @@ const DescTabPanel = ({ row, loading, onEdit }) => {
   );
 };
 
-const StatusToggleModal = ({ open, onClose, onConfirm, isActive }) => {
-  if (!open) return null;
-  const isStopping = isActive !== false;
-  return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4">
-      <div
-        className="w-full max-w-md rounded-xl bg-white shadow-2xl dark:bg-[#1a1a1a]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-[#333333]">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
-            {isStopping ? 'Ngừng kinh doanh' : 'Mở bán lại'}
-          </h3>
-          <button onClick={onClose} className="rounded-full p-1 text-slate-400 hover:bg-gray-100 dark:text-[#808080] dark:hover:bg-[#333333]">
-            <Icon name="close" size={20} />
-          </button>
-        </div>
-        <div className="p-6 text-sm text-slate-600 dark:text-[#b3b3b3]">
-          {isStopping
-            ? 'Sản phẩm sẽ bị ẩn khỏi các kênh bán hàng. Thông tin tồn kho vẫn được giữ nguyên. Bạn có chắc chắn?'
-            : 'Sản phẩm sẽ hiển thị lại và có thể giao dịch bình thường. Bạn có muốn tiếp tục?'}
-        </div>
-        <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4 dark:border-[#333333]">
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-5 py-2 text-sm font-semibold hover:bg-gray-50 dark:border-[#404040] dark:hover:bg-[#333333]"
-          >
-            Hủy
-          </button>
-          <button
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className={`rounded-lg px-5 py-2 text-sm font-semibold text-white ${isStopping ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-          >
-            Xác nhận
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const currentActive = isProductActive(row);
+const BottomToolbar = ({ row, fullData, onEdit, onDelete }) => {
   return (
     <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-4 dark:border-[#333333]">
       <div className="flex gap-4">
@@ -246,42 +177,12 @@ const BottomToolbar = ({ row, fullData, onEdit, onDelete, onToggleStatus }) => {
         >
           <Icon name="edit" size={18} /> Chỉnh sửa
         </button>
-        <div className="relative">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setMenuOpen((p) => !p);
-            }}
-            className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#333333]"
-          >
-            <Icon name="more_horiz" size={20} />
-          </button>
-          {menuOpen && (
-            <div className="absolute bottom-full right-0 z-30 mb-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-[#333333] dark:bg-[#1a1a1a]">
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  setStatusModalOpen(true);
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
-              >
-                {currentActive ? 'Ngừng kinh doanh' : 'Mở bán lại'}
-              </button>
-            </div>
-          )}
-        </div>
       </div>
-      <StatusToggleModal
-        open={statusModalOpen}
-        onClose={() => setStatusModalOpen(false)}
-        isActive={currentActive}
-        onConfirm={() => onToggleStatus?.(row.id || row.productId, !currentActive)}
-      />
     </div>
   );
 };
 
-export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) => {
+export const ProductDetailPanel = ({ row, onEdit, onDelete }) => {
   const [activeTab, setActiveTab] = useState('info');
   const [fullData, setFullData] = useState(row);
   const [loading, setLoading] = useState(false);
@@ -300,7 +201,6 @@ export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) =>
         const res = await getProduct(productId);
         if (res?.success && res?.data) {
           const apiData = res.data;
-          const productStatus = normalizeDetailStatus(apiData);
           // Map PascalCase từ backend C# sang lowercase frontend
           setFullData((prev) => ({
             ...prev,
@@ -313,12 +213,13 @@ export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) =>
             weightUnit: apiData.weightUnit || apiData.WeightUnit || prev.weightUnit || 'g',
             specification:
               apiData.specification || apiData.Specification || prev.specification || '',
-            productStatus,
-            isActive: productStatus !== 'inactive',
+            // Luon lay productStatus tu row (bang ngoai) - nguon su that duy nhat
+            productStatus: row.productStatus,
+            isActive: row.productStatus !== 'inactive',
           }));
         }
       } catch (err) {
-        console.error('Lỗi tải chi tiết:', err);
+        console.error('Loi tai chi tiet:', err);
       } finally {
         setLoading(false);
       }
@@ -350,7 +251,6 @@ export const ProductDetailPanel = ({ row, onEdit, onDelete, onToggleStatus }) =>
           fullData={fullData}
           onEdit={onEdit}
           onDelete={onDelete}
-          onToggleStatus={onToggleStatus}
         />
       )}
     </div>
