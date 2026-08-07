@@ -170,7 +170,6 @@ export const StockExport = () => {
 
       try {
         const productFilters = { pageNumber: 1, pageSize: 500 };
-        if (filterParams.supplierId) productFilters.supplierId = filterParams.supplierId;
         const productsResponse = await getProducts(productFilters);
         const productItems = extractList(productsResponse);
         setProducts(productItems);
@@ -299,8 +298,9 @@ export const StockExport = () => {
       }));
       setItems(autoItems);
       setStatusMessage('');
-    } catch {
-      setStatusMessage('Lỗi: Không thể tải danh sách sản phẩm có thể trả.');
+    } catch (err) {
+      console.error('[StockExport] Lỗi tải returnable items:', err);
+      setStatusMessage('Lỗi: Không thể tải danh sách sản phẩm có thể trả. ' + (err?.message || ''));
     }
   };
 

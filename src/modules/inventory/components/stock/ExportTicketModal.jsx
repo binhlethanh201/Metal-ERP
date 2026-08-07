@@ -226,8 +226,9 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       }));
       setItems(autoItems);
       setStatusMessage('');
-    } catch {
-      setStatusMessage('Lỗi: Không thể tải danh sách sản phẩm có thể trả.');
+    } catch (err) {
+      console.error('[ExportTicketModal] Lỗi tải returnable items:', err);
+      setStatusMessage('Lỗi: Không thể tải danh sách sản phẩm có thể trả. ' + (err?.message || ''));
     }
   };
 
