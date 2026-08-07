@@ -9,8 +9,7 @@ export const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters })
     setGroupKeyword,
     brandKeyword,
     setBrandKeyword,
-    // eslint-disable-next-line
-    supplierKeyword,
+    // supplierKeyword,
     setSupplierKeyword,
     productStatusFilter,
     setProductStatusFilter,
