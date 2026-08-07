@@ -27,7 +27,24 @@ const ShiftHistory = () => {
   } = useShiftHistory();
 
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false); // State mở Drawer bộ lọc
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+
+  // Draft filters — chỉ apply khi bấm "Áp dụng"
+  const [draftFilters, setDraftFilters] = useState({ from: '', to: '' });
+
+  const openFilterDrawer = () => {
+    setDraftFilters({ from: filters.from || '', to: filters.to || '' });
+    setIsFilterDrawerOpen(true);
+  };
+
+  const applyFilters = () => {
+    setDateRange(draftFilters.from || '', draftFilters.to || '');
+    setIsFilterDrawerOpen(false);
+  };
+
+  const resetDraftFilters = () => {
+    setDraftFilters({ from: '', to: '' });
+  };
 
   const handleViewSummary = async (shiftId) => {
     setSummaryOpen(true);
@@ -53,7 +70,9 @@ const ShiftHistory = () => {
     <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* ==================== PAGE HEADER ==================== */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Lịch sử Ca bán hàng</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">
+          Lịch sử Ca bán hàng
+        </h1>
       </div>
 
       {/* ==================== GLOBAL ERROR BANNER ==================== */}
@@ -71,14 +90,16 @@ const ShiftHistory = () => {
       <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-semibold text-slate-600 dark:text-[#999999]">Danh sách các ca đã lưu</span>
+            <span className="text-sm font-semibold text-slate-600 dark:text-[#999999]">
+              Danh sách các ca đã lưu
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsFilterDrawerOpen(true)}
+              onClick={openFilterDrawer}
               className="flex items-center gap-1.5"
             >
               <Layers size={14} className="text-[#004785]" />
@@ -112,41 +133,44 @@ const ShiftHistory = () => {
           widthClass="max-w-sm"
           footer={
             <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  resetFilters();
-                  setIsFilterDrawerOpen(false);
-                }}
-              >
+              <Button variant="secondary" size="sm" onClick={resetDraftFilters}>
                 Đặt lại
               </Button>
-              <Button variant="primary" size="sm" onClick={() => setIsFilterDrawerOpen(false)}>
-                Đóng
+              <Button variant="primary" size="sm" onClick={applyFilters}>
+                Áp dụng
               </Button>
             </>
           }
         >
           <div className="space-y-5">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Từ ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                Từ ngày
+              </label>
               <input
                 type="date"
-                value={filters.from ? filters.from.slice(0, 10) : ''}
+                value={draftFilters.from ? draftFilters.from.slice(0, 10) : ''}
                 onChange={(e) =>
-                  setDateRange(e.target.value ? `${e.target.value}T00:00:00Z` : '', filters.to)
+                  setDraftFilters((f) => ({
+                    ...f,
+                    from: e.target.value ? `${e.target.value}T00:00:00Z` : '',
+                  }))
                 }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Đến ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                Đến ngày
+              </label>
               <input
                 type="date"
-                value={filters.to ? filters.to.slice(0, 10) : ''}
+                value={draftFilters.to ? draftFilters.to.slice(0, 10) : ''}
                 onChange={(e) =>
-                  setDateRange(filters.from, e.target.value ? `${e.target.value}T23:59:59Z` : '')
+                  setDraftFilters((f) => ({
+                    ...f,
+                    to: e.target.value ? `${e.target.value}T23:59:59Z` : '',
+                  }))
                 }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />

@@ -38,6 +38,32 @@ const ReturnHistory = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
+  // Draft filters — chỉ apply khi bấm "Áp dụng"
+  const [draftFilters, setDraftFilters] = useState({
+    status: '',
+    dateFrom: '',
+    dateTo: '',
+  });
+
+  const openFilterDrawer = () => {
+    setDraftFilters({
+      status: filters.status,
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+    });
+    setIsFilterDrawerOpen(true);
+  };
+
+  const applyFilters = () => {
+    setStatus(draftFilters.status);
+    setDateRange(draftFilters.dateFrom, draftFilters.dateTo);
+    setIsFilterDrawerOpen(false);
+  };
+
+  const resetDraftFilters = () => {
+    setDraftFilters({ status: '', dateFrom: '', dateTo: '' });
+  };
+
   const handleViewDetail = async (returnOrderId) => {
     setDetailOpen(true);
     await loadReturnDetail(returnOrderId);
@@ -68,7 +94,9 @@ const ReturnHistory = () => {
     <div className="animate-fade-in w-full space-y-4 text-slate-800 dark:text-[#e5e5e5]">
       {/* ==================== PAGE HEADER ==================== */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Lịch sử Đổi/Trả hàng</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">
+          Lịch sử Đổi/Trả hàng
+        </h1>
       </div>
 
       {/* ==================== POLICY SETTINGS ==================== */}
@@ -87,14 +115,16 @@ const ReturnHistory = () => {
       <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-semibold text-slate-600 dark:text-[#999999]">Danh sách phiếu đổi/trả</span>
+            <span className="text-sm font-semibold text-slate-600 dark:text-[#999999]">
+              Danh sách phiếu đổi/trả
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsFilterDrawerOpen(true)}
+              onClick={openFilterDrawer}
               className="flex items-center gap-1.5"
             >
               <Layers size={14} className="text-[#004785]" />
@@ -132,24 +162,25 @@ const ReturnHistory = () => {
                 variant="secondary"
                 size="sm"
                 onClick={() => {
-                  resetFilters();
-                  setIsFilterDrawerOpen(false);
+                  resetDraftFilters();
                 }}
               >
                 Đặt lại
               </Button>
-              <Button variant="primary" size="sm" onClick={() => setIsFilterDrawerOpen(false)}>
-                Đóng
+              <Button variant="primary" size="sm" onClick={applyFilters}>
+                Áp dụng
               </Button>
             </>
           }
         >
           <div className="space-y-5">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Trạng thái</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                Trạng thái
+              </label>
               <select
-                value={filters.status}
-                onChange={(e) => setStatus(e.target.value)}
+                value={draftFilters.status}
+                onChange={(e) => setDraftFilters((f) => ({ ...f, status: e.target.value }))}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               >
                 {STATUS_OPTIONS.map((opt) => (
@@ -160,26 +191,33 @@ const ReturnHistory = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Từ ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                Từ ngày
+              </label>
               <input
                 type="date"
-                value={filters.dateFrom ? filters.dateFrom.slice(0, 10) : ''}
+                value={draftFilters.dateFrom ? draftFilters.dateFrom.slice(0, 10) : ''}
                 onChange={(e) =>
-                  setDateRange(e.target.value ? `${e.target.value}T00:00:00Z` : '', filters.dateTo)
+                  setDraftFilters((f) => ({
+                    ...f,
+                    dateFrom: e.target.value ? `${e.target.value}T00:00:00Z` : '',
+                  }))
                 }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Đến ngày</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                Đến ngày
+              </label>
               <input
                 type="date"
-                value={filters.dateTo ? filters.dateTo.slice(0, 10) : ''}
+                value={draftFilters.dateTo ? draftFilters.dateTo.slice(0, 10) : ''}
                 onChange={(e) =>
-                  setDateRange(
-                    filters.dateFrom,
-                    e.target.value ? `${e.target.value}T23:59:59Z` : ''
-                  )
+                  setDraftFilters((f) => ({
+                    ...f,
+                    dateTo: e.target.value ? `${e.target.value}T23:59:59Z` : '',
+                  }))
                 }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
               />

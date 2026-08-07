@@ -88,9 +88,10 @@ const normalizeInwardInventory = (item) => ({
   status: mapStatus(item?.status),
   branchName: item?.branchName || '-',
   branchId: item?.branchId,
-  reason: item?.ticketType === 'CUSTOMER_RETURN' && (!item?.reason || item?.reason === 'Nhập kho')
-    ? 'Khách hàng trả'
-    : (item?.reason || item?.note || '-'),
+  reason:
+    item?.ticketType === 'CUSTOMER_RETURN' && (!item?.reason || item?.reason === 'Nhập kho')
+      ? 'Khách hàng trả'
+      : item?.reason || item?.note || '-',
   note: item?.note || '',
   ticketType: item?.ticketType || 'PURCHASE',
   items: (item?.items || []).map(normalizeItem),
@@ -152,6 +153,36 @@ export const InventoryTransactionManagement = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
+  // Draft state cho drawer — chỉ apply khi bấm "Áp dụng"
+  const [draftStatus, setDraftStatus] = useState('ALL');
+  const [draftDateFrom, setDraftDateFrom] = useState('');
+  const [draftDateTo, setDraftDateTo] = useState('');
+  const [draftTab, setDraftTab] = useState('ALL');
+
+  const openFilterDrawer = () => {
+    setDraftStatus(statusFilter);
+    setDraftDateFrom(dateFrom);
+    setDraftDateTo(dateTo);
+    setDraftTab(activeTab);
+    setFilterDrawerOpen(true);
+  };
+
+  const applyDrawerFilters = () => {
+    setStatusFilter(draftStatus);
+    setDateFrom(draftDateFrom);
+    setDateTo(draftDateTo);
+    setActiveTab(draftTab);
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+    setFilterDrawerOpen(false);
+  };
+
+  const resetDrawerFilters = () => {
+    setDraftStatus('ALL');
+    setDraftDateFrom('');
+    setDraftDateTo('');
+    setDraftTab('ALL');
+  };
+
   const [inwardData, setInwardData] = useState([]);
   const [outwardData, setOutwardData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -204,7 +235,7 @@ export const InventoryTransactionManagement = () => {
           (supList || []).forEach((s) => {
             if (s.id) supplierMap[s.id] = s.name || s.supplierName || '';
           });
-        } catch { } // eslint-disable-line no-empty
+        } catch {} // eslint-disable-line no-empty
 
         if (inwardRes?.success && inwardRes?.data) {
           setInwardData(
@@ -228,7 +259,7 @@ export const InventoryTransactionManagement = () => {
                     localStorage.getItem(`outward_party_${item.ticketCode}`) || ''
                   ).replace(/^.*?:\s*/g, '');
                   if (localName) return { ...normalized, partyName: localName };
-                } catch { } // eslint-disable-line no-empty
+                } catch {} // eslint-disable-line no-empty
               }
               return normalized;
             })
@@ -389,7 +420,7 @@ export const InventoryTransactionManagement = () => {
                 partyName: supData.name || supData.supplierName || '-',
               };
             }
-          } catch { }
+          } catch {}
         }
         // Tra cứu tên đối tượng xuất từ localStorage
         if (transaction.type === 'OUTWARD' && rawData.ticketCode && normalized.partyName === '-') {
@@ -400,7 +431,7 @@ export const InventoryTransactionManagement = () => {
             if (localName) {
               normalized = { ...normalized, partyName: localName };
             }
-          } catch { } // eslint-disable-line no-empty
+          } catch {} // eslint-disable-line no-empty
         }
         setSelectedTransaction(normalized);
       } else {
@@ -450,12 +481,6 @@ export const InventoryTransactionManagement = () => {
     setPagination((prev) => ({ ...prev, pageSize: size, currentPage: 1 }));
   };
 
-  // Handle filter changes
-  const handleStatusFilterChange = (value) => {
-    setStatusFilter(value);
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  };
-
   // Handle reset all filters
   const handleReset = () => {
     setActiveTab('ALL');
@@ -472,44 +497,59 @@ export const InventoryTransactionManagement = () => {
       {/* ==================== PAGE HEADER ==================== */}
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">Lịch sử Xuất/Nhập</h1>
-          <p className="mt-1 text-gray-600 dark:text-[#999999]">Theo dõi toàn bộ giao dịch nhập kho và xuất kho</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#e5e5e5]">
+            Lịch sử Xuất/Nhập
+          </h1>
+          <p className="mt-1 text-gray-600 dark:text-[#999999]">
+            Theo dõi toàn bộ giao dịch nhập kho và xuất kho
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-
-
-        </div>
+        <div className="flex items-center gap-2"></div>
       </div>
 
       {/* ==================== STATS CARDS ==================== */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-emerald-600">{loading ? '...' : (computedStats?.totalInwardCount || 0).toLocaleString()}</div>
+            <div className="text-xl font-bold text-emerald-600">
+              {loading ? '...' : (computedStats?.totalInwardCount || 0).toLocaleString()}
+            </div>
             <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu nhập</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-rose-600">{loading ? '...' : (computedStats?.totalOutwardCount || 0).toLocaleString()}</div>
+            <div className="text-xl font-bold text-rose-600">
+              {loading ? '...' : (computedStats?.totalOutwardCount || 0).toLocaleString()}
+            </div>
             <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Tổng phiếu xuất</p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-emerald-600">{loading ? '...' : formatCurrency(computedStats?.inwardValue || 0)}</div>
-            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">{dateFrom || dateTo ? 'Giá trị nhập (đã lọc)' : 'Giá trị nhập hôm nay'}</p>
+            <div className="text-xl font-bold text-emerald-600">
+              {loading ? '...' : formatCurrency(computedStats?.inwardValue || 0)}
+            </div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">
+              {dateFrom || dateTo ? 'Giá trị nhập (đã lọc)' : 'Giá trị nhập hôm nay'}
+            </p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-rose-600">{loading ? '...' : formatCurrency(computedStats?.outwardValue || 0)}</div>
-            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">{dateFrom || dateTo ? 'Giá trị xuất (đã lọc)' : 'Giá trị xuất hôm nay'}</p>
+            <div className="text-xl font-bold text-rose-600">
+              {loading ? '...' : formatCurrency(computedStats?.outwardValue || 0)}
+            </div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">
+              {dateFrom || dateTo ? 'Giá trị xuất (đã lọc)' : 'Giá trị xuất hôm nay'}
+            </p>
           </div>
         </Card>
         <Card>
           <div className="py-4 text-center">
-            <div className="text-xl font-bold text-amber-500">{loading ? '...' : (computedStats?.pendingCount || 0).toLocaleString()}</div>
+            <div className="text-xl font-bold text-amber-500">
+              {loading ? '...' : (computedStats?.pendingCount || 0).toLocaleString()}
+            </div>
             <p className="mt-1 text-sm text-gray-600 dark:text-[#999999]">Hàng chờ duyệt</p>
           </div>
         </Card>
@@ -545,14 +585,14 @@ export const InventoryTransactionManagement = () => {
               { value: 'COMPLETED', label: 'Đã hoàn thành' },
               { value: 'CANCELLED', label: 'Đã hủy' },
             ].map((item) => {
-              const isActive = statusFilter === item.value;
+              const isActive = draftStatus === item.value;
               return (
                 <Button
                   key={item.value}
                   type="button"
                   variant={isActive ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => handleStatusFilterChange(item.value)}
+                  onClick={() => setDraftStatus(item.value)}
                 >
                   {item.label}
                 </Button>
@@ -565,7 +605,7 @@ export const InventoryTransactionManagement = () => {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={openFilterDrawer}
               className="flex items-center gap-1.5"
             >
               <Icon name="Layers" size={14} className="text-[#004785]" />
@@ -605,20 +645,11 @@ export const InventoryTransactionManagement = () => {
         widthClass="max-w-sm"
         footer={
           <>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setActiveTab('ALL');
-                setDateFrom('');
-                setDateTo('');
-                setPagination((p) => ({ ...p, currentPage: 1 }));
-              }}
-            >
+            <Button variant="secondary" size="sm" onClick={resetDrawerFilters}>
               Đặt lại
             </Button>
-            <Button variant="primary" size="sm" onClick={() => setFilterDrawerOpen(false)}>
-              Đóng
+            <Button variant="primary" size="sm" onClick={applyDrawerFilters}>
+              Áp dụng
             </Button>
           </>
         }
@@ -626,7 +657,9 @@ export const InventoryTransactionManagement = () => {
         <div className="space-y-5">
           {/* Loại phiếu */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Loại phiếu</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+              Loại phiếu
+            </label>
             <div className="flex flex-wrap gap-2">
               {[
                 { key: 'ALL', label: 'Tất cả', count: counts.all },
@@ -636,15 +669,21 @@ export const InventoryTransactionManagement = () => {
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => { setActiveTab(tab.key); setPagination((p) => ({ ...p, currentPage: 1 })); }}
-                  className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${activeTab === tab.key
-                    ? 'bg-[#004785] text-white shadow-sm'
-                    : 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#333] dark:text-[#b3b3b3] dark:hover:bg-[#272727]'
-                    }`}
+                  onClick={() => setDraftTab(tab.key)}
+                  className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+                    draftTab === tab.key
+                      ? 'bg-[#004785] text-white shadow-sm'
+                      : 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#333] dark:text-[#b3b3b3] dark:hover:bg-[#272727]'
+                  }`}
                 >
                   {tab.label}
-                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs ${activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-[#333] dark:text-[#b3b3b3]'
-                    }`}>
+                  <span
+                    className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs ${
+                      draftTab === tab.key
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-100 text-slate-600 dark:bg-[#333] dark:text-[#b3b3b3]'
+                    }`}
+                  >
                     {tab.count}
                   </span>
                 </button>
@@ -654,22 +693,26 @@ export const InventoryTransactionManagement = () => {
 
           {/* Từ ngày */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Từ ngày</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+              Từ ngày
+            </label>
             <input
               type="date"
-              value={dateFrom}
-              onChange={(e) => { setDateFrom(e.target.value); setPagination((p) => ({ ...p, currentPage: 1 })); }}
+              value={draftDateFrom}
+              onChange={(e) => setDraftDateFrom(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
             />
           </div>
 
           {/* Đến ngày */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Đến ngày</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+              Đến ngày
+            </label>
             <input
               type="date"
-              value={dateTo}
-              onChange={(e) => { setDateTo(e.target.value); setPagination((p) => ({ ...p, currentPage: 1 })); }}
+              value={draftDateTo}
+              onChange={(e) => setDraftDateTo(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
             />
           </div>
@@ -682,15 +725,33 @@ export const InventoryTransactionManagement = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 dark:border-[#333] dark:bg-[#1a1a1a]">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Loại</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Mã phiếu</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Ngày tạo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Đối tượng</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Số mặt hàng</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Tổng SL</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Tổng tiền</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Người tạo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">Trạng thái</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Loại
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Mã phiếu
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Ngày tạo
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Đối tượng
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Số mặt hàng
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Tổng SL
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Tổng tiền
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Người tạo
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-[#b3b3b3]">
+                  Trạng thái
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-[#333]">
@@ -698,7 +759,9 @@ export const InventoryTransactionManagement = () => {
                 Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx}>
                     {Array.from({ length: 9 }).map((_, i) => (
-                      <td key={i} className="px-4 py-4"><div className="h-4 w-20 animate-pulse rounded bg-slate-200 dark:bg-[#333]" /></td>
+                      <td key={i} className="px-4 py-4">
+                        <div className="h-4 w-20 animate-pulse rounded bg-slate-200 dark:bg-[#333]" />
+                      </td>
                     ))}
                   </tr>
                 ))
@@ -707,8 +770,12 @@ export const InventoryTransactionManagement = () => {
                   <td colSpan={9} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Package className="h-10 w-10 text-slate-300 dark:text-[#666]" />
-                      <p className="font-medium text-slate-500 dark:text-[#999]">Không có dữ liệu</p>
-                      <p className="text-sm text-slate-400 dark:text-[#808080]">Thử thay đổi bộ lọc hoặc tạo phiếu mới</p>
+                      <p className="font-medium text-slate-500 dark:text-[#999]">
+                        Không có dữ liệu
+                      </p>
+                      <p className="text-sm text-slate-400 dark:text-[#808080]">
+                        Thử thay đổi bộ lọc hoặc tạo phiếu mới
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -719,21 +786,41 @@ export const InventoryTransactionManagement = () => {
                     className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-[#272727]"
                     onClick={() => handleViewDetail(row)}
                   >
-                    <td className="px-4 py-3"><TransactionTypeBadge type={row.type} size="sm" /></td>
-                    <td className="px-4 py-3 font-mono font-medium text-slate-900 dark:text-[#e5e5e5]">{row.ticketCode}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">{formatDate(row.createdAt)}</td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{row.partyName}</td>
-                    <td className="px-4 py-3 text-right text-slate-600 dark:text-[#b3b3b3]">{row.itemCount}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">{(row.totalQuantity || 0).toLocaleString('vi-VN')}</td>
-                    <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
-                      {row.ticketType === 'CUSTOMER_RETURN'
-                        ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">Khách hàng trả</span>
-                        : row.type === 'OUTWARD' && row.totalAmount === 0
-                          ? <span className="text-xs italic text-slate-400 dark:text-[#808080]">{row.reason || row.ticketType || '-'}</span>
-                          : formatCurrency(row.totalAmount)}
+                    <td className="px-4 py-3">
+                      <TransactionTypeBadge type={row.type} size="sm" />
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">{row.createdByName}</td>
-                    <td className="px-4 py-3"><StatusBadge status={row.status} size="sm" /></td>
+                    <td className="px-4 py-3 font-mono font-medium text-slate-900 dark:text-[#e5e5e5]">
+                      {row.ticketCode}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">
+                      {formatDate(row.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-900">{row.partyName}</td>
+                    <td className="px-4 py-3 text-right text-slate-600 dark:text-[#b3b3b3]">
+                      {row.itemCount}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
+                      {(row.totalQuantity || 0).toLocaleString('vi-VN')}
+                    </td>
+                    <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
+                      {row.ticketType === 'CUSTOMER_RETURN' ? (
+                        <span className="text-xs italic text-slate-400 dark:text-[#808080]">
+                          Khách hàng trả
+                        </span>
+                      ) : row.type === 'OUTWARD' && row.totalAmount === 0 ? (
+                        <span className="text-xs italic text-slate-400 dark:text-[#808080]">
+                          {row.reason || row.ticketType || '-'}
+                        </span>
+                      ) : (
+                        formatCurrency(row.totalAmount)
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-[#b3b3b3]">
+                      {row.createdByName}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={row.status} size="sm" />
+                    </td>
                   </tr>
                 ))
               )}
@@ -759,8 +846,8 @@ export const InventoryTransactionManagement = () => {
               </div>
               <span>
                 {(pagination.currentPage - 1) * pagination.pageSize + 1} -{' '}
-                {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)} trong tổng số{' '}
-                {pagination.totalItems} phiếu
+                {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)}{' '}
+                trong tổng số {pagination.totalItems} phiếu
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -768,7 +855,7 @@ export const InventoryTransactionManagement = () => {
                 type="button"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage <= 1}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#272727] disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:text-[#b3b3b3] dark:hover:bg-[#272727]"
               >
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
@@ -779,7 +866,7 @@ export const InventoryTransactionManagement = () => {
                 type="button"
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage >= pagination.totalPages}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 dark:text-[#b3b3b3] hover:bg-slate-50 dark:hover:bg-[#272727] disabled:opacity-50"
+                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:text-[#b3b3b3] dark:hover:bg-[#272727]"
               >
                 <Icon name="chevron_right" className="text-[18px]" />
               </button>

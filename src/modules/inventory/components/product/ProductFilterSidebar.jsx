@@ -170,31 +170,7 @@ export const ProductFilterSidebar = ({ isCollapsed, onToggleCollapse, filters })
           </select>
         </div>
 
-        {/* Nhà cung cấp — hiển thị tên, gửi GUID (supplierId) lên API */}
-        <div className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-700 dark:text-[#b3b3b3]">Nhà cung cấp</p>
-          <select
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none disabled:opacity-60 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-            value={supplierKeyword}
-            onChange={(e) => setSupplierKeyword(e.target.value)}
-            disabled={loadingSuppliers}
-          >
-            <option value="">-- Tất cả nhà cung cấp --</option>
-            {supplierOptions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          {loadingSuppliers && (
-            <p className="text-[11px] text-slate-400 dark:text-[#808080]">Đang tải danh sách nhà cung cấp...</p>
-          )}
-          {!loadingSuppliers && supplierOptions.length === 0 && (
-            <p className="text-[11px] text-slate-400 dark:text-[#808080]">
-              Chưa có nhà cung cấp nào hoặc API chưa sẵn sàng.
-            </p>
-          )}
-        </div>
+
       </aside>
     </>
   );

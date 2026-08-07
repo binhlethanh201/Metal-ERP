@@ -22,6 +22,19 @@ export const ProductManagement = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Draft state — chỉ apply khi bấm "Áp dụng"
+  const [draftSearch, setDraftSearch] = useState('');
+
+  const openFilterDrawer = () => {
+    setDraftSearch(filters.search);
+    setFilterDrawerOpen(true);
+  };
+
+  const applySearch = () => {
+    filters.setSearch(draftSearch);
+    filters.setCurrentPage(1);
+  };
+
   const filters = useProductFilters();
   const activeQueryParams = filters.queryParams;
 
@@ -41,15 +54,9 @@ export const ProductManagement = () => {
     let count = 0;
     if (filters.groupKeyword?.trim()) count += 1;
     if (filters.brandKeyword?.trim()) count += 1;
-    if (filters.supplierKeyword?.trim()) count += 1;
     if (filters.productStatusFilter && filters.productStatusFilter !== 'all') count += 1;
     return count;
-  }, [
-    filters.groupKeyword,
-    filters.brandKeyword,
-    filters.supplierKeyword,
-    filters.productStatusFilter,
-  ]);
+  }, [filters.groupKeyword, filters.brandKeyword, filters.productStatusFilter]);
 
   const { currentPage, setCurrentPage, pageSize } = filters;
   const totalPages = paginationMeta?.totalPages || 1;
@@ -192,16 +199,16 @@ export const ProductManagement = () => {
               <input
                 className="w-full border-none bg-transparent text-sm outline-none focus:ring-0 dark:text-[#e5e5e5]"
                 placeholder="Tìm theo mã, tên hàng, mã vạch..."
-                value={filters.search}
-                onChange={(e) => {
-                  filters.setSearch(e.target.value);
-                  filters.setCurrentPage(1);
+                value={draftSearch}
+                onChange={(e) => setDraftSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') applySearch();
                 }}
               />
             </div>
             <button
               type="button"
-              onClick={() => setFilterDrawerOpen(true)}
+              onClick={openFilterDrawer}
               className="relative flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
             >
               <Icon name="Layers" size={16} className="text-slate-500 dark:text-[#999999]" />

@@ -56,10 +56,14 @@ const getStatusLabel = (item) => {
   }
 
   switch (status) {
-    case 'WaitingForApproval': return 'Chờ duyệt';
-    case 'Completed': return 'Đã hoàn thành';
-    case 'Cancelled': return 'Đã hủy';
-    default: return status;
+    case 'WaitingForApproval':
+      return 'Chờ duyệt';
+    case 'Completed':
+      return 'Đã hoàn thành';
+    case 'Cancelled':
+      return 'Đã hủy';
+    default:
+      return status;
   }
 };
 
@@ -144,7 +148,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   const canApprovePermission = hasPermission(user, 'STOCK_CHECK_APPROVE');
   const canCancelPermission = hasPermission(user, 'STOCK_CHECK_CANCEL');
 
-  const isOwnerOrAdmin = user?.role === 'Owner' || user?.role === 'Admin' || user?.roles?.includes('Owner') || user?.roles?.includes('Admin');
+  const isOwnerOrAdmin =
+    user?.role === 'Owner' ||
+    user?.role === 'Admin' ||
+    user?.roles?.includes('Owner') ||
+    user?.roles?.includes('Admin');
   const isCreator = currentUserId === detailData?.createdByUserId;
   const isAssignee = currentUserId === detailData?.assigneeUserId;
 
@@ -152,9 +160,8 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   const isCreatorNotAssignedToOther = isCreator && (!detailData?.assigneeUserId || isAssignee);
   const canFill = isDraft && (isOwnerOrAdmin || isAssignee || isCreatorNotAssignedToOther);
   const canModify = isDraft && (isOwnerOrAdmin || isAssignee || isCreatorNotAssignedToOther);
-  
-  // Không cho phép người được phân công tự duyệt phiếu của mình (trừ khi là Owner/Admin)
-  const canApproveReject = isWaiting && (isOwnerOrAdmin || (canApprovePermission && !isAssignee));
+
+  const canApproveReject = isWaiting && (isOwnerOrAdmin || canApprovePermission);
   const canCancel = canCancelPermission && (isDraft || isWaiting);
   const canEditReasons = canApprovePermission && (isWaiting || isCompleted);
 
@@ -308,7 +315,9 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
     {
       key: 'productCode',
       header: 'Mã SP',
-      render: (val) => <span className="font-semibold text-slate-700 dark:text-[#d4d4d4]">{val}</span>,
+      render: (val) => (
+        <span className="font-semibold text-slate-700 dark:text-[#d4d4d4]">{val}</span>
+      ),
     },
     {
       key: 'productName',
@@ -319,7 +328,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
       header: (
         <div className="text-center" title="Tồn kho thực tế hiện tại trong hệ thống.">
           Tồn Hệ Thống{' '}
-          <Icon name="info" size={14} className="inline align-text-bottom text-slate-400 dark:text-[#808080]" />
+          <Icon
+            name="info"
+            size={14}
+            className="inline align-text-bottom text-slate-400 dark:text-[#808080]"
+          />
         </div>
       ),
 
@@ -341,7 +354,6 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
           </div>
         );
       },
-
     },
     {
       key: 'actualQuantity',
@@ -358,10 +370,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                 type="number"
                 min="0"
                 placeholder="Nhập..."
-                className={`w-24 rounded border px-2 py-1.5 text-center font-bold shadow-inner focus:outline-none focus:ring-2 focus:ring-[#004785] ${!hasValue
-                  ? 'border-orange-300 bg-orange-50 text-orange-700 dark:text-orange-400 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-300'
-                  : 'border-slate-300 text-[#004785] dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
-                  }`}
+                className={`w-24 rounded border px-2 py-1.5 text-center font-bold shadow-inner focus:outline-none focus:ring-2 focus:ring-[#004785] ${
+                  !hasValue
+                    ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-300 dark:text-orange-400'
+                    : 'border-slate-300 text-[#004785] dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
+                }`}
                 value={currentActualRaw}
                 onChange={(e) => {
                   let val = e.target.value;
@@ -399,22 +412,23 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
 
         return (
           <div
-            className={`text-center font-bold ${isDraft
-              ? !hasValue
-                ? 'text-slate-300 dark:text-[#666666]'
-                : displayDiscrepancy === 0
-                  ? 'text-slate-400 dark:text-[#808080]'
-                  : displayDiscrepancy > 0
-                    ? 'text-emerald-600'
-                    : 'text-red-600'
-              : !item.isCounted
-                ? 'text-slate-300 dark:text-[#666666]'
-                : item.discrepancy === 0
-                  ? 'text-slate-400 dark:text-[#808080]'
-                  : item.discrepancy > 0
-                    ? 'text-emerald-600'
-                    : 'text-red-600'
-              }`}
+            className={`text-center font-bold ${
+              isDraft
+                ? !hasValue
+                  ? 'text-slate-300 dark:text-[#666666]'
+                  : displayDiscrepancy === 0
+                    ? 'text-slate-400 dark:text-[#808080]'
+                    : displayDiscrepancy > 0
+                      ? 'text-emerald-600'
+                      : 'text-red-600'
+                : !item.isCounted
+                  ? 'text-slate-300 dark:text-[#666666]'
+                  : item.discrepancy === 0
+                    ? 'text-slate-400 dark:text-[#808080]'
+                    : item.discrepancy > 0
+                      ? 'text-emerald-600'
+                      : 'text-red-600'
+            }`}
           >
             {isDraft
               ? !hasValue
@@ -454,7 +468,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
             />
           );
         }
-        return <span className="text-xs italic text-slate-500 dark:text-[#999999]">{item.reasonNote || '—'}</span>;
+        return (
+          <span className="text-xs italic text-slate-500 dark:text-[#999999]">
+            {item.reasonNote || '—'}
+          </span>
+        );
       },
     });
   }
@@ -703,11 +721,9 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
               emptyMessage="Không có sản phẩm nào trong phiếu."
             />
             {isDraft && (
-
               <div className="border-t border-blue-100 bg-blue-50 p-3 text-center text-xs italic text-blue-600">
                 * Cột "Tồn Hệ Thống" hiển thị tồn kho thực tế hiện tại. "Chênh Lệch" được tính với
                 tồn kho này và sẽ được chốt tại thời điểm bấm "Gửi duyệt".
-
               </div>
             )}
           </div>
@@ -743,7 +759,10 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
               <Textarea
                 label={
                   <>
-                    Lý do hủy phiếu <span className="font-normal text-slate-400 dark:text-[#808080]">(tùy chọn)</span>
+                    Lý do hủy phiếu{' '}
+                    <span className="font-normal text-slate-400 dark:text-[#808080]">
+                      (tùy chọn)
+                    </span>
                   </>
                 }
                 placeholder="VD: Hủy vì sai sản phẩm..."

@@ -142,9 +142,9 @@ const AdminUserDetail = () => {
     }
   };
 
-  const handleAssignRoles = async (userId, roleIds) => {
+  const handleAssignRoles = async (userId, roleId) => {
     try {
-      await assignUserRoles(userId, roleIds);
+      await assignUserRoles(userId, roleId);
       alert('Cập nhật quyền thành công!');
       setIsAssignModalOpen(false);
       setActivityPage(1);

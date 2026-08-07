@@ -161,7 +161,9 @@ export const StockExport = () => {
       const queryParams = { pageNumber: 1, pageSize: 100, ...filterParams };
 
       try {
-        const productsResponse = await getProducts({ pageNumber: 1, pageSize: 500 });
+        const productFilters = { pageNumber: 1, pageSize: 500 };
+        if (filterParams.supplierId) productFilters.supplierId = filterParams.supplierId;
+        const productsResponse = await getProducts(productFilters);
         const productItems = extractList(productsResponse);
         setProducts(productItems);
       } catch {
@@ -191,9 +193,14 @@ export const StockExport = () => {
     }
   };
 
+  // Reload products when NCC changes
   useEffect(() => {
-    loadData();
-  }, []);
+    const filterParams = {};
+    if (targetType === 'Nhà cung cấp' && targetName) {
+      filterParams.supplierId = targetName;
+    }
+    loadData(filterParams);
+  }, [targetName, targetType]);
 
   const ticketSeqRef = useRef(1);
 
@@ -490,6 +497,9 @@ export const StockExport = () => {
       if (!item.quantity || Number(item.quantity) <= 0) {
         errors.push(`Sản phẩm "${item.productName}" chưa nhập số lượng hoặc số lượng không hợp lệ`);
         fields[`qty_${getItemKey(item)}`] = true;
+      } else if (item.maxStock != null && Number(item.quantity) > item.maxStock) {
+        errors.push(`Sản phẩm "${item.productName}" vượt quá tồn kho (tối đa: ${item.maxStock})`);
+        fields[`qty_${getItemKey(item)}`] = true;
       }
     });
 
@@ -524,6 +534,7 @@ export const StockExport = () => {
         reason: reasonText,
         note: note || reasonText,
         ...(ticketCode.trim() && { ticketCode: ticketCode.trim() }),
+        ...(targetType === 'Nhà cung cấp' && targetName && { supplierId: targetName }),
         items: items.map((i) => ({
           branchProductId: i.productId,
           quantity: Number(i.quantity || 0),
@@ -894,10 +905,7 @@ export const StockExport = () => {
                   >
                     <option value="">-- Chọn nhà cung cấp --</option>
                     {suppliers.map((s) => (
-                      <option
-                        key={s.id || s.supplierId}
-                        value={s.supplierName || s.name || s.fullName || s.companyName || ''}
-                      >
+                      <option key={s.id || s.supplierId} value={s.id || s.supplierId || ''}>
                         {s.supplierName || s.name || s.fullName || s.companyName || 'NCC'}
                       </option>
                     ))}
