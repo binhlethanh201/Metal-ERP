@@ -11,11 +11,11 @@ export const validateAccountProfile = ({ fullName, phoneNumber }) => {
     errors.fullName = 'Họ tên không được vượt quá 100 ký tự.';
   }
 
-  // phoneNumber: optional, nhưng nếu nhập thì phải đúng format
+  // phoneNumber: optional, nhưng nếu nhập thì phải đúng format VN (10 số, bắt đầu 0[35789])
   if (phoneNumber && phoneNumber.trim().length > 0) {
-    const phoneRegex = /^0\d{9,10}$/;
+    const phoneRegex = /^0[35789]\d{8}$/;
     if (!phoneRegex.test(phoneNumber.trim())) {
-      errors.phoneNumber = 'Số điện thoại phải bắt đầu bằng 0 và có 10-11 số.';
+      errors.phoneNumber = 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam 10 chữ số.';
     }
   }
 
