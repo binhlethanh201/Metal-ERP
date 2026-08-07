@@ -116,7 +116,6 @@ export const sidebarItems = [
     icon: 'assessment',
     permissions: ['REPORT_VIEW'],
     children: [
-      { label: 'Báo cáo kho', path: '/inventory/reports', permissions: ['REPORT_VIEW'] },
       { label: 'Báo cáo Tổng hợp', path: '/inventory/owner-reports', permissions: ['REPORT_VIEW', 'OWNER_MANAGE'] },
     ],
   },

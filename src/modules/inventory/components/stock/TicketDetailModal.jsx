@@ -19,6 +19,7 @@ import {
   updateOutwardInventory,
   cancelInwardInventory,
   cancelOutwardInventory,
+  getInwardReturnableItems,
 } from '../../services/inventoryService';
 import { getSupplierDetail } from '../../services/supplierService';
 import { Modal } from '../../../../shared/components/Modal';
@@ -63,6 +64,7 @@ export const TicketDetailModal = ({
   const [detail, setDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [returnableMap, setReturnableMap] = useState({});
 
   const [isEditing, setIsEditing] = useState(false);
   const [editReason, setEditReason] = useState('');
@@ -132,6 +134,34 @@ export const TicketDetailModal = ({
       active = false;
     };
   }, [isOpen, ticketId, type]);
+
+  // Fetch returnable items data for RETURN_SUPPLIER tickets with inward reference
+  useEffect(() => {
+    if (!detail || detail.ticketType !== 'RETURN_SUPPLIER' || !detail.inwardTicketId) {
+      setReturnableMap({});
+      return;
+    }
+    const fetchReturnable = async () => {
+      try {
+        const res = await getInwardReturnableItems(detail.inwardTicketId);
+        const items = res?.data?.items || res?.data || [];
+        if (Array.isArray(items)) {
+          const map = {};
+          items.forEach((ri) => {
+            map[ri.inwardTicketItemId] = {
+              maxReturnable: ri.maxReturnableQuantity || 0,
+              originalQty: ri.originalQuantity || 0,
+              actualStock: ri.actualStock || 0,
+            };
+          });
+          setReturnableMap(map);
+        }
+      } catch {
+        setReturnableMap({});
+      }
+    };
+    fetchReturnable();
+  }, [detail?.inwardTicketId, detail?.ticketType]);
 
   const handleConfirm = async () => {
     setIsConfirming(true);
@@ -220,6 +250,7 @@ export const TicketDetailModal = ({
   const isCancelled = statusUpper === 'CANCELLED';
   const isCustomerReturn = detail?.ticketType === 'CUSTOMER_RETURN';
   const isReturnSupplier = detail?.ticketType === 'RETURN_SUPPLIER';
+  const hasInwardRef = isReturnSupplier && !!detail?.inwardTicketId;
   const hidePriceFields = isCustomerReturn || isReturnSupplier;
 
   const canEditReason = isPending;
@@ -483,16 +514,24 @@ export const TicketDetailModal = ({
                           <th className="px-3 py-3 text-right">Đơn giá nhập</th>
                         )}
                         {type === 'OUTWARD' && <th className="px-3 py-3 text-right">Đơn giá</th>}
-                        {isCompleted && (
+                        {isCompleted && !hasInwardRef && (
                           <th className="px-3 py-3 text-right text-slate-500 dark:text-[#999999]">
                             Tồn trước
+                          </th>
+                        )}
+                        {isCompleted && hasInwardRef && (
+                          <th className="px-3 py-3 text-right text-slate-500 dark:text-[#999999]">
+                            SL có thể trả
                           </th>
                         )}
                         <th className="px-3 py-3 text-right font-extrabold text-[#004785]">
                           {type === 'INWARD' ? 'Nhập vào' : 'Xuất đi'}
                         </th>
-                        {isCompleted && (
+                        {isCompleted && !hasInwardRef && (
                           <th className="px-3 py-3 text-right text-green-700">Tồn sau</th>
+                        )}
+                        {isCompleted && hasInwardRef && (
+                          <th className="px-3 py-3 text-right text-green-700">Tồn sau xuất</th>
                         )}
                         {type === 'INWARD' && !hidePriceFields && (
                           <th className="px-3 py-3 text-right">Thành tiền</th>
@@ -504,7 +543,7 @@ export const TicketDetailModal = ({
                       {!detail.items || detail.items.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={10}
+                            colSpan={8}
                             className="py-6 text-center text-slate-400 dark:text-[#808080]"
                           >
                             Không có sản phẩm nào
@@ -545,17 +584,34 @@ export const TicketDetailModal = ({
                                   {formatCurrency(item.unitPrice || item.UnitPrice || 0)}
                                 </td>
                               )}
-                              {isCompleted && (
+                              {isCompleted && !hasInwardRef && (
                                 <td className="px-3 py-3 text-right font-medium text-slate-500 dark:text-[#999999]">
                                   {item.systemQuantity !== undefined ? item.systemQuantity : '---'}
+                                </td>
+                              )}
+                              {isCompleted && hasInwardRef && (
+                                <td className="px-3 py-3 text-right font-medium text-slate-500 dark:text-[#999999]">
+                                  {item.inwardTicketItemId && returnableMap[item.inwardTicketItemId]
+                                    ? Math.min(
+                                        returnableMap[item.inwardTicketItemId].maxReturnable,
+                                        returnableMap[item.inwardTicketItemId].actualStock
+                                      )
+                                    : item.inwardTicketItemId
+                                      ? 0
+                                      : '---'}
                                 </td>
                               )}
                               <td className="px-3 py-3 text-right font-extrabold text-[#004785]">
                                 {qty}
                               </td>
-                              {isCompleted && (
+                              {isCompleted && !hasInwardRef && (
                                 <td className="px-3 py-3 text-right font-bold text-green-700">
                                   {afterQty}
+                                </td>
+                              )}
+                              {isCompleted && hasInwardRef && (
+                                <td className="px-3 py-3 text-right font-bold text-green-700">
+                                  {item.actualQuantity !== undefined ? item.actualQuantity : '---'}
                                 </td>
                               )}
                               {type === 'INWARD' && !hidePriceFields && (

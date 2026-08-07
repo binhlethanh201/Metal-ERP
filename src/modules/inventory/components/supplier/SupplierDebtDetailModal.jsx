@@ -94,20 +94,21 @@ const SupplierDebtDetailModal = ({ isOpen, onClose, supplierId, fetchDetail }) =
                 </div>
               </div>
 
-              {/* Danh sách PO */}
+              {/* Danh sách đơn mua hàng (PO + StockTicket) */}
               <div>
                 <h3 className="mb-4 text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Lịch sử đơn mua hàng</h3>
-                {detail.purchaseOrders?.length === 0 ? (
+                {(detail.purchaseOrders?.length ?? 0) === 0 && (detail.stockTickets?.length ?? 0) === 0 ? (
                   <div className="rounded-xl border border-slate-200 bg-white py-12 text-center text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
                     Chưa có đơn mua nào phát sinh với nhà cung cấp này
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* Purchase Orders */}
                     {detail.purchaseOrders?.map((po) => {
                       const status = getPoStatusLabel(po.status);
                       return (
                         <div
-                          key={po.purchaseOrderId}
+                          key={'po-' + po.purchaseOrderId}
                           className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]"
                         >
                           <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-[#333333] dark:bg-[#1a1a1a]">
@@ -119,14 +120,12 @@ const SupplierDebtDetailModal = ({ isOpen, onClose, supplierId, fetchDetail }) =
                               <div>
                                 <p className="text-xs font-medium text-slate-500 dark:text-[#999999]">Ngày đặt</p>
                                 <p className="font-semibold text-slate-700 dark:text-[#b3b3b3]">
-                                  {po.createdAt.split('T')[0]}
+                                  {po.createdAt?.split('T')[0]}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <span
-                                className={`rounded-full px-3 py-1 text-xs font-bold ${status.css}`}
-                              >
+                              <span className={`rounded-full px-3 py-1 text-xs font-bold ${status.css}`}>
                                 {status.label}
                               </span>
                               <p className="mt-1 text-xl font-black text-slate-900 dark:text-[#e5e5e5]">
@@ -134,7 +133,6 @@ const SupplierDebtDetailModal = ({ isOpen, onClose, supplierId, fetchDetail }) =
                               </p>
                             </div>
                           </div>
-
                           <div className="p-0">
                             <table className="w-full text-left text-sm">
                               <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-[#1a1a1a] dark:text-[#999999]">
@@ -146,25 +144,15 @@ const SupplierDebtDetailModal = ({ isOpen, onClose, supplierId, fetchDetail }) =
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
-                                {po.items?.map((item) => (
-                                  <tr key={item.productId} className="hover:bg-slate-50 dark:hover:bg-[#333333]">
+                                {po.items?.map((item, idx) => (
+                                  <tr key={item.productId || idx} className="hover:bg-slate-50 dark:hover:bg-[#333333]">
                                     <td className="px-5 py-3">
-                                      <div className="font-semibold text-slate-800 dark:text-[#e5e5e5]">
-                                        {item.productName}
-                                      </div>
-                                      <div className="text-xs text-slate-400 dark:text-[#808080]">
-                                        Mã: {item.productCode}
-                                      </div>
+                                      <div className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{item.productName}</div>
+                                      <div className="text-xs text-slate-400 dark:text-[#808080]">Mã: {item.productCode}</div>
                                     </td>
-                                    <td className="px-5 py-3 text-center font-medium">
-                                      {item.quantity}
-                                    </td>
-                                    <td className="px-5 py-3 text-right">
-                                      {formatCurrency(item.unitPrice)}
-                                    </td>
-                                    <td className="px-5 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                      {formatCurrency(item.lineTotal)}
-                                    </td>
+                                    <td className="px-5 py-3 text-center font-medium">{item.quantity}</td>
+                                    <td className="px-5 py-3 text-right">{formatCurrency(item.unitPrice)}</td>
+                                    <td className="px-5 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">{formatCurrency(item.lineTotal)}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -173,6 +161,61 @@ const SupplierDebtDetailModal = ({ isOpen, onClose, supplierId, fetchDetail }) =
                         </div>
                       );
                     })}
+                    {/* Stock Tickets (Phiếu nhập kho đã hoàn thành) */}
+                    {detail.stockTickets?.map((st) => (
+                      <div
+                        key={'st-' + st.stockTicketId}
+                        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]"
+                      >
+                        <div className="flex items-center justify-between border-b border-slate-100 bg-emerald-50/50 px-5 py-4 dark:border-[#333333] dark:bg-emerald-950/20">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 dark:text-[#999999]">Phiếu nhập kho</p>
+                              <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{st.ticketCode}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 dark:text-[#999999]">Ngày hoàn thành</p>
+                              <p className="font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                                {st.completedAt?.split('T')[0] || st.createdAt?.split('T')[0]}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              Đã nhập kho
+                            </span>
+                            <p className="mt-1 text-xl font-black text-slate-900 dark:text-[#e5e5e5]">
+                              {formatCurrency(st.totalAmount)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="p-0">
+                          <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-[#1a1a1a] dark:text-[#999999]">
+                              <tr>
+                                <th className="px-5 py-3">Sản phẩm</th>
+                                <th className="px-5 py-3 text-center">Số lượng</th>
+                                <th className="px-5 py-3 text-right">Đơn giá</th>
+                                <th className="px-5 py-3 text-right">Thành tiền</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
+                              {st.items?.map((item, idx) => (
+                                <tr key={item.productId || idx} className="hover:bg-slate-50 dark:hover:bg-[#333333]">
+                                  <td className="px-5 py-3">
+                                    <div className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{item.productName}</div>
+                                    <div className="text-xs text-slate-400 dark:text-[#808080]">Mã: {item.productCode}</div>
+                                  </td>
+                                  <td className="px-5 py-3 text-center font-medium">{item.quantity}</td>
+                                  <td className="px-5 py-3 text-right">{formatCurrency(item.unitPrice)}</td>
+                                  <td className="px-5 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">{formatCurrency(item.lineTotal)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

@@ -14,6 +14,8 @@ import {
   confirmOutwardInventory,
   getOutwardInventories,
   getProducts,
+  getInwardBySupplier,
+  getInwardReturnableItems,
 } from '../services/inventoryService';
 import { getSuppliers } from '../services/supplierService';
 import { InventoryHistoryCard } from '../components/stock/InventoryHistoryCard';
@@ -135,6 +137,12 @@ export const StockExport = () => {
   const [targetType, setTargetType] = useState('Nhà cung cấp');
   const [targetName, setTargetName] = useState('');
   const [suppliers, setSuppliers] = useState([]);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [inwardTickets, setInwardTickets] = useState([]);
+  const [selectedInwardTicket, setSelectedInwardTicket] = useState(null);
+  const [loadingInwardTickets, setLoadingInwardTickets] = useState(false);
+  const [inwardTicketSearch, setInwardTicketSearch] = useState('');
+  const [inwardDropdownOpen, setInwardDropdownOpen] = useState(false);
   const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
   const [note, setNote] = useState('');
 
@@ -213,6 +221,10 @@ export const StockExport = () => {
     setExportTime(t.time);
     setTargetType('Nhà cung cấp');
     setTargetName('');
+    setSelectedSupplier(null);
+    setInwardTickets([]);
+    setSelectedInwardTicket(null);
+    setInwardTicketSearch('');
     setReasonType('Xuất trả nhà cung cấp');
     setNote('');
     setItems([]);
@@ -227,6 +239,73 @@ export const StockExport = () => {
   const closeModal = () => {
     if (!isSubmitting) setIsModalOpen(false);
   };
+
+  // Fetch inward tickets when supplier is selected (for Return to Supplier)
+  useEffect(() => {
+    if (!selectedSupplier || targetType !== 'Nhà cung cấp') {
+      setInwardTickets([]);
+      setSelectedInwardTicket(null);
+      return;
+    }
+    const supplierId = selectedSupplier.id || selectedSupplier.supplierId;
+    if (!supplierId) return;
+
+    const fetchInwardTickets = async () => {
+      setLoadingInwardTickets(true);
+      try {
+        const res = await getInwardBySupplier(supplierId);
+        setInwardTickets(extractList(res));
+      } catch {
+        setInwardTickets([]);
+      } finally {
+        setLoadingInwardTickets(false);
+      }
+    };
+    fetchInwardTickets();
+  }, [selectedSupplier, targetType]);
+
+  const handleInwardTicketChange = async (ticketId) => {
+    if (!ticketId) {
+      setSelectedInwardTicket(null);
+      setItems((prev) => prev.filter((i) => !i.inwardTicketItemId));
+      return;
+    }
+    try {
+      const res = await getInwardReturnableItems(ticketId);
+      const returnableItems = res?.data?.items || res?.data || [];
+      if (!Array.isArray(returnableItems) || returnableItems.length === 0) {
+        setStatusMessage('Phiếu nhập này không còn sản phẩm nào có thể trả.');
+        return;
+      }
+      setSelectedInwardTicket({ ticketId });
+      const autoItems = returnableItems.map((ri) => ({
+        branchProductId: ri.branchProductId,
+        productId: ri.branchProductId,
+        productCode: ri.productCode || '',
+        productName: ri.productName || '',
+        unit: ri.unitName || '',
+        quantity: 0,
+        maxStock: Math.min(ri.maxReturnableQuantity, ri.actualStock || 0),
+        unitPrice: ri.unitPrice || 0,
+        inwardTicketItemId: ri.inwardTicketItemId,
+        priceLocked: true,
+      }));
+      setItems(autoItems);
+      setStatusMessage('');
+    } catch {
+      setStatusMessage('Lỗi: Không thể tải danh sách sản phẩm có thể trả.');
+    }
+  };
+
+  const filteredInwardTickets = useMemo(() => {
+    const kw = inwardTicketSearch.toLowerCase().trim();
+    return inwardTickets.filter((t) => {
+      if (!kw) return true;
+      const code = (t.ticketCode || t.TicketCode || '').toLowerCase();
+      const date = t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : '';
+      return code.includes(kw) || date.includes(kw);
+    });
+  }, [inwardTickets, inwardTicketSearch]);
 
   const resolvedReason = reasonType;
 
@@ -405,7 +484,7 @@ export const StockExport = () => {
               productName: row.tenSanPham || '',
               unit,
               quantity: Number(row.soLuong || 0),
-              unitPrice: Number(row.donGiaXuat || 0),
+              unitPrice: 0,
               maxStock: stock,
             };
           });
@@ -524,10 +603,13 @@ export const StockExport = () => {
         reason: reasonText,
         note: note || reasonText,
         ...(ticketCode.trim() && { ticketCode: ticketCode.trim() }),
+        ...(selectedSupplier && { supplierId: selectedSupplier.id || selectedSupplier.supplierId }),
+        ...(selectedInwardTicket && { inwardTicketId: selectedInwardTicket.ticketId }),
         items: items.map((i) => ({
-          branchProductId: i.productId,
+          branchProductId: i.productId || i.branchProductId,
           quantity: Number(i.quantity || 0),
           unitPrice: Number(i.unitPrice || 0),
+          ...(i.inwardTicketItemId && { inwardTicketItemId: i.inwardTicketItemId }),
         })),
       };
       setStatusMessage('Đang tạo phiếu xuất kho...');
@@ -678,6 +760,7 @@ export const StockExport = () => {
 
       {/* ==================== MODAL TẠO PHIẾU XUẤT ==================== */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Tạo phiếu xuất kho" size="5xl">
+        {reasonType !== 'Xuất trả nhà cung cấp' && (
         <div className="mb-4 flex items-center gap-2">
           <input
             type="file"
@@ -706,6 +789,7 @@ export const StockExport = () => {
             <span className="text-xs text-slate-500 dark:text-[#999999]">Đang xử lý file...</span>
           )}
         </div>
+        )}
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* Error / Status Banner */}
           {statusMessage &&
@@ -751,14 +835,11 @@ export const StockExport = () => {
 
           {importResult && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3">
                 <h3 className="font-bold text-amber-800 dark:text-amber-300">
                   Kết quả import: {importResult.validRows?.length || 0} dòng hợp lệ,{' '}
                   {importResult.errors?.length || 0} lỗi
                 </h3>
-                <Button variant="secondary" size="sm" onClick={() => setImportResult(null)}>
-                  Đóng
-                </Button>
               </div>
               {importResult.errors?.length > 0 && (
                 <div className="max-h-40 space-y-1 overflow-y-auto">
@@ -781,10 +862,11 @@ export const StockExport = () => {
                   ))}
                 </div>
               )}
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Các dòng hợp lệ đã được nạp vào form bên dưới. Kiểm tra lại và bấm Xác nhận xuất
-                kho.
-              </p>
+              {importResult.validRows?.length > 0 && (
+                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                  Các dòng hợp lệ đã được nạp vào form bên dưới.
+                </p>
+              )}
             </div>
           )}
 
@@ -880,15 +962,26 @@ export const StockExport = () => {
                   <span className="text-red-500">*</span>
                 </label>
                 {targetType === 'Nhà cung cấp' ? (
+                  <>
                   <select
                     className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${
                       fieldErrors.targetName
                         ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                         : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                     }`}
-                    value={targetName}
+                    value={
+                      selectedSupplier ? selectedSupplier.id || selectedSupplier.supplierId || '' : ''
+                    }
                     onChange={(e) => {
-                      setTargetName(e.target.value);
+                      const val = e.target.value;
+                      if (!val) {
+                        setSelectedSupplier(null);
+                        setTargetName('');
+                        return;
+                      }
+                      const s = suppliers.find((x) => (x.id || x.supplierId) === val);
+                      setSelectedSupplier(s || null);
+                      setTargetName(s ? (s.supplierName || s.name || s.fullName || s.companyName || '') : '');
                       setFieldErrors((prev) => ({ ...prev, targetName: false }));
                     }}
                   >
@@ -896,12 +989,132 @@ export const StockExport = () => {
                     {suppliers.map((s) => (
                       <option
                         key={s.id || s.supplierId}
-                        value={s.supplierName || s.name || s.fullName || s.companyName || ''}
+                        value={s.id || s.supplierId}
                       >
                         {s.supplierName || s.name || s.fullName || s.companyName || 'NCC'}
                       </option>
                     ))}
                   </select>
+                  {/* Đơn nhập hàng tham chiếu */}
+                  {reasonType === 'Xuất trả nhà cung cấp' && selectedSupplier && (
+                    <div className="mt-3">
+                      <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                        Đơn nhập hàng tham chiếu
+                      </label>
+                      <div className="relative mt-1.5">
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
+                          onClick={() => {
+                            if (!loadingInwardTickets) {
+                              setInwardDropdownOpen((o) => !o);
+                              setInwardTicketSearch('');
+                            }
+                          }}
+                          disabled={loadingInwardTickets}
+                        >
+                          <span className={selectedInwardTicket ? 'text-slate-800 dark:text-[#e5e5e5]' : 'text-slate-400 dark:text-[#808080]'}>
+                            {loadingInwardTickets
+                              ? 'Đang tải...'
+                              : selectedInwardTicket
+                                ? (() => {
+                                    const t = inwardTickets.find(
+                                      (x) => (x.stockTicketId || x.ticketId) === selectedInwardTicket.ticketId
+                                    );
+                                    return t
+                                      ? `${t.ticketCode || t.TicketCode} - ${t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : ''} (${t.itemsCount || t.ItemsCount || 0} SP)`
+                                      : '-- Chọn đơn nhập hàng --';
+                                  })()
+                                : inwardTickets.length === 0
+                                  ? '-- Không có đơn nhập nào --'
+                                  : '-- Chọn đơn nhập hàng của NCC này --'}
+                          </span>
+                          <Icon
+                            name="expand_more"
+                            size={18}
+                            className={`text-slate-400 transition-transform ${inwardDropdownOpen ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+
+                        {inwardDropdownOpen && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => {
+                                setInwardDropdownOpen(false);
+                                setInwardTicketSearch('');
+                              }}
+                            />
+                            <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
+                              <div className="border-b border-slate-100 p-3 dark:border-[#333333]">
+                                <div className="relative">
+                                  <Icon
+                                    name="search"
+                                    size={16}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Tìm theo mã phiếu hoặc ngày..."
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
+                                    value={inwardTicketSearch}
+                                    onChange={(e) => setInwardTicketSearch(e.target.value)}
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="max-h-52 overflow-y-auto">
+                                {filteredInwardTickets.length === 0 ? (
+                                  <div className="px-4 py-6 text-center text-sm text-slate-400">
+                                    {inwardTicketSearch.trim()
+                                      ? 'Không tìm thấy phiếu nhập phù hợp'
+                                      : 'Không có phiếu nhập nào'}
+                                  </div>
+                                ) : (
+                                  filteredInwardTickets.map((t) => {
+                                    const tId = t.stockTicketId || t.ticketId;
+                                    const isSelected = selectedInwardTicket?.ticketId === tId;
+                                    return (
+                                      <button
+                                        key={tId}
+                                        type="button"
+                                        className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-blue-50 dark:hover:bg-[#333333] ${
+                                          isSelected ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400' : 'text-slate-700 dark:text-[#e5e5e5]'
+                                        }`}
+                                        onClick={() => {
+                                          handleInwardTicketChange(tId);
+                                          setInwardDropdownOpen(false);
+                                          setInwardTicketSearch('');
+                                        }}
+                                      >
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500 dark:bg-[#272727] dark:text-[#b3b3b3]">
+                                          <Icon name="receipt_long" size={16} />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <div className="truncate font-medium">
+                                            {t.ticketCode || t.TicketCode}
+                                          </div>
+                                          <div className="text-xs text-slate-400">
+                                            {t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : ''} - {t.itemsCount || t.ItemsCount || 0} sản phẩm
+                                          </div>
+                                        </div>
+                                        {isSelected && (
+                                          <Icon name="check" size={18} className="shrink-0 text-blue-600" />
+                                        )}
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  </>
                 ) : (
                   <input
                     type="text"
@@ -1009,7 +1222,8 @@ export const StockExport = () => {
               </span>
             </div>
 
-            {/* Dòng thêm mới + combobox tìm kiếm */}
+            {/* Dòng thêm mới + combobox tìm kiếm - ẩn khi xuất trả NCC */}
+            {reasonType !== 'Xuất trả nhà cung cấp' && (
             <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-r from-blue-50/60 to-white p-4 dark:border-blue-800 dark:from-blue-950/30 dark:to-[#1a1a1a]">
               <div className="flex items-end gap-3">
                 <div className="relative min-w-0 flex-1">
@@ -1214,6 +1428,7 @@ export const StockExport = () => {
                   );
                 })()}
             </div>
+            )}
 
             {/* Bảng sản phẩm đã thêm */}
             {items.length > 0 ? (

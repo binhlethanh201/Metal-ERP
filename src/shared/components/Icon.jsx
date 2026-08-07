@@ -144,6 +144,7 @@ const staticIconMap = {
   note: 'FileText',
   light_mode: 'Sun',
   dark_mode: 'Moon',
+  email: 'Mail',
 };
 
 const toPascalCase = (str) => {
