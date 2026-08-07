@@ -161,8 +161,11 @@ function App() {
                 <Route path="return-history" element={<ReturnHistory />} />
                 <Route path="audit-logs" element={<OwnerAuditLogsPage />} />
                 <Route path="outward-excel" element={<OwnerOutwardExcelPage />} />
-                <Route path="transactions" element={<InventoryTransactionManagement />} />
                 <Route path="audit-logs" element={<OwnerAuditLog />} />
+              </Route>
+
+              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryTransactions} />}>
+                <Route path="transactions" element={<InventoryTransactionManagement />} />
               </Route>
 
               {/* --- ROUTE SUPPLIER --- */}

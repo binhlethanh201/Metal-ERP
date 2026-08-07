@@ -94,12 +94,18 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
   const groupedPermissions = useMemo(() => {
     if (!permissions.length) return [];
     return PERMISSION_GROUPS.map((group) => {
-      const items = permissions.filter((p) =>
+      let items = permissions.filter((p) =>
         group.prefixes.some((prefix) => p.permissionCode.startsWith(prefix))
       );
+      // Owner không được cấp các quyền tối cao của Admin/Owner
+      if (!isAdminContext) {
+        items = items.filter(
+          (p) => !['SYSTEM_MANAGE', 'OWNER_MANAGE'].includes(p.permissionCode)
+        );
+      }
       return { ...group, items };
     }).filter((g) => g.items.length > 0);
-  }, [permissions]);
+  }, [permissions, isAdminContext]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
