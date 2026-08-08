@@ -18,7 +18,7 @@ export const PAGE_PERMISSION_GROUPS = [
     id: 'page_stock_inward',
     pageName: 'Nhập kho',
     category: 'Hàng hóa & Kho',
-    viewPermission: 'STOCK_VIEW',
+    viewPermission: 'STOCK_INWARD_CREATE',
     subPermissions: [
       { code: 'STOCK_INWARD_CREATE', label: 'Tạo phiếu nhập kho' },
       { code: 'STOCK_INWARD_UPDATE', label: 'Cập nhật phiếu nhập kho' },
@@ -29,7 +29,7 @@ export const PAGE_PERMISSION_GROUPS = [
     id: 'page_stock_outward',
     pageName: 'Xuất kho',
     category: 'Hàng hóa & Kho',
-    viewPermission: 'STOCK_VIEW',
+    viewPermission: 'STOCK_OUTWARD_CREATE',
     subPermissions: [
       { code: 'STOCK_OUTWARD_CREATE', label: 'Tạo phiếu xuất kho' },
       { code: 'STOCK_OUTWARD_UPDATE', label: 'Cập nhật phiếu xuất kho' },

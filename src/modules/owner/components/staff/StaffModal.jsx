@@ -53,12 +53,22 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
         const data = res?.data || res;
         if (data && (data.SalesStaff || data.InventoryStaff)) {
           setRolePermissions(data);
+          // Auto-apply role defaults cho new staff khi chua customize
+          if (!staff && !isCustomizing) {
+            const defaults = data[form.defaultRoleType] || [];
+            const validDefaults = permissions
+              .filter((p) => defaults.includes(p.permissionCode))
+              .map((p) => p.permissionCode);
+            if (validDefaults.length > 0) {
+              setForm((prev) => ({ ...prev, permissionCodes: validDefaults }));
+            }
+          }
         }
       })
       .catch(() => {
         // Dung fallback
       });
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isOpen) {
