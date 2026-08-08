@@ -148,6 +148,10 @@ const AdminRoleManagement = () => {
   const selectedRole = matrix.find((role) => role.roleId === selectedRoleId);
   const isSuperAdmin = selectedRole?.roleName?.toUpperCase() === 'ADMIN';
 
+  // Bo VIEW permission khoi count, chi dem quyen thao tac
+  const viewCodes = new Set(PAGE_PERMISSION_GROUPS.map((p) => p.viewPermission));
+  const actionCount = selectedCodes.filter((c) => !viewCodes.has(c)).length;
+
   return (
     <div className="flex h-[calc(100vh-100px)] flex-col">
       {/* Tiêu đề */}
@@ -277,7 +281,7 @@ const AdminRoleManagement = () => {
                   </p>
                 </div>
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                  {selectedCodes.length > 0 ? `${selectedCodes.length} quyền đang chọn` : 'Chưa có quyền nào'}
+                  {actionCount > 0 ? `${actionCount} quyền đang chọn` : 'Chưa có quyền nào'}
                 </span>
               </div>
 
