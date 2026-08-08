@@ -76,7 +76,6 @@ const DEFAULT_ROLE_PERMISSIONS = {
     'STOCK_CHECK_VIEW',
     'STOCK_CHECK_CREATE',
   ],
-  Staff: [],
 };
 
 // Checkbox chọn tất cả theo nhóm, hỗ trợ trạng thái "chọn một phần" (indeterminate)
@@ -112,11 +111,9 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
           password: '',
           defaultRoleType: hasRole(staff.roles, 'InventoryStaff')
             ? 'InventoryStaff'
-            : hasRole(staff.roles, 'Staff')
-              ? 'Staff'
-              : hasRole(staff.roles, 'SalesStaff')
-                ? 'SalesStaff'
-                : '',
+            : hasRole(staff.roles, 'SalesStaff')
+              ? 'SalesStaff'
+              : 'SalesStaff',
           isActive: staff.isActive !== undefined ? staff.isActive : 1,
           permissionCodes: staff.permissionCodes || [],
         });
@@ -205,18 +202,11 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
 
   const handleApplyRoleDefaults = () => {
     setIsCustomizing(true);
-    if (form.defaultRoleType === 'Staff') {
-      setForm((prev) => ({
-        ...prev,
-        permissionCodes: permissions.map((p) => p.permissionCode),
-      }));
-    } else {
-      const defaults = DEFAULT_ROLE_PERMISSIONS[form.defaultRoleType] || [];
-      const validDefaults = permissions
-        .filter((p) => defaults.includes(p.permissionCode))
-        .map((p) => p.permissionCode);
-      setForm((prev) => ({ ...prev, permissionCodes: validDefaults }));
-    }
+    const defaults = DEFAULT_ROLE_PERMISSIONS[form.defaultRoleType] || [];
+    const validDefaults = permissions
+      .filter((p) => defaults.includes(p.permissionCode))
+      .map((p) => p.permissionCode);
+    setForm((prev) => ({ ...prev, permissionCodes: validDefaults }));
   };
 
   const handleRoleChange = (e) => {
@@ -319,8 +309,6 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
               {isAdminContext && <option value="Owner">Chủ cửa hàng (Owner)</option>}
               <option value="SalesStaff">Nhân viên Bán hàng</option>
               <option value="InventoryStaff">Nhân viên Kho</option>
-              <option value="Staff">Nhân viên</option>
-              {!staff && <option value="">-- Không gán vai trò (Tuỳ chỉnh) --</option>}
             </select>
             {staff && (
               <p className="mt-1 text-xs italic text-slate-400 dark:text-[#808080]">

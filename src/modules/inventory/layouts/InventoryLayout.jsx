@@ -75,7 +75,10 @@ const InventoryLayout = () => {
           });
         }
       } catch (err) {
-        console.error('Failed to fetch recent system notifs on mount:', err);
+        // 403 = khong co quyen xem thong bao, bo qua
+        if (err?.status !== 403) {
+          console.error('Failed to fetch recent system notifs on mount:', err);
+        }
       }
     };
     
