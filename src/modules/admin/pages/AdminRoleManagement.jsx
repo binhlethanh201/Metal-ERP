@@ -1,97 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Icon from '../../../shared/components/Icon';
 import {
   getPermissionList,
   getPermissionMatrix,
   updateRolePermissions,
 } from '../services/adminService';
-
-// Mapping đầy đủ tên quyền tiếng Việt theo permissionCode.
-// Ưu tiên lookup theo code (chính xác), fallback về permissionName từ BE, cuối cùng mới dùng chuỗi chung.
-const PERMISSION_NAME_VI = {
-  // === EXPENSE / PHIẾU CHI TIỀN ===
-  EXPENSE_VIEW: 'Xem danh sách phiếu chi',
-  EXPENSE_CREATE: 'Tạo phiếu chi mới',
-  EXPENSE_CONFIRM: 'Xác nhận phiếu chi',
-  EXPENSE_CANCEL: 'Huỷ phiếu chi',
-  EXPENSE_CATEGORY_MANAGE: 'Quản lý danh mục chi phí',
-
-  // === SUPPLIER (Nhà cung cấp) ===
-  SUPPLIER_VIEW: 'Xem nhà cung cấp',
-  SUPPLIER_CREATE: 'Tạo nhà cung cấp',
-  SUPPLIER_UPDATE: 'Sửa nhà cung cấp',
-  SUPPLIER_DELETE: 'Xóa nhà cung cấp',
-
-  // === SUPPLIER PAYMENT (Thanh toán / Công nợ NCC) ===
-  SUPPLIER_PAYMENT_VIEW: 'Xem thanh toán nhà cung cấp',
-  SUPPLIER_PAYMENT_CREATE: 'Tạo thanh toán nhà cung cấp',
-  SUPPLIER_PAYMENT_UPDATE: 'Cập nhật thanh toán NCC',
-  SUPPLIER_PAYMENT_DELETE: 'Xoá thanh toán NCC',
-
-  // === PRODUCT (Sản phẩm) ===
-  PRODUCT_VIEW: 'Xem sản phẩm',
-  PRODUCT_CREATE: 'Tạo sản phẩm',
-  PRODUCT_UPDATE: 'Sửa sản phẩm',
-  PRODUCT_DELETE: 'Xóa sản phẩm',
-
-  // === LOCATION (Vị trí kho) ===
-  LOCATION_VIEW: 'Xem vị trí kho',
-  LOCATION_CREATE: 'Tạo vị trí kho',
-  LOCATION_UPDATE: 'Cập nhật vị trí kho',
-  LOCATION_DELETE: 'Xoá vị trí kho',
-
-  // === STOCK / INVENTORY (Xuất nhập kho) ===
-  STOCK_VIEW: 'Xem tồn kho',
-  STOCK_INWARD_CREATE: 'Tạo phiếu nhập kho',
-  STOCK_INWARD_UPDATE: 'Cập nhật phiếu nhập kho',
-  STOCK_INWARD_DELETE: 'Xoá phiếu nhập kho',
-  STOCK_OUTWARD_CREATE: 'Tạo phiếu xuất kho',
-  STOCK_OUTWARD_UPDATE: 'Cập nhật phiếu xuất kho',
-  STOCK_OUTWARD_DELETE: 'Xoá phiếu xuất kho',
-  STOCK_OUTWARD_CONFIRM: 'Xác nhận xuất kho',
-  STOCK_CHECK_VIEW: 'Xem phiếu kiểm kho',
-  STOCK_CHECK_CREATE: 'Tạo phiếu kiểm kho',
-  STOCK_CHECK_APPROVE: 'Duyệt phiếu kiểm kho',
-  STOCK_CHECK_CANCEL: 'Hủy kiểm kho',
-
-  // === SALE / POS ===
-  CUSTOMER_VIEW: 'Xem khách hàng',
-  CUSTOMER_CREATE: 'Tạo khách hàng',
-  CUSTOMER_UPDATE: 'Cập nhật khách hàng',
-  CUSTOMER_DELETE: 'Xoá khách hàng',
-  SALE_VIEW: 'Xem đơn hàng',
-  SALE_CREATE: 'Tạo đơn hàng',
-  SALE_UPDATE: 'Cập nhật đơn hàng',
-  SALE_DELETE: 'Xoá đơn hàng',
-  PAYMENT_VIEW: 'Xem thanh toán',
-  PAYMENT_CREATE: 'Tạo thanh toán',
-  PRINT_VIEW: 'Xem mẫu in',
-  PROMOTION_VIEW: 'Xem khuyến mãi',
-  SHIFT_VIEW: 'Xem ca làm việc',
-  SHIFT_CREATE: 'Tạo ca làm việc',
-  SHIFT_UPDATE: 'Cập nhật ca làm việc',
-  SHIFT_DELETE: 'Xoá ca làm việc',
-  SHIFT_FORCE_CLOSE: 'Đóng ca bắt buộc',
-
-  // === SYSTEM / OWNER ===
-  OWNER_MANAGE: 'Quản lý cửa hàng (Chủ)',
-  SYSTEM_MANAGE: 'Quản lý hệ thống (Admin)',
-  REPORT_VIEW: 'Xem báo cáo',
-
-  // === STAFF / EMPLOYEE (Nhân viên) ===
-  STAFF_VIEW: 'Xem nhân viên',
-  STAFF_CREATE: 'Tạo nhân viên',
-  STAFF_UPDATE: 'Sửa nhân viên',
-  STAFF_DELETE: 'Xóa nhân viên',
-  STAFF_ASSIGN_BRANCH: 'Phân công cửa hàng',
-};
-
-const getPermissionLabel = (permission) => {
-  const code = (permission?.permissionCode || '').toUpperCase();
-  if (PERMISSION_NAME_VI[code]) return PERMISSION_NAME_VI[code];
-  if (permission?.permissionName) return permission.permissionName;
-  return 'Cấp quyền truy cập';
-};
+import PageBasedPermissionSelector from '../../owner/components/staff/PageBasedPermissionSelector';
+import { getAllCodesForPage, PERMISSION_TO_VIEW, PAGE_PERMISSION_GROUPS } from '../../owner/config/pagePermissionMapping';
 
 const AdminRoleManagement = () => {
   const [matrix, setMatrix] = useState([]);
@@ -100,19 +15,17 @@ const AdminRoleManagement = () => {
   const [error, setError] = useState(null);
 
   const [selectedRoleId, setSelectedRoleId] = useState(null);
-  const [editedPermissions, setEditedPermissions] = useState([]);
+  const [selectedCodes, setSelectedCodes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
       const [matrixData, permissionData] = await Promise.all([
         getPermissionMatrix(),
         getPermissionList(),
       ]);
-
       setMatrix(Array.isArray(matrixData) ? matrixData : []);
       setAllPermissions(Array.isArray(permissionData) ? permissionData : []);
     } catch (err) {
@@ -127,57 +40,91 @@ const AdminRoleManagement = () => {
     fetchData();
   }, [fetchData]);
 
-  // Xử lý khi chọn một vai trò
+  // Build map: permissionCode -> permissionId
+  const codeToId = {};
+  allPermissions.forEach((p) => {
+    codeToId[p.permissionCode] = p.permissionId;
+  });
+
   const handleSelectRole = (role) => {
     setSelectedRoleId(role.roleId);
-
-    // Lấy danh sách ID quyền hiện tại của vai trò
-    const currentPermissionIds = (role.permissions || []).map(
-      (permission) => permission.permissionId
-    );
-
-    setEditedPermissions(currentPermissionIds);
+    const codes = (role.permissions || []).map((p) => p.permissionCode).filter(Boolean);
+    setSelectedCodes(codes);
   };
 
-  // Bật hoặc tắt một quyền
-  const handleTogglePermission = (permissionId) => {
-    setEditedPermissions((previousPermissions) =>
-      previousPermissions.includes(permissionId)
-        ? previousPermissions.filter((id) => id !== permissionId)
-        : [...previousPermissions, permissionId]
-    );
+  const handleTogglePermission = (code) => {
+    setSelectedCodes((prev) => {
+      if (prev.includes(code)) {
+        const next = prev.filter((c) => c !== code);
+        // Neu bo chon quyen con cuoi cung, tu dong go ca VIEW
+        const viewPerm = PERMISSION_TO_VIEW[code];
+        if (viewPerm && next.includes(viewPerm)) {
+          const pageForView = PAGE_PERMISSION_GROUPS.find((p) => p.viewPermission === viewPerm);
+          if (pageForView) {
+            const hasOtherSub = pageForView.subPermissions.some(
+              (sub) => sub.code !== code && next.includes(sub.code)
+            );
+            if (!hasOtherSub) {
+              return next.filter((c) => c !== viewPerm);
+            }
+          }
+        }
+        return next;
+      }
+      const next = [...prev, code];
+      // Auto-include VIEW permission
+      const viewPerm = PERMISSION_TO_VIEW[code];
+      if (viewPerm && !next.includes(viewPerm)) return [...next, viewPerm];
+      return next;
+    });
   };
 
-  // Chọn hoặc bỏ chọn toàn bộ quyền trong một nhóm
-  const handleToggleGroup = (groupPermissionIds, isAllChecked) => {
-    if (isAllChecked) {
-      // Bỏ chọn toàn bộ quyền trong nhóm
-      setEditedPermissions((previousPermissions) =>
-        previousPermissions.filter((id) => !groupPermissionIds.includes(id))
-      );
-    } else {
-      // Chọn toàn bộ quyền trong nhóm
-      setEditedPermissions((previousPermissions) => {
-        const permissionSet = new Set([...previousPermissions, ...groupPermissionIds]);
-
-        return Array.from(permissionSet);
-      });
-    }
+  const handleTogglePage = (page, viewOn) => {
+    setSelectedCodes((prev) => {
+      const nextSet = new Set(prev);
+      const allCodes = getAllCodesForPage(page);
+      if (viewOn) {
+        allCodes.forEach((c) => nextSet.delete(c));
+      } else {
+        nextSet.add(page.viewPermission);
+      }
+      return [...nextSet];
+    });
   };
 
-  // Lưu quyền của vai trò
   const handleSavePermissions = async () => {
     if (!selectedRoleId) return;
-
     setIsSaving(true);
-
     try {
-      await updateRolePermissions(selectedRoleId, editedPermissions);
+      const permissionIds = selectedCodes
+        .map((code) => codeToId[code])
+        .filter(Boolean);
 
-      alert('Cập nhật quyền thành công!');
+      // Tim tat ca role ID cung loai (ca "SalesStaff" va "Sales Staff") de update dong bo
+      const selectedRole = matrix.find((r) => r.roleId === selectedRoleId);
+      const roleName = (selectedRole?.roleName || '').toLowerCase();
+      let siblingIds = [selectedRoleId];
 
-      // Tải lại dữ liệu mới nhất
+      if (roleName === 'salesstaff' || roleName === 'sales staff') {
+        const other = matrix.find((r) =>
+          r.roleId !== selectedRoleId &&
+          ((r.roleName || '').toLowerCase() === 'salesstaff' || (r.roleName || '').toLowerCase() === 'sales staff')
+        );
+        if (other) siblingIds.push(other.roleId);
+      } else if (roleName === 'inventorystaff' || roleName === 'inventory staff') {
+        const other = matrix.find((r) =>
+          r.roleId !== selectedRoleId &&
+          ((r.roleName || '').toLowerCase() === 'inventorystaff' || (r.roleName || '').toLowerCase() === 'inventory staff')
+        );
+        if (other) siblingIds.push(other.roleId);
+      }
+
+      // Update tat ca cac role siblings
+      const results = await Promise.all(siblingIds.map((id) => updateRolePermissions(id, permissionIds)));
+      console.log('Save results:', results);
+
       await fetchData();
+      alert('Cập nhật quyền thành công!');
     } catch (err) {
       console.error('Save error:', err);
       alert(err.message || 'Cập nhật quyền thất bại');
@@ -185,62 +132,6 @@ const AdminRoleManagement = () => {
       setIsSaving(false);
     }
   };
-
-  // Nhóm các quyền thành những module lớn
-  const groupedPermissions = useMemo(() => {
-    const MODULE_MAP = {
-      SALE: 'Bán hàng & Thu ngân',
-      PAYMENT: 'Bán hàng & Thu ngân',
-      SHIFT: 'Bán hàng & Thu ngân',
-      PRINT: 'Bán hàng & Thu ngân',
-
-      STOCK: 'Quản lý kho bãi & Sản phẩm',
-      INVENTORY: 'Quản lý kho bãi & Sản phẩm',
-      INWARD: 'Quản lý kho bãi & Sản phẩm',
-      PRODUCT: 'Quản lý kho bãi & Sản phẩm',
-      SUPPLIER: 'Quản lý kho bãi & Sản phẩm',
-
-      CUSTOMER: 'Chăm sóc khách hàng',
-      LOYALTY: 'Chăm sóc khách hàng',
-      PROMOTION: 'Chăm sóc khách hàng',
-
-      STAFF: 'Quản lý nhân sự',
-
-      REPORT: 'Báo cáo & Hệ thống',
-      SYSTEM: 'Báo cáo & Hệ thống',
-    };
-
-    const groups = {};
-
-    allPermissions.forEach((permission) => {
-      const permissionCode = permission.permissionCode || '';
-
-      const parts = permissionCode.split('_');
-      const prefix = parts.length > 1 ? parts[0].toUpperCase() : 'OTHER';
-
-      // Bỏ toàn bộ quyền thuộc Owner
-      if (prefix === 'OWNER') {
-        return;
-      }
-
-      const moduleName = MODULE_MAP[prefix] || 'Các quyền hạn khác';
-
-      if (!groups[moduleName]) {
-        groups[moduleName] = [];
-      }
-
-      groups[moduleName].push(permission);
-    });
-
-    // Sắp xếp quyền theo bảng chữ cái trong từng nhóm
-    Object.values(groups).forEach((permissionList) => {
-      permissionList.sort((permissionA, permissionB) =>
-        permissionA.permissionCode.localeCompare(permissionB.permissionCode)
-      );
-    });
-
-    return groups;
-  }, [allPermissions]);
 
   if (loading) {
     return (
@@ -255,23 +146,20 @@ const AdminRoleManagement = () => {
   }
 
   const selectedRole = matrix.find((role) => role.roleId === selectedRoleId);
-
   const isSuperAdmin = selectedRole?.roleName?.toUpperCase() === 'ADMIN';
 
   return (
     <div className="flex h-[calc(100vh-100px)] flex-col">
-      {/* Phần tiêu đề */}
+      {/* Tiêu đề */}
       <div className="mb-6 flex shrink-0 items-center justify-between border-b border-slate-200 pb-3 dark:border-[#333333]">
         <div>
           <h1 className="text-xl font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
             Cấu hình vai trò & Phân quyền
           </h1>
-
           <p className="mt-1 text-sm font-semibold uppercase tracking-tight text-slate-500 dark:text-[#999999]">
             Kiểm soát bảo mật và phân quyền truy cập
           </p>
         </div>
-
         {selectedRoleId && !isSuperAdmin && (
           <div className="flex gap-3">
             <button
@@ -282,7 +170,6 @@ const AdminRoleManagement = () => {
             >
               Hủy thay đổi
             </button>
-
             <button
               type="button"
               onClick={handleSavePermissions}
@@ -290,7 +177,6 @@ const AdminRoleManagement = () => {
               className="flex items-center gap-2 rounded bg-[#004785] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#003663] disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700"
             >
               <Icon name={isSaving ? 'hourglass_empty' : 'save'} size={16} />
-
               {isSaving ? 'Đang lưu...' : 'Lưu quyền hạn'}
             </button>
           </div>
@@ -305,23 +191,31 @@ const AdminRoleManagement = () => {
               Chọn chức vụ
             </h2>
           </div>
-
           <div className="no-scrollbar flex-1 space-y-1 overflow-y-auto p-2">
-            {matrix
-              .filter((role) => {
-                const roleName = role.roleName?.toLowerCase() || '';
-
-                // Không hiển thị Owner
-                return ['salesstaff', 'inventorystaff'].includes(roleName);
-              })
-              .map((role) => {
+            {(() => {
+              // Deduplicate: gop "Sales Staff" + "SalesStaff" thanh 1, "Inventory Staff" + "InventoryStaff" thanh 1
+              const deduped = {};
+              matrix.forEach((role) => {
+                const name = (role.roleName || '').toLowerCase();
+                let key = null;
+                if (name === 'salesstaff' || name === 'sales staff') key = 'SalesStaff';
+                if (name === 'inventorystaff' || name === 'inventory staff') key = 'InventoryStaff';
+                if (!key) return;
+                if (!deduped[key]) {
+                  deduped[key] = { ...role, roleName: key, permissions: [...(role.permissions || [])] };
+                } else {
+                  // Merge permissions
+                  const existingCodes = new Set(deduped[key].permissions.map(p => p.permissionCode));
+                  (role.permissions || []).forEach(p => {
+                    if (!existingCodes.has(p.permissionCode)) {
+                      deduped[key].permissions.push(p);
+                    }
+                  });
+                }
+              });
+              return Object.values(deduped).map((role) => {
                 const isSelected = role.roleId === selectedRoleId;
-
-                const permissionCount = (role.permissions || []).filter((permission) => {
-                  const permissionCode = permission.permissionCode || '';
-
-                  return !permissionCode.toUpperCase().startsWith('OWNER_');
-                }).length;
+                const permissionCount = (role.permissions || []).length;
 
                 return (
                   <button
@@ -335,48 +229,35 @@ const AdminRoleManagement = () => {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span
-                        className={`text-sm font-bold ${
-                          isSelected ? 'text-white' : 'text-slate-900 dark:text-[#e5e5e5]'
-                        }`}
-                      >
+                      <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-900 dark:text-[#e5e5e5]'}`}>
                         {role.roleName}
                       </span>
-
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          isSelected
-                            ? 'bg-white/20 text-white'
-                            : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
-                        }`}
-                      >
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        isSelected
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
+                      }`}>
                         {permissionCount} quyền
                       </span>
                     </div>
-
-                    <div
-                      className={`mt-1 text-[11px] ${
-                        isSelected ? 'text-white/80' : 'text-slate-500 dark:text-[#999999]'
-                      }`}
-                    >
+                    <div className={`mt-1 text-[11px] ${isSelected ? 'text-white/80' : 'text-slate-500 dark:text-[#999999]'}`}>
                       Nhấp để xem và cấu hình quyền
                     </div>
                   </button>
                 );
-              })}
+              });
+            })()}
           </div>
         </div>
 
-        {/* Cột phải: Ma trận quyền hạn */}
+        {/* Cột phải: Phân quyền theo Trang */}
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
           {!selectedRoleId ? (
             <div className="flex flex-1 flex-col items-center justify-center text-slate-400 dark:text-[#666666]">
               <Icon name="admin_panel_settings" size={48} className="mb-4 opacity-50" />
-
               <p className="text-sm font-bold text-slate-500 dark:text-[#999999]">
                 Chưa chọn chức vụ nào.
               </p>
-
               <p className="text-xs">Hãy chọn một chức vụ ở cột bên trái để bắt đầu phân quyền.</p>
             </div>
           ) : (
@@ -386,114 +267,33 @@ const AdminRoleManagement = () => {
                   <h2 className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-[#e5e5e5]">
                     Quyền hạn của:{' '}
                     <span className="text-[#004785] dark:text-blue-400">
-                      {selectedRole?.roleName}
+                      {selectedRole?.roleName === 'Sales Staff' ? 'SalesStaff' :
+                       selectedRole?.roleName === 'Inventory Staff' ? 'InventoryStaff' :
+                       selectedRole?.roleName}
                     </span>
                   </h2>
-
                   <p className="mt-0.5 text-[11px] text-slate-500 dark:text-[#999999]">
-                    Tích chọn các ô bên dưới để bật hoặc tắt quyền truy cập của từng module.
+                    Bật / tắt Switch trang và chọn quyền con để phân quyền chi tiết.
                   </p>
                 </div>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                  {selectedCodes.length > 0 ? `${selectedCodes.length} quyền đang chọn` : 'Chưa có quyền nào'}
+                </span>
               </div>
 
-              <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto p-5">
-                {isSuperAdmin && (
+              <div className="no-scrollbar flex-1 overflow-y-auto p-5">
+                {isSuperAdmin ? (
                   <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-600 dark:border-red-800/30 dark:bg-red-900/20 dark:text-red-500">
                     <Icon name="info" size={16} />
                     Super Admin được mặc định toàn quyền và không thể chỉnh sửa từ giao diện.
                   </div>
+                ) : (
+                  <PageBasedPermissionSelector
+                    selectedCodes={selectedCodes}
+                    onTogglePage={handleTogglePage}
+                    onTogglePermission={handleTogglePermission}
+                  />
                 )}
-
-                {Object.entries(groupedPermissions).map(([groupName, permissions]) => {
-                  const groupPermissionIds = permissions.map(
-                    (permission) => permission.permissionId
-                  );
-
-                  const isAllChecked = groupPermissionIds.every((id) =>
-                    editedPermissions.includes(id)
-                  );
-
-                  const isIndeterminate =
-                    !isAllChecked &&
-                    groupPermissionIds.some((id) => editedPermissions.includes(id));
-
-                  return (
-                    <div key={groupName} className="mb-6">
-                      <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2 dark:border-[#333333]">
-                        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
-                          <Icon
-                            name="folder"
-                            size={18}
-                            className="text-[#004785] dark:text-blue-400"
-                          />
-
-                          {groupName}
-                        </h3>
-
-                        <label className="group flex cursor-pointer items-center gap-2">
-                          <span className="text-[11px] font-bold text-slate-500 group-hover:text-[#004785] dark:text-[#999999] dark:group-hover:text-blue-400">
-                            Chọn hết nhóm này
-                          </span>
-
-                          <input
-                            type="checkbox"
-                            disabled={isSuperAdmin}
-                            checked={isAllChecked}
-                            ref={(input) => {
-                              if (input) {
-                                input.indeterminate = isIndeterminate;
-                              }
-                            }}
-                            onChange={() => handleToggleGroup(groupPermissionIds, isAllChecked)}
-                            className="h-4 w-4 rounded text-[#004785] focus:ring-[#004785] disabled:opacity-50 dark:text-blue-400"
-                          />
-                        </label>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-3">
-                        {permissions.map((permission) => {
-                          const isChecked = editedPermissions.includes(permission.permissionId);
-
-                          return (
-                            <label
-                              key={permission.permissionId}
-                              className={`group flex items-start gap-2 ${
-                                isSuperAdmin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                disabled={isSuperAdmin}
-                                checked={isChecked}
-                                onChange={() => handleTogglePermission(permission.permissionId)}
-                                className="mt-0.5 h-4 w-4 rounded border-slate-200 text-[#004785] focus:ring-[#004785] dark:border-[#333333] dark:text-blue-400"
-                              />
-
-                              <div>
-                                <div
-                                  className={`text-xs font-bold transition-colors ${
-                                    isChecked
-                                      ? 'text-[#004785] dark:text-blue-400'
-                                      : 'text-slate-900 group-hover:text-[#004785] dark:text-[#e5e5e5] dark:group-hover:text-blue-400'
-                                  }`}
-                                >
-                                  {permission.permissionCode}
-                                </div>
-
-                                <div
-                                  className="mt-0.5 line-clamp-2 w-40 text-xs font-semibold leading-snug text-slate-600 dark:text-[#b3b3b3] md:w-56"
-                                  title={getPermissionLabel(permission)}
-                                >
-                                  {getPermissionLabel(permission)}
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </>
           )}

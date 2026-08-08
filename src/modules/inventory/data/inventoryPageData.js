@@ -113,17 +113,17 @@ export const sidebarItems = [
   {
     label: 'Chi phí',
     icon: 'request_quote',
-    permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE', 'SUPPLIER_PAYMENT_VIEW'],
+    permissions: ['EXPENSE_VIEW'],
     children: [
       {
         label: 'Quản lý chi phí',
         path: '/inventory/expenses',
-        permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE', 'SUPPLIER_PAYMENT_VIEW'],
+        permissions: ['EXPENSE_VIEW', 'EXPENSE_CREATE'],
       },
       {
         label: 'Loại chi phí',
         path: '/inventory/expense-categories',
-        permissions: ['PAYMENT_VIEW', 'PAYMENT_CREATE'],
+        permissions: ['EXPENSE_CATEGORY_MANAGE', 'EXPENSE_VIEW'],
       },
     ],
   },

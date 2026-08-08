@@ -3,7 +3,7 @@ import {
   createInwardInventory,
   confirmInwardInventory,
   getInwardInventories,
-  getProducts,
+  getProductsLookup,
 } from '../services/inventoryService';
 import { getSuppliers } from '../services/supplierService';
 
@@ -133,24 +133,26 @@ export const StockImport = () => {
 
   useEffect(() => {
     const loadInitData = async () => {
+      // Load suppliers - API mo, khong yeu cau quyen cu the
       try {
-        const [prodRes, supRes] = await Promise.all([
-          getProducts({ pageNumber: 1, pageSize: 50 }),
-          getSuppliers({ pageNumber: 1, pageSize: 50 }),
-        ]);
-        const pList = extractList(prodRes);
+        const supRes = await getSuppliers({ pageNumber: 1, pageSize: 50 });
         const sList = extractList(supRes);
-        if (pList.length > 0) setProducts(pList);
-        if (sList.length > 0) {
-          setSuppliers(sList);
-        }
-        setStatus({ type: 'success', message: 'Đã tải dữ liệu hệ thống' });
+        if (sList.length > 0) setSuppliers(sList);
       } catch {
-        setGlobalError('Không thể tải dữ liệu sản phẩm hoặc nhà cung cấp.');
-      } finally {
-        setIsLoadingData(false);
-        loadInwardHistory();
+        // keep empty
       }
+
+      // Load products - dung API lookup (khong can quyen PRODUCT_VIEW)
+      try {
+        const prodRes = await getProductsLookup({ pageSize: 200 });
+        setProducts(extractList(prodRes));
+      } catch {
+        setProducts([]);
+      }
+
+      setStatus({ type: 'success', message: 'Đã tải dữ liệu hệ thống' });
+      setIsLoadingData(false);
+      loadInwardHistory();
     };
     loadInitData();
   }, [loadInwardHistory]);

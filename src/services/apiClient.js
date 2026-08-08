@@ -216,7 +216,10 @@ export const apiClient = async (endpoint, options = {}) => {
 
     return data;
   } catch (error) {
-    console.error(`API Error [${config.method} ${endpoint}]:`, error);
+    // 403 la loi quyen - expected, khong can log console
+    if (error?.status !== 403) {
+      console.error(`API Error [${config.method} ${endpoint}]:`, error);
+    }
     throw error;
   }
 };

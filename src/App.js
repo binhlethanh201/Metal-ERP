@@ -93,6 +93,7 @@ const InventoryRedirect = () => {
   if (hasAnyPermission(user, OWNER_PERMISSIONS)) {
     return <Navigate to="owner-dashboard" replace />;
   }
+  // Dashboard luon la default cho moi inventory staff
   return <Navigate to="dashboard" replace />;
 };
 
