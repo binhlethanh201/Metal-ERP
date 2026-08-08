@@ -5,7 +5,7 @@ import Icon from '../../../../shared/components/Icon';
 import {
   createOutwardInventory,
   confirmOutwardInventory,
-  getProducts,
+  getProductsLookup,
   getInwardBySupplier,
   getInwardReturnableItems,
 } from '../../services/inventoryService';
@@ -150,7 +150,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     const loadProducts = async () => {
       setIsLoadingProducts(true);
       try {
-        const res = await getProducts({ pageNumber: 1, pageSize: 100 });
+        const res = await getProductsLookup({ pageSize: 200 });
         setProducts(extractList(res));
       } catch {
         setProducts([]);
@@ -510,18 +510,22 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       onSuccess?.();
       onClose();
     } catch (error) {
-      const errors = error?.data?.errors;
       let msg;
-      if (errors) {
-        if (typeof errors === 'object' && !Array.isArray(errors)) {
-          msg = Object.entries(errors)
-            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
-            .join(' | ');
-        } else {
-          msg = String(errors);
-        }
+      if (error?.status === 403) {
+        msg = 'Bạn không có quyền thực hiện thao tác này.';
       } else {
-        msg = error?.message || 'Không thể tạo hoặc xác nhận phiếu xuất kho';
+        const errors = error?.data?.errors;
+        if (errors) {
+          if (typeof errors === 'object' && !Array.isArray(errors)) {
+            msg = Object.entries(errors)
+              .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+              .join(' | ');
+          } else {
+            msg = String(errors);
+          }
+        } else {
+          msg = error?.message || 'Không thể tạo hoặc xác nhận phiếu xuất kho';
+        }
       }
       setStatusMessage(`Lỗi: ${msg}`);
     } finally {

@@ -95,6 +95,7 @@ const InventoryRedirect = () => {
   if (hasAnyPermission(user, OWNER_PERMISSIONS)) {
     return <Navigate to="owner-dashboard" replace />;
   }
+  // Dashboard luon la default cho moi inventory staff
   return <Navigate to="dashboard" replace />;
 };
 
@@ -145,9 +146,8 @@ function App() {
               <Route index element={<InventoryRedirect />} />
 
               {/* --- ROUTE INVENTORY STAFF & OWNER --- */}
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryDashboard} />}>
-                <Route path="dashboard" element={<InventoryDashboard />} />
-              </Route>
+              {/* Dashboard luon truy cap duoc cho moi inventory staff */}
+              <Route path="dashboard" element={<InventoryDashboard />} />
 
               {/* --- ROUTE OWNER --- */}
               <Route element={<PrivateRoute allowedPermissions={OWNER_PERMISSIONS} />}>

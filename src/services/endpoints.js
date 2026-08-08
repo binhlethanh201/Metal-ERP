@@ -30,6 +30,7 @@ export const ENDPOINTS = {
     STAFF_UNASSIGN_BRANCH: (id, branchId) => `/api/owner/staffs/${id}/unassign-branch/${branchId}`,
     STAFF_TOGGLE_STATUS: (id) => `/api/owner/staffs/${id}/toggle-status`,
     STAFF_AVAILABLE_PERMISSIONS: '/api/owner/staffs/available-permissions',
+    STAFF_ROLE_PERMISSIONS: '/api/owner/staffs/role-permissions',
     STAFF_CHECK_RELATIONS: (id) => `/api/owner/staffs/${id}/check-relations`,
 
     // Discount Tiers (Chiết khấu theo giá trị đơn hàng)
@@ -51,6 +52,8 @@ export const ENDPOINTS = {
 
     // ================= Products =================
     GET_PRODUCTS: '/api/Products',
+    GET_PRODUCTS_LOOKUP: '/api/Products/lookup',
+    SEARCH_PRODUCTS: '/api/Products/search',
     CREATE_PRODUCT: '/api/Products',
     GET_PRODUCT: (id) => `/api/Products/${id}`,
     UPDATE_PRODUCT: (id) => `/api/Products/${id}`,

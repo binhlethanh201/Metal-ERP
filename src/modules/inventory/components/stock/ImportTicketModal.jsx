@@ -4,10 +4,12 @@ import { Button } from '../../../../shared/components/Button';
 import Icon from '../../../../shared/components/Icon';
 import { ImportItemsTable } from './ImportItemsTable';
 import { ImportTicketForm } from './ImportTicketForm';
+import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../../shared/utils/permissions';
 import {
   createInwardInventory,
   confirmInwardInventory,
-  getProducts,
+  getProductsLookup,
 } from '../../services/inventoryService';
 import { getSuppliers } from '../../services/supplierService';
 import { createProduct } from '../../services/productService';
@@ -30,6 +32,8 @@ const getItemKey = (item) =>
   item?.branchProductId || item?.productId || item?.productCode || item?.id || '';
 
 export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
+  const { user } = useAuth();
+  const canCreateProduct = hasPermission(user, 'PRODUCT_CREATE');
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -58,17 +62,21 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     setStatus({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
 
     const loadInitData = async () => {
+      // Load suppliers independently - API nay mo, khong yeu cau quyen cu the
       try {
-        const [prodRes, supRes] = await Promise.all([
-          getProducts({ pageNumber: 1, pageSize: 50 }),
-          getSuppliers({ pageNumber: 1, pageSize: 50 }),
-        ]);
-        const pList = extractList(prodRes);
+        const supRes = await getSuppliers({ pageNumber: 1, pageSize: 50 });
         const sList = extractList(supRes);
-        if (pList.length > 0) setProducts(pList);
         if (sList.length > 0) setSuppliers(sList);
       } catch {
-        // keep fallback data
+        // keep empty
+      }
+
+      // Load products - dung API lookup (khong can quyen PRODUCT_VIEW)
+      try {
+        const prodRes = await getProductsLookup({ pageSize: 200 });
+        setProducts(extractList(prodRes));
+      } catch {
+        setProducts([]);
       }
     };
     loadInitData();
@@ -237,17 +245,21 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       onSuccess?.();
       onClose();
     } catch (error) {
-      const errors = error?.data?.errors;
       let msg;
-      if (errors) {
-        if (Array.isArray(errors)) msg = errors.join(' | ');
-        else if (typeof errors === 'object')
-          msg = Object.entries(errors)
-            .map(([f, ms]) => `${f}: ${Array.isArray(ms) ? ms.join(', ') : ms}`)
-            .join(' | ');
-        else msg = String(errors);
+      if (error?.status === 403) {
+        msg = 'Bạn không có quyền thực hiện thao tác này.';
       } else {
-        msg = error?.message || 'Lỗi khi tạo phiếu';
+        const errors = error?.data?.errors;
+        if (errors) {
+          if (Array.isArray(errors)) msg = errors.join(' | ');
+          else if (typeof errors === 'object')
+            msg = Object.entries(errors)
+              .map(([f, ms]) => `${f}: ${Array.isArray(ms) ? ms.join(', ') : ms}`)
+              .join(' | ');
+          else msg = String(errors);
+        } else {
+          msg = error?.message || 'Lỗi khi tạo phiếu';
+        }
       }
       setStatus({ type: 'error', message: msg });
     } finally {
@@ -366,7 +378,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
               onAddProduct={addProductToTicket}
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
-              onAddNewProduct={() => setIsProductModalOpen(true)}
+              onAddNewProduct={canCreateProduct ? () => setIsProductModalOpen(true) : null}
               onImportRows={handleImportRows}
               formatCurrency={formatCurrency}
               isCustomerReturn={isCustomerReturn}

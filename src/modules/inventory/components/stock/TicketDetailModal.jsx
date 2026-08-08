@@ -10,6 +10,8 @@ import {
   Edit3,
   Save,
 } from 'lucide-react';
+import { useAuth } from '../../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../../shared/utils/permissions';
 import {
   getInwardInventory,
   getOutwardInventory,
@@ -25,7 +27,6 @@ import { getSupplierDetail } from '../../services/supplierService';
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import IconButton from '../../../../shared/components/IconButton';
-import { Input } from '../../../../shared/components/Input';
 import { Textarea } from '../../../../shared/components/Textarea';
 import { Badge } from '../../../../shared/components/Badge';
 import CancelTicketModal from './CancelTicketModal';
@@ -61,14 +62,25 @@ export const TicketDetailModal = ({
   onReload,
   onNotify,
 }) => {
+  const { user } = useAuth();
   const [detail, setDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConfirming, setIsConfirming] = useState(false);
   const [returnableMap, setReturnableMap] = useState({});
 
+  // Quyen duyet: STOCK_INWARD_UPDATE (inward) hoac STOCK_OUTWARD_CONFIRM (outward)
+  const permCanConfirm =
+    type === 'OUTWARD'
+      ? hasPermission(user, 'STOCK_OUTWARD_CONFIRM')
+      : hasPermission(user, 'STOCK_INWARD_UPDATE');
+  // Quyen huy: STOCK_INWARD_DELETE (inward) hoac STOCK_OUTWARD_DELETE (outward)
+  const permCanCancel =
+    type === 'OUTWARD'
+      ? hasPermission(user, 'STOCK_OUTWARD_DELETE')
+      : hasPermission(user, 'STOCK_INWARD_DELETE');
+
   const [isEditing, setIsEditing] = useState(false);
   const [editReason, setEditReason] = useState('');
-  const [editNote, setEditNote] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Cancel modal (dùng chung pattern như table Lịch sử phiếu nhập)
@@ -98,9 +110,8 @@ export const TicketDetailModal = ({
         if (active && data) {
           setDetail(data);
           setEditReason(
-            data.reason || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : '')
+            data.reason || data.note || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : '')
           );
-          setEditNote(data.note || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : ''));
 
           // Tra cứu tên nhà cung cấp từ supplierId
           if (type === 'INWARD' && data.supplierId) {
@@ -165,6 +176,10 @@ export const TicketDetailModal = ({
   }, [detail?.inwardTicketId, detail?.ticketType]);
 
   const handleConfirm = async () => {
+    if (!canConfirm) {
+      onNotify && onNotify({ type: 'error', message: 'Bạn không có quyền duyệt phiếu này.' });
+      return;
+    }
     setIsConfirming(true);
     try {
       if (type === 'INWARD') {
@@ -178,7 +193,9 @@ export const TicketDetailModal = ({
       onClose();
     } catch (error) {
       let msg;
-      if (error?.status === 409 || error?.status === 400) {
+      if (error?.status === 403) {
+        msg = 'Bạn không có quyền duyệt phiếu này.';
+      } else if (error?.status === 409 || error?.status === 400) {
         msg = 'Phiếu này đã được duyệt trước đó! Tồn kho đã được hạch toán.';
         window.alert(msg);
       } else {
@@ -186,8 +203,8 @@ export const TicketDetailModal = ({
         msg = Array.isArray(errList)
           ? errList.join(' | ')
           : error?.message || 'Lỗi khi xác nhận phiếu';
-        onNotify && onNotify({ type: 'error', message: msg });
       }
+      onNotify && onNotify({ type: 'error', message: msg });
       onReload && onReload();
       onClose();
     } finally {
@@ -200,14 +217,12 @@ export const TicketDetailModal = ({
     try {
       const statusUpper = detail?.status?.toUpperCase();
       let payload = {};
+      const combinedText = editReason.trim();
 
       if (statusUpper === 'PENDING') {
-        payload = { reason: editReason.trim(), note: editNote.trim() };
+        payload = { reason: combinedText, note: combinedText };
       } else if (statusUpper === 'COMPLETED') {
-        // COMPLETED: chỉ được sửa Note theo tài liệu API.
-        // KHÔNG gửi field reason nữa (khác code gốc) để tránh trường hợp
-        // backend validate strict field reason khi ticket đã COMPLETED.
-        payload = { note: editNote.trim() };
+        payload = { note: combinedText };
       } else {
         throw new Error('Phiếu đã hủy không thể chỉnh sửa thông tin.');
       }
@@ -220,8 +235,8 @@ export const TicketDetailModal = ({
 
       setDetail((prev) => ({
         ...prev,
-        reason: statusUpper === 'PENDING' ? editReason.trim() : prev.reason,
-        note: editNote.trim(),
+        reason: combinedText,
+        note: combinedText,
       }));
       setIsEditing(false);
 
@@ -254,11 +269,21 @@ export const TicketDetailModal = ({
   const hasInwardRef = isReturnSupplier && !!detail?.inwardTicketId;
   const hidePriceFields = isCustomerReturn || isReturnSupplier;
 
-  const canEditReason = isPending;
-  const canEditNote = isPending || isCompleted;
-  const canConfirm = detail?.canConfirm ?? isPending;
+  const canConfirm = (detail?.canConfirm ?? isPending) && permCanConfirm;
+  // Huy phieu:
+  // - PENDING: nguoi tao phieu hoac co quyen xoa / Owner
+  // - COMPLETED: chi Owner hoac nguoi co quyen xoa
+  const isCreator = detail?.userId && user?.userId && detail.userId === user.userId;
+  const isOwner = (user?.roles || []).some((r) => (r || '').toLowerCase() === 'owner');
+  const canCancel =
+    (isPending && (isCreator || permCanCancel || isOwner)) ||
+    (isCompleted && (permCanCancel || isOwner));
 
   const handleCancelDraft = () => {
+    if (!canCancel) {
+      onNotify && onNotify({ type: 'error', message: 'Bạn không có quyền hủy phiếu này.' });
+      return;
+    }
     setShowCancelModal(true);
   };
 
@@ -273,7 +298,10 @@ export const TicketDetailModal = ({
       onReload && onReload();
       onClose();
     } catch (e) {
-      onNotify && onNotify({ type: 'error', message: 'Không thể hủy phiếu nháp này' });
+      const msg = e?.status === 403
+        ? 'Bạn không có quyền hủy phiếu này.'
+        : (e?.message || 'Không thể hủy phiếu nháp này');
+      onNotify && onNotify({ type: 'error', message: msg });
     } finally {
       setIsCancelling(false);
     }
@@ -306,17 +334,41 @@ export const TicketDetailModal = ({
               <Button
                 variant="danger"
                 onClick={handleCancelDraft}
-                disabled={isConfirming || isSavingEdit}
+                disabled={isConfirming || isSavingEdit || !canCancel}
+                title={
+                  !canCancel
+                    ? 'Bạn không có quyền hủy phiếu này (chỉ người tạo phiếu hoặc người có quyền hủy mới được)'
+                    : 'Hủy phiếu nháp'
+                }
               >
                 Hủy phiếu nháp
               </Button>
             )}
-            {canConfirm && isPending && (
+            {!isPending && !isCancelled && (
+              <Button
+                variant="danger"
+                onClick={handleCancelDraft}
+                disabled={isConfirming || isSavingEdit || !canCancel}
+                title={
+                  !canCancel
+                    ? 'Bạn không có quyền hủy phiếu này (chỉ Owner hoặc người có quyền hủy mới được)'
+                    : 'Hủy phiếu'
+                }
+              >
+                Hủy phiếu
+              </Button>
+            )}
+            {isPending && (
               <Button
                 variant="success"
                 onClick={handleConfirm}
-                disabled={isConfirming}
+                disabled={isConfirming || !canConfirm}
                 className="flex items-center gap-2"
+                title={
+                  !permCanConfirm
+                    ? 'Bạn không có quyền duyệt phiếu này'
+                    : 'Xác nhận duyệt để cộng/trừ kho thực tế'
+                }
               >
                 <CheckCircle2 size={18} />
                 {isConfirming ? 'Đang duyệt kho...' : 'Xác nhận duyệt kho ngay'}
@@ -435,18 +487,13 @@ export const TicketDetailModal = ({
 
                 {isEditing ? (
                   <div className="space-y-3 pt-1">
-                    <Input
-                      label={`Lý do nghiệp vụ ${canEditReason ? '' : '(Phiếu đã hoàn tất - Không được sửa Lý do)'}`}
-                      disabled={!canEditReason || isSavingEdit}
+                    <Textarea
+                      label="Lý do / Ghi chú phiếu"
+                      rows={3}
+                      disabled={isSavingEdit}
                       value={editReason}
                       onChange={(e) => setEditReason(e.target.value)}
-                    />
-                    <Textarea
-                      label={`Ghi chú bổ sung ${canEditNote ? '' : '(Không được phép sửa)'}`}
-                      rows={2}
-                      disabled={!canEditNote || isSavingEdit}
-                      value={editNote}
-                      onChange={(e) => setEditNote(e.target.value)}
+                      placeholder="Nhập lý do hoặc ghi chú cho phiếu..."
                     />
                     <div className="flex justify-end gap-2 pt-1">
                       <Button
@@ -469,33 +516,18 @@ export const TicketDetailModal = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                    <div>
-                      <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">
-                        Lý do phiếu:
-                      </span>
-                      <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                        {(() => {
-                          const raw = detail.reason || '';
-                          if (isCustomerReturn && (!raw || raw === 'Nhập kho'))
-                            return 'Khách hàng trả';
-                          return raw || 'Không có lý do';
-                        })()}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">
-                        Ghi chú thêm:
-                      </span>
-                      <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
-                        {(() => {
-                          const raw = detail.note || '';
-                          if (isCustomerReturn && (!raw || raw === 'Nhập kho'))
-                            return 'Khách hàng trả';
-                          return raw || 'Không có ghi chú';
-                        })()}
-                      </p>
-                    </div>
+                  <div className="text-sm">
+                    <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">
+                      Lý do / Ghi chú:
+                    </span>
+                    <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
+                      {(() => {
+                        const raw = (detail.reason || detail.note || '');
+                        if (isCustomerReturn && (!raw || raw === 'Nhập kho'))
+                          return 'Khách hàng trả';
+                        return raw || 'Không có';
+                      })()}
+                    </p>
                   </div>
                 )}
               </div>

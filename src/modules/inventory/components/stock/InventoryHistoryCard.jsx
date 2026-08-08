@@ -56,15 +56,27 @@ export const InventoryHistoryCard = ({
   branches = [],
 }) => {
   const { user } = useAuth();
+  const isOwner = (user?.roles || []).some((r) => (r || '').toLowerCase() === 'owner');
 
   const canConfirm =
     type === 'OUTWARD'
       ? hasPermission(user, 'STOCK_OUTWARD_CONFIRM')
       : hasPermission(user, 'STOCK_INWARD_UPDATE');
-  const canCancel =
+  const permCanCancel =
     type === 'OUTWARD'
       ? hasPermission(user, 'STOCK_OUTWARD_DELETE')
       : hasPermission(user, 'STOCK_INWARD_DELETE');
+  // Huy phieu:
+  // - PENDING: nguoi tao phieu hoac co quyen xoa / Owner
+  // - COMPLETED: chi Owner hoac nguoi co quyen xoa
+  const canCancelTicket = (ticket) => {
+    const isPending = ticket.status?.toUpperCase() === 'PENDING';
+    const isCompleted = ticket.status?.toUpperCase() === 'COMPLETED';
+    const isCreator = ticket.userId && user?.userId && ticket.userId === user.userId;
+    if (isPending) return isCreator || permCanCancel || isOwner;
+    if (isCompleted) return permCanCancel || isOwner;
+    return false;
+  };
 
   const [cancellingTicket, setCancellingTicket] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
@@ -185,7 +197,9 @@ export const InventoryHistoryCard = ({
       if (onReload) onReload();
     } catch (error) {
       let msg;
-      if (error?.status === 409 || error?.status === 400) {
+      if (error?.status === 403) {
+        msg = 'Bạn không có quyền thực hiện thao tác này.';
+      } else if (error?.status === 409 || error?.status === 400) {
         msg = 'Phiếu này đã được duyệt trước đó! Tồn kho đã được hạch toán.';
         window.alert(msg);
       } else {
@@ -193,8 +207,8 @@ export const InventoryHistoryCard = ({
         msg = Array.isArray(errList)
           ? errList.join(' | ')
           : error?.message || 'Lỗi khi xác nhận phiếu';
-        onNotify && onNotify({ type: 'error', message: msg });
       }
+      onNotify && onNotify({ type: 'error', message: msg });
       if (onReload) onReload();
     } finally {
       setConfirmingId(null);
@@ -203,6 +217,11 @@ export const InventoryHistoryCard = ({
 
   const handleConfirmCancel = async (reason) => {
     if (!cancellingTicket) return;
+    if (!canCancelTicket(cancellingTicket)) {
+      onNotify && onNotify({ type: 'error', message: 'Bạn không có quyền hủy phiếu này.' });
+      setCancellingTicket(null);
+      return;
+    }
     setIsSubmittingCancel(true);
 
     try {
@@ -222,7 +241,12 @@ export const InventoryHistoryCard = ({
       setCancellingTicket(null);
       if (onReload) onReload();
     } catch (error) {
-      let msg = error?.message || 'Lỗi khi hủy phiếu';
+      let msg;
+      if (error?.status === 403) {
+        msg = 'Bạn không có quyền hủy phiếu này.';
+      } else {
+        msg = error?.message || 'Lỗi khi hủy phiếu';
+      }
       msg = msg.replace(/[.;,]?\s*Sản phẩm bị ảnh hưởng.*$/i, '');
       msg = msg.replace(
         /\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
@@ -329,16 +353,21 @@ export const InventoryHistoryCard = ({
 
         return (
           <div className="flex items-center justify-end gap-1">
-            {isPending && canConfirm && (
+            {isPending && (
               <Button
                 variant="primary"
                 size="sm"
-                disabled={isConfirming}
+                disabled={isConfirming || !canConfirm}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!canConfirm) return;
                   handleConfirmTicket(row);
                 }}
-                title="Xác nhận duyệt để cộng/trừ kho thực tế"
+                title={
+                  !canConfirm
+                    ? 'Bạn không có quyền duyệt phiếu này'
+                    : 'Xác nhận duyệt để cộng/trừ kho thực tế'
+                }
                 className="flex items-center gap-1 whitespace-nowrap !px-2.5 !py-1 !text-[11px]"
               >
                 <CheckCheck size={12} /> {isConfirming ? 'Đang duyệt...' : 'Duyệt'}
@@ -349,7 +378,7 @@ export const InventoryHistoryCard = ({
               variant="ghost"
               space="customer"
               size="sm"
-              disabled={isCancelled || isConfirming || !canCancel}
+              disabled={isCancelled || isConfirming || !canCancelTicket(row)}
               onClick={(e) => {
                 e.stopPropagation();
                 setCancellingTicket(row);
@@ -357,7 +386,7 @@ export const InventoryHistoryCard = ({
               title={
                 isCancelled
                   ? 'Phiếu đã bị hủy'
-                  : !canCancel
+                  : !canCancelTicket(row)
                     ? 'Bạn không có quyền hủy phiếu này'
                     : 'Hủy phiếu này'
               }
