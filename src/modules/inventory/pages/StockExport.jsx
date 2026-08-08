@@ -13,7 +13,7 @@ import {
   createOutwardInventory,
   confirmOutwardInventory,
   getOutwardInventories,
-  getProducts,
+  getProductsLookup,
   getInwardBySupplier,
   getInwardReturnableItems,
 } from '../services/inventoryService';
@@ -169,9 +169,8 @@ export const StockExport = () => {
       const queryParams = { pageNumber: 1, pageSize: 100, ...filterParams };
 
       try {
-        const productFilters = { pageNumber: 1, pageSize: 500 };
-        const productsResponse = await getProducts(productFilters);
-        const productItems = extractList(productsResponse);
+        const res = await getProductsLookup({ pageSize: 500 });
+        const productItems = extractList(res);
         setProducts(productItems);
       } catch {
         setProducts([]);
@@ -467,7 +466,7 @@ export const StockExport = () => {
             .filter((id) => id && !existingIds.has(id));
           if (missingIds.length > 0) {
             try {
-              const allRes = await getProducts({ pageNumber: 1, pageSize: 1000 });
+              const allRes = await getProductsLookup({ pageSize: 1000 });
               const allItems = extractList(allRes);
               availableProducts = allItems;
               if (allItems.length > products.length) setProducts(allItems);

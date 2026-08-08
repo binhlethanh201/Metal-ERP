@@ -465,8 +465,11 @@ export const InventoryTransactionManagement = () => {
         fetchData(false);
         setIsDetailOpen(false);
       } catch (error) {
-        console.error('Cancel failed:', error);
-        alert('Hủy phiếu thất bại. Vui lòng thử lại.');
+        if (error?.status === 403) {
+          alert('Bạn không có quyền hủy phiếu này.');
+        } else {
+          alert(error?.message || 'Hủy phiếu thất bại. Vui lòng thử lại.');
+        }
       }
     },
     [fetchData]

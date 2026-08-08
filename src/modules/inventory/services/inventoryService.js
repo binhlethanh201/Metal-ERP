@@ -26,6 +26,14 @@ export const getProducts = (filters = {}) => {
   return apiGet(`${ENDPOINTS.INVENTORY.GET_PRODUCTS}${buildQueryString(filters)}`);
 };
 
+export const getProductsLookup = (filters = {}) => {
+  return apiGet(`${ENDPOINTS.INVENTORY.GET_PRODUCTS_LOOKUP}${buildQueryString(filters)}`);
+};
+
+export const searchProducts = (filters = {}) => {
+  return apiGet(`${ENDPOINTS.INVENTORY.SEARCH_PRODUCTS}${buildQueryString(filters)}`);
+};
+
 export const getProduct = (id) => {
   return apiGet(ENDPOINTS.INVENTORY.GET_PRODUCT(id));
 };
@@ -163,6 +171,8 @@ export const getImportSuggestions = () => {
 const inventoryService = {
   getInventoryDashboard,
   getProducts,
+  getProductsLookup,
+  searchProducts,
   getProduct,
   createProduct,
   updateProduct,

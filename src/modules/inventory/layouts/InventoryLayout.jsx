@@ -7,6 +7,7 @@ import AiChatWidget from '../../../shared/components/AiChatWidget';
 import Icon from '../../../shared/components/Icon';
 import { getInventoryNotifications } from '../services/inventoryCheckService';
 import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../shared/utils/permissions';
 
 const API_BASE = process.env.REACT_APP_API_URL;
 const HUB_URL = `${API_BASE}/r/mepHub`;
@@ -44,7 +45,10 @@ const InventoryLayout = () => {
   }, [addToast]);
 
   // Load missed recent system notifications on mount (within 1 hour)
+  // Chi fetch khi user co quyen STOCK_CHECK_VIEW
   useEffect(() => {
+    if (!hasPermission(user, 'STOCK_CHECK_VIEW')) return;
+
     const fetchRecentSysNotifs = async () => {
       try {
         const res = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 });
@@ -53,20 +57,20 @@ const InventoryLayout = () => {
           const now = new Date();
           const key = `dismissed_toasts_${user?.userId || 'guest'}`;
           const dismissed = JSON.parse(localStorage.getItem(key) || '[]');
-          
+
           const recent = items.filter(n => {
             if (n.type !== 'Announcement' || n.isRead || dismissed.includes(n.notificationId)) return false;
             const createdAt = new Date(n.createdAt.endsWith('Z') || n.createdAt.includes('+') ? n.createdAt : n.createdAt + 'Z');
             const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
             return hoursDiff <= 1; // within 1 hour
           });
-          
+
           // Show toasts sequentially or together
           recent.forEach((n, idx) => {
             setTimeout(() => {
               const isUrgent = (n.message || '').includes('[KHẨN');
               addToast(
-                isUrgent ? 'Thông báo Khẩn cấp' : 'Thông báo hệ thống mới',
+                isUrgent ? 'Thong bao Khan cap' : 'Thong bao he thong moi',
                 isUrgent ? 'warning' : 'info',
                 n.message,
                 n.notificationId
@@ -81,7 +85,7 @@ const InventoryLayout = () => {
         }
       }
     };
-    
+
     fetchRecentSysNotifs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -107,13 +111,16 @@ const InventoryLayout = () => {
         data.isUrgent ? 'warning' : 'info',
         data.content
       );
-      // Phát sự kiện để báo cho các component khác (như Notification Dropdown) cập nhật
       window.dispatchEvent(new CustomEvent('RefreshNotifications'));
     });
 
-    connection.start().catch((err) => {
-      console.warn('SignalR không thể kết nối từ Inventory:', err.message);
-    });
+    (async () => {
+      try {
+        await connection.start();
+      } catch (err) {
+        console.warn('SignalR khong the ket noi tu Inventory:', err.message);
+      }
+    })();
 
     return () => {
       connection.stop().catch(() => {});

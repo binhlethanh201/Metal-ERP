@@ -32,15 +32,23 @@ const InventorySidebar = ({ open = true, onToggle }) => {
       return true;
     };
 
-    return sidebarItems.filter(checkPermission).map((item) => {
-      if (item.children) {
-        return {
-          ...item,
-          children: item.children.filter(checkPermission),
-        };
-      }
-      return item;
-    });
+    return sidebarItems
+      .filter(checkPermission)
+      .map((item) => {
+        if (item.children) {
+          const visibleChildren = item.children.filter(checkPermission);
+          return { ...item, children: visibleChildren };
+        }
+        return item;
+      })
+      .filter((item) => {
+        // Giu lai item neu:
+        // - Co path truc tiep (co the click duoc), hoac
+        // - Co it nhat 1 children visible
+        if (item.path) return true;
+        if (item.children && item.children.length > 0) return true;
+        return false;
+      });
   }, [user]);
 
   useEffect(() => {
