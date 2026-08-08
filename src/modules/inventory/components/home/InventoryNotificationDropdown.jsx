@@ -80,6 +80,7 @@ const InventoryNotificationDropdown = () => {
       clearInterval(interval);
       window.removeEventListener('RefreshNotifications', handleRefresh);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
