@@ -69,7 +69,7 @@ const DebtCell = ({ supplier }) => {
   );
 };
 
-const SupplierTable = ({ suppliers, loading, onDetail, onToggleStatus }) => {
+const SupplierTable = ({ suppliers, loading, onDetail, onToggleStatus, canUpdate = true }) => {
   if (loading)
     return <div className="py-10 text-center text-sm text-slate-500 dark:text-[#999999]">Đang tải dữ liệu...</div>;
   if (suppliers.length === 0)
@@ -144,13 +144,14 @@ const SupplierTable = ({ suppliers, loading, onDetail, onToggleStatus }) => {
                     {onToggleStatus && (
                       <button
                         type="button"
+                        disabled={!canUpdate}
                         onClick={(e) => handleToggle(e, supplier)}
+                        title={!canUpdate ? 'Bạn không có quyền sửa trạng thái nhà cung cấp' : ''}
                         className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                           inactive
                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50'
                             : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50'
                         }`}
-                        title={inactive ? 'Kích hoạt lại nhà cung cấp' : 'Ngừng hợp tác với nhà cung cấp'}
                       >
                         <Icon name={inactive ? 'check_circle' : 'dangerous'} size={14} />
                         {inactive ? 'Kích hoạt' : 'Ngừng'}

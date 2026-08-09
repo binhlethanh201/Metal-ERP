@@ -73,11 +73,11 @@ export const TicketDetailModal = ({
     type === 'OUTWARD'
       ? hasPermission(user, 'STOCK_OUTWARD_CONFIRM')
       : hasPermission(user, 'STOCK_INWARD_UPDATE');
-  // Quyen huy: STOCK_INWARD_DELETE (inward) hoac STOCK_OUTWARD_DELETE (outward)
+  // Quyen huy: STOCK_INWARD_DELETE/UPDATE (inward) hoac STOCK_OUTWARD_DELETE/CONFIRM (outward)
   const permCanCancel =
     type === 'OUTWARD'
-      ? hasPermission(user, 'STOCK_OUTWARD_DELETE')
-      : hasPermission(user, 'STOCK_INWARD_DELETE');
+      ? hasPermission(user, 'STOCK_OUTWARD_DELETE') || hasPermission(user, 'STOCK_OUTWARD_CONFIRM')
+      : hasPermission(user, 'STOCK_INWARD_DELETE') || hasPermission(user, 'STOCK_INWARD_UPDATE');
 
   const [isEditing, setIsEditing] = useState(false);
   const [editReason, setEditReason] = useState('');
@@ -213,6 +213,10 @@ export const TicketDetailModal = ({
   };
 
   const handleSaveEdit = async () => {
+    if (!isCreator) {
+      onNotify && onNotify({ type: 'error', message: 'Bạn không có quyền chỉnh sửa phiếu này.' });
+      return;
+    }
     setIsSavingEdit(true);
     try {
       const statusUpper = detail?.status?.toUpperCase();
@@ -473,7 +477,7 @@ export const TicketDetailModal = ({
                     <FileText size={16} className="text-slate-500 dark:text-[#999999]" /> Ghi chú &
                     Lý do giải trình
                   </span>
-                  {!isCancelled && !isEditing && (
+                  {!isCancelled && !isEditing && isPending && isCreator && (
                     <IconButton
                       icon={Edit3}
                       variant="outline"

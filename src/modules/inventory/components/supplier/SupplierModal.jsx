@@ -47,7 +47,7 @@ const validateForm = (data) => {
   return errors;
 };
 
-const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDelete }) => {
+const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDelete, canEdit = true, canDelete = true }) => {
   const [formData, setFormData] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -118,8 +118,10 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
         {supplier && (
           <Button
             variant="danger"
+            disabled={!canDelete}
             onClick={() => { onDelete?.(supplier); onClose(); }}
             className="flex items-center gap-1"
+            title={!canDelete ? 'Bạn không có quyền xóa nhà cung cấp' : ''}
           >
             <Icon name="delete" size={18} />
             Xóa
@@ -135,8 +137,9 @@ const SupplierModal = ({ isOpen, mode, supplier, loading, onClose, onSave, onDel
             type="submit"
             form="supplierForm"
             variant="primary"
-            disabled={submitting}
+            disabled={submitting || (mode === 'edit' && !canEdit)}
             className="flex items-center gap-2"
+            title={mode === 'edit' && !canEdit ? 'Bạn không có quyền sửa nhà cung cấp' : ''}
           >
             {submitting ? (
               'Đang lưu...'

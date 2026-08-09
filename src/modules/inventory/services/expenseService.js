@@ -30,6 +30,11 @@ export const getExpenseDetail = (id) => apiGet(ENDPOINTS.EXPENSE.GET_DETAIL(id))
 export const createExpense = (payload) => apiPost(ENDPOINTS.EXPENSE.CREATE, payload);
 
 /**
+ * Cập nhật phiếu chi (chỉ PENDING, chỉ người tạo)
+ */
+export const updateExpenseVoucher = (id, payload) => apiPut(ENDPOINTS.EXPENSE.UPDATE(id), payload);
+
+/**
  * Xác nhận phiếu chi tiền (PENDING -> COMPLETED)
  */
 export const confirmExpense = (id) => apiPatch(ENDPOINTS.EXPENSE.CONFIRM(id));
@@ -71,6 +76,7 @@ const expenseService = {
   getExpenses,
   getExpenseDetail,
   createExpense,
+  updateExpenseVoucher,
   confirmExpense,
   cancelExpense,
   getExpenseCategories,

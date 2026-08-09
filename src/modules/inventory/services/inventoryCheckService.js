@@ -28,9 +28,10 @@ export const getInventoryChecks = (filters = {}) => {
  * GET /api/InventoryCheck/{id}
  * @param {string} id - TicketId
  */
-export const getInventoryCheckDetail = (id) => {
-  return apiGet(ENDPOINTS.INVENTORY.GET_INVENTORY_CHECK(id));
-};
+export const getInventoryCheckDetail = (id) =>
+  apiGet(ENDPOINTS.INVENTORY.GET_INVENTORY_CHECK(id));
+
+export const getCounters = () => apiGet(ENDPOINTS.INVENTORY.GET_COUNTERS);
 
 /**
  * Tạo mới phiếu kiểm kê (Trạng thái: Draft)

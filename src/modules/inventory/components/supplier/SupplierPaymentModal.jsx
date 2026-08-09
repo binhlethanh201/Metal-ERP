@@ -199,14 +199,14 @@ const SupplierPaymentModal = ({ isOpen, onClose, onSave, suppliers, debts = [] }
           </div>
 
           <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-            <span className="mb-1 block">Mã giao dịch / Tham chiếu</span>
+            <span className="mb-1 block">Mã giao dịch</span>
             <input
               type="text"
               name="referenceCode"
               value={formData.referenceCode}
               onChange={handleChange}
               className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
-              placeholder="VD: UNC123456 hoặc Mã đối soát NH"
+              placeholder="VD: UNC123456"
             />
           </label>
 

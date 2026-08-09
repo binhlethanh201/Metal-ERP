@@ -82,9 +82,8 @@ export const createSupplierPayment = (data) => {
   return apiPost(ENDPOINTS.INVENTORY.CREATE_SUPPLIER_PAYMENT, data);
 };
 
-export const updateSupplierPaymentNote = (id, note) => {
-  // API chỉ cho phép cập nhật field "note"
-  return apiPut(ENDPOINTS.INVENTORY.UPDATE_SUPPLIER_PAYMENT(id), { note });
+export const updateSupplierPaymentNote = (id, payload) => {
+  return apiPut(ENDPOINTS.INVENTORY.UPDATE_SUPPLIER_PAYMENT(id), payload);
 };
 
 export const deleteSupplierPayment = (id) => {

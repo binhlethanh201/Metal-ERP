@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
-import { getProducts } from '../../services/inventoryService';
-import { getStaffs } from '../../../owner/services/staffService';
+import { getProductsLookup } from '../../services/inventoryService';
+import { getCounters } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
@@ -25,6 +25,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
   const isOwner = hasRole(user?.roles, 'Owner');
   const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
+  const canManageAssign = isOwner || canCreate || canApprove;
   const currentUserId = user?.userId || user?.id;
 
   const [products, setProducts] = useState([]);
@@ -63,7 +64,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
 
     // Fetch sản phẩm trong chi nhánh
     setLoadingProducts(true);
-    getProducts({ pageSize: 200, status: 'active' })
+    getProductsLookup({ pageSize: 200 })
       .then((res) => {
         if (res?.success && res.data) {
           setProducts(res.data.items || res.data || []);
@@ -72,36 +73,28 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
       .catch((err) => console.error('Lỗi lấy sản phẩm:', err))
       .finally(() => setLoadingProducts(false));
 
-    // Fetch staff chỉ cho Owner
-    if (isOwner || canCreate || canApprove) {
-      setLoadingStaff(true);
-      getStaffs({ pageSize: 100 })
-        .then((res) => {
-          if (res?.success && res.data) {
-            const allStaff = res.data.items || [];
-            const qualified = allStaff.filter((staff) => {
-              const isSameBranch = !branchId || !staff.branchId || staff.branchId === branchId;
-              const staffRoles = Array.isArray(staff.roles)
-                ? staff.roles
-                : staff.role
-                  ? [staff.role]
-                  : [];
-              const hasInventoryRole =
-                hasRole(staffRoles, 'InventoryStaff') || hasRole(staffRoles, 'Owner');
-              const hasPermission =
-                staff.permissionCodes?.includes('STOCK_CHECK_CREATE') ||
-                staff.permissionCodes?.includes('STOCK_CHECK_APPROVE');
-              return isSameBranch && (hasInventoryRole || hasPermission);
-            });
+    // Fetch staff - them current user vao list mac dinh
+    if (canManageAssign) {
+        setLoadingStaff(true);
+        const hasCountPerm = hasPermission(user, 'STOCK_CHECK_COUNT');
+        const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
+        getCounters()
+          .then((res) => {
+            const counters = res?.data || res || [];
+            const qualified = Array.isArray(counters) ? counters : [];
+            if ((hasCountPerm || isOwner) && !qualified.find(s => s.userId === currentUserId)) {
+              qualified.unshift(me);
+            }
             setStaffList(qualified);
-          }
-        })
-        .catch((err) => console.error('Lỗi lấy nhân viên:', err))
+          })
+          .catch(() => {
+            setStaffList(hasCountPerm || isOwner ? [me] : []);
+          })
         .finally(() => setLoadingStaff(false));
     } else {
       setAssigneeUserId(currentUserId);
     }
-  }, [isOpen, detailData, branchId, isOwner, currentUserId, canCreate, canApprove]);
+  }, [isOpen, detailData, branchId, isOwner, currentUserId, canCreate, canApprove]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isOpen || !detailData) return null;
 
@@ -143,7 +136,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
 
     const payload = {
       notes,
-      assigneeUserId: isOwner || canApprove ? assigneeUserId || null : currentUserId,
+      assigneeUserId: canManageAssign ? assigneeUserId || null : currentUserId,
       addProductIds,
       removeProductIds,
     };
@@ -261,7 +254,7 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Người phụ trách</label>
-          {isOwner ? (
+          {canManageAssign ? (
             <>
               <select
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm transition-colors focus:border-[#004785] focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50"

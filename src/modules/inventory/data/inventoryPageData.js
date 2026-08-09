@@ -18,27 +18,27 @@ export const sidebarItems = [
   {
     label: 'Hàng hóa & Kho',
     icon: 'inventory_2',
-    permissions: ['STOCK_VIEW', 'PRODUCT_VIEW', 'STOCK_INWARD_CREATE', 'STOCK_OUTWARD_CREATE', 'STOCK_CHECK_VIEW'],
+    permissions: ['STOCK_VIEW', 'PRODUCT_VIEW', 'PRODUCT_CREATE', 'PRODUCT_UPDATE', 'PRODUCT_DELETE', 'PRODUCT_CATEGORY_MANAGE', 'STOCK_INWARD_CREATE', 'STOCK_INWARD_UPDATE', 'STOCK_OUTWARD_CREATE', 'STOCK_OUTWARD_CONFIRM', 'STOCK_CHECK_VIEW', 'STOCK_CHECK_CREATE', 'STOCK_CHECK_COUNT', 'STOCK_CHECK_APPROVE', 'STOCK_CHECK_CANCEL'],
     children: [
       {
         label: 'Danh sách hàng hóa',
         path: '/inventory/products',
-        permissions: ['PRODUCT_VIEW', 'PRODUCT_CREATE', 'PRODUCT_UPDATE', 'PRODUCT_DELETE'],
+        permissions: ['PRODUCT_VIEW', 'PRODUCT_CREATE', 'PRODUCT_UPDATE', 'PRODUCT_DELETE', 'PRODUCT_CATEGORY_MANAGE'],
       },
       {
         label: 'Nhập kho',
         path: '/inventory/import',
-        permissions: ['STOCK_INWARD_CREATE', 'STOCK_INWARD_UPDATE', 'STOCK_INWARD_DELETE'],
+        permissions: ['STOCK_INWARD_CREATE', 'STOCK_INWARD_UPDATE'],
       },
       {
         label: 'Xuất kho',
         path: '/inventory/export',
-        permissions: ['STOCK_OUTWARD_CREATE', 'STOCK_OUTWARD_UPDATE', 'STOCK_OUTWARD_DELETE', 'STOCK_OUTWARD_CONFIRM'],
+        permissions: ['STOCK_OUTWARD_CREATE', 'STOCK_OUTWARD_CONFIRM'],
       },
       {
         label: 'Kiểm kê kho',
         path: '/inventory/inventory-check',
-        permissions: ['STOCK_CHECK_CREATE', 'STOCK_CHECK_VIEW', 'STOCK_CHECK_APPROVE', 'STOCK_CHECK_CANCEL'],
+        permissions: ['STOCK_CHECK_CREATE', 'STOCK_CHECK_COUNT', 'STOCK_CHECK_VIEW', 'STOCK_CHECK_APPROVE', 'STOCK_CHECK_CANCEL'],
       },
       {
         label: 'Lịch sử Xuất/Nhập',
@@ -62,12 +62,11 @@ export const sidebarItems = [
   {
     label: 'Mua hàng & NCC',
     icon: 'shopping_bag',
-    permissions: ['SUPPLIER_VIEW', 'SUPPLIER_CREATE', 'SUPPLIER_UPDATE', 'SUPPLIER_DELETE'],
+    permissions: ['SUPPLIER_VIEW', 'SUPPLIER_CREATE', 'SUPPLIER_UPDATE', 'SUPPLIER_DELETE', 'SUPPLIER_PAYMENT_VIEW', 'SUPPLIER_PAYMENT_CREATE', 'SUPPLIER_PAYMENT_DELETE'],
     children: [
       { label: 'Nhà cung cấp', path: '/inventory/suppliers', permissions: ['SUPPLIER_VIEW', 'SUPPLIER_CREATE', 'SUPPLIER_UPDATE', 'SUPPLIER_DELETE'] },
-      // { label: 'Đặt hàng mua', path: '/inventory/purchasing/orders' },
-      // { label: 'Nhập hàng mua', path: '/inventory/purchasing/import' },
-      // { label: 'Trả lại hàng mua', path: '/inventory/purchasing/returns' },
+      { label: 'Công nợ NCC', path: '/inventory/supplier-debt', permissions: ['SUPPLIER_PAYMENT_VIEW'], hideWhenPermissions: ['OWNER_MANAGE'] },
+      { label: 'Thanh toán NCC', path: '/inventory/supplier-payments', permissions: ['SUPPLIER_PAYMENT_CREATE', 'SUPPLIER_PAYMENT_DELETE'], hideWhenPermissions: ['OWNER_MANAGE'] },
     ],
   },
   // {
@@ -96,7 +95,7 @@ export const sidebarItems = [
     permissions: ['EXPENSE_VIEW'],
     children: [
       { label: 'Quản lý chi phí', path: '/inventory/expenses', permissions: ['EXPENSE_VIEW'] },
-      { label: 'Loại chi phí', path: '/inventory/expense-categories', permissions: ['EXPENSE_VIEW'] },
+      { label: 'Loại chi phí', path: '/inventory/expense-categories', permissions: ['EXPENSE_CATEGORY_MANAGE'] },
     ],
   },
   {
@@ -117,7 +116,7 @@ export const sidebarItems = [
     permissions: ['REPORT_VIEW'],
     children: [
       // { label: 'Báo cáo kho', path: '/inventory/reports', permissions: ['REPORT_VIEW'] },
-      { label: 'Báo cáo Tổng hợp', path: '/inventory/owner-reports', permissions: ['REPORT_VIEW', 'OWNER_MANAGE'] },
+      { label: 'Báo cáo Tổng hợp', path: '/inventory/reports', permissions: ['REPORT_VIEW', 'OWNER_MANAGE'] },
     ],
   },
 ];

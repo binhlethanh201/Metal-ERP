@@ -5,7 +5,7 @@ import Button from '../../../../shared/components/Button';
 import Input from '../../../../shared/components/Input';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
 import PageBasedPermissionSelector from './PageBasedPermissionSelector';
-import { getAllCodesForPage, PERMISSION_TO_VIEW, PAGE_PERMISSION_GROUPS } from '../../config/pagePermissionMapping';
+import { getAllCodesForPage } from '../../config/pagePermissionMapping';
 import { apiGet } from '../../../../services/apiClient';
 import ENDPOINTS from '../../../../services/endpoints';
 
@@ -114,29 +114,10 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
     setIsCustomizing(true);
     setForm((prev) => {
       const current = prev.permissionCodes;
-      const isCurrentlyChecked = current.includes(code);
-      let next;
-      if (isCurrentlyChecked) {
-        next = current.filter((c) => c !== code);
-        // Nếu bỏ chọn 1 quyền thao tác con, kiểm tra xem có nên gỡ cả VIEW không
-        const viewPerm = PERMISSION_TO_VIEW[code];
-        if (viewPerm && next.includes(viewPerm)) {
-          const pageForView = PAGE_PERMISSION_GROUPS.find((p) => p.viewPermission === viewPerm);
-          if (pageForView) {
-            const hasOtherSub = pageForView.subPermissions.some(
-              (sub) => sub.code !== code && next.includes(sub.code)
-            );
-            if (!hasOtherSub) {
-              next = next.filter((c) => c !== viewPerm);
-            }
-          }
-        }
-      } else {
-        next = [...current, code];
-        const viewPerm = PERMISSION_TO_VIEW[code];
-        if (viewPerm && !next.includes(viewPerm)) next = [...next, viewPerm];
+      if (current.includes(code)) {
+        return { ...prev, permissionCodes: current.filter((c) => c !== code) };
       }
-      return { ...prev, permissionCodes: next };
+      return { ...prev, permissionCodes: [...current, code] };
     });
   };
 
@@ -238,8 +219,8 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
             <div className="w-full">
               <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">Trạng thái tài khoản</label>
               <select className={selectCss} value={form.isActive} onChange={(e) => setForm({ ...form, isActive: Number(e.target.value) })}>
-                <option value={1}>Đang hoạt động (ACTIVE)</option>
-                <option value={0}>Khóa tài khoản (INACTIVE)</option>
+                <option value={1}>Đang hoạt động</option>
+                <option value={0}>Khóa tài khoản</option>
               </select>
             </div>
           )}

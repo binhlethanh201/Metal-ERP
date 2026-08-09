@@ -6,7 +6,7 @@ import {
   updateRolePermissions,
 } from '../services/adminService';
 import PageBasedPermissionSelector from '../../owner/components/staff/PageBasedPermissionSelector';
-import { getAllCodesForPage, PERMISSION_TO_VIEW, PAGE_PERMISSION_GROUPS } from '../../owner/config/pagePermissionMapping';
+import { getAllCodesForPage, PAGE_PERMISSION_GROUPS } from '../../owner/config/pagePermissionMapping';
 
 const AdminRoleManagement = () => {
   const [matrix, setMatrix] = useState([]);
@@ -53,30 +53,9 @@ const AdminRoleManagement = () => {
   };
 
   const handleTogglePermission = (code) => {
-    setSelectedCodes((prev) => {
-      if (prev.includes(code)) {
-        const next = prev.filter((c) => c !== code);
-        // Neu bo chon quyen con cuoi cung, tu dong go ca VIEW
-        const viewPerm = PERMISSION_TO_VIEW[code];
-        if (viewPerm && next.includes(viewPerm)) {
-          const pageForView = PAGE_PERMISSION_GROUPS.find((p) => p.viewPermission === viewPerm);
-          if (pageForView) {
-            const hasOtherSub = pageForView.subPermissions.some(
-              (sub) => sub.code !== code && next.includes(sub.code)
-            );
-            if (!hasOtherSub) {
-              return next.filter((c) => c !== viewPerm);
-            }
-          }
-        }
-        return next;
-      }
-      const next = [...prev, code];
-      // Auto-include VIEW permission
-      const viewPerm = PERMISSION_TO_VIEW[code];
-      if (viewPerm && !next.includes(viewPerm)) return [...next, viewPerm];
-      return next;
-    });
+    setSelectedCodes((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+    );
   };
 
   const handleTogglePage = (page, viewOn) => {

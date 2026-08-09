@@ -3,8 +3,10 @@ import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import { Badge } from '../../../../shared/components/Badge';
 import { Textarea } from '../../../../shared/components/Textarea';
-import { CheckCircle2, Clock, XCircle, RefreshCw, Check, Ban, Receipt, FileText } from 'lucide-react';
-import { getExpenseDetail } from '../../services/expenseService';
+import { Input } from '../../../../shared/components/Input';
+import { CheckCircle2, Clock, XCircle, RefreshCw, Check, Ban, Receipt, FileText, Edit3, Save } from 'lucide-react';
+import { getExpenseDetail, updateExpenseVoucher } from '../../services/expenseService';
+import { useAuth } from '../../../../shared/hooks/useAuth';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', {
@@ -43,6 +45,7 @@ const renderStatusBadge = (val) => {
 };
 
 const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, handleCancel }) => {
+  const { user } = useAuth();
   const [detailVoucher, setDetailVoucher] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -51,16 +54,31 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
+  // Edit mode
+  const [isEditing, setIsEditing] = useState(false);
+  const [editReason, setEditReason] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editNote, setEditNote] = useState('');
+
+  const isPending = detailVoucher?.status === 'PENDING';
+  const isCreator = detailVoucher?.createdBy && user?.userId && detailVoucher.createdBy === user.userId;
+  const canEdit = isPending && isCreator;
+
   useEffect(() => {
     if (isOpen && selectedVoucher) {
       setLoading(true);
       setError('');
       setCancelMode(false);
       setCancelReason('');
+      setIsEditing(false);
 
       getExpenseDetail(selectedVoucher.voucherId)
         .then((res) => {
-          setDetailVoucher(res?.data || res);
+          const data = res?.data || res;
+          setDetailVoucher(data);
+          setEditReason(data.reason || '');
+          setEditAmount(data.amount != null ? String(data.amount) : '');
+          setEditNote(data.note || '');
         })
         .catch((err) => {
           setError(err?.data?.message || err?.message || 'Không tải được chi tiết phiếu chi.');
@@ -97,6 +115,32 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
       onClose();
     } catch (err) {
       alert(err?.data?.message || err?.message || 'Hủy phiếu chi thất bại.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const onSaveEdit = async () => {
+    if (!editReason.trim()) {
+      alert('Vui lòng nhập lý do chi.');
+      return;
+    }
+    const amount = Number(editAmount);
+    if (!amount || amount <= 0) {
+      alert('Vui lòng nhập số tiền hợp lệ.');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await updateExpenseVoucher(selectedVoucher.voucherId, {
+        reason: editReason.trim(),
+        amount,
+        note: editNote.trim(),
+      });
+      setDetailVoucher((prev) => ({ ...prev, reason: editReason.trim(), amount, note: editNote.trim() }));
+      setIsEditing(false);
+    } catch (err) {
+      alert(err?.data?.message || err?.message || 'Cập nhật phiếu chi thất bại.');
     } finally {
       setActionLoading(false);
     }
@@ -142,6 +186,16 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
             Đóng
           </Button>
           <div className="flex items-center gap-2">
+            {canEdit && !isEditing && (
+              <Button
+                variant="outline"
+                className="flex items-center gap-1"
+                onClick={() => setIsEditing(true)}
+                disabled={actionLoading}
+              >
+                <Edit3 size={16} /> Sửa phiếu
+              </Button>
+            )}
             {selectedVoucher?.canCancel && (
               <Button
                 variant="outline"
@@ -218,6 +272,19 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
             <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 text-sm font-bold text-slate-800 dark:border-[#333333] dark:text-[#d4d4d4]">
               <FileText size={16} className="text-slate-500 dark:text-[#999999]" /> Thông tin phiếu chi
             </div>
+            {isEditing ? (
+              <div className="space-y-3">
+                <Input label="Lý do chi" value={editReason} onChange={(e) => setEditReason(e.target.value)} />
+                <Input label="Số tiền" type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} />
+                <Textarea label="Ghi chú" rows={2} value={editNote} onChange={(e) => setEditNote(e.target.value)} />
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)} disabled={actionLoading}>Hủy</Button>
+                  <Button variant="primary" size="sm" onClick={onSaveEdit} loading={actionLoading} className="flex items-center gap-1">
+                    <Save size={13} /> Lưu thay đổi
+                  </Button>
+                </div>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               <div>
                 <span className="block text-xs font-medium text-slate-500 dark:text-[#999999]">Nhóm chi phí</span>
@@ -240,6 +307,7 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {detailVoucher.status === 'COMPLETED' && (

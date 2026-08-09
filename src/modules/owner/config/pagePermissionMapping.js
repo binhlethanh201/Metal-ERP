@@ -12,6 +12,7 @@ export const PAGE_PERMISSION_GROUPS = [
       { code: 'PRODUCT_CREATE', label: 'Thêm hàng hóa mới' },
       { code: 'PRODUCT_UPDATE', label: 'Chỉnh sửa thông tin hàng hóa' },
       { code: 'PRODUCT_DELETE', label: 'Xóa hàng hóa' },
+      { code: 'PRODUCT_CATEGORY_MANAGE', label: 'Quản lý nhóm hàng & thương hiệu' },
     ],
   },
   {
@@ -21,8 +22,7 @@ export const PAGE_PERMISSION_GROUPS = [
     viewPermission: 'STOCK_INWARD_CREATE',
     subPermissions: [
       { code: 'STOCK_INWARD_CREATE', label: 'Tạo phiếu nhập kho' },
-      { code: 'STOCK_INWARD_UPDATE', label: 'Cập nhật phiếu nhập kho' },
-      { code: 'STOCK_INWARD_DELETE', label: 'Xóa phiếu nhập kho' },
+      { code: 'STOCK_INWARD_UPDATE', label: 'Duyệt / Hủy phiếu nhập kho' },
     ],
   },
   {
@@ -32,9 +32,7 @@ export const PAGE_PERMISSION_GROUPS = [
     viewPermission: 'STOCK_OUTWARD_CREATE',
     subPermissions: [
       { code: 'STOCK_OUTWARD_CREATE', label: 'Tạo phiếu xuất kho' },
-      { code: 'STOCK_OUTWARD_UPDATE', label: 'Cập nhật phiếu xuất kho' },
-      { code: 'STOCK_OUTWARD_DELETE', label: 'Xóa phiếu xuất kho' },
-      { code: 'STOCK_OUTWARD_CONFIRM', label: 'Xác nhận phiếu xuất kho' },
+      { code: 'STOCK_OUTWARD_CONFIRM', label: 'Duyệt / Hủy phiếu xuất kho' },
     ],
   },
   {
@@ -44,6 +42,7 @@ export const PAGE_PERMISSION_GROUPS = [
     viewPermission: 'STOCK_CHECK_VIEW',
     subPermissions: [
       { code: 'STOCK_CHECK_CREATE', label: 'Tạo phiếu kiểm kê' },
+      { code: 'STOCK_CHECK_COUNT', label: 'Đếm sản phẩm kiểm kê' },
       { code: 'STOCK_CHECK_APPROVE', label: 'Duyệt kết quả kiểm kê' },
       { code: 'STOCK_CHECK_CANCEL', label: 'Hủy phiếu kiểm kê' },
     ],
@@ -76,8 +75,8 @@ export const PAGE_PERMISSION_GROUPS = [
       { code: 'SUPPLIER_CREATE', label: 'Thêm nhà cung cấp' },
       { code: 'SUPPLIER_UPDATE', label: 'Sửa thông tin nhà cung cấp' },
       { code: 'SUPPLIER_DELETE', label: 'Xóa nhà cung cấp' },
-      { code: 'SUPPLIER_PAYMENT_VIEW', label: 'Xem công nợ NCC' },
       { code: 'SUPPLIER_PAYMENT_CREATE', label: 'Tạo thanh toán cho NCC' },
+      { code: 'SUPPLIER_PAYMENT_DELETE', label: 'Xóa thanh toán NCC' },
     ],
   },
   {
@@ -87,8 +86,7 @@ export const PAGE_PERMISSION_GROUPS = [
     viewPermission: 'EXPENSE_VIEW',
     subPermissions: [
       { code: 'EXPENSE_CREATE', label: 'Tạo phiếu chi' },
-      { code: 'EXPENSE_CONFIRM', label: 'Xác nhận/Duyệt chi phí' },
-      { code: 'EXPENSE_CANCEL', label: 'Hủy phiếu chi' },
+      { code: 'EXPENSE_CONFIRM', label: 'Duyệt / Hủy phiếu chi' },
       { code: 'EXPENSE_CATEGORY_MANAGE', label: 'Quản lý danh mục chi phí' },
     ],
   },
@@ -105,6 +103,7 @@ export const PAGE_PERMISSION_GROUPS = [
       { code: 'SHIFT_VIEW', label: 'Xem lịch sử ca bán' },
       { code: 'SHIFT_CREATE', label: 'Mở ca làm việc' },
       { code: 'SHIFT_UPDATE', label: 'Chốt ca / Cập nhật ca' },
+      { code: 'SHIFT_DELETE', label: 'Xóa ca làm việc' },
       { code: 'SHIFT_FORCE_CLOSE', label: 'Chốt hộ ca làm việc' },
     ],
   },

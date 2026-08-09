@@ -529,30 +529,6 @@ const SupplierQuickAddPopup = ({ isOpen, onClose, onSave }) => {
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Nhóm NCC</label>
-                <div className="flex gap-1.5">
-                  <select
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                    value={form.group}
-                    onChange={(e) => handleChange('group', e.target.value)}
-                  >
-                    <option value="">-- Chọn nhóm --</option>
-                    {supplierGroups.map((g) => (
-                      <option key={g} value={g}>
-                        {g}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-primary hover:text-primary"
-                    onClick={() => setShowGroupPopup(true)}
-                  >
-                    <Icon name="add" size={16} />
-                  </button>
-                </div>
-              </div>
-              <div>
                 <label className="mb-1 block text-xs font-bold text-slate-500">Ghi chú</label>
                 <input
                   type="text"
@@ -601,84 +577,6 @@ const SupplierQuickAddPopup = ({ isOpen, onClose, onSave }) => {
           </div>
         </div>
       </div>
-
-      {/* Popup Thêm nhóm NCC */}
-      {showGroupPopup && (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowGroupPopup(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900">Thêm nhóm nhà cung cấp</h3>
-            <div className="mt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500">Mã nhóm NCC</label>
-                  <input
-                    type="text"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                    value={newGroup.code}
-                    onChange={(e) => setNewGroup({ ...newGroup, code: e.target.value })}
-                    placeholder="VD: NCC_VL"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500">
-                    Tên nhóm NCC <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                    value={newGroup.name}
-                    onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-                    placeholder="Nhập tên nhóm"
-                    autoFocus
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">
-                  Thuộc nhóm NCC
-                </label>
-                <select
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                  value={newGroup.parentGroup}
-                  onChange={(e) => setNewGroup({ ...newGroup, parentGroup: e.target.value })}
-                >
-                  <option value="">-- Không --</option>
-                  {supplierGroups.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Mô tả</label>
-                <textarea
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                  rows={2}
-                  value={newGroup.description}
-                  onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                  placeholder="Mô tả về nhóm NCC..."
-                />
-              </div>
-            </div>
-            <div className="mt-5 flex justify-end gap-2.5 border-t border-slate-100 pt-4">
-              <button
-                type="button"
-                className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                onClick={() => setShowGroupPopup(false)}
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-[#003566]"
-                onClick={handleAddGroup}
-              >
-                Thêm
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

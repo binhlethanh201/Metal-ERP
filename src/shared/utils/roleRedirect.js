@@ -26,12 +26,19 @@ export const getDefaultRouteByUser = (user) => {
     if (hasAnyPermission(user, ROUTE_PERMISSIONS.pos)) return '/pos';
   }
 
-  // Inventory module - dashboard luon la default cho moi inventory staff
+  // Inventory module - dieu huong theo quyen cu the
   if (hasAnyPermission(user, INVENTORY_PERMISSIONS)) {
+    if (hasAnyPermission(user, ['SUPPLIER_PAYMENT_CREATE', 'SUPPLIER_PAYMENT_VIEW', 'SUPPLIER_PAYMENT_DELETE'])) return '/inventory/supplier-debt';
+    if (hasAnyPermission(user, ROUTE_PERMISSIONS.inventoryImport)) return '/inventory/import';
+    if (hasAnyPermission(user, ROUTE_PERMISSIONS.inventoryExport)) return '/inventory/export';
+    if (hasAnyPermission(user, ROUTE_PERMISSIONS.suppliers)) return '/inventory/suppliers';
+    if (hasAnyPermission(user, ROUTE_PERMISSIONS.inventoryProducts)) return '/inventory/products';
+    if (hasAnyPermission(user, ROUTE_PERMISSIONS.inventoryCheck)) return '/inventory/inventory-check';
     return '/inventory/dashboard';
   }
 
-  return '/';
+  // Fallback: neu da dang nhap thi vao dashboard
+  return '/inventory/dashboard';
 };
 
 /** @deprecated Dung getDefaultRouteByUser thay the. Giu lai de tuong thich. */

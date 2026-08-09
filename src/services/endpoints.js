@@ -121,6 +121,7 @@ export const ENDPOINTS = {
 
     // ================= KIỂM KÊ KHO =================
     REJECT_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reject`,
+    GET_COUNTERS: '/api/InventoryCheck/counters',
     GET_NOTIFICATIONS: '/api/InventoryCheck/notifications',
     MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/read',
 
@@ -148,6 +149,7 @@ export const ENDPOINTS = {
     GET_LIST: '/api/expense',
     GET_DETAIL: (id) => `/api/expense/${id}`,
     CREATE: '/api/expense',
+    UPDATE: (id) => `/api/expense/${id}`,
     CONFIRM: (id) => `/api/expense/${id}/confirm`,
     CANCEL: (id) => `/api/expense/${id}/cancel`,
 

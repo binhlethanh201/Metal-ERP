@@ -157,8 +157,9 @@ export const apiClient = async (endpoint, options = {}) => {
         }
         throw new Error(errorBody401?.message || 'Unauthorized');
       }
-      // 403 → throw với message rõ
+      // 403 → throw với message rõ + dispatch global event cho toast
       if (response.status === 403) {
+        window.dispatchEvent(new CustomEvent('mep:forbidden', { detail: { message: 'Không có quyền thực hiện thao tác này' } }));
         const error403 = new Error('Không có quyền thực hiện thao tác này');
         error403.status = 403;
         throw error403;

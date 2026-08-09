@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import Icon from '../../../shared/components/Icon';
 import Button from '../../../shared/components/Button';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../shared/utils/permissions';
 import { useSupplierManager } from '../hooks/useSupplierManager';
 import SupplierTable from '../components/supplier/SupplierTable';
 import SupplierModal from '../components/supplier/SupplierModal';
@@ -15,7 +17,8 @@ const formatCurrency = (value) =>
   }).format(Number(value || 0));
 
 const SupplierManagement = () => {
-  const navigate = useNavigate(); // KHỞI TẠO ĐIỀU HƯỚNG
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const {
     suppliers,
@@ -44,6 +47,12 @@ const SupplierManagement = () => {
   const [modalLoading, setModalLoading] = useState(false);
   // eslint-disable-next-line
   const [deletingId, setDeletingId] = useState(null);
+
+  // Permissions
+  const canCreateSupplier = hasPermission(user, 'SUPPLIER_CREATE');
+  const canUpdateSupplier = hasPermission(user, 'SUPPLIER_UPDATE');
+  const canDeleteSupplier = hasPermission(user, 'SUPPLIER_DELETE');
+  const canViewPayment = hasPermission(user, 'SUPPLIER_PAYMENT_VIEW') || hasPermission(user, 'SUPPLIER_PAYMENT_CREATE') || hasPermission(user, 'SUPPLIER_PAYMENT_DELETE');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -121,16 +130,20 @@ const SupplierManagement = () => {
         <div className="flex gap-3">
           <Button
             variant="secondary"
+            disabled={!canViewPayment}
             onClick={() => navigate('/inventory/supplier-debt')}
             className="flex items-center gap-2"
+            title={!canViewPayment ? 'Bạn không có quyền xem công nợ' : ''}
           >
             <Icon name="account_balance_wallet" size={18} />
             Sổ Công Nợ
           </Button>
           <Button
             variant="primary"
+            disabled={!canCreateSupplier}
             onClick={() => openModal('create')}
             className="flex items-center gap-2"
+            title={!canCreateSupplier ? 'Bạn không có quyền thêm nhà cung cấp' : ''}
           >
             <Icon name="add" size={20} />
             Thêm nhà cung cấp
@@ -203,6 +216,8 @@ const SupplierManagement = () => {
             loading={loading}
             onDetail={(s) => openModal('edit', s)}
             onToggleStatus={onToggleStatus}
+            canUpdate={canUpdateSupplier}
+            canDelete={canDeleteSupplier}
           />
 
           {/* Pagination */}
@@ -259,6 +274,7 @@ const SupplierManagement = () => {
               <div className="flex w-full items-center justify-between">
                 <span>Theo dõi công nợ</span>
                 <button
+                  disabled={!canViewPayment}
                   onClick={() => navigate('/inventory/supplier-debt')}
                   className="group flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800"
                 >
@@ -308,6 +324,8 @@ const SupplierManagement = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveModal}
         onDelete={onDeleteConfirm}
+        canEdit={canUpdateSupplier}
+        canDelete={canDeleteSupplier}
       />
     </div>
   );

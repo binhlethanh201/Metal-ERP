@@ -15,7 +15,6 @@ const handleDownloadTemplate = () => {
       'Thương hiệu': 'Brand X',
       'Giá vốn': 100000,
       'Giá bán': 150000,
-      'Tồn kho': 10,
     },
   ]);
   const wb = XLSX.utils.book_new();
@@ -81,8 +80,6 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
       BrandName: row['Thương hiệu']?.toString() || '',
       CostPrice: parseFloat(row['Giá vốn']) || 0,
       SalePrice: parseFloat(row['Giá bán']) || 0,
-      AvailableStock: parseFloat(row['Tồn kho']) || 0,
-      ActualStock: parseFloat(row['Tồn kho']) || 0,
       IsActive: true,
     }));
   };

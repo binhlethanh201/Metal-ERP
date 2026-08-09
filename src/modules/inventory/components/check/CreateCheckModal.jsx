@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
-import { getProducts } from '../../services/inventoryService';
+import { getProductsLookup } from '../../services/inventoryService';
+import { getCounters } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
-import { getStaffs } from '../../../owner/services/staffService';
 
 // Import Shared Components
 import Modal from '../../../../shared/components/Modal';
@@ -24,6 +24,8 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
   const isOwner = hasRole(user?.roles, 'Owner');
   const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprove = hasPermission(user, 'STOCK_CHECK_APPROVE');
+  const canManageAssign = isOwner || canCreate || canApprove;
+  const hasCountPerm = hasPermission(user, 'STOCK_CHECK_COUNT');
   const currentUserId = user?.userId || user?.id;
 
   const [products, setProducts] = useState([]);
@@ -59,7 +61,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
     if (!isOpen) return;
 
     setLoadingProducts(true);
-    getProducts({ pageSize: 200, status: 'active' })
+    getProductsLookup({ pageSize: 200 })
       .then((res) => {
         if (res?.success && res.data) {
           setProducts(res.data.items || res.data || []);
@@ -79,41 +81,31 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
     if (!isOpen || (!isOwner && !canCreate && !canApprove)) return;
 
     setLoadingStaff(true);
-    getStaffs({ pageSize: 100 })
+    const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
+    getCounters()
       .then((res) => {
-        if (res?.success && res.data) {
-          const allStaff = res.data.items || [];
-          // Chỉ hiển thị staff có quyền fill phiếu (STOCK_CHECK_CREATE) hoặc Owner
-          const qualified = allStaff.filter((staff) => {
-            const staffRoles = Array.isArray(staff.roles)
-              ? staff.roles
-              : staff.role
-                ? [staff.role]
-                : [];
-            const hasInventoryRole =
-              hasRole(staffRoles, 'InventoryStaff') || hasRole(staffRoles, 'Owner');
-            const hasPermission =
-              staff.permissionCodes?.includes('STOCK_CHECK_CREATE') ||
-              staff.permissionCodes?.includes('STOCK_CHECK_APPROVE');
-            return hasInventoryRole || hasPermission;
-          });
-          setStaffList(qualified);
-        } else {
-          setStaffList([]);
+        const counters = res?.data || res || [];
+        const qualified = Array.isArray(counters) ? counters : [];
+        if ((hasCountPerm || isOwner) && !qualified.find(s => s.userId === currentUserId)) {
+          qualified.unshift(me);
         }
+        setStaffList(qualified);
       })
-      .catch((err) => {
-        console.error('Lỗi lấy danh sách nhân viên:', err);
-        setStaffList([]);
+      .catch(() => {
+        setStaffList(hasCountPerm || isOwner ? [me] : []);
       })
       .finally(() => setLoadingStaff(false));
   }, [isOpen, isOwner, canCreate, canApprove]);
 
-  // Staff luôn tự gán cho chính mình
+  // Chi tu gan neu current user co quyen STOCK_CHECK_COUNT
   useEffect(() => {
     if (!isOpen || isOwner) return;
-    setAssigneeUserId(currentUserId);
-  }, [isOpen, isOwner, currentUserId]);
+    if (hasCountPerm) {
+      setAssigneeUserId(currentUserId);
+    } else {
+      setAssigneeUserId('');
+    }
+  }, [isOpen, isOwner, currentUserId, hasCountPerm]);
 
   const filteredProducts = products.filter(
     (p) =>
@@ -147,6 +139,10 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       setError('Vui lòng chọn ít nhất 1 sản phẩm để kiểm kê!');
       return;
     }
+    if (!assigneeUserId) {
+      setError('Vui lòng chọn Người phụ trách đếm!');
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
@@ -155,7 +151,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       await onSave(
         selectedIds,
         notes,
-        isOwner || canApprove ? assigneeUserId || null : currentUserId
+        canManageAssign ? assigneeUserId || null : currentUserId
       );
     } catch {
       // Error được xử lý bởi parent
@@ -258,8 +254,8 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
           />
         </div>
 
-        {/* Người phụ trách - Chỉ Owner */}
-        {isOwner && (
+        {/* Người phụ trách */}
+        {canManageAssign ? (
           <div className="col-span-1">
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Người phụ trách
@@ -270,8 +266,10 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
               onChange={(e) => setAssigneeUserId(e.target.value)}
               disabled={loadingStaff}
             >
-              <option value="">-- Để trống (chưa gán) --</option>
-              <option value={currentUserId}>Tự giao cho tôi</option>
+              <option value="">-- Chọn người phụ trách --</option>
+              {(hasCountPerm || isOwner) && (
+                <option value={currentUserId}>Tự giao cho tôi</option>
+              )}
               {staffList
                 .filter((staff) => staff.userId !== currentUserId)
                 .map((staff) => (
@@ -286,10 +284,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
               </span>
             )}
           </div>
-        )}
-
-        {/* Staff: hiển thị thông tin assignee */}
-        {!isOwner && (
+        ) : (
           <div className="col-span-1">
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
               Người phụ trách

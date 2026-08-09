@@ -64,8 +64,8 @@ export const InventoryHistoryCard = ({
       : hasPermission(user, 'STOCK_INWARD_UPDATE');
   const permCanCancel =
     type === 'OUTWARD'
-      ? hasPermission(user, 'STOCK_OUTWARD_DELETE')
-      : hasPermission(user, 'STOCK_INWARD_DELETE');
+      ? hasPermission(user, 'STOCK_OUTWARD_DELETE') || hasPermission(user, 'STOCK_OUTWARD_CONFIRM')
+      : hasPermission(user, 'STOCK_INWARD_DELETE') || hasPermission(user, 'STOCK_INWARD_UPDATE');
   // Huy phieu:
   // - PENDING: nguoi tao phieu hoac co quyen xoa / Owner
   // - COMPLETED: chi Owner hoac nguoi co quyen xoa

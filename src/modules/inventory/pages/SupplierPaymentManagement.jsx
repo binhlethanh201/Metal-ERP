@@ -64,18 +64,6 @@ const SupplierPaymentManagement = () => {
     }
   };
 
-  const onUpdateNoteClick = async (payment) => {
-    const newNote = window.prompt('Nhập ghi chú mới:', payment.note || '');
-    if (newNote !== null && newNote !== payment.note) {
-      try {
-        await handleUpdateNote(payment.paymentId, newNote);
-        alert('Đã cập nhật ghi chú');
-      } catch (err) {
-        alert(err.message || 'Lỗi khi cập nhật ghi chú');
-      }
-    }
-  };
-
   return (
     <div className="animate-fade-in mt-2 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -132,7 +120,6 @@ const SupplierPaymentManagement = () => {
                 <th className="px-4 py-3 font-bold">Ngày thanh toán</th>
                 <th className="px-4 py-3 font-bold">Nhà cung cấp</th>
                 <th className="px-4 py-3 font-bold">Hình thức</th>
-                <th className="px-4 py-3 font-bold">Tham chiếu</th>
                 <th className="px-4 py-3 text-right font-bold text-emerald-600">Số tiền (VNĐ)</th>
                 <th className="px-4 py-3 text-center font-bold">Trạng thái</th>
                 <th className="px-4 py-3 text-right font-bold">Thao tác</th>
@@ -167,7 +154,6 @@ const SupplierPaymentManagement = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4 font-medium">{getMethodLabel(p.paymentMethod)}</td>
-                    <td className="px-4 py-4 font-mono text-xs">{p.referenceCode || '---'}</td>
                     <td className="px-4 py-4 text-right text-base font-bold text-emerald-600">
                       {formatCurrency(p.amount)}
                     </td>
@@ -185,13 +171,6 @@ const SupplierPaymentManagement = () => {
                     <td className="px-4 py-4 text-right">
                       {p.status !== 'CANCELLED' && (
                         <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => onUpdateNoteClick(p)}
-                            className="rounded p-1.5 text-blue-600 hover:bg-blue-100"
-                            title="Sửa ghi chú"
-                          >
-                            <Icon name="edit" size={18} />
-                          </button>
                           <button
                             onClick={() => onCancelClick(p)}
                             className="rounded p-1.5 text-red-600 hover:bg-red-100"

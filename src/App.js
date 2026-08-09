@@ -164,6 +164,11 @@ function App() {
                 <Route path="audit-logs" element={<OwnerAuditLog />} />
               </Route>
 
+              {/* --- ROUTE REPORT --- */}
+              <Route element={<PrivateRoute allowedPermissions={['REPORT_VIEW']} />}>
+                <Route path="reports" element={<OwnerReports />} />
+              </Route>
+
               <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryTransactions} />}>
                 <Route path="transactions" element={<InventoryTransactionManagement />} />
               </Route>

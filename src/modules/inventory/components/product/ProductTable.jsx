@@ -24,7 +24,6 @@ const COLUMNS = [
   { label: 'Thương hiệu', width: 'w-[130px]', sortKey: 'brand', align: '' },
   { label: 'Giá bán', width: 'w-[110px]', sortKey: 'salePrice', align: 'right' },
   { label: 'Giá vốn', width: 'w-[110px]', sortKey: 'costPrice', align: 'right' },
-  { label: 'Tồn kho', width: 'w-[110px]', sortKey: 'stock', align: 'right' },
   { label: 'Vị trí kho', width: 'w-[110px]', sortKey: 'location', align: '' },
   { label: 'Hoạt động', width: 'w-[90px]', sortKey: '', align: '' },
   { label: 'Thời gian tạo', width: 'w-[160px]', sortKey: 'createdAt', align: '' },
@@ -144,7 +143,7 @@ export const ProductTable = ({
       <tbody className="divide-y divide-gray-200 text-sm dark:divide-[#333333]">
         {sortedRows.length === 0 && (
           <tr>
-            <td colSpan={11} className="px-6 py-8 text-center text-slate-500 dark:text-[#999999]">
+            <td colSpan={10} className="px-6 py-8 text-center text-slate-500 dark:text-[#999999]">
               Không có dữ liệu
             </td>
           </tr>
@@ -206,33 +205,6 @@ export const ProductTable = ({
                 <td className="whitespace-nowrap px-4 py-3 text-right text-slate-500 dark:text-[#999999]">
                   {fmtMoney(row.costPrice)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                  <div className="inline-flex items-center gap-1.5">
-                    {(row.actualStock ?? row.stock ?? 0).toLocaleString('vi-VN')}
-                    {row.minimumStock > 0 &&
-                      (row.actualStock ?? row.stock ?? 0) <= row.minimumStock && (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-950/30 dark:text-red-400"
-                          title={`Tồn kho thấp hơn ngưỡng tối thiểu (${row.minimumStock})`}
-                        >
-                          <svg
-                            className="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                            />
-                          </svg>
-                          Thấp
-                        </span>
-                      )}
-                  </div>
-                </td>
                 <td className="truncate whitespace-nowrap px-4 py-3 text-slate-500 dark:text-[#999999]">
                   {row.shelfLocation || row.location || '---'}
                 </td>
@@ -250,7 +222,7 @@ export const ProductTable = ({
               </tr>
               {isExpanded && (
                 <tr>
-                  <td colSpan={11} className="border-b border-blue-200 p-0 dark:border-blue-800">
+                  <td colSpan={10} className="border-b border-blue-200 p-0 dark:border-blue-800">
                     <ProductDetailPanel
                       row={row}
                       onEdit={(r, tab) => onEdit?.(r, tab)}

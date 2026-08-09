@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
 import { Card } from '../../../shared/components/Card';
 import Icon from '../../../shared/components/Icon';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasPermission } from '../../../shared/utils/permissions';
 import { Button } from '../../../shared/components/Button';
 import { useSupplierDebt } from '../hooks/useSupplierDebt';
 import SupplierDebtDetailModal from '../components/supplier/SupplierDebtDetailModal';
@@ -23,7 +25,11 @@ const STATUS_OPTIONS = [
 ];
 
 const SupplierDebtManagement = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const canViewSupplier = hasPermission(user, 'SUPPLIER_VIEW');
+  const canViewPayment = hasPermission(user, 'SUPPLIER_PAYMENT_VIEW');
+  const canCreatePayment = hasPermission(user, 'SUPPLIER_PAYMENT_CREATE');
 
   const {
     debts,
@@ -98,7 +104,9 @@ const SupplierDebtManagement = () => {
             onClick={() => navigate('/inventory/suppliers')}
             variant="secondary"
             size="sm"
+            disabled={!canViewSupplier}
             className="flex items-center gap-1.5"
+            title={!canViewSupplier ? 'Bạn không có quyền quản lý nhà cung cấp' : ''}
           >
             <Icon name="chevron_left" size={16} /> Quản lý NCC
           </Button>
@@ -106,20 +114,16 @@ const SupplierDebtManagement = () => {
             onClick={() => navigate('/inventory/supplier-payments')}
             variant="outline"
             size="sm"
+            disabled={!canViewPayment && !canCreatePayment}
             className="flex items-center gap-1.5"
+            title={!canViewPayment && !canCreatePayment ? 'Bạn không có quyền xem lịch sử thanh toán' : ''}
           >
             <Icon name="history" size={16} /> Lịch sử Thanh toán
           </Button>
           <Button
-            onClick={handleExport}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1.5"
-          >
-            <Icon name="download" size={16} /> Xuất Excel
-          </Button>
-          <Button
             onClick={() => setPaymentModalOpen(true)}
+            disabled={!canCreatePayment}
+            title={!canCreatePayment ? 'Bạn không có quyền tạo thanh toán' : ''}
             className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white"
           >
             <Icon name="payments" size={16} /> Lập Phiếu Chi

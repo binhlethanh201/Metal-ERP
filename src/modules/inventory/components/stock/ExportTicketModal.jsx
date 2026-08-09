@@ -75,6 +75,8 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
 
   const [products, setProducts] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const lastSubmitTime = useRef(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -463,6 +465,10 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (event, isDraft = false) => {
     if (event?.preventDefault) event.preventDefault();
+    // Chong double submit: check ref + timestamp (trong 2s)
+    const now = Date.now();
+    if (submittingRef.current || (now - lastSubmitTime.current < 2000)) return;
+    lastSubmitTime.current = now;
 
     const errors = validateForm();
     if (errors.length > 0) {
@@ -473,6 +479,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     const reasonText = resolvedReason.trim();
 
     setIsSubmitting(true);
+    submittingRef.current = true;
     setStatusMessage('');
 
     try {
@@ -530,6 +537,7 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       setStatusMessage(`Lỗi: ${msg}`);
     } finally {
       setIsSubmitting(false);
+      submittingRef.current = false;
     }
   };
 

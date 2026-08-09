@@ -46,6 +46,8 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     if (isCustomerReturn && !note.trim()) setNote('Khách hàng trả');
   }, [inwardType]); // eslint-disable-line react-hooks/exhaustive-deps
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const lastSubmitTime = useRef(0);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [status, setStatus] = useState({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
 
@@ -185,6 +187,9 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
   );
 
   const handleFinish = async (isDraft = false) => {
+    const now = Date.now();
+    if (submittingRef.current || (now - lastSubmitTime.current < 2000)) return;
+    lastSubmitTime.current = now;
     if (!items.length) {
       setStatus({ type: 'error', message: 'Vui lòng chọn ít nhất 1 sản phẩm trước khi hoàn tất' });
       return;
@@ -227,6 +232,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     };
 
     setIsSubmitting(true);
+    submittingRef.current = true;
     setStatus({
       type: 'info',
       message: isDraft ? 'Đang tạo phiếu nháp...' : 'Đang tạo và duyệt phiếu kho...',
@@ -264,6 +270,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       setStatus({ type: 'error', message: msg });
     } finally {
       setIsSubmitting(false);
+      submittingRef.current = false;
     }
   };
 

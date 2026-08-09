@@ -156,10 +156,9 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   const isCreator = currentUserId === detailData?.createdByUserId;
   const isAssignee = currentUserId === detailData?.assigneeUserId;
 
-  // Cho phép edit/fill nếu là Owner/Admin, hoặc là người được gán, hoặc là người tạo (khi chưa gán cho ai khác)
-  const isCreatorNotAssignedToOther = isCreator && (!detailData?.assigneeUserId || isAssignee);
-  const canFill = isDraft && (isOwnerOrAdmin || isAssignee || isCreatorNotAssignedToOther);
-  const canModify = isDraft && (isOwnerOrAdmin || isAssignee || isCreatorNotAssignedToOther);
+  // Cho phép edit/fill nếu là Owner/Admin, hoặc là người được gán, hoặc là người tạo
+  const canFill = isDraft && (isOwnerOrAdmin || isAssignee || isCreator);
+  const canModify = isDraft && (isOwnerOrAdmin || isAssignee || isCreator);
 
   const canApproveReject = isWaiting && (isOwnerOrAdmin || canApprovePermission);
   const canCancel = canCancelPermission && (isDraft || isWaiting);
@@ -376,8 +375,26 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
                     : 'border-slate-300 text-[#004785] dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                 }`}
                 value={currentActualRaw}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                onKeyDown={(e) => {
+                  if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = (e.clipboardData || window.clipboardData).getData('text');
+                  const digits = pasted.replace(/[^0-9]/g, '');
+                  const val = currentActualRaw ? currentActualRaw + digits : digits;
+                  setActualValues((prev) => ({
+                    ...prev,
+                    [item.detailId]: val.slice(0, 9),
+                  }));
+                }}
                 onChange={(e) => {
-                  let val = e.target.value;
+                  let val = e.target.value.replace(/[^0-9]/g, '');
                   if (val.length > 9) val = val.slice(0, 9);
                   setActualValues((prev) => ({
                     ...prev,
