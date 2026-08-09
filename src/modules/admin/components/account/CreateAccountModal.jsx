@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import { getAssignableRoles } from '../../../../shared/utils/roles';
 
 const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
   const [formData, setFormData] = useState({
@@ -104,9 +105,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     if (!validateForm()) return;
 
     // Set username = email
-    let mappedRoleName = formData.roleName;
-    if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
-    if (mappedRoleName === 'Inventory Staff') mappedRoleName = 'InventoryStaff';
+    const mappedRoleName = formData.roleName;
 
     const normalizedBranchId = formData.branchId && formData.branchId !== 'null' ? formData.branchId : undefined;
     const normalizedBranchName = formData.branchName?.trim() || undefined;
@@ -124,23 +123,8 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     onSave(dataToSave);
   };
 
-  // Bỏ chặn Staff, chỉ chặn Admin và CommunityUser; gộp trùng lặp
-  const assignableRoles = (() => {
-    const seen = new Set();
-    const result = [];
-    roles.forEach((r) => {
-      const name = (r.roleName || '').toLowerCase();
-      if (name === 'admin' || name === 'communityuser' || name === 'staff') return;
-      let key = null;
-      if (name === 'salesstaff' || name === 'sales staff') key = 'SalesStaff';
-      if (name === 'inventorystaff' || name === 'inventory staff') key = 'InventoryStaff';
-      if (!key) key = r.roleName;
-      if (seen.has(key)) return;
-      seen.add(key);
-      result.push({ ...r, roleName: key });
-    });
-    return result;
-  })();
+  // Bỏ chặn Staff, chỉ chặn Admin và CommunityUser
+  const assignableRoles = getAssignableRoles(roles);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -280,7 +264,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
                     className="h-4 w-4 text-[#004785] focus:ring-[#004785]"
                   />
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">{role.roleName}</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">{role.label}</div>
                   </div>
                 </label>
               ))}

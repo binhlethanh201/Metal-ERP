@@ -1,15 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import {
+  getAssignableRoles,
+  canonicalizeRoleName,
+  getRoleName,
+  getRoleId,
+  normalizeRoleName,
+} from '../../../../shared/utils/roles';
 
 const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
   const [roleId, setRoleId] = useState('');
 
+  const assignableRoles = getAssignableRoles(roles);
+
   useEffect(() => {
     if (isOpen && user) {
-      const current = (user.roles || [])[0]?.roleId || '';
-      setRoleId(current);
+      const currentRole = (user.roles || [])[0];
+      const roleName = getRoleName(currentRole);
+      const canonical = canonicalizeRoleName(roleName);
+      const matched = canonical
+        ? assignableRoles.find((r) => r.key === canonical)
+        : assignableRoles.find((r) => normalizeRoleName(r.roleName) === normalizeRoleName(roleName));
+      setRoleId(matched?.roleId || getRoleId(currentRole) || '');
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, assignableRoles]);
 
   if (!isOpen || !user) return null;
 
@@ -20,28 +34,15 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
       await onSave(user.userId, roleId);
     } catch {
       // API failed -> revert to original role
-      const current = (user.roles || [])[0]?.roleId || '';
-      setRoleId(current);
+      const currentRole = (user.roles || [])[0];
+      const roleName = getRoleName(currentRole);
+      const canonical = canonicalizeRoleName(roleName);
+      const matched = canonical
+        ? assignableRoles.find((r) => r.key === canonical)
+        : assignableRoles.find((r) => normalizeRoleName(r.roleName) === normalizeRoleName(roleName));
+      setRoleId(matched?.roleId || getRoleId(currentRole) || '');
     }
   };
-
-  const assignableRoles = (() => {
-    // Deduplicate: gop "Sales Staff" + "SalesStaff" thanh 1, "Inventory Staff" + "InventoryStaff" thanh 1
-    const seen = new Set();
-    const result = [];
-    roles.forEach((r) => {
-      const name = (r.roleName || '').toLowerCase();
-      if (name === 'admin' || name === 'communityuser' || name === 'staff') return;
-      let key = null;
-      if (name === 'salesstaff' || name === 'sales staff') key = 'SalesStaff';
-      if (name === 'inventorystaff' || name === 'inventory staff') key = 'InventoryStaff';
-      if (!key) key = r.roleName;
-      if (seen.has(key)) return;
-      seen.add(key);
-      result.push({ ...r, roleName: key });
-    });
-    return result;
-  })();
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
@@ -74,9 +75,9 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
                   className="h-4 w-4 accent-[#004785]"
                 />
                 <div>
-                  <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{role.roleName}</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{role.label}</div>
                   <div className="text-[10px] leading-tight text-slate-500 dark:text-[#999999]">
-                    {role.description || `Quyền hạn của ${role.roleName}`}
+                    {role.description || `Quyền hạn của ${role.label}`}
                   </div>
                 </div>
               </label>

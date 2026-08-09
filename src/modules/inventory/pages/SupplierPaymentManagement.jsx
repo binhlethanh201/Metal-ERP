@@ -40,7 +40,6 @@ const SupplierPaymentManagement = () => {
     setPageSize,
     paginationMeta,
     fetchActiveSuppliers,
-    handleUpdateNote,
     handleCancel,
     // refetch,
   } = useSupplierPayment();

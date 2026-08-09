@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ErrorToast = ({ message, redirectTo = '/', duration = 2500 }) => {
+const ErrorToast = ({ message, duration = 2500 }) => {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(false);
-      navigate(redirectTo, { replace: true });
+      // Quay về trang trước đó thay vì nhảy về landing, để user không tưởng bị đăng xuất.
+      // Nếu truy cập trực tiếp vào trang lỗi (không có lịch sử) thì mới về "/".
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate('/', { replace: true });
+      }
     }, duration);
     return () => clearTimeout(timer);
-  }, [navigate, redirectTo, duration]);
+  }, [navigate, duration]);
 
   if (!visible) return null;
 

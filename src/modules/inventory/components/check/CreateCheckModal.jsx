@@ -95,7 +95,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
         setStaffList(hasCountPerm || isOwner ? [me] : []);
       })
       .finally(() => setLoadingStaff(false));
-  }, [isOpen, isOwner, canCreate, canApprove]);
+  }, [isOpen, isOwner, canCreate, canApprove, currentUserId, hasCountPerm, user?.fullName]);
 
   // Chi tu gan neu current user co quyen STOCK_CHECK_COUNT
   useEffect(() => {

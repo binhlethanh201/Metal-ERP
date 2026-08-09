@@ -237,9 +237,9 @@ function App() {
           </Route>
 
           {/* ROUTE ERROR - redirect kèm toast */}
-          <Route path="/403" element={<ErrorToast message="Bạn không có quyền truy cập trang này!" redirectTo="/" />} />
-          <Route path="/500" element={<ErrorToast message="Lỗi máy chủ! Vui lòng thử lại sau." redirectTo="/" />} />
-          <Route path="*" element={<ErrorToast message="Không tìm thấy trang yêu cầu!" redirectTo="/" />} />
+          <Route path="/403" element={<ErrorToast message="Bạn không có quyền truy cập trang này!" />} />
+          <Route path="/500" element={<ErrorToast message="Lỗi máy chủ! Vui lòng thử lại sau." />} />
+          <Route path="*" element={<ErrorToast message="Không tìm thấy trang yêu cầu!" />} />
         </Routes>
         </Suspense>
       </ThemeProvider>

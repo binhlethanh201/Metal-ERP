@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import CreateAccountModal from '../components/account/CreateAccountModal';
 import { getUserList, createOwner, createStaff, getRoleList, getAdminBranches } from '../services/adminService';
+import { getAssignableRoles, canonicalizeRoleName, getRoleLabel, getRoleName } from '../../../shared/utils/roles';
 
 const AdminUserManagement = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const AdminUserManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [roles, setRoles] = useState([]);
   const [branches, setBranches] = useState([]);
+
+  const assignableRoles = getAssignableRoles(roles);
 
   // Branch dropdown state
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
@@ -106,11 +109,7 @@ const AdminUserManagement = () => {
 
     const matchesRole =
       !roleFilter ||
-      (u.roles || []).some((r) => {
-        const name = (r.roleName || '').replace(/\s+/g, '').toLowerCase();
-        const filter = roleFilter.replace(/\s+/g, '').toLowerCase();
-        return name === filter;
-      });
+      (u.roles || []).some((r) => canonicalizeRoleName(getRoleName(r)) === canonicalizeRoleName(roleFilter));
 
     const matchesBranch =
       !branchFilter ||
@@ -197,24 +196,9 @@ const AdminUserManagement = () => {
               className="rounded-lg border border-slate-200 bg-transparent px-3 py-1.5 text-xs font-semibold text-slate-600 outline-none transition-colors focus:border-[#004785] dark:border-[#404040] dark:text-[#b3b3b3] dark:focus:border-blue-500 [&>option]:bg-white dark:[&>option]:bg-[#0f0f0f]"
             >
               <option value="">Tất cả vai trò</option>
-              {(() => {
-                const seen = new Set();
-                const deduped = [];
-                roles.forEach((r) => {
-                  const name = (r.roleName || '').toLowerCase();
-                  if (name === 'admin' || name === 'communityuser' || name === 'staff') return;
-                  let key = null;
-                  if (name === 'salesstaff' || name === 'sales staff') key = 'SalesStaff';
-                  if (name === 'inventorystaff' || name === 'inventory staff') key = 'InventoryStaff';
-                  if (!key) key = r.roleName;
-                  if (seen.has(key)) return;
-                  seen.add(key);
-                  deduped.push({ ...r, roleName: key });
-                });
-                return deduped.map((r) => (
-                  <option key={r.roleId} value={r.roleName}>{r.roleName}</option>
-                ));
-              })()}
+              {assignableRoles.map((r) => (
+                <option key={r.roleId} value={r.roleName}>{r.label}</option>
+              ))}
             </select>
 
             <div className="relative" ref={branchDropdownRef}>
@@ -339,7 +323,7 @@ const AdminUserManagement = () => {
                               key={r.roleId}
                               className="rounded bg-[#004785] px-2 py-0.5 text-[10px] font-bold text-white dark:bg-blue-600"
                             >
-                              {r.roleName}
+                              {getRoleLabel(getRoleName(r))}
                             </span>
                           ))}
                         </div>
