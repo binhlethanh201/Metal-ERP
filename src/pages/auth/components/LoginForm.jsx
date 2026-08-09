@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
@@ -58,9 +58,9 @@ const LoginForm = ({ onSubmit, isLoading, error, clearError }) => {
           >
             Mật khẩu
           </label>
-          <Link to="/forgot-password" className="text-xs font-bold text-primary hover:underline">
+          {/* <Link to="/forgot-password" className="text-xs font-bold text-primary hover:underline">
             Quên mật khẩu?
-          </Link>
+          </Link> */}
         </div>
 
         <div className="group relative">

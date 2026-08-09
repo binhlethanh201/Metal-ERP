@@ -366,7 +366,6 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
           return (
             <div className="text-center">
               <input
-                type="number"
                 min="0"
                 placeholder="Nhập..."
                 className={`w-24 rounded border px-2 py-1.5 text-center font-bold shadow-inner focus:outline-none focus:ring-2 focus:ring-[#004785] ${

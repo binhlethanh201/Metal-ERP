@@ -18,6 +18,7 @@ import {
 import ConfirmActionModal from '../components/ConfirmActionModal';
 import AssignRoleModal from '../components/account/AssignRoleModal';
 import AssignBranchModal from '../components/account/AssignBranchModal';
+import { getRoleLabel, getRoleName } from '../../../shared/utils/roles';
 
 const AdminUserDetail = () => {
   const { id } = useParams();
@@ -248,7 +249,7 @@ const AdminUserDetail = () => {
                   key={r.roleId}
                   className="rounded-full bg-[#004785] px-2.5 py-1 text-[10px] font-bold text-white dark:bg-blue-600"
                 >
-                  {r.roleName}
+                  {getRoleLabel(getRoleName(r))}
                 </span>
               ))}
               {user.defaultBranchName && (
