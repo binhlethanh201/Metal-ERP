@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import Modal from '../../../../shared/components/Modal';
 import Button from '../../../../shared/components/Button';
 import Input from '../../../../shared/components/Input';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
 import PageBasedPermissionSelector from './PageBasedPermissionSelector';
-import { getAllCodesForPage } from '../../config/pagePermissionMapping';
+import { getAllCodesForPage, PERMISSION_TO_VIEW, PAGE_PERMISSION_GROUPS } from '../../config/pagePermissionMapping';
 import { apiGet } from '../../../../services/apiClient';
 import ENDPOINTS from '../../../../services/endpoints';
 
@@ -44,6 +44,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
   const [form, setForm] = useState(initialFormState);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [rolePermissions, setRolePermissions] = useState(FALLBACK_ROLE_PERMISSIONS);
+  const lastStaffIdRef = useRef(null);
 
   // Fetch role permissions tu API (dong bo voi Admin cau hinh)
   useEffect(() => {
@@ -71,8 +72,15 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (isOpen) {
-      if (staff) {
+    if (!isOpen) {
+      lastStaffIdRef.current = null;
+      return;
+    }
+    if (staff) {
+      const staffId = staff.userId;
+      // Chi reset form khi mo modal cho 1 nhan vien khac
+      if (staffId !== lastStaffIdRef.current) {
+        lastStaffIdRef.current = staffId;
         setForm({
           ...staff,
           password: '',
@@ -85,10 +93,11 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
           permissionCodes: staff.permissionCodes || [],
         });
         setIsCustomizing(staff.hasCustomPermissions || (staff.permissionCodes || []).length > 0);
-      } else {
-        setForm(initialFormState);
-        setIsCustomizing(false);
       }
+    } else {
+      lastStaffIdRef.current = null;
+      setForm(initialFormState);
+      setIsCustomizing(false);
     }
   }, [isOpen, staff]);
 
@@ -115,9 +124,32 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
     setForm((prev) => {
       const current = prev.permissionCodes;
       if (current.includes(code)) {
-        return { ...prev, permissionCodes: current.filter((c) => c !== code) };
+        // Bỏ chọn quyền con
+        const next = current.filter((c) => c !== code);
+        // Nếu không còn quyền con nào khác trong cùng trang, bỏ luôn VIEW
+        const viewPermission = PERMISSION_TO_VIEW[code];
+        if (viewPermission && next.includes(viewPermission)) {
+          const pageForCode = PAGE_PERMISSION_GROUPS.find((page) =>
+            page.subPermissions.some((sub) => sub.code === code)
+          );
+          if (pageForCode) {
+            const stillHasSub = pageForCode.subPermissions.some(
+              (sub) => sub.code !== code && next.includes(sub.code)
+            );
+            if (!stillHasSub) {
+              return { ...prev, permissionCodes: next.filter((c) => c !== viewPermission) };
+            }
+          }
+        }
+        return { ...prev, permissionCodes: next };
       }
-      return { ...prev, permissionCodes: [...current, code] };
+      // Chọn quyền con -> tự động thêm VIEW nếu chưa có
+      const viewPermission = PERMISSION_TO_VIEW[code];
+      const next = [...current, code];
+      if (viewPermission && !next.includes(viewPermission)) {
+        next.push(viewPermission);
+      }
+      return { ...prev, permissionCodes: next };
     });
   };
 

@@ -151,6 +151,7 @@ const AdminUserDetail = () => {
       fetchData(1, activityPageSize);
     } catch (err) {
       alert(err.message || 'Cập nhật quyền thất bại');
+      throw err;
     }
   };
 

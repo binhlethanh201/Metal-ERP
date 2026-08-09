@@ -124,12 +124,23 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     onSave(dataToSave);
   };
 
-  // Bỏ chặn Staff, chỉ chặn Admin và CommunityUser
-  const assignableRoles = roles.filter(
-    (r) => 
-      r.roleName.toLowerCase() !== 'admin' && 
-      r.roleName.toLowerCase() !== 'communityuser'
-  );
+  // Bỏ chặn Staff, chỉ chặn Admin và CommunityUser; gộp trùng lặp
+  const assignableRoles = (() => {
+    const seen = new Set();
+    const result = [];
+    roles.forEach((r) => {
+      const name = (r.roleName || '').toLowerCase();
+      if (name === 'admin' || name === 'communityuser' || name === 'staff') return;
+      let key = null;
+      if (name === 'salesstaff' || name === 'sales staff') key = 'SalesStaff';
+      if (name === 'inventorystaff' || name === 'inventory staff') key = 'InventoryStaff';
+      if (!key) key = r.roleName;
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push({ ...r, roleName: key });
+    });
+    return result;
+  })();
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">

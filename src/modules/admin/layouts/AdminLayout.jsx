@@ -17,7 +17,7 @@ const MENU_ITEMS = [
   { label: 'Vai trò & Phân quyền', path: '/admin/roles', icon: 'shield' },
   { label: 'Quản lý Cửa hàng', path: '/admin/branches', icon: 'store' },
   { label: 'Thông báo hệ thống', path: '/admin/notifications', icon: 'campaign' },
-  { label: 'Nhật ký máy chủ (Log)', path: '/admin/logs', icon: 'terminal' },
+  { label: 'Nhật ký máy chủ', path: '/admin/logs', icon: 'terminal' },
 ];
 
 const AdminLayout = () => {

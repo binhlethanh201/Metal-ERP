@@ -6,7 +6,7 @@ import {
   updateRolePermissions,
 } from '../services/adminService';
 import PageBasedPermissionSelector from '../../owner/components/staff/PageBasedPermissionSelector';
-import { getAllCodesForPage, PAGE_PERMISSION_GROUPS } from '../../owner/config/pagePermissionMapping';
+import { getAllCodesForPage, PAGE_PERMISSION_GROUPS, PERMISSION_TO_VIEW } from '../../owner/config/pagePermissionMapping';
 
 const AdminRoleManagement = () => {
   const [matrix, setMatrix] = useState([]);
@@ -47,15 +47,43 @@ const AdminRoleManagement = () => {
   });
 
   const handleSelectRole = (role) => {
+    // Khong reset khi bam vao vai tro dang chon
+    if (role.roleId === selectedRoleId && selectedCodes.length > 0) return;
     setSelectedRoleId(role.roleId);
     const codes = (role.permissions || []).map((p) => p.permissionCode).filter(Boolean);
     setSelectedCodes(codes);
   };
 
   const handleTogglePermission = (code) => {
-    setSelectedCodes((prev) =>
-      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
-    );
+    setSelectedCodes((prev) => {
+      if (prev.includes(code)) {
+        // Bỏ chọn quyền con
+        const next = prev.filter((c) => c !== code);
+        // Nếu không còn quyền con nào khác trong cùng trang, bỏ luôn VIEW
+        const viewPermission = PERMISSION_TO_VIEW[code];
+        if (viewPermission && next.includes(viewPermission)) {
+          const pageForCode = PAGE_PERMISSION_GROUPS.find((page) =>
+            page.subPermissions.some((sub) => sub.code === code)
+          );
+          if (pageForCode) {
+            const stillHasSub = pageForCode.subPermissions.some(
+              (sub) => sub.code !== code && next.includes(sub.code)
+            );
+            if (!stillHasSub) {
+              return next.filter((c) => c !== viewPermission);
+            }
+          }
+        }
+        return next;
+      }
+      // Chọn quyền con -> tự động thêm VIEW nếu chưa có
+      const viewPermission = PERMISSION_TO_VIEW[code];
+      const next = [...prev, code];
+      if (viewPermission && !next.includes(viewPermission)) {
+        next.push(viewPermission);
+      }
+      return next;
+    });
   };
 
   const handleTogglePage = (page, viewOn) => {
@@ -198,7 +226,8 @@ const AdminRoleManagement = () => {
               });
               return Object.values(deduped).map((role) => {
                 const isSelected = role.roleId === selectedRoleId;
-                const permissionCount = (role.permissions || []).length;
+                const viewCodes = new Set(PAGE_PERMISSION_GROUPS.map((p) => p.viewPermission));
+                const permissionCount = (role.permissions || []).filter((p) => !viewCodes.has(p.permissionCode)).length;
 
                 return (
                   <button

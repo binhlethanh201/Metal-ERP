@@ -13,15 +13,35 @@ const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
 
   if (!isOpen || !user) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!roleId) return;
-    onSave(user.userId, roleId);
+    try {
+      await onSave(user.userId, roleId);
+    } catch {
+      // API failed -> revert to original role
+      const current = (user.roles || [])[0]?.roleId || '';
+      setRoleId(current);
+    }
   };
 
-  const assignableRoles = roles.filter(
-    (r) => r.roleName.toLowerCase() !== 'admin' && r.roleName.toLowerCase() !== 'communityuser'
-  );
+  const assignableRoles = (() => {
+    // Deduplicate: gop "Sales Staff" + "SalesStaff" thanh 1, "Inventory Staff" + "InventoryStaff" thanh 1
+    const seen = new Set();
+    const result = [];
+    roles.forEach((r) => {
+      const name = (r.roleName || '').toLowerCase();
+      if (name === 'admin' || name === 'communityuser' || name === 'staff') return;
+      let key = null;
+      if (name === 'salesstaff' || name === 'sales staff') key = 'SalesStaff';
+      if (name === 'inventorystaff' || name === 'inventory staff') key = 'InventoryStaff';
+      if (!key) key = r.roleName;
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push({ ...r, roleName: key });
+    });
+    return result;
+  })();
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
