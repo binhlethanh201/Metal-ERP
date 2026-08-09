@@ -2,12 +2,13 @@
  * ReturnForm - Tạo đơn đổi trả
  * Flow: nhập mã hóa đơn → tìm hóa đơn → chọn sản phẩm → chọn loại + lý do → tạo
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { formatDateTime } from '../../../../shared/utils/formatDate';
+import { apiPosGet } from '../../../../services/apiClient';
 import {
   getOrders,
   getReturns,
@@ -38,6 +39,32 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  // Fetch policies từ backend POS khi mở modal, fallback localStorage
+  useEffect(() => {
+    if (!isOpen) return;
+    apiPosGet('/pos/returns/category-policies')
+      .then((res) => {
+        const data = res?.data || res;
+        const policies = Array.isArray(data) ? data : data?.policies || [];
+        const policyMap = {};
+        policies.forEach((p) => {
+          const key = p.categoryId || p.categoryName || '';
+          if (key) {
+            policyMap[key] = {
+              categoryId: p.categoryId || '',
+              categoryName: p.categoryName || '',
+              returnDays: p.returnDays ?? '',
+              exchangeDays: p.exchangeDays ?? '',
+            };
+          }
+        });
+        localStorage.setItem(POLICIES_STORAGE_KEY, JSON.stringify(policyMap));
+      })
+      .catch(() => {
+        // Fallback to localStorage
+      });
+  }, [isOpen]);
 
   const isExchange = returnType === 'EXCHANGE';
 

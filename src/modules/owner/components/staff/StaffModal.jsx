@@ -5,7 +5,7 @@ import Button from '../../../../shared/components/Button';
 import Input from '../../../../shared/components/Input';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
 import PageBasedPermissionSelector from './PageBasedPermissionSelector';
-import { getAllCodesForPage, PERMISSION_TO_VIEW, PAGE_PERMISSION_GROUPS } from '../../config/pagePermissionMapping';
+import { getAllCodesForPage, PERMISSION_TO_VIEW, PAGE_PERMISSION_GROUPS, getSubPermissionCodes } from '../../config/pagePermissionMapping';
 import { apiGet } from '../../../../services/apiClient';
 import ENDPOINTS from '../../../../services/endpoints';
 
@@ -81,6 +81,18 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
       // Chi reset form khi mo modal cho 1 nhan vien khac
       if (staffId !== lastStaffIdRef.current) {
         lastStaffIdRef.current = staffId;
+        // Cleanup: xoa VIEW permission khong con quyen con nao
+        const rawCodes = staff.permissionCodes || [];
+        const viewCodes = new Set(PAGE_PERMISSION_GROUPS.map((p) => p.viewPermission));
+        const cleanedCodes = rawCodes.filter((c) => {
+          if (!viewCodes.has(c)) return true;
+          const page = PAGE_PERMISSION_GROUPS.find((p) => p.viewPermission === c);
+          if (!page) return true;
+          return page.subPermissions.some((sub) => {
+            const subCodes = getSubPermissionCodes(sub);
+            return subCodes.some((sc) => rawCodes.includes(sc));
+          });
+        });
         setForm({
           ...staff,
           password: '',
@@ -90,9 +102,9 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
               ? 'SalesStaff'
               : 'SalesStaff',
           isActive: staff.isActive !== undefined ? staff.isActive : 1,
-          permissionCodes: staff.permissionCodes || [],
+          permissionCodes: cleanedCodes,
         });
-        setIsCustomizing(staff.hasCustomPermissions || (staff.permissionCodes || []).length > 0);
+        setIsCustomizing(staff.hasCustomPermissions || cleanedCodes.length > 0);
       }
     } else {
       lastStaffIdRef.current = null;
@@ -103,6 +115,11 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Validate email format
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      alert('Email không đúng định dạng. Vui lòng nhập địa chỉ email hợp lệ.');
+      return;
+    }
     if (!staff && form.defaultRoleType !== 'Owner' && (!form.username || !form.password)) {
       alert('Tên đăng nhập và Mật khẩu là bắt buộc khi tạo mới!');
       return;
@@ -114,28 +131,48 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
     if (staff && isCustomizing && form.permissionCodes.length === 0) {
       if (!window.confirm('CẢNH BÁO: Bạn đã bỏ chọn tất cả quyền. Tiếp tục?')) return;
     }
-    const submitData = { ...form };
+
+    // Cleanup: xoa VIEW permission khong con quyen con nao
+    let cleanedCodes = [...form.permissionCodes];
+    PAGE_PERMISSION_GROUPS.forEach((page) => {
+      const hasAnySub = page.subPermissions.some((sub) => {
+        const subCodes = getSubPermissionCodes(sub);
+        return subCodes.some((c) => cleanedCodes.includes(c));
+      });
+      if (!hasAnySub && cleanedCodes.includes(page.viewPermission)) {
+        cleanedCodes = cleanedCodes.filter((c) => c !== page.viewPermission);
+      }
+    });
+
+    const submitData = { ...form, permissionCodes: cleanedCodes };
     if (!staff) submitData.customPermissionCodes = submitData.permissionCodes;
     onSave(submitData);
   };
 
-  const handleTogglePermission = (code) => {
+  const handleTogglePermission = (codes) => {
     setIsCustomizing(true);
+    const codeList = Array.isArray(codes) ? codes : [codes];
+    const firstCode = codeList[0];
     setForm((prev) => {
       const current = prev.permissionCodes;
-      if (current.includes(code)) {
-        // Bỏ chọn quyền con
-        const next = current.filter((c) => c !== code);
+      const allChecked = codeList.every((c) => current.includes(c));
+      if (allChecked) {
+        // Bỏ chọn toàn bộ nhóm quyền con
+        const next = current.filter((c) => !codeList.includes(c));
         // Nếu không còn quyền con nào khác trong cùng trang, bỏ luôn VIEW
-        const viewPermission = PERMISSION_TO_VIEW[code];
+        const viewPermission = PERMISSION_TO_VIEW[firstCode];
         if (viewPermission && next.includes(viewPermission)) {
           const pageForCode = PAGE_PERMISSION_GROUPS.find((page) =>
-            page.subPermissions.some((sub) => sub.code === code)
+            page.subPermissions.some((sub) => {
+              const subCodes = Array.isArray(sub.codes) ? sub.codes : sub.code ? [sub.code] : [];
+              return subCodes.some((c) => codeList.includes(c));
+            })
           );
           if (pageForCode) {
-            const stillHasSub = pageForCode.subPermissions.some(
-              (sub) => sub.code !== code && next.includes(sub.code)
-            );
+            const stillHasSub = pageForCode.subPermissions.some((sub) => {
+              const subCodes = Array.isArray(sub.codes) ? sub.codes : sub.code ? [sub.code] : [];
+              return subCodes.some((c) => !codeList.includes(c) && next.includes(c));
+            });
             if (!stillHasSub) {
               return { ...prev, permissionCodes: next.filter((c) => c !== viewPermission) };
             }
@@ -144,8 +181,11 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
         return { ...prev, permissionCodes: next };
       }
       // Chọn quyền con -> tự động thêm VIEW nếu chưa có
-      const viewPermission = PERMISSION_TO_VIEW[code];
-      const next = [...current, code];
+      const viewPermission = PERMISSION_TO_VIEW[firstCode];
+      const next = [...current];
+      codeList.forEach((c) => {
+        if (!next.includes(c)) next.push(c);
+      });
       if (viewPermission && !next.includes(viewPermission)) {
         next.push(viewPermission);
       }

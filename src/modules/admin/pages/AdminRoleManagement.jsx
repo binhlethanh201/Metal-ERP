@@ -6,7 +6,7 @@ import {
   updateRolePermissions,
 } from '../services/adminService';
 import PageBasedPermissionSelector from '../../owner/components/staff/PageBasedPermissionSelector';
-import { getAllCodesForPage, PAGE_PERMISSION_GROUPS, PERMISSION_TO_VIEW } from '../../owner/config/pagePermissionMapping';
+import { getAllCodesForPage, PAGE_PERMISSION_GROUPS, PERMISSION_TO_VIEW, getSubPermissionCodes } from '../../owner/config/pagePermissionMapping';
 
 const AdminRoleManagement = () => {
   const [matrix, setMatrix] = useState([]);
@@ -51,24 +51,42 @@ const AdminRoleManagement = () => {
     if (role.roleId === selectedRoleId && selectedCodes.length > 0) return;
     setSelectedRoleId(role.roleId);
     const codes = (role.permissions || []).map((p) => p.permissionCode).filter(Boolean);
-    setSelectedCodes(codes);
+    // Cleanup: xoa VIEW permission khong con quyen con nao
+    const viewCodes = new Set(PAGE_PERMISSION_GROUPS.map((p) => p.viewPermission));
+    const cleaned = codes.filter((c) => {
+      if (!viewCodes.has(c)) return true;
+      const page = PAGE_PERMISSION_GROUPS.find((p) => p.viewPermission === c);
+      if (!page) return true;
+      return page.subPermissions.some((sub) => {
+        const subCodes = getSubPermissionCodes(sub);
+        return subCodes.some((sc) => codes.includes(sc));
+      });
+    });
+    setSelectedCodes(cleaned);
   };
 
-  const handleTogglePermission = (code) => {
+  const handleTogglePermission = (codes) => {
+    const codeList = Array.isArray(codes) ? codes : [codes];
+    const firstCode = codeList[0];
     setSelectedCodes((prev) => {
-      if (prev.includes(code)) {
-        // Bỏ chọn quyền con
-        const next = prev.filter((c) => c !== code);
+      const allChecked = codeList.every((c) => prev.includes(c));
+      if (allChecked) {
+        // Bỏ chọn toàn bộ nhóm quyền con
+        const next = prev.filter((c) => !codeList.includes(c));
         // Nếu không còn quyền con nào khác trong cùng trang, bỏ luôn VIEW
-        const viewPermission = PERMISSION_TO_VIEW[code];
+        const viewPermission = PERMISSION_TO_VIEW[firstCode];
         if (viewPermission && next.includes(viewPermission)) {
           const pageForCode = PAGE_PERMISSION_GROUPS.find((page) =>
-            page.subPermissions.some((sub) => sub.code === code)
+            page.subPermissions.some((sub) => {
+              const subCodes = Array.isArray(sub.codes) ? sub.codes : sub.code ? [sub.code] : [];
+              return subCodes.some((c) => codeList.includes(c));
+            })
           );
           if (pageForCode) {
-            const stillHasSub = pageForCode.subPermissions.some(
-              (sub) => sub.code !== code && next.includes(sub.code)
-            );
+            const stillHasSub = pageForCode.subPermissions.some((sub) => {
+              const subCodes = Array.isArray(sub.codes) ? sub.codes : sub.code ? [sub.code] : [];
+              return subCodes.some((c) => !codeList.includes(c) && next.includes(c));
+            });
             if (!stillHasSub) {
               return next.filter((c) => c !== viewPermission);
             }
@@ -77,8 +95,11 @@ const AdminRoleManagement = () => {
         return next;
       }
       // Chọn quyền con -> tự động thêm VIEW nếu chưa có
-      const viewPermission = PERMISSION_TO_VIEW[code];
-      const next = [...prev, code];
+      const viewPermission = PERMISSION_TO_VIEW[firstCode];
+      const next = [...prev];
+      codeList.forEach((c) => {
+        if (!next.includes(c)) next.push(c);
+      });
       if (viewPermission && !next.includes(viewPermission)) {
         next.push(viewPermission);
       }
@@ -103,7 +124,19 @@ const AdminRoleManagement = () => {
     if (!selectedRoleId) return;
     setIsSaving(true);
     try {
-      const permissionIds = selectedCodes
+      // Cleanup: xoa VIEW permission khong con quyen con nao
+      let cleanedCodes = [...selectedCodes];
+      PAGE_PERMISSION_GROUPS.forEach((page) => {
+        const hasAnySub = page.subPermissions.some((sub) => {
+          const subCodes = getSubPermissionCodes(sub);
+          return subCodes.some((c) => cleanedCodes.includes(c));
+        });
+        if (!hasAnySub && cleanedCodes.includes(page.viewPermission)) {
+          cleanedCodes = cleanedCodes.filter((c) => c !== page.viewPermission);
+        }
+      });
+
+      const permissionIds = cleanedCodes
         .map((code) => codeToId[code])
         .filter(Boolean);
 

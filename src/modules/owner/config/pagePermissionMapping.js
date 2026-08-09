@@ -51,19 +51,10 @@ export const PAGE_PERMISSION_GROUPS = [
     id: 'page_sales_orders',
     pageName: 'Đơn hàng & POS',
     category: 'Bán hàng',
-    viewPermission: 'SALE_VIEW',
+    viewPermission: '',
     subPermissions: [
-      { code: 'SALE_CREATE', label: 'Tạo đơn hàng mới (Bán hàng)' },
-      { code: 'SALE_UPDATE', label: 'Cập nhật đơn hàng' },
-      { code: 'SALE_DELETE', label: 'Xóa/Hủy đơn hàng' },
-      { code: 'CUSTOMER_VIEW', label: 'Xem danh sách khách hàng' },
-      { code: 'CUSTOMER_CREATE', label: 'Thêm khách hàng' },
-      { code: 'CUSTOMER_UPDATE', label: 'Sửa thông tin khách hàng' },
-      { code: 'CUSTOMER_DELETE', label: 'Xóa khách hàng' },
-      { code: 'PAYMENT_VIEW', label: 'Xem lịch sử thanh toán' },
-      { code: 'PAYMENT_CREATE', label: 'Thanh toán đơn hàng' },
-      { code: 'PRINT_VIEW', label: 'In hóa đơn / phiếu' },
-      { code: 'PROMOTION_VIEW', label: 'Xem chương trình khuyến mãi' },
+      { codes: ['SALE_CREATE', 'SALE_UPDATE', 'PAYMENT_CREATE', 'PAYMENT_VIEW', 'PRINT_VIEW', 'PROMOTION_VIEW', 'CUSTOMER_VIEW', 'CUSTOMER_CREATE', 'CUSTOMER_UPDATE', 'CUSTOMER_DELETE'], label: 'Bán hàng' },
+      { codes: ['SHIFT_CREATE', 'SHIFT_UPDATE', 'SHIFT_FORCE_CLOSE'], label: 'Quản lý ca bán (POS)' },
     ],
   },
   {
@@ -92,19 +83,12 @@ export const PAGE_PERMISSION_GROUPS = [
   },
   {
     id: 'page_staff_management',
-    pageName: 'Quản lý nhân viên & Ca làm',
+    pageName: 'Hệ thống quản lý',
     category: 'Hệ thống & Nhân sự',
     viewPermission: 'STAFF_VIEW',
     subPermissions: [
-      { code: 'STAFF_CREATE', label: 'Thêm nhân viên mới' },
-      { code: 'STAFF_UPDATE', label: 'Sửa thông tin nhân viên' },
-      { code: 'STAFF_DELETE', label: 'Xóa / Khóa tài khoản nhân viên' },
-      { code: 'STAFF_ASSIGN_BRANCH', label: 'Điều chuyển chi nhánh' },
-      { code: 'SHIFT_VIEW', label: 'Xem lịch sử ca bán' },
-      { code: 'SHIFT_CREATE', label: 'Mở ca làm việc' },
-      { code: 'SHIFT_UPDATE', label: 'Chốt ca / Cập nhật ca' },
-      { code: 'SHIFT_DELETE', label: 'Xóa ca làm việc' },
-      { code: 'SHIFT_FORCE_CLOSE', label: 'Chốt hộ ca làm việc' },
+      { codes: ['STAFF_CREATE', 'STAFF_UPDATE', 'STAFF_DELETE'], label: 'Quản lý nhân viên' },
+      { code: 'SHIFT_VIEW', label: 'Xem lịch sử ca bán (Kho)' },
     ],
   },
   {
@@ -120,8 +104,15 @@ export const PAGE_PERMISSION_GROUPS = [
  * Lấy tất cả các permission code từ một nhóm trang (bao gồm cả viewPermission)
  */
 export const getAllCodesForPage = (page) => {
-  const codes = [page.viewPermission];
-  page.subPermissions.forEach((sub) => codes.push(sub.code));
+  const codes = [];
+  if (page.viewPermission) codes.push(page.viewPermission);
+  page.subPermissions.forEach((sub) => {
+    if (sub.codes) {
+      codes.push(...sub.codes);
+    } else if (sub.code) {
+      codes.push(sub.code);
+    }
+  });
   return codes;
 };
 
@@ -142,6 +133,7 @@ export const getAllPagePermissionCodes = () => {
  */
 export const PERMISSION_TO_VIEW = {};
 PAGE_PERMISSION_GROUPS.forEach((page) => {
+  if (!page.viewPermission) return;
   const all = getAllCodesForPage(page);
   all.forEach((code) => {
     if (code !== page.viewPermission) {
@@ -149,3 +141,12 @@ PAGE_PERMISSION_GROUPS.forEach((page) => {
     }
   });
 });
+
+/**
+ * Lay tat ca cac permission code tu 1 subPermission (ho tro ca nhom codes).
+ */
+export const getSubPermissionCodes = (sub) => {
+  if (sub.codes) return sub.codes;
+  if (sub.code) return [sub.code];
+  return [];
+};

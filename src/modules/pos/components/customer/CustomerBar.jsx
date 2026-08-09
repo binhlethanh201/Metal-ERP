@@ -1,5 +1,6 @@
 import { Badge } from '../../../../shared/components/Badge';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import Icon from '../../../../shared/components/Icon';
 
 const GROUP_COLORS = {
   'Ca nhan': 'info',
@@ -8,7 +9,7 @@ const GROUP_COLORS = {
   'Nha thau': 'success',
 };
 
-const CustomerBar = ({ selectedCustomer, onOpenPicker, onClearCustomer }) => (
+const CustomerBar = ({ selectedCustomer, onOpenPicker, onClearCustomer, onQuickAdd }) => (
   <div className="mb-4 flex items-center gap-3">
     <button
       type="button"
@@ -43,6 +44,18 @@ const CustomerBar = ({ selectedCustomer, onOpenPicker, onClearCustomer }) => (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     </button>
+
+    {onQuickAdd && (
+      <button
+        type="button"
+        onClick={onQuickAdd}
+        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#004785] px-4 py-3 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-800 active:scale-95 dark:bg-blue-600 dark:hover:bg-blue-700"
+        title="Thêm nhanh khách hàng"
+      >
+        <Icon name="add" size={16} />
+        <span>Thêm khách</span>
+      </button>
+    )}
   </div>
 );
 

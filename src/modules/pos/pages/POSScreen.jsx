@@ -1012,6 +1012,7 @@ const POSScreen = () => {
             selectedCustomer={selectedCustomer}
             onOpenPicker={() => setShowCustModal(true)}
             onClearCustomer={() => setSelectedCustomer(null)}
+            onQuickAdd={() => setShowQuickAddCust(true)}
           />
           <div className="flex-1 overflow-hidden">
             <PosCartPanel

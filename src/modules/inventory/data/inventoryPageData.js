@@ -50,13 +50,10 @@ export const sidebarItems = [
   {
     label: 'Đơn hàng',
     icon: 'shopping_cart',
-    permissions: ['SALE_VIEW'],
+    permissions: ['OWNER_MANAGE'],
     children: [
-      { label: 'Danh sách đơn hàng', path: '/inventory/orders', permissions: ['SALE_VIEW'] },
-      { label: 'Lịch sử đổi trả', path: '/inventory/return-history', permissions: ['SALE_VIEW'] },
-      // { label: 'Xử lý đơn', path: '/inventory/orders/processing' },
-      // { label: 'Giao hàng', path: '/inventory/orders/shipping' },
-      // { label: 'Đổi trả hàng', path: '/inventory/orders/returns' },
+      { label: 'Danh sách đơn hàng', path: '/inventory/orders', permissions: ['OWNER_MANAGE'] },
+      { label: 'Lịch sử đổi trả', path: '/inventory/return-history', permissions: ['OWNER_MANAGE'] },
     ],
   },
   {
@@ -101,7 +98,7 @@ export const sidebarItems = [
   {
     label: 'Hệ thống & Nhân sự',
     icon: 'UserCog',
-    permissions: ['OWNER_MANAGE', 'STAFF_VIEW', 'SHIFT_VIEW', 'PRINT_VIEW', 'SYSTEM_MANAGE'],
+    permissions: ['OWNER_MANAGE', 'STAFF_VIEW', 'SHIFT_VIEW', 'SYSTEM_MANAGE'],
     children: [
       { label: 'Quản lý nhân viên', path: '/inventory/employees', permissions: ['STAFF_VIEW', 'STAFF_CREATE', 'STAFF_UPDATE', 'STAFF_DELETE', 'STAFF_ASSIGN_BRANCH'] },
       { label: 'Lịch sử ca bán', path: '/inventory/shift-history', permissions: ['SHIFT_VIEW'] },

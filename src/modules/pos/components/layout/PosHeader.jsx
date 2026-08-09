@@ -8,6 +8,7 @@ import Logo from '../../../../shared/components/Logo';
 import ShiftBadge from '../../../../shared/components/ShiftBadge';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { useTheme } from '../../../../shared/contexts/ThemeContext';
+import { hasPermission } from '../../../../shared/utils/permissions';
 import StorePolicyModal from '../StorePolicyModal';
 
 const PosHeader = ({ onHistory, onQuickAdd }) => {
@@ -17,6 +18,8 @@ const PosHeader = ({ onHistory, onQuickAdd }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const dropdownRef = useRef(null);
+
+  const canViewHistory = hasPermission(user, 'SALE_VIEW');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,14 +48,16 @@ const PosHeader = ({ onHistory, onQuickAdd }) => {
       <Logo moduleName="Máy bán hàng" />
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onHistory}
-          className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-[#555555] dark:hover:bg-[#333333]"
-        >
-          <Icon name="history" className="text-base" />
-          <span>Lịch sử</span>
-        </button>
+        {canViewHistory && (
+          <button
+            type="button"
+            onClick={onHistory}
+            className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3] dark:hover:border-[#555555] dark:hover:bg-[#333333]"
+          >
+            <Icon name="history" className="text-base" />
+            <span>Lịch sử</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setShowPolicyModal(true)}

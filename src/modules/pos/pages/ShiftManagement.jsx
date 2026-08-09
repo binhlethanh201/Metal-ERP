@@ -230,7 +230,7 @@ export const ShiftManagement = () => {
       // Load orders và returns song song
       console.log('[ShiftManagement] Fetching completed orders and returns...');
       const [ordersData, returnsRaw] = await Promise.all([
-        getOrders({ status: 'Completed' }),
+        getOrders({ status: 'Completed' }).catch(() => []),
         getReturns({}).catch(() => []),
       ]);
       console.log('[ShiftManagement] getOrders response:', ordersData);
@@ -672,7 +672,7 @@ export const ShiftManagement = () => {
         pageSize: 1000
       };
       const [ordersData, returnsRaw] = await Promise.all([
-        getOrders({ status: 'Completed', ...params }),
+        getOrders({ status: 'Completed', ...params }).catch(() => []),
         getReturns({ ...params }).catch(() => []),
       ]);
       const rawOrders = Array.isArray(ordersData)

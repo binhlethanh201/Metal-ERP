@@ -1,5 +1,5 @@
 import React from 'react';
-import { PAGE_PERMISSION_GROUPS, getAllCodesForPage } from '../../config/pagePermissionMapping';
+import { PAGE_PERMISSION_GROUPS, getAllCodesForPage, getSubPermissionCodes } from '../../config/pagePermissionMapping';
 
 /**
  * Giao diện phân quyền theo Trang (Page-based).
@@ -20,7 +20,10 @@ const PageBasedPermissionSelector = ({ selectedCodes, onTogglePage, onTogglePerm
   const isViewOn = (page) => selectedCodes.includes(page.viewPermission);
 
   const hasAnySubSelected = (page) =>
-    page.subPermissions.some((sub) => selectedCodes.includes(sub.code));
+    page.subPermissions.some((sub) => {
+      const codes = getSubPermissionCodes(sub);
+      return codes.some((c) => selectedCodes.includes(c));
+    });
 
   const isPageFullyOn = (page) => {
     const allCodes = getAllCodesForPage(page);
@@ -101,21 +104,26 @@ const PageBasedPermissionSelector = ({ selectedCodes, onTogglePage, onTogglePerm
                     <div className="border-t border-slate-100 px-4 py-3 dark:border-[#333333]">
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {page.subPermissions.map((sub) => {
-                          const isChecked = selectedCodes.includes(sub.code);
+                          const codes = getSubPermissionCodes(sub);
+                          const isChecked = codes.length > 0 && codes.every((c) => selectedCodes.includes(c));
+                          const isPartial = !isChecked && codes.some((c) => selectedCodes.includes(c));
+                          const key = sub.codes ? sub.codes.join('_') : sub.code;
                           return (
                             <label
-                              key={sub.code}
+                              key={key}
                               className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
                                 isChecked
                                   ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                                  : 'text-slate-600 hover:bg-slate-50 dark:text-[#999999] dark:hover:bg-[#272727]'
+                                  : isPartial
+                                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                                    : 'text-slate-600 hover:bg-slate-50 dark:text-[#999999] dark:hover:bg-[#272727]'
                               }`}
                             >
                               <input
                                 type="checkbox"
                                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-[#404040]"
                                 checked={isChecked}
-                                onChange={() => onTogglePermission(sub.code)}
+                                onChange={() => onTogglePermission(codes)}
                               />
                               <span className="flex-1">{sub.label}</span>
                             </label>

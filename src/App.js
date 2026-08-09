@@ -154,14 +154,26 @@ function App() {
                 <Route path="owner-dashboard" element={<OwnerDashboard />} />
                 <Route path="branches" element={<BranchManagement />} />
                 <Route path="store-settings" element={<StoreSettings />} />
-                <Route path="print-templates" element={<PrintTemplateSettings />} />
-                <Route path="employees" element={<StaffManagement />} />
                 <Route path="owner-reports" element={<OwnerReports />} />
-                <Route path="shift-history" element={<ShiftHistory />} />
                 <Route path="return-history" element={<ReturnHistory />} />
                 <Route path="audit-logs" element={<OwnerAuditLogsPage />} />
                 <Route path="outward-excel" element={<OwnerOutwardExcelPage />} />
                 <Route path="audit-logs" element={<OwnerAuditLog />} />
+              </Route>
+
+              {/* --- ROUTE STAFF MANAGEMENT --- */}
+              <Route element={<PrivateRoute allowedPermissions={['STAFF_VIEW', 'STAFF_CREATE', 'STAFF_UPDATE', 'STAFF_DELETE', 'STAFF_ASSIGN_BRANCH']} />}>
+                <Route path="employees" element={<StaffManagement />} />
+              </Route>
+
+              {/* --- ROUTE SHIFT HISTORY --- */}
+              <Route element={<PrivateRoute allowedPermissions={['SHIFT_VIEW']} />}>
+                <Route path="shift-history" element={<ShiftHistory />} />
+              </Route>
+
+              {/* --- ROUTE PRINT TEMPLATES --- */}
+              <Route element={<PrivateRoute allowedPermissions={['PRINT_VIEW']} />}>
+                <Route path="print-templates" element={<PrintTemplateSettings />} />
               </Route>
 
               {/* --- ROUTE REPORT --- */}
@@ -216,7 +228,7 @@ function App() {
               <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.goodsIssue} />}>
                 <Route path="goods-issue/create" element={<GoodsIssueCreate />} />
               </Route>
-              <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.orderList} />}>
+              <Route element={<PrivateRoute allowedPermissions={OWNER_PERMISSIONS} />}>
                 <Route path="orders" element={<OrderList />} />
               </Route>
             </Route>

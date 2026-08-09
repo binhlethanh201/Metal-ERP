@@ -14,6 +14,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatDate } from '../../../shared/utils/formatDate';
 import Icon from '../../../shared/components/Icon';
 import { hasPermission } from '../../../shared/utils/permissions';
+import { useAuth } from '../../../shared/hooks/useAuth';
 import {
   getCustomers,
   createCustomer,
@@ -56,7 +57,8 @@ const mapCustomer = (c) => ({
 
 const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
 
-export const CustomerManagement = ({ user }) => {
+export const CustomerManagement = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -991,6 +993,10 @@ export const CustomerManagement = ({ user }) => {
                 setForm((f) => ({ ...f, name: e.target.value }));
                 setFormErrors((p) => ({ ...p, name: '' }));
               }}
+              onBlur={() => {
+                const errs = validateForm(form);
+                if (errs.name) setFormErrors((p) => ({ ...p, name: errs.name }));
+              }}
               required
               error={formErrors.name}
             />
@@ -1003,6 +1009,10 @@ export const CustomerManagement = ({ user }) => {
               onChange={(e) => {
                 setForm((f) => ({ ...f, phone: e.target.value }));
                 setFormErrors((p) => ({ ...p, phone: '' }));
+              }}
+              onBlur={() => {
+                const errs = validateForm(form);
+                if (errs.phone) setFormErrors((p) => ({ ...p, phone: errs.phone }));
               }}
               required
               error={formErrors.phone}
@@ -1023,20 +1033,6 @@ export const CustomerManagement = ({ user }) => {
             value={form.address}
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
           />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nhóm khách hàng</label>
-            <select
-              value={form.group}
-              onChange={(e) => setForm((f) => ({ ...f, group: e.target.value }))}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
-            >
-              {CUSTOMER_GROUPS.filter((g) => g !== 'Tất cả').map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
             <textarea
@@ -1093,6 +1089,10 @@ export const CustomerManagement = ({ user }) => {
                 setForm((f) => ({ ...f, name: e.target.value }));
                 setFormErrors((p) => ({ ...p, name: '' }));
               }}
+              onBlur={() => {
+                const errs = validateForm(form);
+                if (errs.name) setFormErrors((p) => ({ ...p, name: errs.name }));
+              }}
               required
               error={formErrors.name}
             />
@@ -1105,6 +1105,10 @@ export const CustomerManagement = ({ user }) => {
               onChange={(e) => {
                 setForm((f) => ({ ...f, phone: e.target.value }));
                 setFormErrors((p) => ({ ...p, phone: '' }));
+              }}
+              onBlur={() => {
+                const errs = validateForm(form);
+                if (errs.phone) setFormErrors((p) => ({ ...p, phone: errs.phone }));
               }}
               required
               error={formErrors.phone}
@@ -1125,20 +1129,6 @@ export const CustomerManagement = ({ user }) => {
             value={form.address}
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
           />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nhóm khách hàng</label>
-            <select
-              value={form.group}
-              onChange={(e) => setForm((f) => ({ ...f, group: e.target.value }))}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#004785] focus:outline-none"
-            >
-              {CUSTOMER_GROUPS.filter((g) => g !== 'Tất cả').map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú</label>
             <textarea

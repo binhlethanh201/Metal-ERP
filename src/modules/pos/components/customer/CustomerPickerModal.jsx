@@ -8,7 +8,7 @@ import { Button } from '../../../../shared/components/Button';
 import { Badge } from '../../../../shared/components/Badge';
 import { Input } from '../../../../shared/components/Input';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { getCustomers } from '../../services/posService';
+import { getCustomers, createCustomer } from '../../services/posService';
 
 const GROUP_COLORS = {
   'Cá nhân': 'info',
@@ -34,6 +34,15 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
   const [search, setSearch] = useState('');
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [form, setForm] = useState({ name: '', phone: '' });
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const resetForm = () => {
+    setForm({ name: '', phone: '' });
+    setFormError('');
+  };
 
   // Load customers when modal opens
   useEffect(() => {
@@ -58,87 +67,131 @@ const CustomerPickerModal = ({ isOpen, onClose, selectedCustomer, onSelect }) =>
     return c.name.toLowerCase().includes(kw) || c.phone.includes(kw);
   });
 
+  const handleCreate = async () => {
+    if (!form.name.trim()) { setFormError('Vui lòng nhập tên'); return; }
+    if (!form.phone.trim()) { setFormError('Vui lòng nhập SĐT'); return; }
+    setSaving(true);
+    try {
+      const result = await createCustomer({ customerName: form.name.trim(), phoneNumber: form.phone.trim() });
+      const newCust = mapCustomer(result);
+      setCustomers((prev) => [newCust, ...prev]);
+      onSelect(newCust);
+      setShowAddForm(false);
+      resetForm();
+      onClose();
+    } catch (err) {
+      setFormError(err.message || 'Không thể tạo khách hàng');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Chọn khách hàng"
+      title={showAddForm ? 'Thêm khách hàng mới' : 'Chọn khách hàng'}
       size="lg"
       footer={
-        <Button variant="secondary" onClick={onClose}>
-          Đóng
-        </Button>
+        <div className="flex w-full items-center justify-between">
+          {!showAddForm && (
+            <Button variant="primary" onClick={() => { resetForm(); setShowAddForm(true); }}>
+              + Thêm khách
+            </Button>
+          )}
+          <Button variant="secondary" onClick={onClose}>
+            Đóng
+          </Button>
+        </div>
       }
     >
       <div className="space-y-3">
-        <Input
-          placeholder="Tìm theo tên hoặc số điện thoại..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <div className="max-h-72 space-y-1 overflow-y-auto">
-          {/* Tùy chọn Khách lẻ */}
-          <button
-            type="button"
-            onClick={() => {
-              onSelect(null);
-              onClose();
-            }}
-            className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] ${!selectedCustomer ? 'border-[#004785] bg-blue-50' : 'border-slate-100 dark:border-[#333333]'}`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                L
-              </div>
-              <div>
-                <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">Khách lẻ</p>
-                <p className="text-xs text-slate-400 dark:text-[#808080]">Không lưu thông tin khách hàng</p>
-              </div>
+        {showAddForm ? (
+          <div className="space-y-3">
+            {formError && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{formError}</div>}
+            <Input label="Tên khách hàng" placeholder="Nhập tên" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
+            <Input label="Số điện thoại" placeholder="VD: 0903123456" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} required />
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => { setShowAddForm(false); resetForm(); }}>
+                Quay lại
+              </Button>
+              <Button variant="primary" onClick={handleCreate} disabled={saving}>
+                {saving ? 'Đang lưu...' : 'Thêm khách'}
+              </Button>
             </div>
-          </button>
-
-          {loading && <div className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">Đang tải...</div>}
-
-          {!loading && filtered.length === 0 && (
-            <div className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">
-              {search ? 'Không tìm thấy khách hàng' : 'Chưa có khách hàng nào'}
-            </div>
-          )}
-
-          {!loading &&
-            filtered.map((c) => (
+          </div>
+        ) : (
+          <>
+            <Input
+              placeholder="Tìm theo tên hoặc số điện thoại..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <div className="max-h-72 space-y-1 overflow-y-auto">
+              {/* Tùy chọn Khách lẻ */}
               <button
-                key={c.id}
                 type="button"
                 onClick={() => {
-                  onSelect(c);
+                  onSelect(null);
                   onClose();
                 }}
-                className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] ${selectedCustomer && selectedCustomer.id === c.id ? 'border-[#004785] bg-blue-50' : 'border-slate-100 dark:border-[#333333]'}`}
+                className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] ${!selectedCustomer ? 'border-[#004785] bg-blue-50' : 'border-slate-100 dark:border-[#333333]'}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#004785] text-sm font-bold text-white">
-                    {c.name.charAt(0)}
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
+                    L
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{c.name}</p>
-                      <Badge variant={GROUP_COLORS[c.group] || 'secondary'} size="sm">
-                        {c.group}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-[#999999]">
-                      {c.phone} {c.email ? '- ' + c.email : ''}
-                    </p>
-                  </div>
-                  <div className="text-right text-xs">
-                    <p className="font-bold text-green-600">{formatCurrency(c.totalSpent)}</p>
-                    <p className="text-slate-400 dark:text-[#808080]">{c.orderCount} đơn</p>
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">Khách lẻ</p>
+                    <p className="text-xs text-slate-400 dark:text-[#808080]">Không lưu thông tin khách hàng</p>
                   </div>
                 </div>
               </button>
-            ))}
-        </div>
+
+              {loading && <div className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">Đang tải...</div>}
+
+              {!loading && filtered.length === 0 && (
+                <div className="py-4 text-center text-sm text-slate-400 dark:text-[#808080]">
+                  {search ? 'Không tìm thấy khách hàng' : 'Chưa có khách hàng nào'}
+                </div>
+              )}
+
+              {!loading &&
+                filtered.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      onSelect(c);
+                      onClose();
+                    }}
+                    className={`w-full rounded-lg border px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#272727] ${selectedCustomer && selectedCustomer.id === c.id ? 'border-[#004785] bg-blue-50' : 'border-slate-100 dark:border-[#333333]'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#004785] text-sm font-bold text-white">
+                        {c.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-slate-900 dark:text-[#e5e5e5]">{c.name}</p>
+                          <Badge variant={GROUP_COLORS[c.group] || 'secondary'} size="sm">
+                            {c.group}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-[#999999]">
+                          {c.phone} {c.email ? '- ' + c.email : ''}
+                        </p>
+                      </div>
+                      <div className="text-right text-xs">
+                        <p className="font-bold text-green-600">{formatCurrency(c.totalSpent)}</p>
+                        <p className="text-slate-400 dark:text-[#808080]">{c.orderCount} đơn</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </>
+        )}
       </div>
     </Modal>
   );
