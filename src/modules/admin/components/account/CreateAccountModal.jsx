@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
+import { getAssignableRoles } from '../../../../shared/utils/roles';
 
 const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
   const [formData, setFormData] = useState({
@@ -104,9 +105,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
     if (!validateForm()) return;
 
     // Set username = email
-    let mappedRoleName = formData.roleName;
-    if (mappedRoleName === 'Sales Staff') mappedRoleName = 'SalesStaff';
-    if (mappedRoleName === 'Inventory Staff') mappedRoleName = 'InventoryStaff';
+    const mappedRoleName = formData.roleName;
 
     const normalizedBranchId = formData.branchId && formData.branchId !== 'null' ? formData.branchId : undefined;
     const normalizedBranchName = formData.branchName?.trim() || undefined;
@@ -125,11 +124,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
   };
 
   // Bỏ chặn Staff, chỉ chặn Admin và CommunityUser
-  const assignableRoles = roles.filter(
-    (r) => 
-      r.roleName.toLowerCase() !== 'admin' && 
-      r.roleName.toLowerCase() !== 'communityuser'
-  );
+  const assignableRoles = getAssignableRoles(roles);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -269,7 +264,7 @@ const CreateAccountModal = ({ isOpen, onClose, onSave, roles, branches }) => {
                     className="h-4 w-4 text-[#004785] focus:ring-[#004785]"
                   />
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">{role.roleName}</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">{role.label}</div>
                   </div>
                 </label>
               ))}

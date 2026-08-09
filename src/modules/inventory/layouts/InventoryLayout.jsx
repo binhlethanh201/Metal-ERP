@@ -41,13 +41,8 @@ const InventoryLayout = () => {
 
   useEffect(() => {
     window.testToast = () => addToast('Đây là thông báo test', 'info', 'Chi tiết test');
-
-    // Global 403 toast
-    const handleForbidden = (e) => addToast(e.detail?.message || 'Không có quyền', 'error');
-    window.addEventListener('mep:forbidden', handleForbidden);
     return () => {
       delete window.testToast;
-      window.removeEventListener('mep:forbidden', handleForbidden);
     };
   }, [addToast]);
 

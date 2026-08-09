@@ -46,7 +46,6 @@ const SupplierDebtManagement = () => {
     setPageSize,
     paginationMeta,
     fetchDebtDetail,
-    handleExport,
     refetch,
   } = useSupplierDebt();
 
