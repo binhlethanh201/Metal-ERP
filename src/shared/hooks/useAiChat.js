@@ -56,7 +56,9 @@ export const useAiChat = () => {
       setLoading(true);
 
       try {
-        const res = await sendChatMessage(text);
+        // Chỉ gửi tối đa 10 tin nhắn gần nhất để làm ngữ cảnh (không gửi tin rác quá cũ)
+        const historyContext = messages.slice(-10);
+        const res = await sendChatMessage(text, historyContext);
         const botText =
           (res && res.success && res.data) ||
           res?.message ||
@@ -70,7 +72,7 @@ export const useAiChat = () => {
         setLoading(false);
       }
     },
-    [input, loading]
+    [input, loading, messages]
   );
 
   const clearChat = useCallback(() => {

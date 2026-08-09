@@ -1,7 +1,7 @@
 /**
  * Widget Trợ lý AI dùng chung toàn hệ thống
  */
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -9,8 +9,10 @@ import Icon from './Icon';
 import useAiChat from '../hooks/useAiChat';
 
 // ==================== HELPERS ====================
-const parseMessageWithTables = (text) => {
-  if (!text) return [];
+const parseMessageWithTables = (rawText) => {
+  if (!rawText) return [];
+  // Thêm newline để regex bắt được dòng cuối cùng nếu AI không trả về xuống dòng ở cuối
+  const text = rawText + '\n';
   const tableRegex = /((?:\|[^\n]+\|\r?\n){2,})/g;
   const parts = [];
   let lastIndex = 0;
@@ -24,8 +26,8 @@ const parseMessageWithTables = (text) => {
     lastIndex = match.index + match[0].length;
   }
 
-  if (lastIndex < text.length) {
-    parts.push({ type: 'text', content: text.substring(lastIndex) });
+  if (lastIndex < rawText.length) {
+    parts.push({ type: 'text', content: rawText.substring(lastIndex) });
   }
 
   return parts;
@@ -104,6 +106,18 @@ const AiChatWidget = () => {
   } = useAiChat();
 
   const [activeTableModal, setActiveTableModal] = useState(null);
+
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [messages, isOpen]);
 
   const handleClear = () => {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ lịch sử trò chuyện?')) {
@@ -253,6 +267,7 @@ const AiChatWidget = () => {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
