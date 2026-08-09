@@ -49,7 +49,7 @@ export const hasPermission = (user, permission) => {
   const isOwner = roles.some((role) => normalizePermission(role) === 'OWNER');
   const isAdmin = roles.some((role) => normalizePermission(role) === 'ADMIN');
 
-  if (isOwner) return true;
+  if (isOwner && normalizedPermission !== 'SYSTEM_MANAGE') return true;
   // Admin được mặc định cấp quyền quản trị hệ thống khi API không trả mảng permissions
   if (isAdmin && normalizedPermission === 'SYSTEM_MANAGE') return true;
 

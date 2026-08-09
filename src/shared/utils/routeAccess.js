@@ -112,8 +112,7 @@ export const ROUTE_PERMISSIONS = {
   returnHistory: ['SALE_VIEW'],
   storeSettings: OWNER_PERMISSIONS,
   printTemplates: ['PRINT_VIEW'],
-  staffManagement: ['STAFF_VIEW', 'STAFF_CREATE', 'STAFF_UPDATE', 'STAFF_DELETE', 'STAFF_ASSIGN_BRANCH'],
-  auditLogs: ['SYSTEM_MANAGE', 'OWNER_MANAGE'],
+  auditLogs: ['OWNER_MANAGE'],
   outwardExcel: ['STOCK_OUTWARD_CREATE', 'STOCK_OUTWARD_UPDATE', 'STOCK_OUTWARD_DELETE'],
 
   // Admin

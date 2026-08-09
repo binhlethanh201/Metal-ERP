@@ -4,16 +4,20 @@
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { hasPermission } from '../../utils/routeAccess';
 
 export const Header = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const userPermissions = user?.permissions || [];
 
   return (
     <header className="fixed left-[260px] right-0 top-0 z-30 border-b border-slate-200 bg-white dark:border-[#333333] dark:bg-[#0f0f0f]">
       <div className="flex min-h-16 items-center justify-between gap-4 px-6 py-0">
         <div className="flex max-w-xl flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 dark:border-[#404040] dark:bg-[#1a1a1a]">
-          <span className="material-symbols-outlined mr-2 text-slate-400 dark:text-[#808080]">search</span>
+          <span className="material-symbols-outlined mr-2 text-slate-400 dark:text-[#808080]">
+            search
+          </span>
           <input
             type="text"
             placeholder="Tìm kiếm sản phẩm, đơn hàng..."
@@ -23,21 +27,25 @@ export const Header = () => {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 border-r border-slate-200 pr-4 dark:border-[#333333]">
-            <button
-              type="button"
-              onClick={() => navigate('/inventory/export')}
-              className="rounded-lg border border-[#F59E0B] px-4 py-2 text-sm font-bold text-[#F59E0B] transition-all active:scale-95"
-            >
-              Xuất kho
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/pos')}
-              className="flex items-center gap-1 rounded-lg border border-[#004785] px-4 py-2 text-sm font-bold text-[#004785] transition-all hover:bg-blue-50 active:scale-95 dark:hover:bg-blue-950"
-            >
-              <span className="material-symbols-outlined text-sm">point_of_sale</span>
-              <span>Máy bán hàng</span>
-            </button>
+            {hasPermission(userPermissions, 'STOCK_OUTWARD_CREATE') && (
+              <button
+                type="button"
+                onClick={() => navigate('/inventory/export')}
+                className="rounded-lg border border-[#F59E0B] px-4 py-2 text-sm font-bold text-[#F59E0B] transition-all active:scale-95"
+              >
+                Xuất kho
+              </button>
+            )}
+            {hasPermission(userPermissions, 'SALE_VIEW') && (
+              <button
+                type="button"
+                onClick={() => navigate('/pos')}
+                className="flex items-center gap-1 rounded-lg border border-[#004785] px-4 py-2 text-sm font-bold text-[#004785] transition-all hover:bg-blue-50 active:scale-95 dark:hover:bg-blue-950"
+              >
+                <span className="material-symbols-outlined text-sm">point_of_sale</span>
+                <span>Máy bán hàng</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

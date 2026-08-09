@@ -3,16 +3,18 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { hasAnyPermission } from '../../utils/permissions';
 
 const navSections = [
   {
     title: 'HỆ THỐNG',
     items: [
-      { icon: 'dashboard', label: 'Tổng quan', path: '/inventory/dashboard' },
-      { icon: 'inventory_2', label: 'Hàng hóa', path: '/inventory/products' },
-      { icon: 'group', label: 'Nhà cung cấp', path: '/inventory/suppliers' },
-      { icon: 'analytics', label: 'Báo cáo', path: '/inventory/reports' },
-      { icon: 'badge', label: 'Quản lý nhân viên', path: '/admin' },
+      { icon: 'dashboard', label: 'Tổng quan', path: '/inventory/dashboard', permissions: ['STOCK_VIEW', 'OWNER_MANAGE'] },
+      { icon: 'inventory_2', label: 'Hàng hóa', path: '/inventory/products', permissions: ['PRODUCT_VIEW'] },
+      { icon: 'group', label: 'Nhà cung cấp', path: '/inventory/suppliers', permissions: ['SUPPLIER_VIEW'] },
+      { icon: 'analytics', label: 'Báo cáo', path: '/inventory/reports', permissions: ['REPORT_VIEW', 'OWNER_MANAGE'] },
+      { icon: 'badge', label: 'Quản lý nhân viên', path: '/admin', permissions: ['SYSTEM_MANAGE'] },
     ],
   },
 ];
@@ -20,6 +22,7 @@ const navSections = [
 export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const isActivePath = (path) => {
     if (path === '/inventory/products') return location.pathname === path;
@@ -55,7 +58,7 @@ export const Sidebar = () => {
               {section.title}
             </p>
             <div className="space-y-1">
-              {section.items.map((item) => (
+              {section.items.filter(item => !item.permissions || hasAnyPermission(user, item.permissions)).map((item) => (
                 <button
                   key={item.label}
                   onClick={() => navigate(item.path)}
