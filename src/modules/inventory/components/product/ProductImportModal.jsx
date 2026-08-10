@@ -15,6 +15,7 @@ const handleDownloadTemplate = () => {
       'Thương hiệu': 'Brand X',
       'Giá vốn': 100000,
       'Giá bán': 150000,
+      'Tồn kho ban đầu': 0,
     },
   ]);
   const wb = XLSX.utils.book_new();
@@ -80,6 +81,7 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
       BrandName: row['Thương hiệu']?.toString() || '',
       CostPrice: parseFloat(row['Giá vốn']) || 0,
       SalePrice: parseFloat(row['Giá bán']) || 0,
+      ActualStock: parseFloat(row['Tồn kho ban đầu']) || 0,
       IsActive: true,
     }));
   };
@@ -182,12 +184,13 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
                     <th className="px-4 py-2">ĐVT</th>
                     <th className="px-4 py-2">Giá vốn</th>
                     <th className="px-4 py-2">Giá bán</th>
+                    <th className="px-4 py-2">Tồn kho</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {previewData.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-4 py-4 text-center text-slate-500">
+                      <td colSpan="6" className="px-4 py-4 text-center text-slate-500">
                         File trống hoặc không đúng định dạng
                       </td>
                     </tr>
@@ -199,6 +202,7 @@ export const ProductImportModal = ({ isOpen, onClose, onSuccess }) => {
                         <td className="px-4 py-2">{row['ĐVT'] || '-'}</td>
                         <td className="px-4 py-2">{row['Giá vốn'] || '-'}</td>
                         <td className="px-4 py-2">{row['Giá bán'] || '-'}</td>
+                        <td className="px-4 py-2">{row['Tồn kho ban đầu'] ?? 0}</td>
                       </tr>
                     ))
                   )}

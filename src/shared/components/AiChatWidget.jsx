@@ -13,7 +13,7 @@ const parseMessageWithTables = (rawText) => {
   if (!rawText) return [];
   // Thêm newline để regex bắt được dòng cuối cùng nếu AI không trả về xuống dòng ở cuối
   const text = rawText + '\n';
-  const tableRegex = /((?:\|[^\n]+\|\r?\n){2,})/g;
+  const tableRegex = /((?:^[ \t]*\|[^\n]*\r?\n){2,})/gm;
   const parts = [];
   let lastIndex = 0;
   let match;
