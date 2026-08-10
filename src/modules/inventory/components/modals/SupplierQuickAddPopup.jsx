@@ -11,12 +11,14 @@ const SupplierQuickAddPopup = ({ isOpen, onClose, onSave }) => {
   const [saving, setSaving] = useState(false);
 
   // Supplier groups & quick-add
+  // eslint-disable-next-line no-unused-vars
   const [supplierGroups, setSupplierGroups] = useState([
     'Nguyên vật liệu',
     'Thành phẩm',
     'Dịch vụ',
     'Khác',
   ]);
+  // eslint-disable-next-line no-unused-vars
   const [showGroupPopup, setShowGroupPopup] = useState(false);
   const [newGroup, setNewGroup] = useState({
     code: '',
@@ -25,6 +27,7 @@ const SupplierQuickAddPopup = ({ isOpen, onClose, onSave }) => {
     description: '',
   });
 
+  // eslint-disable-next-line no-unused-vars
   const handleAddGroup = () => {
     if (!newGroup.name.trim()) {
       alert('Vui lòng nhập Tên nhóm NCC');
@@ -577,8 +580,6 @@ const SupplierQuickAddPopup = ({ isOpen, onClose, onSave }) => {
           </div>
         </div>
       </div>
-        </div>
-      )}
     </div>
   );
 };

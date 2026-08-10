@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import {
   getAssignableRoles,
@@ -11,7 +11,7 @@ import {
 const AssignRoleModal = ({ isOpen, onClose, onSave, roles, user }) => {
   const [roleId, setRoleId] = useState('');
 
-  const assignableRoles = getAssignableRoles(roles);
+  const assignableRoles = useMemo(() => getAssignableRoles(roles), [roles]);
 
   useEffect(() => {
     if (isOpen && user) {
