@@ -203,7 +203,7 @@ export const ProductManagement = () => {
               <Icon name="search" className="mr-2 text-slate-400 dark:text-[#808080]" />
               <input
                 className="w-full border-none bg-transparent text-sm outline-none focus:ring-0 dark:text-[#e5e5e5]"
-                placeholder="Tìm theo mã, tên hàng, mã vạch..."
+                placeholder="Tìm mã, tên, mã vạch, nhóm, thương hiệu..."
                 value={draftSearch}
                 onChange={(e) => setDraftSearch(e.target.value)}
                 onKeyDown={(e) => {

@@ -260,7 +260,7 @@ const AdminDashboard = () => {
           </Section>
         </div>
 
-        <div className="xl:col-span-1">
+        <div className="xl:col-span-1 xl:-mt-[134px] relative z-10">
           <Section
             title="Hoạt động Quản trị gần đây"
             icon="history"
@@ -273,7 +273,7 @@ const AdminDashboard = () => {
               </button>
             }
           >
-            <div className="no-scrollbar flex h-[280px] flex-col gap-3 overflow-y-auto pr-1">
+            <div className="no-scrollbar flex h-[280px] xl:h-[414px] flex-col gap-3 overflow-y-auto pr-1">
               {loading && recentEvents.length === 0 ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full" />
