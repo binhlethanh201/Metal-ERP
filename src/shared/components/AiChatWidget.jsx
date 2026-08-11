@@ -107,6 +107,62 @@ const AiChatWidget = () => {
 
   const [activeTableModal, setActiveTableModal] = useState(null);
 
+  // Drag logic
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const hasDragged = useRef(false);
+
+  const handleMouseDown = (e) => {
+    if (isFull) return; // Không cho kéo khi đang phóng to
+    
+    const isChatToggleBtn = e.currentTarget.id === 'chat-toggle-btn';
+    if (!isChatToggleBtn && e.target.closest('button')) return; // Không kéo nếu click vào các nút trên header
+
+    hasDragged.current = false;
+    setIsDragging(true);
+    dragStartPos.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      hasDragged.current = true;
+      setPosition({
+        x: e.clientX - dragStartPos.current.x,
+        y: e.clientY - dragStartPos.current.y
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'none'; // Tránh bôi đen chữ
+    } else {
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
+
+  // Đặt lại vị trí khi đổi chế độ phóng to
+  useEffect(() => {
+    if (isFull) {
+      setPosition({ x: 0, y: 0 });
+    }
+  }, [isFull]);
+
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -178,10 +234,15 @@ const AiChatWidget = () => {
   return (
     <>
       <div
-        className={`fixed z-[100] flex origin-bottom-right flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 dark:border-[#333333] dark:bg-[#0f0f0f] ${
+        style={{
+          transform: isFull ? 'none' : `translate(${position.x}px, ${position.y}px) scale(${isOpen ? 1 : 0.95})`,
+        }}
+        className={`fixed z-[100] flex origin-bottom-right flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-[#333333] dark:bg-[#0f0f0f] ${
+          isDragging ? 'transition-none' : 'transition-all duration-200'
+        } ${
           isOpen
-            ? 'visible scale-100 opacity-100'
-            : 'pointer-events-none invisible scale-95 opacity-0'
+            ? 'visible opacity-100'
+            : 'pointer-events-none invisible opacity-0'
         } ${
           isFull
             ? 'inset-0 h-[100dvh] w-[100dvw] rounded-none sm:inset-4 sm:h-[calc(100vh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[1.5rem]'
@@ -189,7 +250,10 @@ const AiChatWidget = () => {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between rounded-t-2xl bg-primary px-4 py-3 text-white">
+        <div 
+          className={`flex items-center justify-between rounded-t-2xl bg-primary px-4 py-3 text-white ${!isFull ? 'cursor-move' : ''}`}
+          onMouseDown={handleMouseDown}
+        >
           <div className="flex items-center gap-2">
             <span className="relative flex h-3 w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
@@ -337,10 +401,23 @@ const AiChatWidget = () => {
 
       {/* Nút mở chat */}
       <button
+        id="chat-toggle-btn"
         type="button"
-        onClick={() => toggle((prev) => !prev)}
-        className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-2xl transition-transform hover:scale-110 ${
-          isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'
+        onMouseDown={handleMouseDown}
+        onClick={(e) => {
+          if (hasDragged.current) {
+            e.preventDefault();
+            return;
+          }
+          toggle((prev) => !prev);
+        }}
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px) scale(${isOpen ? 0 : 1})`,
+        }}
+        className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-2xl hover:brightness-110 ${
+          isDragging ? 'transition-none cursor-move' : 'transition-all duration-200 cursor-pointer'
+        } ${
+          isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
         <Icon name="chat" className="text-2xl" />
