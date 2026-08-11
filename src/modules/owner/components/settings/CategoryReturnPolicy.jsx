@@ -121,7 +121,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
 
   // Các nhóm hàng đã được thiết lập (có ít nhất 1 trong 2 policy)
   const configuredEntries = Object.values(policies).filter(
-    (vals) => vals.returnDays || vals.exchangeDays
+    (vals) => Number(vals.returnDays) > 0 || Number(vals.exchangeDays) > 0
   );
 
   // Các nhóm hàng chưa thiết lập policy nào
@@ -162,9 +162,17 @@ const CategoryReturnPolicy = ({ branchId }) => {
   const handleModalSave = async () => {
     const catName = editCategory || formCategory;
     if (!catName) return;
-    const catId = getCatIdByName(catName);
+
     const returnDays = toTotalDays(formReturn.value, formReturn.unit);
     const exchangeDays = toTotalDays(formExchange.value, formExchange.unit);
+
+    // Block neu ca 2 deu trong (ko cho phep them policy rong)
+    if (!returnDays && !exchangeDays) {
+      alert('Vui lòng nhập ít nhất một thời hạn (Trả hàng hoặc Đổi hàng) trước khi thêm.');
+      return;
+    }
+
+    const catId = getCatIdByName(catName);
 
     updatePolicy(catName, 'returnDays', String(returnDays), catId);
     updatePolicy(catName, 'exchangeDays', String(exchangeDays), catId);

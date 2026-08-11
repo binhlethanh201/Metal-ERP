@@ -7,13 +7,18 @@ import { ReportHelpModal } from './ReportHelpModal';
 
 const calcQty = (items, field) => items.reduce((s, i) => s + (Number(i[field]) || 0), 0);
 
-export const StockMovementReport = ({ data, isLoading, fromDate, toDate }) => {
+export const StockMovementReport = ({ data, isLoading, fromDate, toDate, productStatus = 'all' }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [ledgerProduct, setLedgerProduct] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
 
-  const items = useMemo(() => data?.items || [], [data?.items]);
+  const items = useMemo(() => {
+    const all = data?.items || [];
+    if (productStatus === 'active') return all.filter(i => !i.isDeleted);
+    if (productStatus === 'deleted') return all.filter(i => i.isDeleted);
+    return all;
+  }, [data?.items, productStatus]);
   const totalPages = Math.ceil(items.length / pageSize) || 1;
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * pageSize;

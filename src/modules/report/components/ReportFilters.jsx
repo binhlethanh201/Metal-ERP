@@ -86,6 +86,7 @@ export const ReportFilters = ({
   toDate, onToDateChange,
   categoryId, onCategoryChange, categories,
   productId, onProductChange, products,
+  productStatus, onProductStatusChange,
   timeGrouping, onTimeGroupingChange,
   includeZeroStock, onIncludeZeroStockChange,
   sortBy, onSortByChange,
@@ -186,6 +187,18 @@ export const ReportFilters = ({
                 options={products}
                 placeholder="Gõ mã hoặc tên SP..."
               />
+            </div>
+          )}
+
+          {/* Product status filter */}
+          {isStock && (
+            <div className="w-36">
+              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999]">Trạng thái</label>
+              <select className={selectClass} value={productStatus} onChange={e => onProductStatusChange(e.target.value)}>
+                <option value="all">Tất cả</option>
+                <option value="active">Đang bán</option>
+                <option value="deleted">Đã xóa</option>
+              </select>
             </div>
           )}
 

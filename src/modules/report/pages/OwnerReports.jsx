@@ -37,6 +37,7 @@ export const OwnerReports = () => {
   const [toDate, setToDate] = useState(defaultToDate);
   const [categoryId, setCategoryId] = useState('');
   const [productId, setProductId] = useState('');
+  const [productStatus, setProductStatus] = useState('all'); // all | active | deleted
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -402,6 +403,8 @@ export const OwnerReports = () => {
         productId={productId}
         onProductChange={setProductId}
         products={products}
+        productStatus={productStatus}
+        onProductStatusChange={setProductStatus}
         timeGrouping={timeGrouping}
         onTimeGroupingChange={setTimeGrouping}
         includeZeroStock={includeZeroStock}
@@ -435,7 +438,7 @@ export const OwnerReports = () => {
       <div className="space-y-6">
         {selectedReport === 'daily-end' && <DailyEndReport data={dailyEndData} />}
         {selectedReport === 'stock-movement' && (
-          <StockMovementReport data={movementData} isLoading={loadingStockMovement} fromDate={fromDate} toDate={toDate} />
+          <StockMovementReport data={movementData} isLoading={loadingStockMovement} fromDate={fromDate} toDate={toDate} productStatus={productStatus} />
         )}
         {selectedReport === 'revenue-by-time' && (
           <RevenueByTimeReport data={revenueData} isLoading={loadingRevenue} />
