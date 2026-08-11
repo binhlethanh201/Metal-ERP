@@ -41,8 +41,8 @@ const STEPS = [
     icon: 'tune',
     badge: '± Cân bằng kho',
     badgeClass: 'bg-amber-100 text-amber-700 border-amber-300',
-    desc: 'Số lượng điều chỉnh tăng hoặc giảm do chênh lệch giữa đếm kiểm kê thực tế và số liệu trên hệ thống.',
-    includes: ['Cộng (+): Kiểm kê thực tế THỪA so với hệ thống', 'Trừ (-): Kiểm kê thực tế THIẾU so với hệ thống'],
+    desc: 'Số lượng điều chỉnh tăng hoặc giảm do chênh lệch giữa đếm kiểm kê thực tế và số liệu trên hệ thống, hoặc điều chỉnh cân bằng kho thủ công.',
+    includes: ['Cộng (+): Kiểm kê thực tế THỪA so với hệ thống', 'Trừ (-): Kiểm kê thực tế THIẾU so với hệ thống', 'Cân bằng kho thủ công (tăng/giảm theo thực tế)'],
     example: 'Phiếu kiểm kê kho phát sinh chênh lệch giảm 1 sản phẩm do hao hụt/hư hỏng.',
     result: 'Số lượng điều chỉnh = -1 sản phẩm',
   },
@@ -52,9 +52,24 @@ const STEPS = [
     icon: 'calculate',
     badge: 'Kết quả tồn kho',
     badgeClass: 'bg-blue-600 text-white border-blue-600',
-    desc: 'Số lượng và giá trị hàng hóa tồn kho thực tế tại thời điểm kết thúc khoảng thời gian lọc báo cáo.',
+    desc: 'Số lượng và giá trị hàng hóa tồn kho thực tế tại thời điểm kết thúc khoảng thời gian lọc báo cáo. Con số này khớp với tồn kho hiển thị ngoài danh sách sản phẩm.',
     example: 'Công thức xác định số lượng tồn kho cuối kỳ:',
     result: '10 (Đầu) + 5 (Nhập) - 3 (Xuất) + (-1) (Điều chỉnh) = 11 sản phẩm',
+  },
+  {
+    title: '6. Giá Vốn Bình Quân',
+    subtitle: 'Cách tính giá vốn khi nhập từ nhiều NCC',
+    icon: 'finance',
+    badge: 'BQ gia quyền',
+    badgeClass: 'bg-purple-100 text-purple-700 border-purple-300',
+    desc: 'Giá vốn bình quân gia quyền được tính lại mỗi lần nhập kho. Khi cùng một sản phẩm được nhập từ nhiều nhà cung cấp với giá khác nhau, hệ thống tự động tính bình quân theo số lượng thực tế.',
+    includes: [
+      'Giá vốn BQ = (Tổng tiền hàng tồn) / (Tổng số lượng tồn)',
+      'Tính lại mỗi khi có giao dịch nhập kho mới',
+      'Xuất kho: lấy giá vốn BQ tại thời điểm xuất'
+    ],
+    example: 'Tồn đầu: 10 sản phẩm x 20.000đ = 200.000đ. Nhập thêm NCC khác: 5 sản phẩm x 16.000đ = 80.000đ. Giá vốn BQ mới = (200.000 + 80.000) / (10 + 5) = 18.667đ/sản phẩm.',
+    result: 'Giá vốn BQ = 18.667đ/sp (hiển thị làm tròn: 18.667đ)',
   },
 ];
 

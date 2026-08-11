@@ -24,6 +24,7 @@ const COLUMNS = [
   { label: 'Thương hiệu', width: 'w-[130px]', sortKey: 'brand', align: '' },
   { label: 'Giá bán', width: 'w-[110px]', sortKey: 'salePrice', align: 'right' },
   { label: 'Giá vốn', width: 'w-[110px]', sortKey: 'costPrice', align: 'right' },
+  { label: 'Tồn kho', width: 'w-[90px]', sortKey: 'stock', align: 'right' },
   { label: 'Vị trí kho', width: 'w-[110px]', sortKey: 'location', align: '' },
   { label: 'Hoạt động', width: 'w-[90px]', sortKey: '', align: '' },
   { label: 'Thời gian tạo', width: 'w-[160px]', sortKey: 'createdAt', align: '' },
@@ -143,7 +144,7 @@ export const ProductTable = ({
       <tbody className="divide-y divide-gray-200 text-sm dark:divide-[#333333]">
         {sortedRows.length === 0 && (
           <tr>
-            <td colSpan={10} className="px-6 py-8 text-center text-slate-500 dark:text-[#999999]">
+            <td colSpan={11} className="px-6 py-8 text-center text-slate-500 dark:text-[#999999]">
               Không có dữ liệu
             </td>
           </tr>
@@ -205,6 +206,9 @@ export const ProductTable = ({
                 <td className="whitespace-nowrap px-4 py-3 text-right text-slate-500 dark:text-[#999999]">
                   {fmtMoney(row.costPrice)}
                 </td>
+                <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-800 dark:text-[#e5e5e5]">
+                  {row.actualStock ?? row.stock ?? 0}
+                </td>
                 <td className="truncate whitespace-nowrap px-4 py-3 text-slate-500 dark:text-[#999999]">
                   {row.shelfLocation || row.location || '---'}
                 </td>
@@ -222,7 +226,7 @@ export const ProductTable = ({
               </tr>
               {isExpanded && (
                 <tr>
-                  <td colSpan={10} className="border-b border-blue-200 p-0 dark:border-blue-800">
+                  <td colSpan={11} className="border-b border-blue-200 p-0 dark:border-blue-800">
                     <ProductDetailPanel
                       row={row}
                       onEdit={(r, tab) => onEdit?.(r, tab)}
