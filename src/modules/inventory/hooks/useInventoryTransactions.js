@@ -37,8 +37,8 @@ const normalizeTransaction = (item, type) => {
     totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
     totalAmount:
       item?.items?.reduce((sum, i) => {
-        const qty = Number(i.quantity || 0);
-        const price = Number(i.costPrice || 0);
+        const qty = Number(i.quantity || i.discrepancy || 0);
+        const price = Number(i.unitPrice ?? i.costPrice ?? 0);
         return sum + qty * price;
       }, 0) || 0,
     createdByName: item?.userName || item?.createdByName || '-',
@@ -48,9 +48,9 @@ const normalizeTransaction = (item, type) => {
       id: i?.ticketItemId || i?.branchProductId,
       productCode: i?.productCode || '-',
       productName: i?.productName || '-',
-      unit: i?.unit || 'Cái',
-      quantity: Number(i?.quantity || 0),
-      costPrice: Number(i?.costPrice || 0),
+      unit: i?.unit || i?.unitName || 'Cái',
+      quantity: Number(i?.quantity || i?.discrepancy || 0),
+      costPrice: Number(i?.unitPrice ?? i?.costPrice ?? 0),
     })),
   };
 };
@@ -159,7 +159,7 @@ export const useInventoryTransactions = () => {
               })
               .reduce(
                 (s, i) =>
-                  s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
+                  s + (i.items?.reduce((a, b) => a + (b.quantity || b.discrepancy || 0) * (b.unitPrice ?? b.costPrice ?? 0), 0) || 0),
                 0
               ) || 0,
           todayOutwardValue:
@@ -167,7 +167,7 @@ export const useInventoryTransactions = () => {
               .filter((ticket) => ticket.status === 'COMPLETED')
               .reduce(
                 (s, i) =>
-                  s + (i.items?.reduce((a, b) => a + b.quantity * (b.costPrice || 0), 0) || 0),
+                  s + (i.items?.reduce((a, b) => a + (b.quantity || b.discrepancy || 0) * (b.unitPrice ?? b.costPrice ?? 0), 0) || 0),
                 0
               ) || 0,
           pendingCount: 0,

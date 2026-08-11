@@ -813,6 +813,10 @@ export const InventoryTransactionManagement = () => {
                         <span className="text-xs italic text-slate-400 dark:text-[#808080]">
                           Khách hàng trả
                         </span>
+                      ) : (row.note || '').includes('INVENTORY_ADJUSTMENT') ? (
+                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          Cân bằng kho
+                        </span>
                       ) : row.type === 'OUTWARD' && row.totalAmount === 0 ? (
                         <span className="text-xs italic text-slate-400 dark:text-[#808080]">
                           {row.reason || row.ticketType || '-'}

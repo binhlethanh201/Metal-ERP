@@ -188,10 +188,6 @@ const AdminRoleManagement = () => {
   const selectedRole = matrix.find((role) => role.roleId === selectedRoleId);
   const isSuperAdmin = selectedRole?.roleName?.toUpperCase() === 'ADMIN';
 
-  // Bo VIEW permission khoi count, chi dem quyen thao tac
-  const viewCodes = new Set(PAGE_PERMISSION_GROUPS.map((p) => p.viewPermission));
-  const actionCount = selectedCodes.filter((c) => !viewCodes.has(c)).length;
-
   return (
     <div className="flex h-[calc(100vh-100px)] flex-col">
       {/* Tiêu đề */}
@@ -259,8 +255,6 @@ const AdminRoleManagement = () => {
               });
               return Object.values(deduped).map((role) => {
                 const isSelected = role.roleId === selectedRoleId;
-                const viewCodes = new Set(PAGE_PERMISSION_GROUPS.map((p) => p.viewPermission));
-                const permissionCount = (role.permissions || []).filter((p) => !viewCodes.has(p.permissionCode)).length;
 
                 return (
                   <button
@@ -276,13 +270,6 @@ const AdminRoleManagement = () => {
                     <div className="flex items-center justify-between">
                       <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-900 dark:text-[#e5e5e5]'}`}>
                         {role.roleName}
-                      </span>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        isSelected
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
-                      }`}>
-                        {permissionCount} quyền
                       </span>
                     </div>
                     <div className={`mt-1 text-[11px] ${isSelected ? 'text-white/80' : 'text-slate-500 dark:text-[#999999]'}`}>
@@ -321,9 +308,6 @@ const AdminRoleManagement = () => {
                     Bật / tắt Switch trang và chọn quyền con để phân quyền chi tiết.
                   </p>
                 </div>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                  {actionCount > 0 ? `${actionCount} quyền đang chọn` : 'Chưa có quyền nào'}
-                </span>
               </div>
 
               <div className="no-scrollbar flex-1 overflow-y-auto p-5">
