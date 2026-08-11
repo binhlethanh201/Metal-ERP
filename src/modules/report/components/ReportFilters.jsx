@@ -13,12 +13,19 @@ const SearchableSelect = ({ value, onChange, options, placeholder, label }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  const selected = options.find(o => (o.id ?? o) === value);
-  const displayText = selected ? (selected.name ?? selected.label ?? selected) : '';
+  const getId = (o) => o?.id ?? o?.productId ?? o;
+  const getName = (o) => {
+    if (!o) return '';
+    if (typeof o === 'string') return o;
+    return o.name ?? o.productName ?? o.supplierName ?? o.label ?? 'Không tên';
+  };
+
+  const selected = options.find(o => getId(o) === value);
+  const displayText = getName(selected);
 
   const filtered = options.filter(o => {
-    const name = (o.name ?? o.label ?? o).toString().toLowerCase();
-    return name.includes(search.toLowerCase());
+    const nameStr = getName(o).toString().toLowerCase();
+    return nameStr.includes(search.toLowerCase());
   });
 
   useEffect(() => {
@@ -50,9 +57,9 @@ const SearchableSelect = ({ value, onChange, options, placeholder, label }) => {
             -- Tất cả --
           </div>
           {filtered.map((o, i) => {
-            const id = o.id ?? o;
-            const name = o.name ?? o.label ?? o;
-            const code = o.productCode ?? o.code ?? '';
+            const id = getId(o);
+            const name = getName(o);
+            const code = o?.productCode ?? o?.code ?? '';
             return (
               <div
                 key={id || i}
