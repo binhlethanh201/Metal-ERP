@@ -103,13 +103,7 @@ export const STAFF_ACTIONS = {
   ASSIGN_BRANCH: 'STAFF_ASSIGN_BRANCH',
 };
 
-// ==================== REPORT (Bao Cao) ====================
-export const REPORT_ACTIONS = {
-  VIEW:          'REPORT_VIEW',
-};
-
-/**
- * Cac permission duoc phep truy cap lookup/dropdown APIs.
+// ==================== LOOKUP PERMISSIONS ====================
  * VD: Nguoi co STOCK_INWARD_CREATE duoc phep goi GET /api/suppliers de chon NCC trong form nhap kho.
  */
 export const LOOKUP_ACCESS = {

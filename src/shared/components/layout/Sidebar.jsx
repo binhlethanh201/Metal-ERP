@@ -13,7 +13,7 @@ const navSections = [
       { icon: 'dashboard', label: 'Tổng quan', path: '/inventory/dashboard', permissions: ['STOCK_VIEW', 'OWNER_MANAGE'] },
       { icon: 'inventory_2', label: 'Hàng hóa', path: '/inventory/products', permissions: ['PRODUCT_VIEW'] },
       { icon: 'group', label: 'Nhà cung cấp', path: '/inventory/suppliers', permissions: ['SUPPLIER_VIEW'] },
-      { icon: 'analytics', label: 'Báo cáo', path: '/inventory/reports', permissions: ['REPORT_VIEW', 'OWNER_MANAGE'] },
+      { icon: 'analytics', label: 'Báo cáo', path: '/inventory/reports', permissions: ['OWNER_MANAGE'] },
       { icon: 'badge', label: 'Quản lý nhân viên', path: '/admin', permissions: ['SYSTEM_MANAGE'] },
     ],
   },

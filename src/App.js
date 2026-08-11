@@ -176,15 +176,8 @@ function App() {
                 <Route path="print-templates" element={<PrintTemplateSettings />} />
               </Route>
 
-              {/* --- ROUTE REPORT --- */}
-              <Route element={<PrivateRoute allowedPermissions={['REPORT_VIEW']} />}>
-                <Route path="reports" element={<OwnerReports />} />
-              </Route>
-
-              {/* --- ROUTE REPORT --- */}
-              <Route element={<PrivateRoute allowedPermissions={['REPORT_VIEW']} />}>
-                <Route path="reports" element={<OwnerReports />} />
-              </Route>
+              {/* --- ROUTE REPORT (Owner only, no extra permission required) --- */}
+              <Route path="reports" element={<OwnerReports />} />
 
               <Route element={<PrivateRoute allowedPermissions={ROUTE_PERMISSIONS.inventoryTransactions} />}>
                 <Route path="transactions" element={<InventoryTransactionManagement />} />

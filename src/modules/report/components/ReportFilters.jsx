@@ -1,11 +1,76 @@
 // src/modules/report/components/ReportFilters.jsx
-import { useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { Card } from '../../../shared/components/Card';
 import Icon from '../../../shared/components/Icon';
 import { REPORT_TYPES } from '../constraints/reportConstants';
 
 const inputClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]';
 const selectClass = inputClass;
+
+// Searchable dropdown component
+const SearchableSelect = ({ value, onChange, options, placeholder, label }) => {
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const selected = options.find(o => (o.id ?? o) === value);
+  const displayText = selected ? (selected.name ?? selected.label ?? selected) : '';
+
+  const filtered = options.filter(o => {
+    const name = (o.name ?? o.label ?? o).toString().toLowerCase();
+    return name.includes(search.toLowerCase());
+  });
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999]">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          className={inputClass + ' pr-8'}
+          placeholder={placeholder || 'Tìm kiếm...'}
+          value={open ? search : displayText}
+          onChange={e => { setSearch(e.target.value); setOpen(true); }}
+          onFocus={() => { setSearch(''); setOpen(true); }}
+        />
+        <Icon name={open ? 'expand_less' : 'expand_more'} size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      </div>
+      {open && (
+        <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-[#404040] dark:bg-[#1a1a1a]">
+          <div
+            className="cursor-pointer px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-[#333333]"
+            onClick={() => { onChange(''); setSearch(''); setOpen(false); }}
+          >
+            -- Tất cả --
+          </div>
+          {filtered.map((o, i) => {
+            const id = o.id ?? o;
+            const name = o.name ?? o.label ?? o;
+            const code = o.productCode ?? o.code ?? '';
+            return (
+              <div
+                key={id || i}
+                className={`cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-950/30 ${value === id ? 'bg-blue-50 font-semibold text-[#004785] dark:bg-blue-950/30 dark:text-blue-400' : 'text-slate-700 dark:text-[#b3b3b3]'}`}
+                onClick={() => { onChange(id); setSearch(''); setOpen(false); }}
+              >
+                {code ? `${code} - ${name}` : name}
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="px-3 py-2 text-sm text-slate-400">Không tìm thấy</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const ReportFilters = ({
   selectedReport, onSelectReport,
@@ -94,22 +159,26 @@ export const ReportFilters = ({
           {/* Category filter */}
           {(isStock || isProductProfit) && (
             <div className="w-48">
-              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999]">Nhóm SP</label>
-              <select className={selectClass} value={categoryId} onChange={e => onCategoryChange(e.target.value)}>
-                <option value="">Tất cả</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <SearchableSelect
+                label="Nhóm SP"
+                value={categoryId}
+                onChange={onCategoryChange}
+                options={categories}
+                placeholder="Gõ tên nhóm..."
+              />
             </div>
           )}
 
           {/* Product filter */}
           {isStock && (
-            <div className="w-48">
-              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#999]">Sản phẩm</label>
-              <select className={selectClass} value={productId} onChange={e => onProductChange(e.target.value)}>
-                <option value="">Tất cả</option>
-                {products.map(p => <option key={p.id || p.productId} value={p.id || p.productId}>{p.productCode || p.code} - {p.productName || p.name}</option>)}
-              </select>
+            <div className="w-56">
+              <SearchableSelect
+                label="Sản phẩm"
+                value={productId}
+                onChange={onProductChange}
+                options={products}
+                placeholder="Gõ mã hoặc tên SP..."
+              />
             </div>
           )}
 

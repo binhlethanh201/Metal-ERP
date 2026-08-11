@@ -349,8 +349,7 @@ export const OwnerReports = () => {
         const selectedCatName = categories.find((c) => c.id === categoryId)?.name;
         const res = await getProducts({
           pageNumber: 1,
-          pageSize: 200,
-          status: 'active',
+          pageSize: 1000,
           categoryName: selectedCatName || undefined,
         });
         if (isMounted && res?.success && res.data) {

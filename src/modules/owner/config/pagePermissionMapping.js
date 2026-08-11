@@ -91,13 +91,6 @@ export const PAGE_PERMISSION_GROUPS = [
       { code: 'SHIFT_VIEW', label: 'Xem lịch sử ca bán (Kho)' },
     ],
   },
-  {
-    id: 'page_reports',
-    pageName: 'Báo cáo tổng hợp',
-    category: 'Báo cáo',
-    viewPermission: 'REPORT_VIEW',
-    subPermissions: [],
-  },
 ];
 
 /**

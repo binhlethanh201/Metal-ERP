@@ -66,7 +66,6 @@ export const INVENTORY_PERMISSIONS = [
   'SHIFT_UPDATE',
   'SHIFT_FORCE_CLOSE',
   'PRINT_VIEW',
-  'REPORT_VIEW',
 ];
 
 export const ADMIN_PERMISSIONS = ['SYSTEM_MANAGE'];
@@ -107,7 +106,7 @@ export const ROUTE_PERMISSIONS = {
   ],
   expenses: ['EXPENSE_VIEW'],
   expenseCategories: ['EXPENSE_CATEGORY_MANAGE'],
-  ownerReports: ['REPORT_VIEW', 'OWNER_MANAGE'],
+  ownerReports: ['OWNER_MANAGE'],
   shiftHistory: ['SHIFT_VIEW'],
   returnHistory: ['SALE_VIEW'],
   storeSettings: OWNER_PERMISSIONS,

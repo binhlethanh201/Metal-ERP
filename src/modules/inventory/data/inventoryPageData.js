@@ -110,10 +110,9 @@ export const sidebarItems = [
   {
     label: 'Báo cáo',
     icon: 'assessment',
-    permissions: ['REPORT_VIEW'],
+    permissions: ['OWNER_MANAGE'],
     children: [
-      // { label: 'Báo cáo kho', path: '/inventory/reports', permissions: ['REPORT_VIEW'] },
-      { label: 'Báo cáo Tổng hợp', path: '/inventory/reports', permissions: ['REPORT_VIEW', 'OWNER_MANAGE'] },
+      { label: 'Báo cáo Tổng hợp', path: '/inventory/reports', permissions: ['OWNER_MANAGE'] },
     ],
   },
 ];
