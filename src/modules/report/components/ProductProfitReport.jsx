@@ -4,10 +4,12 @@ import { Card } from '../../../shared/components/Card';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { PRODUCT_PROFIT_COLUMNS } from '../constraints/reportConstants';
+import { ProductProfitHelpModal } from './ProductProfitHelpModal';
 
 export const ProductProfitReport = ({ data, items, totals, isLoading }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [showHelp, setShowHelp] = useState(false);
 
   const allItems = useMemo(() => items || [], [items]);
   const totalPages = Math.ceil(allItems.length / pageSize) || 1;
@@ -20,6 +22,16 @@ export const ProductProfitReport = ({ data, items, totals, isLoading }) => {
 
   return (
     <>
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Chỉ số tổng quan</span>
+        <button
+          type="button"
+          onClick={() => setShowHelp(true)}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+        >
+          <Icon name="lightbulb" size={14} /> Cách tính
+        </button>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card padding="p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">Tổng doanh thu</p>
@@ -75,6 +87,8 @@ export const ProductProfitReport = ({ data, items, totals, isLoading }) => {
           </div>
         )}
       </Card>
+
+      <ProductProfitHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </>
   );
 };

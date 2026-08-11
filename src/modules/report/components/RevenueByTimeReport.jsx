@@ -4,10 +4,12 @@ import { Card } from '../../../shared/components/Card';
 import { Table } from '../../../shared/components/Table';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { RevenueHelpModal } from './RevenueHelpModal';
 
 export const RevenueByTimeReport = ({ data, isLoading }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [showHelp, setShowHelp] = useState(false);
 
   const items = useMemo(() => data?.tableData || [], [data?.tableData]);
   const totalPages = Math.ceil(items.length / pageSize) || 1;
@@ -40,6 +42,16 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
 
   return (
     <>
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Chỉ số tổng quan</span>
+        <button
+          type="button"
+          onClick={() => setShowHelp(true)}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+        >
+          <Icon name="lightbulb" size={14} /> Cách tính
+        </button>
+      </div>
       <div className="grid gap-4 sm:grid-cols-4">
         <Card padding="p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
@@ -153,6 +165,8 @@ export const RevenueByTimeReport = ({ data, isLoading }) => {
           </div>
         )}
       </Card>
+
+      <RevenueHelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </>
   );
 };
