@@ -28,8 +28,9 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
   const [brandOptions, setBrandOptions] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(false);
 
-  // Tải danh sách nhóm hàng & thương hiệu từ API (chỉ tải khi drawer từng mở lần đầu)
+  // Tải danh sách nhóm hàng & thương hiệu từ API mỗi khi mở Drawer để cập nhật dữ liệu mới nhất
   useEffect(() => {
+    if (!isOpen) return;
     let active = true;
     const loadMeta = async () => {
       setLoadingMeta(true);
@@ -52,7 +53,7 @@ export const ProductFilterDrawer = ({ isOpen, onClose, filters }) => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isOpen]);
 
   const handleReset = () => {
     setGroupKeyword('');
