@@ -49,7 +49,26 @@ export const useAiChat = () => {
   const send = useCallback(
     async (suggestedText) => {
       const text = (typeof suggestedText === 'string' ? suggestedText : input).trim();
-      if (!text || loading) return;
+      if (!text) return;
+
+      // Chặn gửi request khi AI đang xử lý - thông báo rõ ràng cho user
+      if (loading) {
+        setMessages((prev) => {
+          // Tránh spam nhiều tin cảnh báo liên tiếp
+          const last = prev[prev.length - 1];
+          if (last?.role === 'bot' && last?.isWarning) return prev;
+          return [
+            ...prev,
+            {
+              id: nextId(),
+              role: 'bot',
+              text: '⏳ Vui lòng đợi trong giây lát, AI đang xử lý câu hỏi trước đó...',
+              isWarning: true,
+            },
+          ];
+        });
+        return;
+      }
 
       setMessages((prev) => [...prev, { id: nextId(), role: 'user', text }]);
       if (typeof suggestedText !== 'string') setInput('');

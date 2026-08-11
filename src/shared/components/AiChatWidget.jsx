@@ -341,16 +341,19 @@ const AiChatWidget = () => {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-[#404040] dark:bg-[#1a1a1a]">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" />
+              <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-[#404040] dark:bg-[#1a1a1a]">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
                 <span
-                  className="h-2 w-2 animate-bounce rounded-full bg-slate-400"
+                  className="h-2 w-2 animate-bounce rounded-full bg-primary"
                   style={{ animationDelay: '0.15s' }}
                 />
                 <span
-                  className="h-2 w-2 animate-bounce rounded-full bg-slate-400"
+                  className="h-2 w-2 animate-bounce rounded-full bg-primary"
                   style={{ animationDelay: '0.3s' }}
                 />
+                <span className="ml-1 text-xs text-slate-500 dark:text-[#999999]">
+                  Vui lòng đợi trong giây lát, AI đang xử lý...
+                </span>
               </div>
             </div>
           )}
@@ -364,13 +367,12 @@ const AiChatWidget = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 send();
               }
             }}
-            disabled={loading}
-            placeholder="Nhập câu hỏi cho trợ lý..."
+            placeholder={loading ? 'AI đang xử lý, vui lòng đợi...' : 'Nhập câu hỏi cho trợ lý...'}
             className="h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-primary disabled:opacity-60 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4] dark:placeholder:text-[#808080]"
           />
           <button
