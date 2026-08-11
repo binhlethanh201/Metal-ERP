@@ -117,7 +117,30 @@ const AiChatWidget = () => {
     if (isFull) return; // Không cho kéo khi đang phóng to
     
     const isChatToggleBtn = e.currentTarget.id === 'chat-toggle-btn';
-    if (!isChatToggleBtn && e.target.closest('button')) return; // Không kéo nếu click vào các nút trên header
+    
+    if (!isChatToggleBtn) {
+      // Bỏ qua kéo thả nếu click vào:
+      // 1. Các thẻ button, input, textarea, a
+      // 2. Nội dung bong bóng tin nhắn (để người dùng có thể bôi đen chữ)
+      if (
+        e.target.closest('button') || 
+        e.target.closest('input') || 
+        e.target.closest('textarea') || 
+        e.target.closest('a') ||
+        e.target.closest('.chat-bubble')
+      ) {
+        return;
+      }
+
+      // Tránh kéo khi click vào thanh cuộn của vùng tin nhắn
+      const scrollArea = e.target.closest('.chat-scroll-area');
+      if (scrollArea && e.target === scrollArea) {
+        const rect = scrollArea.getBoundingClientRect();
+        if (e.clientX > rect.right - 20) { // Click vào thanh cuộn (khoảng 20px bên phải)
+          return;
+        }
+      }
+    }
 
     hasDragged.current = false;
     setIsDragging(true);
@@ -234,6 +257,7 @@ const AiChatWidget = () => {
   return (
     <>
       <div
+        onMouseDown={handleMouseDown}
         style={{
           transform: isFull ? 'none' : `translate(${position.x}px, ${position.y}px) scale(${isOpen ? 1 : 0.95})`,
         }}
@@ -252,7 +276,6 @@ const AiChatWidget = () => {
         {/* Header */}
         <div 
           className={`flex items-center justify-between rounded-t-2xl bg-primary px-4 py-3 text-white ${!isFull ? 'cursor-move' : ''}`}
-          onMouseDown={handleMouseDown}
         >
           <div className="flex items-center gap-2">
             <span className="relative flex h-3 w-3">
@@ -294,14 +317,14 @@ const AiChatWidget = () => {
         </div>
 
         {/* Body */}
-        <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/60 px-4 py-3 dark:bg-[#1a1a1a]/60">
+        <div className="chat-scroll-area flex-1 space-y-3 overflow-y-auto bg-slate-50/60 px-4 py-3 dark:bg-[#1a1a1a]/60">
           {messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                className={`chat-bubble max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm ${
                   msg.role === 'user'
                     ? 'rounded-tr-sm bg-primary text-white'
                     : 'rounded-tl-sm border border-slate-200 bg-white text-slate-700 shadow-sm dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#b3b3b3]'
