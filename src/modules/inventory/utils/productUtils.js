@@ -132,16 +132,20 @@ export const buildSpecification = (form) => {
 };
 
 // Chuẩn hóa Payload CREATE (ProductUpsertDto - camelCase chuẩn)
-export const createProductPayload = (form) => ({
-  productCode: form.productCode || form.id || `SP${Date.now()}`,
-  productName: form.name || form.productName || '',
-  barcode: form.barcode || '',
-  unit: form.baseUnit?.name || form.unit || 'cái',
-  brandName: form.brand || '',
-  categoryName: form.group || '',
-  supplierId: form.supplierId || null,
-  itemType: form.itemType || 'Goods',
-  costPrice: Number(form.costPrice || 0),
+export const createProductPayload = (form) => {
+  const rawCode = form.productCode || form.id;
+  const finalCode = rawCode ? rawCode.trim().toUpperCase() : `SP${Date.now()}`;
+  
+  return {
+    productCode: finalCode,
+    productName: (form.name || form.productName || '').trim(),
+    barcode: (form.barcode || '').trim(),
+    unit: (form.baseUnit?.name || form.unit || 'cái').trim(),
+    brandName: (form.brand || '').trim(),
+    categoryName: (form.group || '').trim(),
+    supplierId: form.supplierId || null,
+    itemType: form.itemType || 'Goods',
+    costPrice: Number(form.costPrice || 0),
   salePrice: Number(form.salePrice || 0),
   actualStock: Number(form.stock || 0),
   availableStock: Number(form.availableStock ?? form.stock ?? 0),
@@ -173,19 +177,21 @@ export const createProductPayload = (form) => ({
     directSale: u.directSale !== false,
   })),
   isActive: form.productStatus !== 'inactive' && form.status !== 'inactive' && form.isActive !== false,
-});
+  };
+};
 
 // Chuẩn hóa Payload UPDATE (Backend yêu cầu ProductCode; không cho phép sửa kho qua API update)
 export const updateProductPayload = (form) => {
+  const rawCode = form.productCode || form.id || '';
   return {
-    productCode: form.productCode || form.id || '',
-    productName: form.name || form.productName || '',
-    barcode: form.barcode || '',
-    unit: form.baseUnit?.name || form.unit || 'cái',
+    productCode: rawCode.trim().toUpperCase(),
+    productName: (form.name || form.productName || '').trim(),
+    barcode: (form.barcode || '').trim(),
+    unit: (form.baseUnit?.name || form.unit || 'cái').trim(),
     specification: buildSpecification(form),
     itemType: form.itemType || 'Goods',
-    brandName: form.brand || '',
-    categoryName: form.group || '',
+    brandName: (form.brand || '').trim(),
+    categoryName: (form.group || '').trim(),
     supplierId: form.supplierId || null,
     costPrice: Number(form.costPrice || 0),
     salePrice: Number(form.salePrice || 0),
