@@ -151,9 +151,31 @@ export const ShiftManagement = () => {
       console.log('[ShiftManagement] getShifts response:', data);
       const rawItems = Array.isArray(data) ? data : data?.items || data?.data || [];
       const items = Array.isArray(rawItems) ? rawItems : [];
+
+      // Luôn fetch ca đang mở (không phụ thuộc date filter)
+      let openShiftData = null;
+      try {
+        const openRes = await getShifts({ status: 'OPEN' });
+        const openItems = Array.isArray(openRes) ? openRes : openRes?.items || openRes?.data || [];
+        if (Array.isArray(openItems) && openItems.length > 0) {
+          openShiftData = openItems[0];
+        }
+      } catch (_) {
+        console.warn('[ShiftManagement] Failed to fetch open shift');
+      }
       const serverTotal = data?.totalCount ?? data?.total ?? items.length;
       setTotalCount(serverTotal);
       console.log('[ShiftManagement] shifts items:', items.length, 'total:', serverTotal);
+
+      // Gộp ca đang mở (fetch riêng không date filter) vào danh sách nếu chưa có
+      if (openShiftData) {
+        const openId = openShiftData.shiftId || openShiftData.id;
+        const existsInList = items.some((s) => (s.shiftId || s.id) === openId);
+        if (!existsInList) {
+          items.unshift(openShiftData);
+        }
+      }
+
       if (items.length > 0) {
         const mapped = items.map(mapShift);
         console.log('[ShiftManagement] mapped shifts:', mapped);

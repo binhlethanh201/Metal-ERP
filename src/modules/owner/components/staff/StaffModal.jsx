@@ -303,7 +303,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
             <div>
               <label className="text-base font-bold text-slate-800 dark:text-[#e5e5e5]">
                 <Icon name="shield" size={20} className="mr-2 inline align-text-bottom text-blue-600" />
-                Phân quyền chi tiết ({form.defaultRoleType === 'Owner' ? 'Tất cả quyền' : `${form.permissionCodes.length} quyền đang chọn`})
+                Phân quyền chi tiết
               </label>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-[#999999]">
                 {!staff ? 'Chọn quyền theo Trang. Bật trang để tự động thêm toàn bộ quyền thao tác.' : 'Cập nhật quyền hạn cho nhân viên.'}
