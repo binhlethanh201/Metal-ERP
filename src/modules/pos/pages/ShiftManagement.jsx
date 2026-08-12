@@ -229,9 +229,10 @@ export const ShiftManagement = () => {
 
       // Load orders và returns song song
       console.log('[ShiftManagement] Fetching completed orders and returns...');
+      const shiftStartISO = new Date(openShift.startedAt).toISOString();
       const [ordersData, returnsRaw] = await Promise.all([
-        getOrders({ status: 'Completed' }).catch(() => []),
-        getReturns({}).catch(() => []),
+        getOrders({ status: 'Completed', dateFrom: shiftStartISO, pageSize: 1000 }).catch(() => []),
+        getReturns({ dateFrom: shiftStartISO, pageSize: 1000 }).catch(() => []),
       ]);
       console.log('[ShiftManagement] getOrders response:', ordersData);
       const rawOrders = Array.isArray(ordersData)
