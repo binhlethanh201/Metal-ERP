@@ -71,6 +71,16 @@ export const useConversionUnits = (form, setForm) => {
             return pm == null ? null : cv * pm;
           })();
     const calcPrice = newMul && form.baseUnit?.price ? Number(form.baseUnit.price) * newMul : 0;
+    const finalPrice = newUnit.price ? Number(newUnit.price) : calcPrice;
+
+    // Kiểm tra giá bán có thấp hơn giá vốn không
+    const effectiveCost = newMul ? Number(form.costPrice || 0) * newMul : 0;
+    if (effectiveCost > 0 && finalPrice < effectiveCost) {
+      const confirmed = window.confirm(
+        `Giá bán (${finalPrice.toLocaleString('vi-VN')} ₫) đang thấp hơn giá vốn (${effectiveCost.toLocaleString('vi-VN')} ₫).\nBạn có chắc chắn muốn bán với giá này?`
+      );
+      if (!confirmed) return;
+    }
 
     setForm((c) => ({
       ...c,
@@ -80,9 +90,9 @@ export const useConversionUnits = (form, setForm) => {
           id: Date.now(),
           name,
           convertValue: cv,
-          rate: cv, // Backend uses 'rate' field in payload
+          rate: cv,
           convertFrom: cf,
-          price: newUnit.price ? Number(newUnit.price) : calcPrice,
+          price: finalPrice,
           calculatedPrice: calcPrice,
           directSale: newUnit.directSale,
         },

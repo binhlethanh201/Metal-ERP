@@ -613,7 +613,30 @@ const UnitManagement = ({ f }) => (
                   price: raw ? Number(raw) : '',
                 });
               }}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-8 text-right text-base font-semibold text-slate-900 transition-colors placeholder:text-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:placeholder:text-[#808080]"
+              className={`w-full rounded-lg border bg-white px-4 py-2.5 pr-8 text-right text-base font-semibold transition-colors placeholder:text-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 dark:bg-[#1a1a1a] dark:placeholder:text-[#808080] ${
+                (() => {
+                  const price = Number(f.newConversionUnit.price) || 0;
+                  const cv = Number(f.newConversionUnit.convertValue) || 0;
+                  const from = f.newConversionUnit.convertFrom || f.form.baseUnit?.name || '';
+                  const baseCost = Number(f.form.costPrice) || 0;
+                  if (!price || !cv || !from || !baseCost) return 'border-slate-300 dark:border-[#404040] text-slate-900 dark:text-[#e5e5e5]';
+                  const unitsByName = (f.form.conversionUnits || []).reduce((acc, u) => { acc[u.name] = u; return acc; }, {});
+                  const computeMul = (un, visited = new Set()) => {
+                    if (!un || visited.has(un)) return null;
+                    if (un === f.form.baseUnit?.name) return 1;
+                    const u = unitsByName[un];
+                    if (!u) return null;
+                    visited.add(un);
+                    const pm = computeMul(u.convertFrom, visited);
+                    return pm == null ? null : Number(u.convertValue) * pm;
+                  };
+                  const mult = from === f.form.baseUnit?.name ? cv : (() => { const pm = computeMul(from); return pm == null ? null : cv * pm; })();
+                  const effectiveCost = mult ? baseCost * mult : 0;
+                  return price < effectiveCost
+                    ? 'border-red-400 text-red-600 dark:border-red-500 dark:text-red-400'
+                    : 'border-slate-300 dark:border-[#404040] text-slate-900 dark:text-[#e5e5e5]';
+                })()
+              }`}
             />
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-[#808080]">
               ₫
@@ -647,11 +670,22 @@ const UnitManagement = ({ f }) => (
                 })();
             if (!mult) return null;
             const suggestPrice = base * mult;
+            const userPrice = Number(f.newConversionUnit.price) || 0;
+            const baseCost = Number(f.form.costPrice) || 0;
+            const effectiveCost = baseCost * mult;
+            const isBelowCost = userPrice > 0 && effectiveCost > 0 && userPrice < effectiveCost;
             return (
-              <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                ✦ Giá đề xuất: <span className="font-semibold">{fmtMoney(suggestPrice)}</span>
-                <span className="ml-0.5">₫</span>
-              </p>
+              <>
+                <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                  ✦ Giá đề xuất: <span className="font-semibold">{fmtMoney(suggestPrice)}</span>
+                  <span className="ml-0.5">₫</span>
+                </p>
+                {isBelowCost && (
+                  <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+                    ⚠ Giá bán ({fmtMoney(userPrice)} ₫) thấp hơn giá vốn ({fmtMoney(effectiveCost)} ₫)
+                  </p>
+                )}
+              </>
             );
           })()}
         </div>

@@ -344,17 +344,20 @@ export const useEditProductForm = ({
 
   const handleChange = (field, value) =>
     setForm((c) => {
-      if (field === 'baseUnit' && value?.name !== undefined) {
+      if (field === 'baseUnit') {
         const oldName = c.baseUnit?.name;
-        const newName = value.name;
-        return {
-          ...c,
-          baseUnit: { ...c.baseUnit, ...value },
-          unit: newName || c.unit,
-          conversionUnits: (c.conversionUnits || []).map((u) =>
-            u.convertFrom === oldName ? { ...u, convertFrom: newName } : u
-          ),
-        };
+        const updated = { ...c, baseUnit: { ...c.baseUnit, ...value } };
+        if (value?.name !== undefined && value.name !== oldName) {
+          updated.unit = value.name || c.unit;
+          updated.conversionUnits = (c.conversionUnits || []).map((u) =>
+            u.convertFrom === oldName ? { ...u, convertFrom: value.name } : u
+          );
+        }
+        // Đồng bộ directSale từ baseUnit lên form top-level
+        if (value?.directSale !== undefined) {
+          updated.directSale = value.directSale;
+        }
+        return updated;
       }
       return { ...c, [field]: value };
     });

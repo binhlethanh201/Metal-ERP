@@ -103,7 +103,7 @@ export const useProductList = (queryParams) => {
     setProducts((prev) =>
       prev.map((p) =>
         p.productId === id || p.id === id
-          ? { ...p, isActive: newStatus, productStatus: newStatus ? 'active' : 'inactive', directSale: newStatus }
+          ? { ...p, isActive: newStatus, productStatus: newStatus ? 'active' : 'inactive' }
           : p
       )
     );
@@ -119,7 +119,6 @@ export const useProductList = (queryParams) => {
                 ...p,
                 isActive: !newStatus,
                 productStatus: !newStatus ? 'active' : 'inactive',
-                directSale: !newStatus,
               }
             : p
         )
@@ -136,7 +135,7 @@ export const useProductList = (queryParams) => {
     setProducts((prev) =>
       prev.map((p) =>
         selectedIds.includes(p.productId || p.id)
-          ? { ...p, isActive: targetStatus, productStatus: targetStatus ? 'active' : 'inactive', directSale: targetStatus }
+          ? { ...p, isActive: targetStatus, productStatus: targetStatus ? 'active' : 'inactive' }
           : p
       )
     );
@@ -214,7 +213,7 @@ export const useProductList = (queryParams) => {
         return;
       }
       if (payload.salePrice < payload.costPrice) {
-        alert('Giá bán phải lớn hơn hoặc bằng giá vốn!');
+        alert('Giá bán đơn vị cơ bản không được thấp hơn giá vốn!');
         return;
       }
 

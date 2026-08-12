@@ -13,12 +13,17 @@ const ProductCard = ({
 }) => {
   const outOfStock = product.stock === 0;
 
-  // Xử lý click: nếu có nhiều đơn vị → mở modal chọn đơn vị
+  // Xử lý click: nếu có nhiều đơn vị → mở modal chọn đơn vị, ngược lại thêm thẳng vào giỏ
   const handleClick = () => {
     if (product.hasMultipleUnits && onOpenUnitSelector) {
       onOpenUnitSelector?.(product);
     } else {
-      onAddToCart?.(product);
+      // Nếu base unit không được bán, dùng đơn vị quy đổi đầu tiên
+      const firstConvUnit = product.conversionUnits?.[0];
+      const selectedUnit = !product.directSale && firstConvUnit
+        ? { name: firstConvUnit.unitName, convertValue: firstConvUnit.convertValue, price: firstConvUnit.price }
+        : null;
+      onAddToCart?.(product, selectedUnit);
     }
   };
 

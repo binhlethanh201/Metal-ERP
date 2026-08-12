@@ -36,7 +36,7 @@ const handlePrint = async (order) => {
       (item) => `
       <tr>
         <td class="text-left">${item.name}</td>
-        <td class="text-center">${item.quantity}${item.displayUnit || item.selectedUnit || ''} x ${formatCurrency(item.price)}</td>
+        <td class="text-center">${item.quantity} ${item.displayUnit || item.selectedUnit || item.unit || ''} x ${formatCurrency(item.price)}</td>
         <td class="text-right">${formatCurrency(item.price * item.quantity)}</td>
       </tr>`
     )
@@ -166,8 +166,7 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
             <div key={idx} className="grid grid-cols-4 gap-1 py-0.5 text-xs text-slate-700 dark:text-[#b3b3b3]">
               <span className="truncate">{item.name}</span>
               <span className="text-center">
-                {item.quantity}
-                {item.displayUnit || item.selectedUnit || ''}
+                {item.quantity} {item.displayUnit || item.selectedUnit || item.unit || ''}
               </span>
               <span className="text-right">{formatCurrency(item.price)}</span>
               <span className="text-right font-medium">
