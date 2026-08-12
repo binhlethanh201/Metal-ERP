@@ -29,14 +29,10 @@ const UnitConversionSection = ({ p }) => (
           <label className="text-sm font-semibold text-slate-700">Giá bán</label>
           <input
             type="text"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-right text-sm focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-right text-sm text-slate-500 cursor-not-allowed"
             value={p.formatMoney(p.baseUnit.price)}
-            onChange={(e) =>
-              p.setBaseUnit({
-                ...p.baseUnit,
-                price: Number(e.target.value.replaceAll(',', '')) || 0,
-              })
-            }
+            disabled
+            readOnly
           />
         </div>
         <div className="flex items-center gap-2 pb-2">

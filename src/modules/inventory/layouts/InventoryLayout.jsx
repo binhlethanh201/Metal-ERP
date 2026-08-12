@@ -7,13 +7,15 @@ import AiChatWidget from '../../../shared/components/AiChatWidget';
 import Icon from '../../../shared/components/Icon';
 import { getInventoryNotifications } from '../services/inventoryCheckService';
 import { useAuth } from '../../../shared/hooks/useAuth';
-import { hasPermission } from '../../../shared/utils/permissions';
+import { hasPermission, hasRole } from '../../../shared/utils/permissions';
 
 const API_BASE = process.env.REACT_APP_API_URL;
 const HUB_URL = `${API_BASE}/r/mepHub`;
 
 const InventoryLayout = () => {
   const { user } = useAuth();
+  const roles = Array.isArray(user?.roles) ? user.roles : user?.role ? [user.role] : [];
+  const isOwner = hasRole(roles, 'Owner');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toasts, setToasts] = useState([]);
   const hubRef = useRef(null);
@@ -182,7 +184,7 @@ const InventoryLayout = () => {
               <Outlet />
             </div>
           </Suspense>
-          <AiChatWidget />
+          {isOwner && <AiChatWidget />}
         </main>
       </div>
     </div>

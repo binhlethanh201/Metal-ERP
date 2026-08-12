@@ -37,7 +37,7 @@ export const OwnerReports = () => {
   const [toDate, setToDate] = useState(defaultToDate);
   const [categoryId, setCategoryId] = useState('');
   const [productId, setProductId] = useState('');
-  const [productStatus, setProductStatus] = useState('all'); // all | active | deleted
+  const [productStatus, setProductStatus] = useState('active'); // all | active | deleted
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);

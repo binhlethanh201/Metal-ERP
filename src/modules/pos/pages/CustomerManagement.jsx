@@ -25,7 +25,6 @@ import {
   getCustomerOrders,
 } from '../services/posService';
 
-const CUSTOMER_GROUPS = ['Tất cả', 'Cá nhân', 'Doanh nghiệp', 'Đại lý', 'Nhà thầu'];
 
 const VN_TZ = 'Asia/Ho_Chi_Minh';
 const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
@@ -64,13 +63,12 @@ export const CustomerManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
-  const [groupFilter, setGroupFilter] = useState('Tất cả');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, groupFilter]);
+  }, [search]);
   const [selected, setSelected] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -319,11 +317,8 @@ export const CustomerManagement = () => {
       const kw = search.toLowerCase();
       list = list.filter((c) => c.name.toLowerCase().includes(kw) || c.phone.includes(kw));
     }
-    if (groupFilter !== 'Tất cả') {
-      list = list.filter((c) => c.group === groupFilter);
-    }
     return list;
-  }, [customers, search, groupFilter]);
+  }, [customers, search]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginatedData = useMemo(() => {
@@ -569,6 +564,19 @@ export const CustomerManagement = () => {
       header: 'Ghé cuối',
       render: (v) => <span className="text-slate-500">{v === '-' ? 'Chưa mua' : v}</span>,
     },
+    {
+      key: 'action',
+      header: 'Thao tác',
+      render: (_, r) => (
+        <button
+          type="button"
+          onClick={() => handleSelect(r)}
+          className="text-sm font-medium text-[#004785] hover:underline"
+        >
+          Chi tiết
+        </button>
+      ),
+    },
   ];
 
   return (
@@ -629,17 +637,6 @@ export const CustomerManagement = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <select
-              value={groupFilter}
-              onChange={(e) => setGroupFilter(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-            >
-              {CUSTOMER_GROUPS.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
           </div>
           {hasPermission(user, 'CUSTOMER_CREATE') && (
             <Button variant="primary" onClick={handleOpenAdd}>
