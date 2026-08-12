@@ -7,7 +7,7 @@ import { ReportHelpModal } from './ReportHelpModal';
 
 const calcQty = (items, field) => items.reduce((s, i) => s + (Number(i[field]) || 0), 0);
 
-export const StockMovementReport = ({ data, isLoading, fromDate, toDate, productStatus = 'all' }) => {
+export const StockMovementReport = ({ data, isLoading, fromDate, toDate, productStatus = 'active' }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [ledgerProduct, setLedgerProduct] = useState(null);

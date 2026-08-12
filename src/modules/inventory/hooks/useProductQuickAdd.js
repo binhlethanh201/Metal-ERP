@@ -53,7 +53,21 @@ export const useProductQuickAdd = (onSave) => {
     maxStock: 0,
   });
 
-  const [baseUnit, setBaseUnit] = useState({ name: '', price: 0, directSale: false });
+  const [baseUnit, setBaseUnitRaw] = useState({ name: '', price: 0, directSale: true });
+  const setBaseUnit = useCallback((val) => {
+    setBaseUnitRaw((prev) => {
+      const newVal = typeof val === 'function' ? val(prev) : val;
+      if (newVal?.name !== undefined && newVal.name !== prev.name) {
+        setForm((f) => ({ ...f, unit: newVal.name }));
+        setConversionUnits((units) =>
+          units.map((u) =>
+            u.convertFrom === prev.name ? { ...u, convertFrom: newVal.name } : u
+          )
+        );
+      }
+      return newVal;
+    });
+  }, []);
   const [conversionUnits, setConversionUnits] = useState([]);
   const [addConversionUnitModal, setAddConversionUnitModal] = useState(false);
   const [newConversionUnit, setNewConversionUnit] = useState({

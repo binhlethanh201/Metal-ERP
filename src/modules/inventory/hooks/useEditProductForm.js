@@ -342,7 +342,22 @@ export const useEditProductForm = ({
     }));
   }, [images]);
 
-  const handleChange = (field, value) => setForm((c) => ({ ...c, [field]: value }));
+  const handleChange = (field, value) =>
+    setForm((c) => {
+      if (field === 'baseUnit' && value?.name !== undefined) {
+        const oldName = c.baseUnit?.name;
+        const newName = value.name;
+        return {
+          ...c,
+          baseUnit: { ...c.baseUnit, ...value },
+          unit: newName || c.unit,
+          conversionUnits: (c.conversionUnits || []).map((u) =>
+            u.convertFrom === oldName ? { ...u, convertFrom: newName } : u
+          ),
+        };
+      }
+      return { ...c, [field]: value };
+    });
 
   useEffect(() => {
     const onDocClick = () => setOpenDropdownId(null);

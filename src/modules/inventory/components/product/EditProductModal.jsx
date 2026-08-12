@@ -369,12 +369,8 @@ const UnitManagement = ({ f }) => (
               label="Giá bán"
               className="text-right"
               value={fmtMoney(f.form.baseUnit?.price || 0)}
-              onChange={(e) =>
-                f.handleChange('baseUnit', {
-                  ...(f.form.baseUnit || {}),
-                  price: Number(e.target.value.replaceAll('.', '').replaceAll(',', '')) || 0,
-                })
-              }
+              disabled
+              readOnly
             />
           </div>
           <div className="flex items-center gap-2 pb-3">
