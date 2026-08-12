@@ -7,6 +7,8 @@ import { ReportHelpModal } from './ReportHelpModal';
 
 const calcQty = (items, field) => items.reduce((s, i) => s + (Number(i[field]) || 0), 0);
 
+  const calcVal = (items, field) => items.reduce((s, i) => s + (Number(i[field]) || 0), 0);
+
 export const StockMovementReport = ({ data, isLoading, fromDate, toDate, productStatus = 'active' }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -48,11 +50,11 @@ export const StockMovementReport = ({ data, isLoading, fromDate, toDate, product
           </button>
         </div>
         {[
-          { l: 'Giá trị Đầu Kỳ', v: data.totalOpeningValue, q: totals.openQ, c: 'blue' },
-          { l: 'Giá trị Nhập', v: data.totalInwardValue, q: totals.inQ, c: 'emerald' },
-          { l: 'Giá trị Xuất', v: data.totalOutwardValue, q: totals.outQ, c: 'rose' },
-          { l: 'Giá trị Đ/Chỉnh', v: data.totalAdjustmentValue || 0, q: totals.adjQ, c: 'amber' },
-          { l: 'Giá trị Cuối Kỳ', v: data.totalClosingValue, q: totals.closeQ, c: 'indigo' },
+          { l: 'Giá trị Đầu Kỳ', v: calcVal(items, 'openingValue'), q: totals.openQ, c: 'blue' },
+          { l: 'Giá trị Nhập', v: calcVal(items, 'inwardValue'), q: totals.inQ, c: 'emerald' },
+          { l: 'Giá trị Xuất', v: calcVal(items, 'outwardValue'), q: totals.outQ, c: 'rose' },
+          { l: 'Giá trị Đ/Chỉnh', v: calcVal(items, 'adjustmentValue'), q: totals.adjQ, c: 'amber' },
+          { l: 'Giá trị Cuối Kỳ', v: calcVal(items, 'closingValue'), q: totals.closeQ, c: 'indigo' },
         ].map(c => (
           <Card key={c.l} padding="p-4" className={`border-l-4 border-l-${c.c}-500`}>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#999]">{c.l}</p>
