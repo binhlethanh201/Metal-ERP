@@ -7,7 +7,7 @@ import ShiftSummaryModal from '../components/shift/ShiftSummaryModal';
 // Import Shared Components & Icons mới để chuẩn hoá UI/UX
 import Button from '../../../shared/components/Button';
 import Drawer from '../../../shared/components/Drawer';
-import { AlertCircle, Layers, RotateCcw } from 'lucide-react';
+import { AlertCircle, Layers, RotateCcw, Search } from 'lucide-react';
 
 const ShiftHistory = () => {
   const {
@@ -26,6 +26,7 @@ const ShiftHistory = () => {
     ordersLoading,
     loadShiftSummary,
     clearShiftSummary,
+    setSearchKeyword,
   } = useShiftHistory();
 
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -98,6 +99,19 @@ const ShiftHistory = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Tìm mã ca bán..."
+                className="h-9 w-64 rounded-lg border border-slate-300 pl-9 pr-4 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setSearchKeyword(e.target.value.trim());
+                  }
+                }}
+              />
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -155,7 +169,7 @@ const ShiftHistory = () => {
                 onChange={(e) =>
                   setDraftFilters((f) => ({
                     ...f,
-                    from: e.target.value ? `${e.target.value}T00:00:00Z` : '',
+                    from: e.target.value ? new Date(`${e.target.value}T00:00:00`).toISOString() : '',
                   }))
                 }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
@@ -171,7 +185,7 @@ const ShiftHistory = () => {
                 onChange={(e) =>
                   setDraftFilters((f) => ({
                     ...f,
-                    to: e.target.value ? `${e.target.value}T23:59:59Z` : '',
+                    to: e.target.value ? new Date(`${e.target.value}T23:59:59.999`).toISOString() : '',
                   }))
                 }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"

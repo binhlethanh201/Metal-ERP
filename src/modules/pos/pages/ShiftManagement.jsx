@@ -143,8 +143,11 @@ export const ShiftManagement = () => {
     try {
       const params = { page: currentPage, pageSize };
       if (dateFilter) {
-        params.from = dateFilter + 'T00:00:00Z';
-        params.to = dateFilter + 'T23:59:59Z';
+        // Calculate UTC ISO strings for the start and end of the chosen local date
+        const localStart = new Date(`${dateFilter}T00:00:00`);
+        const localEnd = new Date(`${dateFilter}T23:59:59.999`);
+        params.from = localStart.toISOString();
+        params.to = localEnd.toISOString();
       }
       console.log('[ShiftManagement] Fetching shifts with params:', params);
       const data = await getShifts(params);
@@ -384,28 +387,27 @@ export const ShiftManagement = () => {
       totalDiscount = Math.max(0, totalDiscount - refundedDiscountTotal);
       const totalRevenue = grossRevenue - shiftRefundTotal;
       const orderCount = filteredOrders.length;
-      const cashSales = filteredOrders
-        .filter(
-          (o) =>
-            o.paymentMethod === 'Cash' ||
-            o.paymentMethod === 'CASH' ||
-            o.paymentMethod === 'Tiền mặt'
-        )
-        .reduce((sum, o) => sum + o.totalAmount, 0);
-      const cardSales = filteredOrders
-        .filter(
-          (o) =>
-            o.paymentMethod === 'Card' || o.paymentMethod === 'CARD' || o.paymentMethod === 'Thẻ'
-        )
-        .reduce((sum, o) => sum + o.totalAmount, 0);
-      const transferSales = filteredOrders
-        .filter(
-          (o) =>
-            o.paymentMethod === 'Transfer' ||
-            o.paymentMethod === 'TRANSFER' ||
-            o.paymentMethod === 'Chuyển khoản'
-        )
-        .reduce((sum, o) => sum + o.totalAmount, 0);
+      const getAmountByMethod = (order, methodKeywords) => {
+        if (!order.paymentMethod) return 0;
+        let pm = order.paymentMethod;
+        try {
+          if (pm.startsWith('[')) {
+            const arr = JSON.parse(pm);
+            if (Array.isArray(arr) && arr.length > 0 && typeof arr[0] === 'object') {
+              return arr
+                .filter(item => methodKeywords.some(kw => item.method?.toLowerCase() === kw.toLowerCase()))
+                .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+            }
+          }
+        } catch {}
+
+        const isMatch = methodKeywords.some(kw => pm.toLowerCase() === kw.toLowerCase());
+        return isMatch ? order.totalAmount : 0;
+      };
+
+      const cashSales = filteredOrders.reduce((sum, o) => sum + getAmountByMethod(o, ['cash', 'tiền mặt']), 0);
+      const cardSales = filteredOrders.reduce((sum, o) => sum + getAmountByMethod(o, ['card', 'thẻ']), 0);
+      const transferSales = filteredOrders.reduce((sum, o) => sum + getAmountByMethod(o, ['transfer', 'chuyển khoản']), 0);
 
       // Tính hoàn trả theo phương thức (cùng thời gian ca)
       const cashRefunds = allReturns
@@ -880,9 +882,9 @@ export const ShiftManagement = () => {
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="overflow-hidden rounded-lg bg-blue-50 p-4 dark:bg-blue-900/30">
-                <p className="truncate text-xs font-bold uppercase text-blue-600">Số dư đầu ca</p>
+                <p className="truncate text-xs font-bold uppercase text-blue-600">Tiền mặt trong ca</p>
                 <p className="mt-1 truncate text-lg font-extrabold text-blue-900">
-                  {formatCurrency(displayShift.openingBalance)}
+                  {formatCurrency((displayShift.openingBalance || 0) + (displayShift.cashSales || 0))}
                 </p>
               </div>
               <div className="overflow-hidden rounded-lg bg-slate-50 p-4 dark:bg-[#1a1a1a]/50">
@@ -1031,21 +1033,13 @@ export const ShiftManagement = () => {
                                   +{formatCurrency(act.amount)}
                                 </span>
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                                  {act.paymentMethod === 'CASH' ||
-                                  act.paymentMethod === 'Cash' ||
-                                  act.paymentMethod === 'Tiền mặt'
+                                  {act.paymentMethod === 'CASH' || act.paymentMethod === 'Cash' || act.paymentMethod === 'Tiền mặt'
                                     ? 'Tiền mặt'
-                                    : act.paymentMethod === 'TRANSFER' ||
-                                        act.paymentMethod === 'Transfer' ||
-                                        act.paymentMethod === 'Chuyển khoản'
+                                    : act.paymentMethod === 'TRANSFER' || act.paymentMethod === 'Transfer' || act.paymentMethod === 'Chuyển khoản'
                                       ? 'CK'
-                                      : act.paymentMethod === 'CARD' ||
-                                          act.paymentMethod === 'Card' ||
-                                          act.paymentMethod === 'Thẻ'
+                                      : act.paymentMethod === 'CARD' || act.paymentMethod === 'Card' || act.paymentMethod === 'Thẻ'
                                         ? 'Thẻ'
-                                        : act.paymentMethod === 'COMBINED' ||
-                                            act.paymentMethod === 'Combined' ||
-                                            act.paymentMethod === 'Kết hợp'
+                                        : act.paymentMethod === 'COMBINED' || act.paymentMethod === 'Combined' || act.paymentMethod === 'Kết hợp' || (act.paymentMethod && act.paymentMethod.startsWith('['))
                                           ? 'Kết hợp'
                                           : act.paymentMethod || '-'}
                                 </span>
@@ -1489,7 +1483,7 @@ export const ShiftManagement = () => {
                 <div className="mt-1.5 flex items-baseline gap-1">
                   <span className="truncate text-xl font-extrabold text-amber-700">
                     {formatCurrency(
-                      (displayShift?.openingBalance || 0) + (displayShift?.totalSales || 0)
+                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0)
                     )}
                   </span>
                   <span className="shrink-0 text-xs text-amber-500">VNĐ</span>
@@ -2033,21 +2027,13 @@ export const ShiftManagement = () => {
                                   +{formatCurrency(act.amount)}
                                 </span>
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
-                                  {act.paymentMethod === 'CASH' ||
-                                  act.paymentMethod === 'Cash' ||
-                                  act.paymentMethod === 'Tiền mặt'
+                                  {act.paymentMethod === 'CASH' || act.paymentMethod === 'Cash' || act.paymentMethod === 'Tiền mặt'
                                     ? 'Tiền mặt'
-                                    : act.paymentMethod === 'TRANSFER' ||
-                                        act.paymentMethod === 'Transfer' ||
-                                        act.paymentMethod === 'Chuyển khoản'
+                                    : act.paymentMethod === 'TRANSFER' || act.paymentMethod === 'Transfer' || act.paymentMethod === 'Chuyển khoản'
                                       ? 'CK'
-                                      : act.paymentMethod === 'CARD' ||
-                                          act.paymentMethod === 'Card' ||
-                                          act.paymentMethod === 'Thẻ'
+                                      : act.paymentMethod === 'CARD' || act.paymentMethod === 'Card' || act.paymentMethod === 'Thẻ'
                                         ? 'Thẻ'
-                                        : act.paymentMethod === 'COMBINED' ||
-                                            act.paymentMethod === 'Combined' ||
-                                            act.paymentMethod === 'Kết hợp'
+                                        : act.paymentMethod === 'COMBINED' || act.paymentMethod === 'Combined' || act.paymentMethod === 'Kết hợp' || (act.paymentMethod && act.paymentMethod.startsWith('['))
                                           ? 'Kết hợp'
                                           : act.paymentMethod || '-'}
                                 </span>
