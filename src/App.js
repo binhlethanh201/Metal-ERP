@@ -63,6 +63,7 @@ const OrderHistory = lazy(() => import('./modules/pos/pages/OrderHistory'));
 const ShiftManagement = lazy(() => import('./modules/pos/pages/ShiftManagement'));
 const CustomerManagement = lazy(() => import('./modules/pos/pages/CustomerManagement'));
 const ReturnOrderPage = lazy(() => import('./modules/pos/pages/ReturnOrderPage'));
+const WarrantyManagement = lazy(() => import('./modules/pos/pages/WarrantyManagement'));
 
 // Admin Module
 const AdminLayout = lazy(() => import('./modules/admin/layouts/AdminLayout'));
@@ -84,6 +85,7 @@ const OwnerAuditLogsPage = lazy(() => import('./modules/owner/pages/OwnerAuditLo
 const OwnerOutwardExcelPage = lazy(() => import('./modules/owner/pages/OwnerOutwardExcelPage'));
 const ShiftHistory = lazy(() => import('./modules/owner/pages/ShiftHistory'));
 const ReturnHistory = lazy(() => import('./modules/owner/pages/ReturnHistory'));
+const OwnerWarrantyHistory = lazy(() => import('./modules/owner/pages/OwnerWarrantyHistory'));
 const StoreSettings = lazy(() => import('./modules/owner/pages/StoreSettings'));
 const PrintTemplateSettings = lazy(() => import('./modules/owner/pages/PrintTemplateSettings'));
 
@@ -137,6 +139,7 @@ function App() {
               <Route path="shift" element={<ShiftManagement />} />
               <Route path="customers" element={<CustomerManagement />} />
               <Route path="returns" element={<ReturnOrderPage />} />
+              <Route path="warranty" element={<WarrantyManagement />} />
             </Route>
           </Route>
 
@@ -156,6 +159,7 @@ function App() {
                 <Route path="store-settings" element={<StoreSettings />} />
                 <Route path="owner-reports" element={<OwnerReports />} />
                 <Route path="return-history" element={<ReturnHistory />} />
+                <Route path="warranty-history" element={<OwnerWarrantyHistory />} />
                 <Route path="audit-logs" element={<OwnerAuditLogsPage />} />
                 <Route path="outward-excel" element={<OwnerOutwardExcelPage />} />
                 <Route path="audit-logs" element={<OwnerAuditLog />} />
