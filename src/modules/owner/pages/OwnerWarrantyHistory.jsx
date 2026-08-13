@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { Table } from '../../../shared/components/Table';
 import { Badge } from '../../../shared/components/Badge';
-import { Input } from '../../../shared/components/Input';
 import Icon from '../../../shared/components/Icon';
 import Button from '../../../shared/components/Button';
 import Drawer from '../../../shared/components/Drawer';
@@ -36,6 +35,7 @@ const OwnerWarrantyHistory = () => {
 
   useEffect(() => {
     setSearch(debouncedSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSearch recreated each render (not memoized), adding it would cause infinite effect loop
   }, [debouncedSearch]);
 
   useEffect(() => {
