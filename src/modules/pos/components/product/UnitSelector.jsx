@@ -18,17 +18,18 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
   const rawConversionUnits = product.ConversionUnits ?? product.conversionUnits ?? [];
 
   // Build list: base unit + conversion units
-  // Quy ước convertValue: SỐ ĐƠN VỊ CƠ BẢN trong 1 đơn vị này
-  // VD: 1 Mét = 0.01 Cuộn (vì 1 cuộn = 100m) → convertValue = 0.01
-  //     1 Thùng = 12 Cuộn → convertValue = 12
+  // Chỉ hiện base unit nếu DirectSale = true
+  const baseUnitSellable = product.directSale !== false;
   const units = [
-    {
-      id: 'base',
-      name: baseUnit,
-      convertValue: 1,
-      price: product.price,
-      description: 'Đơn vị cơ bản',
-    },
+    ...(baseUnitSellable
+      ? [{
+          id: 'base',
+          name: baseUnit,
+          convertValue: 1,
+          price: product.price,
+          description: 'Đơn vị cơ bản',
+        }]
+      : []),
     ...rawConversionUnits.map((u) => {
       const unitName = u.UnitName ?? u.unitName ?? u.name ?? baseUnit;
       let convertValue = u.ConvertValue ?? u.convertValue ?? 1;

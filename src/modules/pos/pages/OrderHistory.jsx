@@ -158,6 +158,9 @@ const mapOrder = (o) => {
           item.lineTotal ||
           (item.unitPrice || item.price || 0) * (item.quantity || 0)
       ),
+      unit: item.unit || item.Unit || '',
+      selectedUnit: item.selectedUnit || item.SelectedUnit || '',
+      displayUnit: item.displayUnit || item.selectedUnit || item.SelectedUnit || item.unit || item.Unit || '',
     })),
     itemCount: (o.items || o.lineItems || []).length || o.itemCount || 0,
     subtotal: parseFloat(o.subtotal || o.Subtotal || o.subTotal || 0),
@@ -341,7 +344,7 @@ const OrderHistory = () => {
       .map((item) => `
       <tr>
         <td class="text-left">${item.productName || item.name || 'SP'}</td>
-        <td class="text-center">${item.quantity || 0}${item.displayUnit || item.selectedUnit || ''} x ${formatCurrency(item.unitPrice || item.price || 0)}</td>
+        <td class="text-center">${item.quantity || 0} ${item.displayUnit || item.selectedUnit || item.unit || ''} x ${formatCurrency(item.unitPrice || item.price || 0)}</td>
         <td class="text-right">${formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 0))}</td>
       </tr>`)
       .join('');

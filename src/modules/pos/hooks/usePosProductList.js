@@ -44,6 +44,8 @@ const normalizePosProduct = (p) => {
       price: u.Price ?? u.price ?? 0,
     })),
     hasMultipleUnits: rawConvUnits.length > 0,
+    // Đơn vị cơ bản có được phép bán không
+    directSale: p.DirectSale ?? p.directSale ?? true,
   };
 };
 

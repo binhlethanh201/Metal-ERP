@@ -21,7 +21,7 @@ import { RevenueByTimeReport } from '../components/RevenueByTimeReport';
 import { LowStockReport } from '../components/LowStockReport';
 import { ProductProfitReport } from '../components/ProductProfitReport';
 import { SupplierDetailReport } from '../components/SupplierDetailReport';
-import { exportStockReportToExcel } from '../utils/reportUtils';
+import { exportStockReportToExcel, exportRevenueReportToExcel, exportProductProfitReportToExcel, exportLowStockReportToExcel } from '../utils/reportUtils';
 
 export const OwnerReports = () => {
   const defaultToDate = new Date().toISOString().split('T')[0];
@@ -211,11 +211,11 @@ export const OwnerReports = () => {
     if (selectedReport === 'stock-movement' && movementData?.items) {
       exportStockReportToExcel(movementData.items, info, 'Bao_Cao_Xuat_Nhap_Ton');
     } else if (selectedReport === 'revenue-by-time' && revenueData?.tableData) {
-      exportStockReportToExcel(revenueData.tableData, info, 'Bao_Cao_Doanh_Thu');
+      exportRevenueReportToExcel(revenueData.tableData, info, 'Bao_Cao_Doanh_Thu');
     } else if (selectedReport === 'low-stock' && lowStockData?.items) {
-      exportStockReportToExcel(lowStockData.items, info, 'Bao_Cao_Ton_Kho_Sap_Het');
+      exportLowStockReportToExcel(lowStockData.items, info, 'Bao_Cao_Ton_Kho_Sap_Het');
     } else if (selectedReport === 'product-profit' && productProfitItems?.length > 0) {
-      exportStockReportToExcel(productProfitItems, info, 'Bao_Cao_Loi_Nhuan_SP');
+      exportProductProfitReportToExcel(productProfitItems, info, 'Bao_Cao_Loi_Nhuan_SP');
     } else if (selectedReport === 'supplier-detail' && supplierPurchaseHistory?.length > 0) {
       exportStockReportToExcel(supplierPurchaseHistory, info, 'Lich_Su_Nhap_Hang_NCC');
     }

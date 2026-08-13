@@ -34,7 +34,9 @@ export const ReceiptPreview = ({ order, onPrint, onClose }) => {
           {order.items.map((item, idx) => (
             <div key={idx} className="grid grid-cols-4 gap-1 text-xs text-slate-800 dark:text-[#e5e5e5]">
               <span className="truncate">{item.name}</span>
-              <span className="text-right">{item.quantity}</span>
+              <span className="text-right">
+                {item.quantity}{item.selectedUnit || item.baseUnit || item.unit ? ` ${item.selectedUnit || item.baseUnit || item.unit}` : ''}
+              </span>
               <span className="text-right">{(item.price / 1000).toFixed(0)}K</span>
               <span className="text-right font-medium">
                 {((item.price * item.quantity) / 1000).toFixed(0)}K

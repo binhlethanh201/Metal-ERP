@@ -104,8 +104,7 @@ export const STAFF_ACTIONS = {
 };
 
 // ==================== LOOKUP PERMISSIONS ====================
- * VD: Nguoi co STOCK_INWARD_CREATE duoc phep goi GET /api/suppliers de chon NCC trong form nhap kho.
- */
+// VD: Nguoi co STOCK_INWARD_CREATE duoc phep goi GET /api/suppliers de chon NCC trong form nhap kho.
 export const LOOKUP_ACCESS = {
   // API get suppliers list -> dung cho dropdown chon NCC
   'SUPPLIER_VIEW': [

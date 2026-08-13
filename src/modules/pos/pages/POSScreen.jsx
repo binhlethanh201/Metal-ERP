@@ -50,10 +50,23 @@ const mapToPosProduct = (p) => {
     unit: p.unit,
     conversionUnits: p.conversionUnits,
   });
+  const conversionUnits = p.conversionUnits || [];
+  const baseDirectSale = p.directSale ?? p.DirectSale ?? true;
+  // Tổng số đơn vị có thể bán (base + quy đổi)
+  const totalSellableUnits = (baseDirectSale ? 1 : 0) + conversionUnits.length;
+  const hasMultipleUnits = totalSellableUnits > 1;
+  // Nếu base unit không được bán, lấy giá từ đơn vị quy đổi đầu tiên
+  const displayPrice = baseDirectSale
+    ? (p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0)
+    : (conversionUnits[0]?.price ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0);
+  const displayUnit = baseDirectSale
+    ? (p.unit || 'Cái')
+    : (conversionUnits[0]?.unitName ?? p.unit ?? 'Cái');
+
   return {
     id: p.productId || p.productCode || p.id || '',
     name: p.productName || p.name || '',
-    price: p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0,
+    price: displayPrice,
     sku: p.productCode || p.barcode || '',
     stock: p.availableStock ?? p.quantity ?? p.stock ?? 0,
     category: p.categoryName || p.group || p.category || '',
@@ -61,9 +74,10 @@ const mapToPosProduct = (p) => {
     image: p.image || '',
     productId: p.productId || p.id || '',
     barcode: p.barcode || '',
-    unit: p.unit || 'Cái', // Base unit
-    conversionUnits: p.conversionUnits || [], // Các đơn vị quy đổi
-    hasMultipleUnits: (p.conversionUnits || []).length > 0, // Có nhiều đơn vị không
+    unit: displayUnit,
+    conversionUnits: conversionUnits,
+    hasMultipleUnits: hasMultipleUnits,
+    directSale: baseDirectSale,
   };
 };
 
