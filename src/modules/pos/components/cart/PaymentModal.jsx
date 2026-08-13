@@ -98,7 +98,7 @@ const PaymentModal = ({
         <div className="border-t border-slate-200 pt-4 dark:border-[#333333]">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-700 dark:text-[#b3b3b3]">Hình thức thanh toán</h3>
-            {payLines.length < 2 && (
+            {(cart?.paymentMethod === 'Kết hợp' || cart?.paymentMethod === 'Combined') && payLines.length < 2 && (
               <button
                 type="button"
                 onClick={onAddLine}
@@ -110,20 +110,29 @@ const PaymentModal = ({
           </div>
 
           <div className="space-y-4">
-            {payLines.map((line) => (
+            {payLines.map((line) => {
+              const isCombined = cart?.paymentMethod === 'Kết hợp' || cart?.paymentMethod === 'Combined' || payLines.length > 1;
+              return (
               <div key={line.id} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-[#333333] dark:bg-[#0f0f0f]">
                 <div className="mb-3 flex items-center justify-between">
-                  <select
-                    value={line.method}
-                    onChange={(e) => onLineChange(line.id, 'method', e.target.value)}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a]"
-                  >
-                    {allMethods.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.icon} {m.name}
-                      </option>
-                    ))}
-                  </select>
+                  {isCombined ? (
+                    <select
+                      value={line.method}
+                      onChange={(e) => onLineChange(line.id, 'method', e.target.value)}
+                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a]"
+                    >
+                      {allMethods.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.icon} {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-800 dark:bg-[#272727] dark:text-[#e5e5e5]">
+                      <span>{line.method === 'Transfer' ? '📱' : '💵'}</span>
+                      <span>{line.method === 'Transfer' ? 'Chuyển khoản' : 'Tiền mặt'}</span>
+                    </div>
+                  )}
                   {payLines.length > 1 && (
                     <button
                       type="button"
@@ -147,7 +156,7 @@ const PaymentModal = ({
                   )}
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#999999]">Số tiền</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-[#999999]">{line.method === 'Cash' ? 'Khách trả' : 'Số tiền'}</label>
                   <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="text"
@@ -170,15 +179,12 @@ const PaymentModal = ({
                         Nhập nốt {formatCurrency(remaining)}
                       </button>
                     )}
-                    {line.amount > 0 && line.amount >= remaining && remaining > 0 && (
-                      <span className="shrink-0 rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-400">
-                        ✅ Đủ
-                      </span>
-                    )}
+                    {/* Removed the buggy ✅ Đủ label entirely */}
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-5 space-y-2 rounded-lg bg-slate-50 p-4 dark:bg-[#1a1a1a]/50">

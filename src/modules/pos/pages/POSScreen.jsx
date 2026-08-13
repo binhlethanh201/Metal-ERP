@@ -396,7 +396,8 @@ const POSScreen = () => {
   const finalTotal = Math.max(0, cart.subtotal - (discountInfo?.discountAmount || 0));
   const totalPaid = payLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
   const remaining = Math.max(0, finalTotal - totalPaid);
-  const isPaymentValid = Math.abs(totalPaid - finalTotal) <= 1 && totalPaid > 0;
+  const hasCash = payLines.some(l => l.method === 'Cash');
+  const isPaymentValid = totalPaid > 0 && (hasCash ? totalPaid >= finalTotal : Math.abs(totalPaid - finalTotal) <= 1);
 
   // Lấy active shift: ưu tiên localStorage, nếu thiếu thì refresh từ BE
   const resolveActiveShift = async () => {
@@ -468,10 +469,10 @@ const POSScreen = () => {
           amount: line.amount,
         });
         payMethodsVN.push({ method: vnMethod, amount: line.amount });
-        const pmBody = { method, amount: line.amount };
+        const appliedAmount = Math.min(line.amount, finalTotal);
+        const pmBody = { method, amount: appliedAmount };
         if (method === 'Cash' || method.toLowerCase() === 'cash') {
-          pmBody.cashReceived =
-            totalPaidAmount && totalPaidAmount >= line.amount ? totalPaidAmount : line.amount;
+          pmBody.cashReceived = line.amount;
         }
         try {
           await createPayment(invoice.invoiceId, pmBody);
@@ -479,13 +480,13 @@ const POSScreen = () => {
           console.warn('[POS] createPayment error:', pmErr.data || pmErr.message);
           // Thử các format khác nhau
           const attempts = [
-            { paymentMethod: method, amount: line.amount, cashReceived: pmBody.cashReceived },
+            { paymentMethod: method, amount: appliedAmount, cashReceived: pmBody.cashReceived },
             {
               method: method.toLowerCase(),
-              amount: line.amount,
+              amount: appliedAmount,
               cashReceived: pmBody.cashReceived,
             },
-            { Method: method, Amount: line.amount, CashReceived: pmBody.cashReceived },
+            { Method: method, Amount: appliedAmount, CashReceived: pmBody.cashReceived },
           ];
           let lastErr = pmErr;
           for (const attempt of attempts) {
@@ -671,17 +672,11 @@ const POSScreen = () => {
       return;
     }
 
-    // Tiền mặt hoặc mặc định
-    if (isSplitPay || cart.paymentMethod === 'Kết hợp') {
-      // Mở modal với 2 dòng Tiền mặt + Chuyển khoản
-      setPayLines([
-        { id: Date.now(), method: 'Cash', amount: 0 },
-        { id: Date.now() + 1, method: 'Transfer', amount: 0 },
-      ]);
-      setShowPayModal(true);
-    } else {
-      processOrder([{ method: 'Cash', amount: finalTotal }], finalTotal);
-    }
+    // Tiền mặt hoặc mặc định → Mở modal 1 dòng (cho phép nhập tiền khách đưa)
+    setPayLines([
+      { id: Date.now(), method: 'Cash', amount: 0 },
+    ]);
+    setShowPayModal(true);
   };
 
   const handleProcessPayment = async () => {
@@ -735,13 +730,32 @@ const POSScreen = () => {
         const validLines = lines.filter((l) => l.amount > 0);
         if (validLines.length === 0) throw new Error('Không có số tiền hợp lệ');
 
+        // Xử lý phân bổ tiền thanh toán vào đơn hàng (để payment amount ko vượt quá finalTotal)
+        let remainingToApply = finalTotal;
+        const processedLines = validLines.map((l) => ({ ...l, applied: 0 }));
+        
+        // Ưu tiên trừ tiền các hình thức không phải Cash trước (như Chuyển khoản)
+        for (let l of processedLines) {
+          if (l.method !== 'Cash') {
+            l.applied = Math.min(l.amount, remainingToApply);
+            remainingToApply -= l.applied;
+          }
+        }
+        // Phần còn lại trừ vào Cash
+        for (let l of processedLines) {
+          if (l.method === 'Cash') {
+            l.applied = Math.min(l.amount, remainingToApply);
+            remainingToApply -= l.applied;
+          }
+        }
+
         const paymentRes = await createPayment(invoiceId, {
           method: 'Combined',
           amount: finalTotal,
-          paymentLines: validLines.map((l) => ({
+          paymentLines: processedLines.map((l) => ({
             method: l.method,
-            amount: l.amount,
-            cashReceived: l.method === 'Cash' ? l.amount : null,
+            amount: l.applied, // Số tiền được ghi nhận cho đơn hàng
+            cashReceived: l.method === 'Cash' ? l.amount : null, // Số tiền thực tế khách đưa
           })),
         });
 
@@ -851,18 +865,17 @@ const POSScreen = () => {
       prev.map((l) => {
         if (l.id !== id) return l;
         if (field === 'method') return { ...l, method: value, amount: 0 };
-        // Không cho nhập vượt quá số tiền còn thiếu + dòng hiện tại
-        const otherTotal = prev
-          .filter((o) => o.id !== id)
-          .reduce((s, o) => s + (Number(o.amount) || 0), 0);
-        const maxAllowed = Math.max(0, finalTotal - otherTotal);
-        const newAmount = Math.min(Number(value) || 0, maxAllowed);
-        return { ...l, amount: newAmount };
+        // Cho phép nhập số tiền tuỳ ý (tiền khách đưa) để tính tiền thừa
+        return { ...l, amount: Number(value) || 0 };
       })
     );
   };
   const handleQuickFill = (id) =>
-    setPayLines((prev) => prev.map((l) => (l.id === id ? { ...l, amount: remaining } : l)));
+    setPayLines((prev) => prev.map((l) => {
+      if (l.id !== id) return l;
+      const otherTotal = prev.filter(x => x.id !== id).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+      return { ...l, amount: Math.max(0, finalTotal - otherTotal) };
+    }));
 
   const handleQuickAddCustomer = (newCust) => {
     setSelectedCustomer(newCust);

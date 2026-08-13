@@ -90,6 +90,24 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
                 label="Tiền cuối ca (thực tế)"
                 value={formatCurrency(summary.closingBalance)}
               />
+              
+              {/* Vị trí Ghi chú đúng ý user: Ở dưới Tiền cuối ca, thuộc cột phải */}
+              {(summary.note || summary.forceCloseReason) && (
+                <div className="mt-2 space-y-2 border-t border-slate-200 pt-3 dark:border-[#333333]">
+                  {summary.note && (
+                    <div className="flex justify-between items-start text-sm">
+                      <span className="font-semibold text-slate-500 dark:text-[#999999]">Ghi chú:</span>
+                      <span className="text-right text-slate-700 dark:text-[#e5e5e5] break-words ml-4">{summary.note}</span>
+                    </div>
+                  )}
+                  {summary.forceCloseReason && (
+                    <div className="flex justify-between items-start text-sm">
+                      <span className="font-semibold text-red-500">Lý do chốt hộ:</span>
+                      <span className="text-right text-red-600 break-words ml-4">{summary.forceCloseReason}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -123,6 +141,7 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
                     isZero ? 'text-slate-500' : isNeg ? 'text-red-600' : 'text-emerald-600'
                   }
                 />
+
               </div>
             </div>
           </div>
@@ -209,7 +228,9 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
                                         ? 'Tiền mặt'
                                         : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer' || o.paymentMethod === 'Chuyển khoản'
                                           ? 'CK'
-                                          : o.paymentMethod}
+                                          : o.paymentMethod === 'COMBINED' || o.paymentMethod === 'Combined' || o.paymentMethod === 'Kết hợp' || (o.paymentMethod && o.paymentMethod.startsWith('['))
+                                            ? 'Kết hợp'
+                                            : o.paymentMethod}
                                     </span>
                                   )}
                                 </div>

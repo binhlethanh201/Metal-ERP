@@ -52,46 +52,45 @@ const AutocompleteInput = ({ label, value, onChange, options = [], placeholder }
   const [filteredOptions, setFilteredOptions] = useState(options);
 
   useEffect(() => {
-    const kw = (value || '').toLowerCase();
-    setFilteredOptions(options.filter((opt) => opt.toLowerCase().includes(kw)));
-  }, [value, options]);
+    // If it's read-only, we just show all options when opened.
+    setFilteredOptions(options);
+  }, [options]);
 
   return (
     <div className="relative w-full space-y-2">
-      <div className="relative">
+      <div className="relative cursor-pointer" onClick={() => setIsOpen((prev) => !prev)}>
         <Input
           label={label}
           value={value || ''}
-          placeholder={placeholder || 'Chọn hoặc nhập mới...'}
-          onChange={(e) => {
-            onChange(e.target.value);
-            setIsOpen(true);
-          }}
-          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder || 'Chọn...'}
+          readOnly={true}
+          className="cursor-pointer"
         />
         <button
           type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
           className="absolute right-2 top-[34px] text-slate-400 hover:text-slate-600 dark:text-[#808080] dark:hover:text-[#b3b3b3]"
         >
           <Icon name="expand_more" size={18} />
         </button>
       </div>
       {isOpen && filteredOptions.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
-          {filteredOptions.map((opt) => (
-            <li
-              key={opt}
-              onClick={() => {
-                onChange(opt);
-                setIsOpen(false);
-              }}
-              className="cursor-pointer px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-[#004785] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
-            >
-              {opt}
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setIsOpen(false)}></div>
+          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
+            {filteredOptions.map((opt) => (
+              <li
+                key={opt}
+                onClick={() => {
+                  onChange(opt);
+                  setIsOpen(false);
+                }}
+                className="cursor-pointer px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-[#004785] dark:text-[#b3b3b3] dark:hover:bg-[#333333]"
+              >
+                {opt}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

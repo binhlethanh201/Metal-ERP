@@ -594,6 +594,50 @@ const OwnerDashboard = () => {
           )}
         </Section>
       </div>
+
+      {/* ── Row 9: Ca bán bất thường ── */}
+      <div className="grid grid-cols-1 gap-6 mt-6">
+        <Section title="Ca bán bất thường (Gần đây)" icon="error">
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+            </div>
+          ) : (data?.abnormalShifts ?? []).length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-6 text-center">
+              <Icon name="check_circle" className="text-3xl text-emerald-400" />
+              <p className="text-sm font-semibold text-slate-500 dark:text-[#999999]">Tất cả các ca bán đều khớp tiền</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-[#333333]">
+                    <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Mã ca / Người trực</th>
+                    <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Chênh lệch</th>
+                    <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Ngày chốt</th>
+                    <th className="pb-2 text-right font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Ghi chú</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
+                  {(data?.abnormalShifts ?? []).map((s) => (
+                    <tr key={s.shiftId} className="hover:bg-slate-50 dark:hover:bg-[#272727]">
+                      <td className="py-2 pr-3">
+                        <p className="font-bold text-slate-800 dark:text-[#e5e5e5]">{s.shiftCode}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-[#808080]">{s.userName}</p>
+                      </td>
+                      <td className={`py-2 pr-3 font-semibold ${s.variance > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {s.variance > 0 ? '+' : ''}{fmtVND(s.variance)}
+                      </td>
+                      <td className="py-2 pr-3 text-slate-500 dark:text-[#999999]">{s.endedAt ? new Date(s.endedAt).toLocaleString('vi-VN') : '—'}</td>
+                      <td className="py-2 text-right text-slate-600 dark:text-[#b3b3b3]">{s.note || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+      </div>
     </div>
   );
 };

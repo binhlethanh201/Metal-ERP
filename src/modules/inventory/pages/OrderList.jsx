@@ -24,7 +24,18 @@ const PAYMENT_VARIANTS = {
   'Kết hợp': 'secondary', 'Công nợ': 'danger',
   Cash: 'warning', Card: 'info', Transfer: 'primary', CASH: 'warning', CARD: 'info', TRANSFER: 'primary',
 };
-const translatePayment = (method) => PAYMENT_LABELS[method] || method || '-';
+const translatePayment = (method) => {
+  if (method && method.startsWith('[')) {
+    try {
+      const arr = JSON.parse(method);
+      if (Array.isArray(arr)) {
+        return arr.map(p => translatePayment(p.method)).join(', ');
+      }
+    } catch {}
+    return 'Kết hợp';
+  }
+  return PAYMENT_LABELS[method] || method || '-';
+};
 
 const getVNDateStr = (dateStr) => {
   if (!dateStr) return '';

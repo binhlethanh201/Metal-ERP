@@ -38,6 +38,7 @@ export const useShiftHistory = () => {
   const setPage = (page) => setFilters((f) => ({ ...f, page }));
   const setPageSize = (pageSize) => setFilters((f) => ({ ...f, pageSize, page: 1 }));
   const setDateRange = (from, to) => setFilters((f) => ({ ...f, from, to, page: 1 }));
+  const setSearchKeyword = (keyword) => setFilters((f) => ({ ...f, shiftCode: keyword, page: 1 }));
   const resetFilters = () => setFilters(DEFAULT_FILTERS);
 
   const [shiftSummary, setShiftSummary] = useState(null);
@@ -117,6 +118,7 @@ export const useShiftHistory = () => {
     ordersLoading,
     loadShiftSummary,
     clearShiftSummary,
+    setSearchKeyword,
   };
 };
 

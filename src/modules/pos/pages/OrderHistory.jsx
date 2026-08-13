@@ -49,7 +49,18 @@ const PAYMENT_LABELS = {
   Combined: 'Kết hợp',
   Debt: 'Công nợ',
 };
-const translatePayment = (method) => PAYMENT_LABELS[method] || method || '-';
+const translatePayment = (method) => {
+  if (method && method.startsWith('[')) {
+    try {
+      const arr = JSON.parse(method);
+      if (Array.isArray(arr)) {
+        return arr.map(p => PAYMENT_LABELS[p.method] || p.method).join(', ');
+      }
+    } catch {}
+    return 'Kết hợp';
+  }
+  return PAYMENT_LABELS[method] || method || '-';
+};
 
 // Map API order/invoice sang format chuẩn cho UI
 const mapOrder = (o) => {
