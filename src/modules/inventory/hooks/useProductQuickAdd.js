@@ -364,6 +364,7 @@ export const useProductQuickAdd = (onSave) => {
     setBaseUnit({ name: '', price: 0, directSale: false });
     setConversionUnits([]);
     setActiveTab('basic');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset one-time, setBaseUnit is stable useCallback
   }, []);
 
   const buildPayload = useCallback(
