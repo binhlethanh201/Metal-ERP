@@ -22,7 +22,6 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
     Khách: '/pos/customers',
     'Quản lý ca bán': '/pos/shift',
     'Đổi trả': '/pos/returns',
-    'Hàng bảo hành': '/pos/warranty',
   };
 
   const menuItems = [
@@ -31,7 +30,6 @@ const PosSidebar = ({ activeMenu, onMenuSelect, onNavigateWarehouse, open, onTog
     { icon: 'groups', label: 'Khách', permissions: ROUTE_PERMISSIONS.posCustomers },
     { icon: 'assessment', label: 'Quản lý ca bán', permissions: ROUTE_PERMISSIONS.posShift },
     { icon: 'swap_horiz', label: 'Đổi trả', permissions: ROUTE_PERMISSIONS.posReturns },
-    { icon: 'verified_user', label: 'Hàng bảo hành', permissions: ROUTE_PERMISSIONS.posReturns },
   ].filter((item) => hasAnyPermission(user, item.permissions));
 
   const handleSwitchToWarehouse = () => {
