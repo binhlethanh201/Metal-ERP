@@ -912,7 +912,7 @@ export const ShiftManagement = () => {
                 </p>
                 <p className="mt-1 truncate text-lg font-extrabold text-amber-700">
                   {formatCurrency(
-                    (displayShift.openingBalance || 0) + (displayShift.totalSales || 0)
+                    (displayShift.openingBalance || 0) + (displayShift.cashSales || 0)
                   )}
                 </p>
               </div>
