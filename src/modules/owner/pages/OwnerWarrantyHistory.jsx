@@ -8,7 +8,13 @@ import Drawer from '../../../shared/components/Drawer';
 import { useDebounce } from '../../../shared/hooks/useDebounce';
 import { formatDate } from '../../../shared/utils/formatDate';
 import { useOwnerWarrantyHistory } from '../hooks/useOwnerWarrantyHistory';
-import { Layers, RotateCcw } from 'lucide-react';
+import { Layers, RotateCcw, Send, PackageCheck } from 'lucide-react';
+
+const STATUS_BADGE = {
+  PENDING_ASSIGN: { variant: 'warning', label: 'Chờ phân công NCC' },
+  AWAITING_SUPPLIER: { variant: 'info', label: 'Chờ hàng về' },
+  COMPLETED: { variant: 'success', label: 'Hoàn tất' },
+};
 
 const OwnerWarrantyHistory = () => {
   const {
@@ -22,6 +28,15 @@ const OwnerWarrantyHistory = () => {
     setSearch,
     setDateRange,
     resetFilters,
+    supplierMap,
+    selectedSupplier,
+    setSelectedSupplier,
+    assigningId,
+    acceptingId,
+    supplierLoadingMap,
+    fetchSuggestedSuppliers,
+    handleAssignSupplier,
+    handleAcceptWarranty,
   } = useOwnerWarrantyHistory();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,7 +50,7 @@ const OwnerWarrantyHistory = () => {
 
   useEffect(() => {
     setSearch(debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSearch recreated each render (not memoized), adding it would cause infinite effect loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
   useEffect(() => {
@@ -110,12 +125,132 @@ const OwnerWarrantyHistory = () => {
       ),
     },
     {
+      header: 'Trạng thái',
+      key: 'status',
+      render: (val) => {
+        const badge = STATUS_BADGE[val] || STATUS_BADGE.PENDING_ASSIGN;
+        return (
+          <Badge variant={badge.variant} className="text-xs whitespace-nowrap">
+            {badge.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      header: 'Nhà cung cấp',
+      key: 'warrantyId',
+      render: (val, row) => {
+        const warrantyId = row.warrantyId || row.warrantyTicketId || '';
+        const returnItemId = row.returnItemId || '';
+        const lookupKey = warrantyId || returnItemId;
+        const suppliers = supplierMap[lookupKey] || [];
+        const isLoading = supplierLoadingMap[lookupKey];
+
+        // Nếu đã có assignedSupplierName từ API
+        if (row.status === 'AWAITING_SUPPLIER' || row.status === 'COMPLETED') {
+          return (
+            <span className="text-sm text-slate-700 dark:text-[#b3b3b3]">
+              {row.assignedSupplierName || row.supplierName || '—'}
+            </span>
+          );
+        }
+
+        if (row.status === 'PENDING_ASSIGN') {
+          if (!suppliers.length && !isLoading) {
+            return (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => fetchSuggestedSuppliers(warrantyId, row.productId || row.id, row.returnItemId)}
+                className="whitespace-nowrap text-xs"
+              >
+                Tra cứu NCC
+              </Button>
+            );
+          }
+
+          if (isLoading) {
+            return <span className="text-xs text-slate-400">Đang tìm NCC...</span>;
+          }
+
+          return (
+            <select
+              value={selectedSupplier[lookupKey] || ''}
+              onChange={(e) =>
+                setSelectedSupplier((prev) => ({
+                  ...prev,
+                  [lookupKey]: e.target.value,
+                }))
+              }
+              className="w-full min-w-[140px] rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+            >
+              <option value="">-- Chọn NCC --</option>
+              {suppliers.map((s) => (
+                <option key={s.id || s.supplierId} value={s.id || s.supplierId}>
+                  {s.name || s.supplierName}
+                </option>
+              ))}
+            </select>
+          );
+        }
+
+        return <span className="text-sm text-slate-400">—</span>;
+      },
+    },
+    {
+      header: 'Thao tác',
+      key: 'actions',
+      render: (val, row) => {
+        const warrantyId = row.warrantyId || row.warrantyTicketId || '';
+        const returnItemId = row.returnItemId || '';
+        const lookupKey = warrantyId || returnItemId;
+        const isAssigning = assigningId === lookupKey;
+        const isAccepting = acceptingId === lookupKey;
+
+        if (row.status === 'PENDING_ASSIGN') {
+          return (
+            <Button
+              variant="primary"
+              size="xs"
+              loading={isAssigning}
+              disabled={isAssigning || !selectedSupplier[lookupKey]}
+              onClick={() =>
+                handleAssignSupplier(lookupKey, selectedSupplier[lookupKey])
+              }
+              className="flex items-center gap-1 whitespace-nowrap text-xs"
+            >
+              <Send size={12} />
+              Gửi NCC
+            </Button>
+          );
+        }
+
+        if (row.status === 'AWAITING_SUPPLIER') {
+          return (
+            <Button
+              variant="success"
+              size="xs"
+              loading={isAccepting}
+              disabled={isAccepting}
+              onClick={() => handleAcceptWarranty(lookupKey)}
+              className="flex items-center gap-1 whitespace-nowrap text-xs"
+            >
+              <PackageCheck size={12} />
+              Xác nhận ACP
+            </Button>
+          );
+        }
+
+        return <span className="text-xs text-slate-400">—</span>;
+      },
+    },
+    {
       header: 'Lý do',
       key: 'reason',
       render: (val) => {
         let displayReason = val || 'Sản phẩm lỗi';
         if (val && val.toUpperCase() === 'DEFECTIVE') displayReason = 'Sản phẩm lỗi';
-        
+
         return (
           <Badge variant="warning" className="text-xs">
             {displayReason}
@@ -210,7 +345,7 @@ const OwnerWarrantyHistory = () => {
             emptyMessage="Không có sản phẩm lỗi nào được ghi nhận."
           />
         </div>
-        
+
         {totalCount > 0 && (
           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
             <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
