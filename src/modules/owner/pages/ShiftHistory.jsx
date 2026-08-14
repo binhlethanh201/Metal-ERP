@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Icon from '../../../shared/components/Icon';
 import { useShiftHistory } from '../hooks/useShiftHistory';
 import ShiftTable from '../components/shift/ShiftTable';
@@ -31,6 +32,32 @@ const ShiftHistory = () => {
 
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+
+  // Đọc query param (từ Dashboard "Ca bán bất thường" hoặc chuông notification)
+  // ?shiftId=...&shiftCode=... → highlight + auto-mở chi tiết ca đó.
+  const [searchParams] = useSearchParams();
+  const highlightShiftId = searchParams.get('shiftId');
+  const highlightShiftCode = searchParams.get('shiftCode');
+
+  // Lọc list theo shiftCode để đảm bảo ca đích nằm trong page hiện tại (chỉ 1 lần/code)
+  const appliedCodeRef = useRef(null);
+  useEffect(() => {
+    if (highlightShiftCode && appliedCodeRef.current !== highlightShiftCode) {
+      appliedCodeRef.current = highlightShiftCode;
+      setSearchKeyword(highlightShiftCode);
+    }
+  }, [highlightShiftCode, setSearchKeyword]);
+
+  // Auto-mở modal chi tiết ca khi đã có shiftId (mở thẳng qua API summary, không cần list)
+  const autoOpenedRef = useRef(null);
+  useEffect(() => {
+    if (!highlightShiftId || autoOpenedRef.current === highlightShiftId) return;
+    autoOpenedRef.current = highlightShiftId;
+    setSummaryOpen(true);
+    loadShiftSummary(highlightShiftId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightShiftId]);
+
 
   // Draft filters — chỉ apply khi bấm "Áp dụng"
   const [draftFilters, setDraftFilters] = useState({ from: '', to: '' });
@@ -201,6 +228,7 @@ const ShiftHistory = () => {
         loading={loading}
         onViewSummary={handleViewSummary}
         onClickRow={(row) => handleViewSummary(row.shiftId)}
+        highlightedShiftId={highlightShiftId}
       />
 
       {/* ==================== PHÂN TRANG ==================== */}

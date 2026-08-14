@@ -56,7 +56,7 @@ const VarianceCell = ({ variance }) => {
   );
 };
 
-const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
+const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow, highlightedShiftId }) => {
   const columns = [
     {
       key: 'shift',
@@ -132,6 +132,8 @@ const ShiftTable = ({ shifts, loading, onViewSummary, onClickRow }) => {
       emptyMessage="Không tìm thấy ca bán nào."
       className="bg-white shadow-sm dark:bg-[#0f0f0f]"
       onClickRow={onClickRow ? (row) => onClickRow(row) : undefined}
+      getRowKey={(row) => row.shiftId}
+      highlightedKey={highlightedShiftId}
     />
   );
 };

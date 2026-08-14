@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AreaChart,
   Area,
@@ -70,6 +71,7 @@ const MiniMetric = ({ icon, label, value, sub, color = 'text-slate-800', bg = 'b
 /* ════════════════════════════════════════════════════════ */
 const OwnerDashboard = () => {
   const { data, loading, error, refetch } = useOwnerDashboard();
+  const navigate = useNavigate();
 
   /* ── Error state ── */
   if (error) {
@@ -612,24 +614,44 @@ const OwnerDashboard = () => {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-[#333333]">
-                    <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Mã ca / Người trực</th>
+                    <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Mã ca / Người bán</th>
+                    <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Người chốt ca</th>
                     <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Chênh lệch</th>
                     <th className="pb-2 font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Ngày chốt</th>
-                    <th className="pb-2 text-right font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Ghi chú</th>
+                    <th className="pb-2 text-right font-black uppercase tracking-wide text-slate-400 dark:text-[#808080]">Lý do</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
                   {(data?.abnormalShifts ?? []).map((s) => (
-                    <tr key={s.shiftId} className="hover:bg-slate-50 dark:hover:bg-[#272727]">
+                    <tr
+                      key={s.shiftId}
+                      onClick={() =>
+                        navigate(
+                          `/inventory/shift-history?shiftId=${s.shiftId}&shiftCode=${encodeURIComponent(s.shiftCode || '')}`
+                        )
+                      }
+                      className="cursor-pointer hover:bg-blue-50/70 dark:hover:bg-blue-900/20"
+                    >
                       <td className="py-2 pr-3">
                         <p className="font-bold text-slate-800 dark:text-[#e5e5e5]">{s.shiftCode}</p>
                         <p className="text-[10px] text-slate-400 dark:text-[#808080]">{s.userName}</p>
+                      </td>
+                      <td className="py-2 pr-3 text-slate-600 dark:text-[#b3b3b3]">
+                        {s.closedByUserName || s.userName || '—'}
                       </td>
                       <td className={`py-2 pr-3 font-semibold ${s.variance > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                         {s.variance > 0 ? '+' : ''}{fmtVND(s.variance)}
                       </td>
                       <td className="py-2 pr-3 text-slate-500 dark:text-[#999999]">{s.endedAt ? new Date(s.endedAt).toLocaleString('vi-VN') : '—'}</td>
-                      <td className="py-2 text-right text-slate-600 dark:text-[#b3b3b3]">{s.note || '—'}</td>
+                      <td className="py-2 text-right text-slate-600 dark:text-[#b3b3b3]">
+                        {/* Lý do chênh lệch được gộp trong note dạng "[Lý do chênh lệch: X] — ghi chú".
+                            Trích riêng phần lý do; nếu là note cũ (không có tag) thì hiện nguyên note. */}
+                        {(() => {
+                          const note = s.note || '';
+                          const m = note.match(/\[Lý do chênh lệch:\s*([^\]]+)\]/);
+                          return (m ? m[1] : note).trim() || '—';
+                        })()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

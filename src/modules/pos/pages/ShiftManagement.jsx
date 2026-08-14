@@ -91,6 +91,22 @@ const mapShift = (s) => {
   };
 };
 
+// ─── Lý do chênh lệch tiền mặt khi chốt ca ──────────────────────────────────
+// Chỉ dùng khi Tiền mặt thực tế ≠ Số dư cuối dự kiến.
+// THỪA (thực tế > dự kiến): tiền quỹ nhiều hơn hệ thống tính.
+const CASH_SURPLUS_REASONS = [
+  'Khách không lấy lại tiền thừa',
+  'Quên tạo đơn / Quên bấm thanh toán trên phần mềm',
+  'Thu tiền đơn nợ/đơn cũ chưa cập nhật hệ thống',
+];
+// THIẾU (thực tế < dự kiến): tiền quỹ ít hơn hệ thống tính.
+const CASH_SHORTAGE_REASONS = [
+  'Trả thừa tiền cho khách (thối sai)',
+  'Nhầm mệnh giá / thiếu tiền lẻ',
+  'Quên bấm thanh toán, đơn chưa ghi nhận (doanh thu ảo)',
+  'Tiền bị mất / thất thoát',
+];
+
 export const ShiftManagement = () => {
   const { user } = useAuth();
   const staffName = user?.fullName || user?.name || user?.email || 'Thu ngân';
@@ -134,7 +150,7 @@ export const ShiftManagement = () => {
   }, [dateFilter, pageSize]);
 
   const [startForm, setStartForm] = useState({ openingBalance: '1000000' });
-  const [endForm, setEndForm] = useState({ actualCashCount: '', note: '', forceClose: false, forceCloseReason: '' });
+  const [endForm, setEndForm] = useState({ actualCashCount: '', note: '', diffReason: '', forceClose: false, forceCloseReason: '' });
 
   // Load shifts từ API (có phân trang server-side)
   const fetchShifts = useCallback(async () => {
@@ -613,21 +629,28 @@ export const ShiftManagement = () => {
   };
 
   const handleOpenEndModal = () => {
-    setEndForm({ actualCashCount: '', note: '', forceClose: false, forceCloseReason: '' });
+    setEndForm({ actualCashCount: '', note: '', diffReason: '', forceClose: false, forceCloseReason: '' });
     setExpandedSalesUser(null);
     setShowEndModal(true);
   };
 
   const handleEndShift = async () => {
     if (!openShift) return;
-    // Kiểm tra nếu tiền mặt lệch so với dự kiến thì bắt buộc nhập ghi chú
+    // Kiểm tra nếu tiền mặt lệch so với dự kiến: bắt buộc chọn lý do + nhập ghi chú chi tiết
     const expectedAmount =
       (openShift?.openingBalance || 0) + ((shiftSummary || openShift)?.cashSales || 0);
     const actualAmount = parseFloat(endForm.actualCashCount) || 0;
     const hasDiff = actualAmount !== expectedAmount;
-    if (hasDiff && !endForm.note.trim()) {
-      alert('Số tiền thực tế chênh lệch so với dự kiến. Vui lòng nhập ghi chú giải thích lý do.');
-      return;
+    if (hasDiff) {
+      // Validation: chênh lệch → PHẢI chọn lý do (dropdown) VÀ nhập ghi chú chi tiết
+      if (!endForm.diffReason) {
+        alert('Tiền mặt thực tế chênh lệch so với dự kiến. Vui lòng chọn "Lý do chênh lệch".');
+        return;
+      }
+      if (!endForm.note.trim()) {
+        alert('Vui lòng nhập ghi chú giải thích chi tiết lý do chênh lệch.');
+        return;
+      }
     }
     // Chốt hộ bắt buộc nhập lý do
     if (!isCurrentUserOpener && !endForm.forceCloseReason.trim()) {
@@ -638,9 +661,13 @@ export const ShiftManagement = () => {
       // Backend tự xác định forceClose dựa trên userId gửi request vs userId mở ca
       const isNotOpener = !isCurrentUserOpener;
       console.log('[ShiftManagement] Ending shift:', openShift.id, 'khongPhaiNguoiMoCa:', isNotOpener);
+      // Gộp lý do chênh lệch (dropdown) vào ghi chú gửi backend → không cần sửa backend
+      const combinedNote = endForm.diffReason
+        ? `[Lý do chênh lệch: ${endForm.diffReason}]${endForm.note.trim() ? ' — ' + endForm.note.trim() : ''}`
+        : endForm.note;
       const result = await endShift(openShift.id, {
         actualCash: parseFloat(endForm.actualCashCount) || 0,
-        note: endForm.note,
+        note: combinedNote,
         forceClose: isNotOpener,
         forceCloseReason: isNotOpener ? (endForm.forceCloseReason || `Chốt hộ bởi ${staffName}`) : null,
         closedByUserName: staffName,
@@ -1640,7 +1667,8 @@ export const ShiftManagement = () => {
                       if (raw.length > 12) {
                         raw = raw.slice(0, 12);
                       }
-                      setEndForm((f) => ({ ...f, actualCashCount: raw }));
+                      // Reset lý do chênh lệch khi đổi số (dấu chênh lệch có thể đổi THỪA↔THIẾU)
+                      setEndForm((f) => ({ ...f, actualCashCount: raw, diffReason: '' }));
                     }}
                     className="w-full rounded-xl border-2 border-slate-200 py-3.5 pl-10 pr-4 text-base font-bold transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] [&::-webkit-inner-spin-button]:appearance-none"
                     maxLength={14}
@@ -1720,6 +1748,37 @@ export const ShiftManagement = () => {
                     );
                   })()}
               </div>
+
+              {/* Lý do chênh lệch (Dropdown) — chỉ hiện khi Tiền thực tế ≠ Số dư dự kiến.
+                  THỪA (diff>0) → 3 lý do; THIẾU (diff<0) → 4 lý do. Bắt buộc chọn khi lệch. */}
+              {(() => {
+                const expectedCash = (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0);
+                const actualCash = Number(endForm.actualCashCount) || 0;
+                const diff = actualCash - expectedCash;
+                if (!endForm.actualCashCount || diff === 0) return null;
+                const isSurplus = diff > 0;
+                const reasons = isSurplus ? CASH_SURPLUS_REASONS : CASH_SHORTAGE_REASONS;
+                return (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold text-red-600">
+                      Lý do chênh lệch <span className="text-red-500">*</span>
+                      <span className={`ml-2 text-xs font-normal ${isSurplus ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        ({isSurplus ? 'thừa tiền' : 'thiếu tiền'})
+                      </span>
+                    </label>
+                    <select
+                      value={endForm.diffReason}
+                      onChange={(e) => setEndForm((f) => ({ ...f, diffReason: e.target.value }))}
+                      className={`w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all focus:outline-none focus:ring-2 ${isSurplus ? 'border-emerald-300 focus:border-emerald-500 focus:ring-emerald-100' : 'border-amber-300 focus:border-amber-500 focus:ring-amber-100'} dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]`}
+                    >
+                      <option value="">— Chọn lý do chênh lệch —</option>
+                      {reasons.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })()}
               <div>
                 <label
                   className={`mb-1.5 block text-sm font-semibold ${(() => {

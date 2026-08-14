@@ -163,7 +163,10 @@ const InventoryNotificationDropdown = () => {
     const refType = notif.referenceType || (notif.inventoryCheckId ? 'InventoryCheck' : null);
     const refId = notif.referenceId || notif.inventoryCheckId;
 
-    if (refType === 'InwardInventory' && refId) {
+    if (refType === 'Shift' && refId) {
+      // Ca bán bất thường (chênh lệch tiền) → mở trang lịch sử ca bán + mở chi tiết ca đó
+      navigate(`/inventory/shift-history?shiftId=${refId}`);
+    } else if (refType === 'InwardInventory' && refId) {
       navigate(`/inventory/transactions?ticketId=${refId}&type=INWARD`);
     } else if (refType === 'OutwardInventory' && refId) {
       navigate(`/inventory/transactions?ticketId=${refId}&type=OUTWARD`);

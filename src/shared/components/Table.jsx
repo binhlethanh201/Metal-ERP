@@ -1,9 +1,12 @@
+import React, { useEffect, useRef } from 'react';
+
 /**
  * Table Component - Table tái sử dụng
  * Hỗ trợ columns, data, loading, empty state
  * Column hỗ trợ: width, align ('left'|'center'|'right')
+ * - getRowKey(row, idx): hàm lấy key ổn định cho row (mặc định dùng index).
+ * - highlightedKey: giá trị key của row cần highlight + auto-scroll tới.
  */
-
 export const Table = ({
   columns = [],
   data = [],
@@ -11,8 +14,17 @@ export const Table = ({
   emptyMessage = 'Không có dữ liệu',
   className = '',
   onClickRow,
+  getRowKey,
+  highlightedKey,
   ...props
 }) => {
+  const highlightRef = useRef(null);
+  useEffect(() => {
+    if (highlightedKey != null && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [highlightedKey, data]);
+
   return (
     <div className={`w-full overflow-x-auto ${className}`}>
       <table className="w-full table-fixed" {...props}>
@@ -72,13 +84,18 @@ export const Table = ({
               </td>
             </tr>
           ) : (
-            data.map((row, rowIdx) => (
+            data.map((row, rowIdx) => {
+              const rowKey = getRowKey ? getRowKey(row, rowIdx) : rowIdx;
+              const isHighlighted = highlightedKey != null && String(rowKey) === String(highlightedKey);
+              return (
               <tr
-                key={rowIdx}
+                key={rowKey}
+                ref={isHighlighted ? highlightRef : null}
                 onClick={onClickRow ? () => onClickRow(row) : undefined}
                 className={`
                   transition-all duration-150
                   even:bg-slate-50/50 dark:even:bg-[#1a1a1a]/50
+                  ${isHighlighted ? 'bg-amber-100/80 dark:bg-amber-900/30 shadow-[inset_3px_0_0_0_#f59e0b]' : ''}
                   ${onClickRow
                     ? 'cursor-pointer hover:bg-blue-100/70 hover:shadow-[inset_3px_0_0_0_#2563eb] dark:hover:bg-blue-900/30'
                     : 'hover:bg-blue-50/40 dark:hover:bg-blue-900/20'
@@ -102,7 +119,8 @@ export const Table = ({
                   );
                 })}
               </tr>
-            ))
+              );
+            })
           )}
         </tbody>
       </table>
