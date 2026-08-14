@@ -12,10 +12,20 @@ export const getSuggestedSuppliers = async (productId) => {
   return await apiGet(`/api/warranty/${productId}/suggested-suppliers`);
 };
 
-export const assignSupplier = async (warrantyId, supplierId) => {
-  return await apiPost(`/api/warranty/${warrantyId}/assign-supplier`, { supplierId });
+export const assignSupplier = async (warrantyId, supplierId, totalClaimQty) => {
+  const body = { supplierId };
+  // Cho phép chọn SL gửi BH (BH một phần). totalClaimQty theo ĐVT cơ bản (cái).
+  if (totalClaimQty != null && !Number.isNaN(Number(totalClaimQty))) {
+    body.totalClaimQty = Number(totalClaimQty);
+  }
+  return await apiPost(`/api/warranty/${warrantyId}/assign-supplier`, body);
 };
 
 export const acceptWarrantyReturn = async (warrantyId) => {
   return await apiPost(`/api/warranty/${warrantyId}/accept`);
+};
+
+export const getSupplierWarrantyBatches = async (params) => {
+  const qs = new URLSearchParams(params).toString();
+  return await apiGet(`/api/warranty/supplier-batches${qs ? `?${qs}` : ''}`);
 };

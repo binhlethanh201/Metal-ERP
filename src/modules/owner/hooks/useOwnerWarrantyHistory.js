@@ -113,14 +113,19 @@ export const useOwnerWarrantyHistory = () => {
     }
   }, []);
 
-  const handleAssignSupplier = useCallback(async (warrantyId, supplierId) => {
+  const handleAssignSupplier = useCallback(async (warrantyId, supplierId, totalClaimQty) => {
     if (!supplierId) {
       alert('Vui lòng chọn Nhà cung cấp');
       return;
     }
     setAssigningId(warrantyId);
     try {
-      await assignSupplier(warrantyId, supplierId);
+      const res = await assignSupplier(warrantyId, supplierId, totalClaimQty);
+      // BH một phần: NCC không đủ hạn mức cho toàn bộ SL trả -> backend chỉ BH một phần,
+      // báo rõ cho user biết phần dư không được BH.
+      if (res?.isPartial) {
+        alert(res?.message || `Đã gửi bảo hành một phần: ${res.allocatedQty}/${res.claimQty}.`);
+      }
       setItems((prev) =>
         prev.map((item) =>
           (item.warrantyId || item.warrantyTicketId || item.returnItemId) === warrantyId
