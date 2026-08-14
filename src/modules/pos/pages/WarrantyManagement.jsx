@@ -102,7 +102,7 @@ const WarrantyManagement = () => {
             Hàng lỗi / Bảo hành
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
-            Danh sách các sản phẩm thu hồi từ khách hàng do hỏng/lỗi (từ các phiếu Đổi hàng)
+            Danh sách các sản phẩm thu hồi từ khách hàng do hỏng/lỗi (từ các phiếu bảo hành)
           </p>
         </div>
 

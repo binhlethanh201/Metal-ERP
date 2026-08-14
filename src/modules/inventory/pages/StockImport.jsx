@@ -183,6 +183,9 @@ export const StockImport = () => {
             id: key,
             quantity: Number(row.quantity || 0),
             costPrice: Number(row.costPrice || 0),
+            // Ưu tiên bảo hành ghi trong file Excel, fallback về default của Product
+            warrantyPeriod: Number(row.warrantyPeriod ?? matched.warrantyPeriod ?? 0),
+            warrantyUnit: row.warrantyUnit || matched.warrantyUnit || 'MONTH',
           };
         } else {
           key = row.productCode || `new-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
@@ -194,6 +197,8 @@ export const StockImport = () => {
             unit: row.unitName || row.unit || '',
             quantity: Number(row.quantity || 0),
             costPrice: Number(row.costPrice || 0),
+            warrantyPeriod: Number(row.warrantyPeriod ?? 0),
+            warrantyUnit: row.warrantyUnit || 'MONTH',
           };
           newCount++;
         }
@@ -207,6 +212,8 @@ export const StockImport = () => {
             ...updated[existingIdx],
             quantity: Number(row.quantity || 0),
             costPrice: Number(row.costPrice || 0),
+            warrantyPeriod: Number(row.warrantyPeriod ?? updated[existingIdx].warrantyPeriod ?? 0),
+            warrantyUnit: row.warrantyUnit || updated[existingIdx].warrantyUnit || 'MONTH',
           };
         } else {
           updated.push(importItem);
@@ -235,7 +242,15 @@ export const StockImport = () => {
           getItemKey(i) === key ? { ...i, quantity: Number(i.quantity) + 1 } : i
         );
       }
-      return [...current, { ...product, id: key, quantity: 1, costPrice: product.costPrice || 0 }];
+      return [...current, {
+        ...product,
+        id: key,
+        quantity: 1,
+        costPrice: product.costPrice || 0,
+        // Pre-fill bảo hành từ default của Product (nếu lookup trả về)
+        warrantyPeriod: product.warrantyPeriod ?? 0,
+        warrantyUnit: product.warrantyUnit || 'MONTH',
+      }];
     });
     setStatus({ type: 'success', message: `Đã thêm/tăng số lượng cho ${product.productName}` });
   }, []);
@@ -246,7 +261,10 @@ export const StockImport = () => {
         getItemKey(item) === id
           ? {
               ...item,
-              [field]: field === 'quantity' || field === 'costPrice' ? Number(value || 0) : value,
+              [field]:
+                field === 'quantity' || field === 'costPrice' || field === 'warrantyPeriod'
+                  ? Number(value || 0)
+                  : value,
             }
           : item
       )
@@ -295,6 +313,9 @@ export const StockImport = () => {
         const item = {
           quantity: Number(i.quantity || 0),
           costPrice: Number(i.costPrice || 0),
+          // Bảo hành lô nhập này (per-line). 0 = không BH -> backend fallback về default của Product.
+          warrantyPeriod: Number(i.warrantyPeriod || 0),
+          warrantyUnit: i.warrantyUnit || 'MONTH',
           note: '',
         };
         if (systemId) {

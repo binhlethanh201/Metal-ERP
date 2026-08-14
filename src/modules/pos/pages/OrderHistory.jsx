@@ -600,8 +600,8 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
                 </span>
               )}
               {exchanged && (
-                <span className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
-                  🔄 Đổi hàng
+                <span className="inline-flex items-center gap-1 rounded border border-yellow-300 bg-yellow-50 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-700">
+                  🔄 Bảo hành
                 </span>
               )}
             </div>

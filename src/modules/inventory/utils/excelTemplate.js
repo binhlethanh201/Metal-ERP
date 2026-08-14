@@ -28,12 +28,13 @@ const EXCEL_TEMPLATE_HEADERS = [
   'ĐVT',
   'Số lượng',
   'Đơn giá nhập',
+  'Bảo hành (tháng)', // 0 = không bảo hành
 ];
 
 const EXCEL_TEMPLATE_SAMPLE_DATA = [
-  ['1', 'SP-001', 'Thép tấm 10mm', 'Tấm', '10', '50000'],
-  ['2', 'SP-002', 'Inox 304 tấm 1.5mm', 'Tấm', '5', '76000'],
-  ['3', 'SP-003', 'Thép ống D50', 'Cây', '20', '120000'],
+  ['1', 'SP-001', 'Thép tấm 10mm', 'Tấm', '10', '50000', '12'],
+  ['2', 'SP-002', 'Inox 304 tấm 1.5mm', 'Tấm', '5', '76000', '12'],
+  ['3', 'SP-003', 'Thép ống D50', 'Cây', '20', '120000', '6'],
 ];
 
 export const downloadExcelTemplate = async () => {
@@ -46,6 +47,7 @@ export const downloadExcelTemplate = async () => {
     { wch: 26 },
     { wch: 8 },
     { wch: 10 },
+    { wch: 16 },
     { wch: 16 },
   ];
 
@@ -94,6 +96,35 @@ const parseNumber = (raw) => {
 
 const formatCurrency = (val) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+};
+
+/**
+ * Bỏ dấu tiếng Việt + lowercase để so khớp linh hoạt.
+ */
+const normalizeText = (raw) =>
+  String(raw ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * Nhận diện đơn vị bảo hành từ chuỗi người dùng nhập,
+ * chấp nhận mọi cách viết (có/không dấu, viết tắt, lẫn tiếng Anh).
+ * VD: "12 tháng", "6 thang", "1 năm", "30 ngay", "365 day", "1y" ...
+ * Trả về 'DAY' | 'MONTH' | 'YEAR' (mặc định MONTH theo tiêu đề cột).
+ */
+const detectWarrantyUnit = (raw) => {
+  const s = normalizeText(raw);
+  if (!s) return 'MONTH';
+  // năm/nam/nam/year/y (đặt trước để tránh "nam" bị nuốt bởi month/day)
+  if (s.includes('nam') || s.includes('year') || /\b(y|yr)\b/.test(s) || /\d+y\b/.test(s)) return 'YEAR';
+  // ngày/ngay/day/d
+  if (s.includes('ngay') || s.includes('day') || /\b(d|dd)\b/.test(s) || /\d+d\b/.test(s)) return 'DAY';
+  // tháng/thang/month/m/t
+  if (s.includes('thang') || s.includes('month') || /\b(m|mm|mo)\b/.test(s) || /\d+m\b/.test(s)) return 'MONTH';
+  return 'MONTH';
 };
 
 /**
@@ -187,18 +218,61 @@ export const parseImportExcelFile = async (file) => {
 
         const headerRow = rows[0];
         const normalizedHeaders = headerRow.map((h) =>
-          String(h).trim().replace(/\s+/g, ' ')
-        );
-        const expectedHeaders = EXCEL_TEMPLATE_HEADERS.map((h) => h.trim());
-
-        const headersMatch = expectedHeaders.every(
-          (expected, i) => normalizedHeaders[i] === expected
+          String(h ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
         );
 
-        if (!headersMatch) {
+        // Dò cột theo tên (linh hoạt): cho phép thêm cột phụ, đổi thứ tự,
+        // sai lệch khoảng trắng. Mỗi field có nhiều alias phổ biến.
+        const COLUMN_ALIASES = {
+          stt: ['stt', 'so thu tu', '#', 'no'],
+          productCode: ['ma hang', 'ma san pham', 'mã hàng', 'mã sp', 'code', 'sku', 'mã'],
+          productName: ['ten hang', 'ten san pham', 'tên hàng', 'tên sản phẩm', 'name', 'tên', 'mo ta'],
+          unit: ['dvt', 'don vi tinh', 'đvt', 'đơn vị tính', 'unit', 'đv'],
+          quantity: ['so luong', 'số lượng', 'qty', 'sl', 's.luong'],
+          costPrice: ['don gia nhap', 'don gia', 'đơn giá nhập', 'đơn giá', 'gia nhap', 'giá nhập', 'price', 'cost', 'gia'],
+          warranty: ['bao hanh', 'bảo hành', 'bao hanh (thang)', 'bảo hành (tháng)', 'bh', 'warranty', 'thang bh', 'tháng bh'],
+        };
+
+        const findColIndex = (aliases) => {
+          for (const alias of aliases) {
+            const idx = normalizedHeaders.indexOf(alias);
+            if (idx >= 0) return idx;
+          }
+          // khớp mờ: chứa alias như chuỗi con
+          for (const alias of aliases) {
+            const idx = normalizedHeaders.findIndex((h) => h && h.includes(alias));
+            if (idx >= 0) return idx;
+          }
+          return -1;
+        };
+
+        const colMap = {
+          productCode: findColIndex(COLUMN_ALIASES.productCode),
+          productName: findColIndex(COLUMN_ALIASES.productName),
+          unit: findColIndex(COLUMN_ALIASES.unit),
+          quantity: findColIndex(COLUMN_ALIASES.quantity),
+          costPrice: findColIndex(COLUMN_ALIASES.costPrice),
+          warranty: findColIndex(COLUMN_ALIASES.warranty),
+        };
+
+        const missing = Object.entries(colMap)
+          .filter(([field, idx]) => idx < 0 && field !== 'warranty')
+          .map(([field]) => field);
+
+        if (missing.length > 0) {
+          const missingVi = missing.map((f) => ({
+            productCode: 'Mã hàng',
+            productName: 'Tên hàng',
+            unit: 'ĐVT',
+            quantity: 'Số lượng',
+            costPrice: 'Đơn giá nhập',
+          }[f] || f));
           resolve({
             success: false,
-            error: `File không đúng định dạng mẫu. Tiêu đề cần có: ${expectedHeaders.join(', ')}. Hãy tải file mẫu và điền dữ liệu.`,
+            error:
+              `File thiếu cột: ${missingVi.join(', ')}.\n` +
+              `Các cột cần có: STT, Mã hàng, Tên hàng, ĐVT, Số lượng, Đơn giá nhập, Bảo hành (tháng).\n` +
+              `Mẹo: cột STT và Bảo hành được phép thiếu; các cột còn lại bắt buộc. Hãy tải file mẫu để có đúng định dạng.`,
           });
           return;
         }
@@ -218,11 +292,13 @@ export const parseImportExcelFile = async (file) => {
         for (let i = 0; i < dataRows.length; i++) {
           const row = dataRows[i];
           const lineNum = i + 2;
-          const productCode = String(row[1] ?? '').trim();
-          const productName = String(row[2] ?? '').trim();
-          const unit = String(row[3] ?? '').trim();
-          const quantityRaw = String(row[4] ?? '').trim();
-          const costPriceRaw = String(row[5] ?? '').trim();
+          const productCode = String(row[colMap.productCode] ?? '').trim();
+          const productName = String(row[colMap.productName] ?? '').trim();
+          const unit = String(row[colMap.unit] ?? '').trim();
+          const quantityRaw = String(row[colMap.quantity] ?? '').trim();
+          const costPriceRaw = String(row[colMap.costPrice] ?? '').trim();
+          // Cột "Bảo hành (tháng)" — để trống hoặc 0 = không bảo hành
+          const warrantyPeriodRaw = String(row[colMap.warranty] ?? '').trim();
 
           if (!productCode || !productName) {
             resolve({
@@ -250,6 +326,25 @@ export const parseImportExcelFile = async (file) => {
             return;
           }
 
+          // Bảo hành: trích số nguyên đầu tiên + nhận diện đơn vị (ngày/tháng/năm)
+          // từ mọi cách viết ("12", "12 tháng", "6 thang", "1 năm", "30 ngay"...)
+          // 0 hoặc để trống = không bảo hành
+          let warrantyPeriod = 0;
+          let warrantyUnit = 'MONTH';
+          if (warrantyPeriodRaw !== '') {
+            const m = warrantyPeriodRaw.replace(/[.,\s]/g, '').match(/\d+/);
+            const wp = m ? Number(m[0]) : NaN;
+            if (isNaN(wp) || wp < 0 || wp > 60000 || !Number.isInteger(wp)) {
+              resolve({
+                success: false,
+                error: `Dòng ${lineNum}: Bảo hành "${warrantyPeriodRaw}" không hợp lệ (phải là số nguyên từ 0 đến 60000; 0 = không bảo hành).`,
+              });
+              return;
+            }
+            warrantyPeriod = wp;
+            warrantyUnit = detectWarrantyUnit(warrantyPeriodRaw);
+          }
+
           if (!rawRowsByCode[productCode]) {
             rawRowsByCode[productCode] = [];
           }
@@ -260,6 +355,8 @@ export const parseImportExcelFile = async (file) => {
             unit,
             quantity,
             costPrice,
+            warrantyPeriod,
+            warrantyUnit,
           });
         }
 
@@ -285,9 +382,11 @@ export const parseImportExcelFile = async (file) => {
               unit: r.unit,
               quantity: r.quantity,
               costPrice: r.costPrice,
+              warrantyPeriod: r.warrantyPeriod,
+              warrantyUnit: r.warrantyUnit,
             });
           } else {
-            // Cùng giá -> cộng dồn số lượng
+            // Cùng giá -> cộng dồn số lượng, bảo hành lấy theo dòng đầu tiên
             const totalQty = rows.reduce((s, r) => s + r.quantity, 0);
             parsed.push({
               productCode: code,
@@ -296,6 +395,8 @@ export const parseImportExcelFile = async (file) => {
               unit: rows[0].unit,
               quantity: totalQty,
               costPrice: rows[0].costPrice,
+              warrantyPeriod: rows[0].warrantyPeriod,
+              warrantyUnit: rows[0].warrantyUnit,
             });
           }
         }

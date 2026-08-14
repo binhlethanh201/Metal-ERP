@@ -20,7 +20,7 @@ const ROUTE_TO_MENU = {
   '/pos/orders': 'Đơn hàng',
   '/pos/customers': 'Khách',
   '/pos/shift': 'Quản lý ca bán',
-  '/pos/returns': 'Đổi trả',
+  '/pos/returns': 'Đổi / Trả / Bảo hành',
 };
 
 const DRAFTS_STORAGE_KEY = 'pos_drafts';

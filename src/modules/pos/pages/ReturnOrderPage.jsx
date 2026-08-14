@@ -138,6 +138,10 @@ const mapApiDetail = (r) => {
     productName: item.productName || 'Sản phẩm',
     productCode: item.productCode || '',
     quantity: parseFloat(item.quantity || 1),
+    unit: item.unit || item.Unit || '',
+    baseUnit: item.baseUnit || item.BaseUnit || '',
+    conversionRate: parseFloat(item.conversionRate || item.ConversionRate || 1),
+    baseQuantity: parseFloat(item.baseQuantity || item.BaseQuantity || 0),
     sellPrice: parseFloat(item.sellPrice || item.unitPrice || item.price || 0),
     refundAmount: parseFloat(item.refundAmount || 0),
   }));
@@ -403,7 +407,7 @@ const ReturnOrderPage = () => {
       header: 'Số tiền',
       render: (v, row) =>
         row?.returnType === 'EXCHANGE' ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+          <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -412,7 +416,7 @@ const ReturnOrderPage = () => {
                 d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
               />
             </svg>
-            Đổi hàng
+            Bảo hành
           </span>
         ) : (
           <span className="text-sm font-semibold text-green-600">{formatCurrency(v || 0)}</span>
@@ -599,7 +603,7 @@ const ReturnOrderPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   {detail.returnType === 'EXCHANGE' && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
                       <svg
                         className="h-3 w-3"
                         fill="none"
@@ -613,7 +617,7 @@ const ReturnOrderPage = () => {
                           d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                         />
                       </svg>
-                      Đổi hàng
+                      Bảo hành
                     </span>
                   )}
                   <Badge variant={getStatusVariant(detail.status)}>
@@ -652,9 +656,9 @@ const ReturnOrderPage = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500 dark:text-[#999999]">Loại</span>
                   <span
-                    className={`font-semibold ${detail.returnType === 'EXCHANGE' ? 'text-blue-700' : ''}`}
+                    className={`font-semibold ${detail.returnType === 'EXCHANGE' ? 'text-yellow-700' : ''}`}
                   >
-                    {detail.returnType === 'EXCHANGE' ? 'Đổi hàng' : 'Trả hàng'}
+                    {detail.returnType === 'EXCHANGE' ? 'Bảo hành' : 'Trả hàng'}
                   </span>
                 </div>
                 {detail.returnType !== 'EXCHANGE' && (
@@ -689,7 +693,7 @@ const ReturnOrderPage = () => {
                       <p className="truncate text-sm font-medium text-slate-900 dark:text-[#e5e5e5]">
                         {item.productName}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-[#808080]">Số lượng: {item.quantity}</p>
+                      <p className="text-xs text-slate-400 dark:text-[#808080]">Số lượng: {item.quantity} {item.unit || item.baseUnit || ''}</p>
                     </div>
                     {detail.returnType !== 'EXCHANGE' && (
                       <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
@@ -714,9 +718,9 @@ const ReturnOrderPage = () => {
               </div>
             ) : (
               <div className="mt-3 border-t border-slate-200 pt-3">
-                <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-3">
+                <div className="flex items-center gap-2 rounded-lg bg-yellow-50 p-3">
                   <svg
-                    className="h-5 w-5 shrink-0 text-blue-600"
+                    className="h-5 w-5 shrink-0 text-yellow-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -728,7 +732,7 @@ const ReturnOrderPage = () => {
                       d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                     />
                   </svg>
-                  <p className="text-sm font-medium text-blue-800">Đổi hàng — không hoàn tiền</p>
+                  <p className="text-sm font-medium text-yellow-800">Bảo hành — không hoàn tiền</p>
                 </div>
               </div>
             )}
@@ -749,7 +753,7 @@ const ReturnOrderPage = () => {
               onClick={handleFinalize}
               loading={finalizing}
             >
-              Xác nhận đổi hàng
+              Xác nhận bảo hành
             </Button>
           )}
           {detail.status === 'PENDING' && detail.returnType !== 'EXCHANGE' && (

@@ -95,6 +95,8 @@ export const ImportItemsTable = ({
         unitName: row.unitName || row.unit,
         quantity: row.quantity,
         costPrice: row.costPrice,
+        warrantyPeriod: row.warrantyPeriod ?? 0,
+        warrantyUnit: row.warrantyUnit || 'MONTH',
         matchedProduct: matchedProduct || null,
       });
 
@@ -268,6 +270,47 @@ export const ImportItemsTable = ({
       },
     },
     {
+      key: 'warranty',
+      header: 'Bảo hành',
+      width: 175,
+      render: (_, row) => {
+        const period = Number(row.warrantyPeriod || 0);
+        const unit = row.warrantyUnit || 'MONTH';
+        return (
+          <div className="flex items-center gap-1" title="Thời hạn bảo hành của lô nhập này (0 = không BH)">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={period > 0 ? String(period) : ''}
+              placeholder="0"
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9]/g, '');
+                if (raw === '' || (/^\d+$/.test(raw) && Number(raw) <= 999))
+                  onUpdateItem(row.id, 'warrantyPeriod', raw);
+              }}
+              onKeyDown={(e) => {
+                if (
+                  ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)
+                )
+                  return;
+                if (!/^\d$/.test(e.key)) e.preventDefault();
+              }}
+              className="w-12 rounded-lg border border-slate-200 px-1.5 py-1.5 text-center text-sm font-semibold outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+            />
+            <select
+              value={unit}
+              onChange={(e) => onUpdateItem(row.id, 'warrantyUnit', e.target.value)}
+              className="rounded-lg border border-slate-200 px-1 py-1.5 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
+            >
+              <option value="DAY">Ngày</option>
+              <option value="MONTH">Tháng</option>
+              <option value="YEAR">Năm</option>
+            </select>
+          </div>
+        );
+      },
+    },
+    {
       key: 'total',
       header: 'Thành tiền',
       width: 150,
@@ -308,7 +351,7 @@ export const ImportItemsTable = ({
   ];
 
   const displayColumns = isCustomerReturn
-    ? columns.filter((c) => c.key !== 'costPrice' && c.key !== 'total')
+    ? columns.filter((c) => c.key !== 'costPrice' && c.key !== 'total' && c.key !== 'warranty')
     : columns;
 
   return (

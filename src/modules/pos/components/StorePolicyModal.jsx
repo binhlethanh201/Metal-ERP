@@ -98,7 +98,7 @@ const StorePolicyModal = ({ isOpen, onClose }) => {
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
                       <th className="px-4 py-3">Nhóm hàng</th>
                       <th className="px-4 py-3">Trả hàng (hoàn tiền)</th>
-                      <th className="px-4 py-3">Đổi hàng</th>
+                      <th className="px-4 py-3">Bảo hành</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">

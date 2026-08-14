@@ -44,10 +44,19 @@ const OwnerWarrantyHistory = () => {
       }
     });
     return Array.from(map.values()).sort((a, b) => {
+      // 1) Đơn gần nhất lên đầu (theo ngày đổi trả) — tránh đơn vừa nhận hàng bị tụt xuống cuối.
+      const da = new Date(a.exchangeDate || 0).getTime();
+      const db = new Date(b.exchangeDate || 0).getTime();
+      if (db !== da) return db - da;
+      // 2) Cùng đơn (returnCode) để cạnh nhau.
       const ca = a.returnCode || '';
       const cb = b.returnCode || '';
-      if (ca === cb) return (a.productName || '').localeCompare(b.productName || '');
-      return ca.localeCompare(cb);
+      if (ca !== cb) return ca.localeCompare(cb);
+      // 3) Tách theo NCC: cùng returnCode + cùng NCC thì cạnh nhau, khác NCC thì 2 block riêng.
+      const sa = a.assignedSupplierName || a.supplierName || '';
+      const sb = b.assignedSupplierName || b.supplierName || '';
+      if (sa !== sb) return sa.localeCompare(sb);
+      return (a.productName || '').localeCompare(b.productName || '');
     });
   }, [items]);
 
@@ -74,6 +83,24 @@ const OwnerWarrantyHistory = () => {
     return Array.from(map.values());
   }, [pendingItems]);
 
+  // Hạn mức BH dùng CHUNG theo (productId + supplierId): tổng SL đã nhập claim
+  // trên các dòng pending cùng SP + cùng NCC. Dùng để trừ đi "SL đơn khác đã dùng"
+  // khi tính remaining hiệu dụng — tránh bug nhiều đơn cùng lúc đều thấy "còn 2"
+  // rồi nhận 8.
+  const claimedPool = useMemo(() => {
+    const m = {};
+    pendingItems.forEach((it) => {
+      const lk = (it.warrantyId || it.warrantyTicketId || '') || (it.returnItemId || '');
+      const supId = selectedSupplier[lk];
+      if (!supId) return;
+      const qty = Number(claimQtyMap[lk] ?? 0);
+      if (qty <= 0) return;
+      const k = `${it.productId || it.id}_${supId}`;
+      m[k] = (m[k] || 0) + qty;
+    });
+    return m;
+  }, [pendingItems, selectedSupplier, claimQtyMap]);
+
   const renderSupplierDropdown = (row) => {
     const lookupKey = (row.warrantyId || row.warrantyTicketId || '') || (row.returnItemId || '');
     const suppliers = supplierMap[lookupKey] || [];
@@ -86,12 +113,17 @@ const OwnerWarrantyHistory = () => {
       <select value={selectedSupplier[lookupKey] || ''} onChange={(e) => {
           const supId = e.target.value;
           setSelectedSupplier((prev) => ({ ...prev, [lookupKey]: supId }));
-          // Khi chọn NCC, kẹp SL nhập theo hạn mức còn lại (BH một phần): nếu đang nhập
-          // vượt quá remaining của NCC -> hạ xuống đúng remaining. Không ép tăng.
+          // Khi chọn NCC, kẹp SL nhập theo hạn mức HIỆU DỤNG (BH một phần + chia sẻ
+          // giữa các đơn cùng SP/NCC): remaining − (SL đơn khác đã dùng). Nếu đang nhập
+          // vượt quá eff -> hạ xuống đúng eff. Không ép tăng.
           const sup = suppliers.find((s) => String(s.id || s.supplierId) === String(supId));
-          const rem = sup?.remainingWarrantyQuantity ?? 0;
+          const rawRem = sup?.remainingWarrantyQuantity ?? 0;
+          const poolKey = supId ? `${row.productId || row.id}_${supId}` : '';
+          const ownClaim = Number(claimQtyMap[lookupKey] ?? 0);
+          const othersClaimed = poolKey ? Math.max(0, (claimedPool[poolKey] || 0) - ownClaim) : 0;
+          const eff = Math.max(0, rawRem - othersClaimed);
           const need = row.baseQuantity || row.quantity || 0;
-          const newMax = Math.min(need, rem);
+          const newMax = Math.min(need, eff);
           const cur = Number(claimQtyMap[lookupKey] ?? 0);
           if (cur > newMax) setClaimQtyMap((prev) => ({ ...prev, [lookupKey]: String(newMax) }));
         }}
@@ -188,7 +220,6 @@ const OwnerWarrantyHistory = () => {
                           </tr>
                           {isExpanded && group.items.map((item) => {
                                 const baseQty = item.baseQuantity || item.quantity || 0;
-                                const convRate = item.conversionRate || 1;
                                 const lookupKey = (item.warrantyId || item.warrantyTicketId || '') || (item.returnItemId || '');
                                 return (
                                   <tr key={item.warrantyTicketId || item.returnItemId} className="">
@@ -199,39 +230,52 @@ const OwnerWarrantyHistory = () => {
                                     </td>
                                     <td className="px-3 py-2 text-center">
                                       <span className="font-bold text-red-600">{baseQty}</span>
-                                      {convRate !== 1 && <span className="ml-1 text-xs text-slate-400">({item.quantity || 0}×{convRate})</span>}
                                     </td>
                                     <td className="px-3 py-2">
-                                      <div className="flex items-center gap-1">
-                                        <div className="min-w-0 flex-1">{renderSupplierDropdown(item)}</div>
-                                        {(() => {
-                                          // max = min(SL trả, hạn mức NCC được chọn). Chưa chọn NCC -> max = SL trả.
+                                      {(() => {
+                                          // max = min(SL trả, hạn mức HIỆU DỤNG = remaining − SL đơn khác đã dùng).
+                                          // Chưa chọn NCC -> max = SL trả.
                                           const supId = selectedSupplier[lookupKey];
                                           const sup = (supplierMap[lookupKey] || []).find((s) => String(s.id || s.supplierId) === String(supId));
-                                          const maxQty = Math.min(baseQty, sup?.remainingWarrantyQuantity ?? baseQty);
-                                          const cur = Number(claimQtyMap[lookupKey] ?? 0);
+                                          const rawRem = sup?.remainingWarrantyQuantity ?? 0;
+                                          const poolKey = supId ? `${item.productId || item.id}_${supId}` : '';
+                                          const ownClaim = Number(claimQtyMap[lookupKey] ?? 0);
+                                          const othersClaimed = poolKey ? Math.max(0, (claimedPool[poolKey] || 0) - ownClaim) : 0;
+                                          const eff = sup ? Math.max(0, rawRem - othersClaimed) : 0;
+                                          const maxQty = sup ? Math.min(baseQty, eff) : baseQty;
+                                          const cur = ownClaim;
                                           const setQty = (v) => setClaimQtyMap((p) => ({ ...p, [lookupKey]: String(v) }));
+                                          const outOfQuota = !!(sup && eff <= 0);
                                           return (
-                                            <>
-                                              <div className="flex shrink-0 items-center rounded border border-slate-300 dark:border-[#404040]" title={`Số lượng gửi BH (cái) — tối đa ${maxQty}`}>
-                                                <button type="button" onClick={() => setQty(Math.max(0, cur - 1))} disabled={cur <= 0}
-                                                  className="px-1.5 text-base leading-none text-slate-500 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-[#222]">−</button>
-                                                <input type="number" min={0} max={maxQty} value={cur}
-                                                  onChange={(e) => { let v = Number(e.target.value); v = Number.isNaN(v) ? 0 : Math.max(0, Math.min(maxQty, v)); setQty(v); }}
-                                                  className="w-9 border-x border-slate-200 bg-transparent py-1 text-center text-xs font-semibold text-slate-700 outline-none dark:border-[#333] dark:text-[#e5e5e5]" />
-                                                <button type="button" onClick={() => setQty(Math.min(maxQty, cur + 1))} disabled={cur >= maxQty}
-                                                  className="px-1.5 text-base leading-none text-slate-500 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-[#222]">+</button>
+                                            <div className="flex flex-col gap-1">
+                                              <div className="flex items-center gap-1">
+                                                <div className="min-w-0 flex-1">{renderSupplierDropdown(item)}</div>
+                                                <div className="flex shrink-0 items-center rounded border border-slate-300 dark:border-[#404040]" title={`Số lượng gửi BH — tối đa ${maxQty}`}>
+                                                  <button type="button" onClick={() => setQty(Math.max(0, cur - 1))} disabled={cur <= 0 || maxQty <= 0}
+                                                    className="px-1.5 text-base leading-none text-slate-500 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-[#222]">−</button>
+                                                  <input type="number" min={0} max={maxQty} value={cur}
+                                                    onChange={(e) => { let v = Number(e.target.value); v = Number.isNaN(v) ? 0 : Math.max(0, Math.min(maxQty, v)); setQty(v); }}
+                                                    className="w-9 border-x border-slate-200 bg-transparent py-1 text-center text-xs font-semibold text-slate-700 outline-none dark:border-[#333] dark:text-[#e5e5e5]" />
+                                                  <button type="button" onClick={() => setQty(Math.min(maxQty, cur + 1))} disabled={cur >= maxQty || maxQty <= 0}
+                                                    className="px-1.5 text-base leading-none text-slate-500 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-[#222]">+</button>
+                                                </div>
+                                                <span className="shrink-0 text-[11px] text-slate-400">/{maxQty}</span>
+                                                <button onClick={() => handleAssignSupplier(lookupKey, supId, cur)}
+                                                  disabled={!supId || cur <= 0 || assigningId === lookupKey || outOfQuota}
+                                                  className="shrink-0 rounded p-1 text-slate-400 hover:bg-amber-100 hover:text-amber-600 disabled:opacity-30 dark:hover:bg-amber-900/20">
+                                                  <Send size={14} />
+                                                </button>
                                               </div>
-                                              <span className="shrink-0 text-[11px] text-slate-400">/{maxQty}</span>
-                                            </>
+                                              {sup && (() => {
+                                                  if (eff <= 0)
+                                                    return <p className="text-[10px] font-medium text-red-600 dark:text-red-400">⛔ NCC hết hạn mức BH — đơn khác đã dùng hết {rawRem}. Chọn NCC khác.</p>;
+                                                  if (eff < baseQty)
+                                                    return <p className="text-[10px] font-medium text-amber-600 dark:text-amber-400">⚠ Bạn chỉ có thể bảo hành tối đa {eff}/{baseQty} (NCC còn {rawRem}, đơn khác đã dùng {othersClaimed})</p>;
+                                                  return <p className="text-[10px] font-medium text-green-600 dark:text-green-400">✓ Đủ hạn mức — có thể bảo hành {baseQty}/{baseQty} (NCC còn {rawRem})</p>;
+                                                })()}
+                                            </div>
                                           );
                                         })()}
-                                        <button onClick={() => handleAssignSupplier(lookupKey, selectedSupplier[lookupKey], claimQtyMap[lookupKey] ?? 0)}
-                                          disabled={!selectedSupplier[lookupKey] || (Number(claimQtyMap[lookupKey] ?? 0)) <= 0 || assigningId === lookupKey}
-                                          className="shrink-0 rounded p-1 text-slate-400 hover:bg-amber-100 hover:text-amber-600 disabled:opacity-30 dark:hover:bg-amber-900/20">
-                                          <Send size={14} />
-                                        </button>
-                                      </div>
                                     </td>
                                   </tr>
                                 );
@@ -283,10 +327,13 @@ const OwnerWarrantyHistory = () => {
                     <tr><td colSpan={10} className="px-3 py-8 text-center text-sm text-slate-400">Không có dữ liệu</td></tr>
                   ) : historyItems.map((row, idx) => {
                     const baseQty = row.baseQuantity || row.quantity || 0;
-                    const prevSameCode = idx > 0 && historyItems[idx - 1]?.returnCode === row.returnCode;
-                    const sameGroup = historyItems.filter((d, i) => i >= idx && d.returnCode === row.returnCode);
+                    // Gộp block theo (returnCode + NCC): cùng đơn + cùng NCC -> 1 block;
+                    // cùng đơn nhưng khác NCC -> 2 block riêng (để nhận hàng rõ ràng theo từng NCC).
+                    const grpKey = (r) => `${r.returnCode || ''}|${r.assignedSupplierId || r.supplierId || 'none'}`;
+                    const prevSameCode = idx > 0 && grpKey(historyItems[idx - 1]) === grpKey(row);
+                    const sameGroup = historyItems.filter((d, i) => i >= idx && grpKey(d) === grpKey(row));
                     const rowSpan = !prevSameCode ? sameGroup.length : 0;
-                    const isLastOfGroup = idx === historyItems.length - 1 || historyItems[idx + 1]?.returnCode !== row.returnCode;
+                    const isLastOfGroup = idx === historyItems.length - 1 || grpKey(historyItems[idx + 1]) !== grpKey(row);
                     const lookupKey = (row.warrantyId || row.warrantyTicketId || '') || (row.returnItemId || '');
                     return (
                       <tr key={row.warrantyTicketId || row.returnItemId || idx} className={`${row.status === 'AWAITING_SUPPLIER' ? 'border-l-2 border-l-blue-400 ' : 'border-l-2 border-l-green-400 '} ${isLastOfGroup ? 'border-b border-slate-200 dark:border-[#333333]' : ''}`}>

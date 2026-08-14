@@ -31,6 +31,8 @@ const mapApiDetail = (r) => {
     productName: item.productName || 'Sản phẩm',
     productCode: item.productCode || '',
     quantity: parseFloat(item.quantity || 1),
+    unit: item.unit || item.Unit || '',
+    baseUnit: item.baseUnit || item.BaseUnit || '',
     sellPrice: parseFloat(item.sellPrice || item.unitPrice || item.price || 0),
     refundAmount: parseFloat(item.refundAmount || 0),
   }));
@@ -142,28 +144,8 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
     setFinalizing(true);
     try {
       await cancelReturn(returnId);
-      // Xóa tracking trong localStorage để số lượng tồn được tính lại đúng
-      try {
-        const invCode = detail.invoiceCode;
-        if (invCode && detail.returnItems?.length > 0) {
-          const storageKey = 'pos_return_items_' + invCode;
-          const existing = JSON.parse(localStorage.getItem(storageKey) || '{}');
-          let changed = false;
-          detail.returnItems.forEach((item) => {
-            const key = item._key || item.productId;
-            if (key && existing[key]) {
-              existing[key].qty = Math.max(0, (existing[key].qty || 0) - item.quantity);
-              if (existing[key].qty <= 0) {
-                delete existing[key];
-              }
-              changed = true;
-            }
-          });
-          if (changed) {
-            localStorage.setItem(storageKey, JSON.stringify(existing));
-          }
-        }
-      } catch (_) {}
+      // Không còn dọn localStorage: "đã đổi trả" giờ lấy từ API và chỉ đếm phiếu
+      // Completed, nên phiếu hủy tự động không bị tính là "đã đổi trả" nữa.
       setDetail((prev) => (prev ? { ...prev, status: 'CANCELLED' } : prev));
       onUpdated?.();
     } catch (err) {
@@ -263,7 +245,7 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
               <div key={item.returnItemId || i} className="flex items-center justify-between py-3">
                 <div>
                   <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{item.productName}</p>
-                  <p className="text-xs text-slate-400 dark:text-[#808080]">Số lượng: {item.quantity}</p>
+                  <p className="text-xs text-slate-400 dark:text-[#808080]">Số lượng: {item.quantity} {item.unit || item.baseUnit || ''}</p>
                 </div>
                 <p className="font-semibold text-green-600">
                   {formatCurrency(item.refundAmount || item.quantity * item.sellPrice)}

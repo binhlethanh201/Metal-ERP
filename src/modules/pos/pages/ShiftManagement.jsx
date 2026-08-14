@@ -1093,9 +1093,9 @@ export const ShiftManagement = () => {
                                     {act.code}
                                   </span>
                                   <span
-                                    className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
+                                    className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}
                                   >
-                                    {isRefund ? 'Trả' : 'Đổi'}
+                                    {isRefund ? 'Trả' : 'Bảo hành'}
                                   </span>
                                 </div>
                                 <span className="mt-0.5 text-[9px] text-slate-400">
@@ -1566,8 +1566,8 @@ export const ShiftManagement = () => {
                             return (
                               <div key={'usr-ret-' + (r.returnCode || r.returnOrderId || r.returnId || r.id)} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
                                 <div className="flex items-center gap-2">
-                                  <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                    {isRefund ? 'Trả' : 'Đổi'}
+                                  <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
+                                    {isRefund ? 'Trả' : 'Bảo hành'}
                                   </span>
                                   <span className="font-mono text-slate-500">{r.returnCode || r.returnOrderId || r.returnId || r.id || ''}</span>
                                   <span className="text-slate-400">{r.customerName || 'Khách lẻ'}</span>
@@ -1901,8 +1901,8 @@ export const ShiftManagement = () => {
                               return (
                                 <div key={'det-usr-ret-' + (r.returnCode || r.returnOrderId || r.returnId || r.id)} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
                                   <div className="flex items-center gap-2">
-                                    <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                      {isRefund ? 'Trả' : 'Đổi'}
+                                    <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
+                                      {isRefund ? 'Trả' : 'Bảo hành'}
                                     </span>
                                     <span className="font-mono text-slate-500">{r.returnCode || r.returnOrderId || r.returnId || r.id || ''}</span>
                                     <span className="text-slate-400">{r.customerName || 'Khách lẻ'}</span>
@@ -2085,9 +2085,9 @@ export const ShiftManagement = () => {
                                 {act.code}
                               </span>
                               <span
-                                className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
+                                className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}
                               >
-                                {isRefund ? 'Trả' : 'Đổi'}
+                                {isRefund ? 'Trả' : 'Bảo hành'}
                               </span>
                               <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">
                                 {new Date(act.createdAt).toLocaleTimeString('vi-VN', {

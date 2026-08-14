@@ -40,6 +40,38 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
+  // Hạn mức bảo hành (số lượng có thể BH tối đa) cho từng sản phẩm — fetch từ
+  // /api/warranty/{productId}/suggested-suppliers. maxRem = max remainingWarrantyQuantity
+  // giữa các NCC (trường hợp tốt nhất). Dùng để hiện limit cho từng dòng khi tạo đơn BH.
+  const [warrantyLimitMap, setWarrantyLimitMap] = useState({});
+
+  useEffect(() => {
+    if (!invoice?.items?.length) { setWarrantyLimitMap({}); return; }
+    let cancelled = false;
+    const distinctPids = [...new Set(invoice.items.map((it) => it.productId).filter(Boolean))];
+    Promise.all(distinctPids.map(async (pid) => {
+      try {
+        const res = await apiPosGet(`/warranty/${pid}/suggested-suppliers`);
+        const data = res?.data || res;
+        const arr = Array.isArray(data) ? data : [];
+        const maxRem = arr.reduce((m, s) => Math.max(m, Number(s.remainingWarrantyQuantity ?? 0)), 0);
+        const bestName = arr
+          .filter((s) => Number(s.remainingWarrantyQuantity ?? 0) === maxRem && maxRem > 0)
+          .map((s) => s.supplierName || s.name || '')
+          .filter(Boolean)[0] || '';
+        return [pid, { maxRem, bestName, suppliers: arr }];
+      } catch {
+        return [pid, { maxRem: 0, bestName: '', suppliers: [] }];
+      }
+    })).then((entries) => {
+      if (cancelled) return;
+      const map = {};
+      entries.forEach(([pid, v]) => { map[pid] = v; });
+      setWarrantyLimitMap(map);
+    });
+    return () => { cancelled = true; };
+  }, [invoice]);
+
   // Fetch policies từ backend POS khi mở modal, fallback localStorage
   useEffect(() => {
     if (!isOpen) return;
@@ -199,14 +231,15 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               JSON.stringify(allReturns[0], null, 2)
             );
           }
-          // Lọc các phiếu đổi trả không bị hủy của hóa đơn này
+          // Chỉ đếm các phiếu ĐÃ ĐƯỢC DUYỆT (Completed = "được chấp nhận") của hóa đơn này.
+          // Phiếu Pending (chưa duyệt) và Cancelled (đã hủy) KHÔNG trừ vào "Còn lại"
+          // → đơn bị hủy sẽ không còn bị tính là "đã đổi trả".
           // CHỈ match bằng invoiceCode để tránh sai sót khi orderId bị trùng lặp
           const relatedReturns = allReturns.filter((r) => {
             const rStatus = String(r.status || '').toUpperCase();
-            // Chỉ match bằng invoiceCode - không dùng orderId vì có thể bị trùng
             const rInvoiceCode = r.invoiceCode || '';
             const match =
-              rStatus !== 'CANCELLED' &&
+              rStatus === 'COMPLETED' &&
               (rInvoiceCode.toLowerCase() === invCode ||
                 rInvoiceCode.toLowerCase() === invId.toLowerCase());
             if (match)
@@ -223,28 +256,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               returnedMap[pid] = (returnedMap[pid] || 0) + qty;
             });
           });
-          console.log('[ReturnForm] Returned map (API):', returnedMap);
+          console.log('[ReturnForm] Returned map (API, Completed only):', returnedMap);
         } catch (err) {
           console.error('[ReturnForm] getReturns failed:', err);
         }
 
-        // Tracking từ localStorage: lưu theo từng dòng invoiceItemId + productId
-        const localReturned = {}; // key = lineKey, value = qty
-        let localTotalByProduct = {}; // key = productId, value = tổng qty từ local
-        try {
-          const invId = found.invoiceId || found.invoiceCode || found.id;
-          const saved = JSON.parse(localStorage.getItem('pos_return_items_' + invId) || '{}');
-          Object.entries(saved).forEach(([k, val]) => {
-            const qty = typeof val === 'number' ? val : val.qty || 0;
-            const pid = val.productId || '';
-            if (qty > 0) {
-              localReturned[k] = (localReturned[k] || 0) + qty;
-              if (pid) localTotalByProduct[pid] = (localTotalByProduct[pid] || 0) + qty;
-            }
-          });
-        } catch (_) {}
-
-        // Tính số lượng còn lại có thể đổi trả cho từng dòng (phân biệt cùng SP khác đơn vị)
+        // Tính số lượng còn lại có thể đổi trả cho từng dòng.
+        // Chỉ dựa trên API (phiếu Completed = đã duyệt) — KHÔNG còn dùng localStorage
+        // để tránh lỗi đơn bị hủy / chưa duyệt vẫn bị tính là "đã đổi trả".
         const invoiceItems = fullInvoice.items || fullInvoice.invoiceItems || [];
 
         // ========== DEBUG: Kiểm tra dữ liệu items từ API ==========
@@ -347,34 +366,17 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         const enrichedItems = itemsWithCategory.map((item) => {
           const lineKey = item.invoiceItemId || item.id || item.productId;
           const originalQty = parseFloat(item.quantity || 0);
-          // Ưu tiên tra theo lineKey (local storage chính xác từng dòng)
-          const localQty = localReturned[lineKey] || 0;
-          if (localQty > 0) {
-            // Có tracking chính xác từ localStorage
-            return {
-              ...item,
-              _key: lineKey,
-              _remainingQty: Math.max(0, originalQty - localQty),
-              _returnedQty: localQty,
-              productName:
-                item.productName || (item.product && item.product.productName) || item.name || '',
-              _displayUnit: item.displayUnit || item.selectedUnit || item.unit || '',
-              _categoryName: item._categoryName,
-              _policy: item._policy,
-            };
-          }
-          // Không có local → dùng API productId, trừ đi lượng đã track local cho product này
-          const apiTotal = returnedMap[item.productId] || 0;
-          const localForProduct = localTotalByProduct[item.productId] || 0;
-          const adjustedTotal = Math.max(0, apiTotal - localForProduct);
-          const remainingQty = Math.max(0, originalQty - adjustedTotal);
+          // "Đã đổi trả" = tổng qty của các phiếu đã DUYỆT (Completed) cho SP này.
+          // Pending (chưa duyệt) và Cancelled (đã hủy) không tính → đơn hủy không trừ "Còn lại".
+          const returnedQty = returnedMap[item.productId] || 0;
+          const remainingQty = Math.max(0, originalQty - returnedQty);
           const productName =
             item.productName || (item.product && item.product.productName) || item.name || '';
           return {
             ...item,
             _key: lineKey,
             _remainingQty: remainingQty,
-            _returnedQty: adjustedTotal,
+            _returnedQty: returnedQty,
             productName,
             _displayUnit: item.displayUnit || item.selectedUnit || item.unit || '',
             _categoryName: item._categoryName,
@@ -419,11 +421,15 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         {
           _key: product._key,
           productId: product.productId,
+          // Pin đúng dòng hóa đơn gốc để backend lấy ConvertValue đúng (xử lý cùng SP nhiều ĐVT).
+          invoiceItemId: product.invoiceItemId || product.id || null,
           productName: product.productName || product.name,
           productCode: product.productCode || '',
           quantity: 1,
           sellPrice: product.unitPrice || product.retailPrice || 0,
           maxQty: remainingQty,
+          // Hệ số quy đổi của dòng hóa đơn gốc (1 Thùng = 20 Cái -> convertValue = 20).
+          convertValue: product.convertValue || product.conversionRate || 1,
         },
       ];
     });
@@ -462,6 +468,30 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
+    // Bảo hành: KHÔNG cho "BH một phần" — nếu chọn vượt hạn mức (thiếu) thì chặn luôn.
+    if (isExchange) {
+      const over = selectedProducts.find((sp) => {
+        const wl = warrantyLimitMap[sp.productId];
+        if (!wl) return true; // hạn mức chưa tải xong → chặn, đợi tải
+        const cv = sp.convertValue || sp.conversionRate || 1;
+        const selBase = (sp.quantity || 0) * cv;
+        return selBase > (wl.maxRem ?? 0);
+      });
+      if (over) {
+        const wl = warrantyLimitMap[over.productId];
+        const cv = over.convertValue || over.conversionRate || 1;
+        const maxRem = wl?.maxRem ?? 0;
+        const selBase = (over.quantity || 0) * cv;
+        setSubmitError(
+          maxRem <= 0
+            ? `Sản phẩm "${over.productName}" đã hết hạn mức bảo hành — không thể bảo hành.`
+            : `Sản phẩm "${over.productName}" vượt hạn mức bảo hành: chỉ còn ${maxRem} (đơn vị cơ bản), đang chọn ${selBase} — không đủ để bảo hành. Vui lòng giảm số lượng.`
+        );
+        setSubmitting(false);
+        return;
+      }
+    }
+
     setSubmitting(true);
     setSubmitError('');
     let createdReturnId = null;
@@ -478,7 +508,10 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       }
       payload.items = selectedProducts.map((p) => ({
         productId: p.productId,
+        invoiceItemId: p.invoiceItemId || undefined,
         quantity: p.quantity,
+        // Quy về ĐVT cơ bản: convertValue từ dòng hóa đơn gốc (vd 1 Thùng = 12 Cái).
+        conversionRate: p.convertValue || p.conversionRate || 1,
       }));
 
       console.log('[ReturnForm] Payload:', payload);
@@ -494,24 +527,16 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           selectedProducts.map((p) =>
             addReturnItem(returnId, {
               productId: p.productId,
+              invoiceItemId: p.invoiceItemId || undefined,
               quantity: p.quantity,
+              conversionRate: p.convertValue || p.conversionRate || 1,
             })
           )
         );
       }
 
-      // Lưu tracking hoàn trả theo từng dòng (invoiceItemId + productId) vào localStorage
-      // để lần sau mở form biết chính xác dòng nào đã hoàn bao nhiêu
-      try {
-        const invId = invoice.invoiceId || invoice.invoiceCode || invoice.id;
-        const storageKey = 'pos_return_items_' + invId;
-        const existing = JSON.parse(localStorage.getItem(storageKey) || '{}');
-        selectedProducts.forEach((p) => {
-          const prev = existing[p._key] || { qty: 0, productId: p.productId };
-          existing[p._key] = { qty: prev.qty + p.quantity, productId: p.productId };
-        });
-        localStorage.setItem(storageKey, JSON.stringify(existing));
-      } catch (_) {}
+      // Không còn lưu tracking localStorage: "đã đổi trả" giờ lấy từ API
+      // (chỉ đếm phiếu Completed) nên đơn hủy sẽ không bị tính nữa.
 
       onSuccess?.(retData);
       handleClose();
@@ -581,7 +606,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
               Quay lại
             </Button>
             <Button variant="primary" onClick={handleSubmit} loading={submitting} disabled={selectedProducts.length === 0}>
-              {isExchange ? 'Tạo đơn đổi hàng' : 'Tạo đơn trả hàng'}
+              {isExchange ? 'Tạo đơn bảo hành' : 'Tạo đơn trả hàng'}
             </Button>
           </>
         )
@@ -696,14 +721,14 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 }}
                 className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                   returnType === 'EXCHANGE'
-                    ? 'border-[#004785] bg-blue-50'
+                    ? 'border-yellow-500 bg-yellow-50'
                     : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
                 }`}
               >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
                     returnType === 'EXCHANGE'
-                      ? 'bg-[#004785] text-white'
+                      ? 'bg-yellow-500 text-white'
                       : 'bg-slate-100 text-slate-500'
                   }`}
                 >
@@ -717,7 +742,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Đổi hàng</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Bảo hành</p>
                   <p className="text-xs text-slate-500 dark:text-[#999999]">Đổi sản phẩm cùng loại, không hoàn tiền</p>
                 </div>
               </button>
@@ -737,6 +762,15 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 const returnedQty = item._returnedQty || 0;
                 const status = getReturnStatus(item, returnType);
                 const notAllowed = !status.allowed;
+
+                // Hạn mức bảo hành (chỉ dùng khi isExchange). maxRem = đơn vị cơ bản.
+                const wl = isExchange ? warrantyLimitMap[item.productId] : undefined;
+                const cv = item.convertValue || item.conversionRate || 1;
+                const bhMaxRem = wl?.maxRem ?? null; // null = chưa tải xong
+                const bhMaxSell = bhMaxRem != null && cv > 0 ? Math.floor(bhMaxRem / cv) : null; // số ĐVT bán tối đa BH được
+                const bhSelBase = selected ? (selected.quantity || 0) * cv : 0;
+                const bhOver = selected && bhMaxRem != null && bhSelBase > bhMaxRem; // vượt/thiếu → KHÔNG cho BH
+                const bhCapReached = bhMaxSell != null && selected && (selected.quantity || 0) >= bhMaxSell; // đạt mức tối đa → chặn +
 
                 // ========== DEBUG: Kiểm tra trạng thái từng item ==========
                 console.log('[DEBUG] Item render:', {
@@ -761,7 +795,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                     <input
                       type="checkbox"
                       checked={!!selected}
-                      disabled={notAllowed}
+                      disabled={notAllowed || (isExchange && bhMaxRem === 0)}
                       onChange={() =>
                         toggleProduct({ ...item, quantity: remainingQty, _key: itemKey })
                       }
@@ -776,9 +810,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                         {selected ? ` · Đổi: ${selected.quantity}` : ''}
                         {item._displayUnit ? ` (${item._displayUnit})` : ''}
                       </p>
-                      {returnedQty > 0 && (
+                      {isExchange && returnedQty > 0 && (
                         <p className="truncate text-[10px] text-amber-500">
-                          Đã đổi trả: {returnedQty} · Còn lại:{' '}
+                          Đã bảo hành: {returnedQty} · Còn lại:{' '}
                           <span className="font-semibold">{remainingQty}</span>
                         </p>
                       )}
@@ -787,6 +821,25 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                           ❌ {status.reason}
                         </p>
                       )}
+                      {isExchange && (() => {
+                        // Hạn mức BH (đơn vị cơ bản). Vượt/thiếu → KHÔNG cho bảo hành.
+                        if (bhMaxRem == null) {
+                          return <p className="truncate text-[10px] text-slate-300 dark:text-[#555]">Đang tải hạn mức BH…</p>;
+                        }
+                        const unit = item._displayUnit || '';
+                        const color = (bhMaxRem <= 0 || bhOver)
+                          ? 'text-red-600 dark:text-red-400'
+                          : 'text-green-600 dark:text-green-400';
+                        return (
+                          <p className={`truncate text-[10px] font-semibold ${color}`}>
+                            {bhMaxRem <= 0
+                              ? '⛔ Hết hạn mức BH — không thể bảo hành'
+                              : bhOver
+                                ? `⛔ Vượt hạn mức BH: chỉ còn ${bhMaxRem} (đủ ${bhMaxSell} ${unit}) — đang chọn ${bhSelBase}, KHÔNG đủ để bảo hành. Giảm số lượng.`
+                                : `✓ Hạn mức BH: ${bhMaxRem}${wl.bestName ? ` · ${wl.bestName}` : ''}`}
+                          </p>
+                        );
+                      })()}
                     </div>
                     {selected && remainingQty > 0 && (
                       <div className="flex shrink-0 items-center gap-1">
@@ -803,9 +856,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                         </span>
                         <button
                           type="button"
-                          disabled={notAllowed}
+                          disabled={notAllowed || (isExchange && !!bhCapReached)}
                           onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
-                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
+                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${(notAllowed || (isExchange && !!bhCapReached)) ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
                         >
                           +
                         </button>
@@ -874,7 +927,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/30">
               <div className="flex items-start gap-3">
                 <svg
-                  className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
+                  className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -887,8 +940,8 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                   />
                 </svg>
                 <div>
-                  <p className="text-sm font-bold text-blue-800">Đổi hàng — không hoàn tiền</p>
-                  <p className="mt-1 text-xs text-blue-600">
+                  <p className="text-sm font-bold text-yellow-800">Bảo hành — không hoàn tiền</p>
+                  <p className="mt-1 text-xs text-yellow-600">
                     Khách hàng sẽ đổi sản phẩm cùng loại, cùng mẫu mã. Phiếu này ghi nhận việc đổi
                     trả, không phát sinh hoàn tiền.
                   </p>
