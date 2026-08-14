@@ -774,7 +774,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Loại yêu cầu <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {/* Trả hàng */}
               <button
                 type="button"
@@ -802,32 +802,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               </button>
 
-              {/* Bảo hành */}
-              <button
-                type="button"
-                onClick={() => {
-                  setReturnType('EXCHANGE');
-                  setSelectedProducts([]);
-                  setNewItems([]);
-                }}
-                className={`flex items-center gap-2 rounded-lg border-2 p-3 transition-all ${
-                  returnType === 'EXCHANGE'
-                    ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-                    : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
-                }`}
-              >
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  returnType === 'EXCHANGE' ? 'bg-yellow-500 text-white' : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
-                }`}>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">Bảo hành</p>
-                  <p className="text-[10px] text-slate-500 dark:text-[#999999]">Đổi cùng loại, không hoàn tiền</p>
-                </div>
-              </button>
+              
 
               {/* Đổi hàng lệch giá */}
               <button

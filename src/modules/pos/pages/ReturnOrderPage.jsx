@@ -113,7 +113,7 @@ const classifyReturn = (r) => {
   const refundCust = num(r.refundAmountCustomer);
   const isExchange = rType === 'EXCHANGE';
   const isExchangeDiff = isExchange && (delta !== 0 || pay > 0 || refundCust > 0);
-  const isWarranty = isExchange && !isExchangeDiff; // EXCHANGE ngang giá, không có tiền lệch
+  const isWarranty = false; // EXCHANGE ngang giá, không có tiền lệch
   const isRefund = !isExchange;
   const label = isExchangeDiff ? 'Đổi chênh' : isWarranty ? 'Bảo hành' : 'Trả hàng';
   return { isRefund, isExchange, isExchangeDiff, isWarranty, label };
@@ -450,7 +450,7 @@ const ReturnOrderPage = () => {
             </span>
           );
         }
-        if (cls.isWarranty) {
+        if (false && cls.isWarranty) {
           return (
             <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
               <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -652,7 +652,7 @@ const ReturnOrderPage = () => {
                         </span>
                       );
                     }
-                    if (cls.isWarranty) {
+                    if (false && cls.isWarranty) {
                       return (
                         <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
                           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

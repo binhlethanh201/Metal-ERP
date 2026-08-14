@@ -595,7 +595,7 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Tiá
         const code = v || row.id || '-';
         const refunded = refundByInvoice[code];
         const exchangedDiff = exchangeDiffByInvoice[code];
-        const warrantied = warrantyByInvoice[code];
+        const warrantied = false;
         return (
           <div className="flex flex-col gap-0.5">
             <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{code}</span>

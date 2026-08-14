@@ -91,7 +91,7 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
                 value={METHOD_LABEL[detail.refundMethod] || detail.refundMethod}
               />
               <InfoRow
-                label="Tổng tiền hoàn"
+                label={detail.returnType === 'EXCHANGE' ? 'Giá trị thu hồi' : 'Tổng tiền hoàn'}
                 value={formatCurrency(detail.refundAmount)}
                 valueClassName="text-blue-700 text-base"
               />
@@ -121,7 +121,7 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
                     <th className="px-4 py-3 text-left font-semibold">Sản phẩm</th>
                     <th className="px-4 py-3 text-center font-semibold">Lý do</th>
                     <th className="px-4 py-3 text-right font-semibold">SL</th>
-                    <th className="px-4 py-3 text-right font-semibold">Tiền hoàn</th>
+                    <th className="px-4 py-3 text-right font-semibold">{detail.returnType === 'EXCHANGE' ? 'Giá trị thu hồi' : 'Tiền hoàn'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white dark:divide-[#333333] dark:bg-[#0f0f0f]">

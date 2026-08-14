@@ -263,7 +263,7 @@ export const CustomerManagement = () => {
         );
         const remaining = Math.max(0, originalValue - refunded);
         const hasExchangeDiff = !!exchangeDiffByOrder[orderId];
-        const hasWarranty = !!warrantyByOrder[orderId];
+        const hasWarranty = false;
         let status = 'COMPLETED';
         if (originalValue > 0 && refunded >= originalValue) status = 'FULLY_REFUNDED';
         else if (refunded > 0 && refunded < originalValue) status = 'PARTIAL_REFUND';

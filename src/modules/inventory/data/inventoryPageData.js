@@ -54,7 +54,7 @@ export const sidebarItems = [
     children: [
       { label: 'Danh sách đơn hàng', path: '/inventory/orders', permissions: ['OWNER_MANAGE'] },
       { label: 'Lịch sử đổi trả', path: '/inventory/return-history', permissions: ['OWNER_MANAGE'] },
-      { label: 'Hàng bảo hành', path: '/inventory/warranty-history', permissions: ['OWNER_MANAGE'] },
+      // { label: 'Hàng bảo hành', path: '/inventory/warranty-history', permissions: ['OWNER_MANAGE'] },
     ],
   },
   {

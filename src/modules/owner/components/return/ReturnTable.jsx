@@ -88,12 +88,37 @@ const ReturnTable = ({ returns, loading, onViewDetail }) => {
     },
     {
       key: 'amount',
-      header: <div className="text-right">Tiền hoàn</div>,
-      render: (_, r) => (
-        <div className="text-right font-semibold text-slate-800 dark:text-[#e5e5e5]">
-          {formatCurrency(r.refundAmount)}
-        </div>
-      ),
+      header: <div className="text-right">Tiền Thu / Chi</div>,
+      render: (_, r) => {
+        let text = '';
+        let color = 'text-slate-800 dark:text-[#e5e5e5]';
+        
+        if (r.returnType === 'REFUND') {
+          text = `Chi: ${formatCurrency(r.refundAmount)}`;
+          color = 'text-red-600';
+        } else if (r.returnType === 'EXCHANGE') {
+          const pay = parseFloat(r.payAmount || 0);
+          const refundCust = parseFloat(r.refundAmountCustomer || 0);
+          if (pay > 0) {
+            text = `Thu: ${formatCurrency(pay)}`;
+            color = 'text-green-600';
+          } else if (refundCust > 0) {
+            text = `Chi: ${formatCurrency(refundCust)}`;
+            color = 'text-red-600';
+          } else {
+            text = '0 đ';
+            color = 'text-slate-500';
+          }
+        } else {
+          text = formatCurrency(r.refundAmount);
+        }
+
+        return (
+          <div className={`text-right font-semibold ${color}`}>
+            {text}
+          </div>
+        );
+      },
     },
     {
       key: 'status',
