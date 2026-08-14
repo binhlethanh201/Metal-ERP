@@ -44,14 +44,13 @@ export const ImportItemsTable = ({
     const unitMismatchErrors = [];
     const duplicateNameErrors = [];
 
-    for (const row of result.data) {
+    result.data.forEach((row, idx) => {
       const matchedProduct = products.find(
         (p) =>
-          p.productCode?.toLowerCase() === row.productCode.toLowerCase()
+          p.productCode?.toLowerCase() === row.productCode?.toLowerCase()
       );
 
       if (matchedProduct) {
-        // Bước 2: Kiểm tra bất nhất Mã hàng vs Tên hàng giữa Excel và DB
         const excelName = (row.productName || '').trim().toLowerCase();
         const dbName = (matchedProduct.productName || '').trim().toLowerCase();
         if (excelName && dbName && excelName !== dbName) {
@@ -62,7 +61,6 @@ export const ImportItemsTable = ({
           );
         }
 
-        // Bước 2: Kiểm tra ĐVT trong Excel khớp với ĐVT chuẩn trong DB
         const excelUnit = (row.unitName || row.unit || '').trim().toLowerCase();
         const dbUnit = (matchedProduct.unitName || matchedProduct.baseUnit || matchedProduct.unit || '').trim().toLowerCase();
         if (excelUnit && dbUnit && excelUnit !== dbUnit) {
@@ -73,7 +71,6 @@ export const ImportItemsTable = ({
           );
         }
       } else {
-        // Bước 3: Mã chưa có trong DB -> kiểm tra Tên có bị trùng với sản phẩm khác không
         const excelName = (row.productName || '').trim().toLowerCase();
         if (excelName) {
           const existingByName = products.find(
@@ -89,19 +86,22 @@ export const ImportItemsTable = ({
         }
       }
 
-      importRows.push({
-        productCode: row.productCode,
-        productName: row.productName,
-        unitName: row.unitName || row.unit,
-        quantity: row.quantity,
-        costPrice: row.costPrice,
-        matchedProduct: matchedProduct || null,
-      });
-
       if (!matchedProduct) {
         notFoundList.push(row.productCode || row.productName);
       }
-    }
+
+      importRows.push({
+        id: `import-row-${Date.now()}-${idx}`,
+        productCode: row.productCode,
+        productName: row.productName,
+        unitName: row.unitName || row.unit,
+        quantity: Number(row.quantity || 0),
+        costPrice: Number(row.costPrice || 0),
+        warrantyPeriod: row.warrantyPeriod ?? 0,
+        warrantyUnit: row.warrantyUnit || 'MONTH',
+        matchedProduct: matchedProduct || null,
+      });
+    });
 
     // Chặn import nếu có dòng bất nhất mã vs tên
     if (nameMismatchErrors.length > 0) {
@@ -290,6 +290,40 @@ export const ImportItemsTable = ({
       },
     },
     {
+      key: 'warranty',
+      header: 'BẢO HÀNH',
+      width: 130,
+      render: (_, row) => {
+        const period = row.warrantyPeriod ?? 0;
+        const unit = row.warrantyUnit || 'MONTH';
+        return (
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min="0"
+              max="999"
+              value={period === 0 ? '' : period}
+              placeholder="0"
+              onChange={(e) => {
+                const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value) || 0);
+                onUpdateItem(row.id, 'warrantyPeriod', val);
+              }}
+              className="w-[55px] rounded border border-slate-300 px-2 py-1 text-center text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+            />
+            <select
+              value={unit}
+              onChange={(e) => onUpdateItem(row.id, 'warrantyUnit', e.target.value)}
+              className="w-[65px] rounded border border-slate-300 px-1 py-1 text-xs cursor-pointer outline-none hover:border-slate-400 focus:ring-2 focus:ring-blue-500 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+            >
+              <option value="DAY">Ngày</option>
+              <option value="MONTH">Tháng</option>
+              <option value="YEAR">Năm</option>
+            </select>
+          </div>
+        );
+      },
+    },
+    {
       key: 'actions',
       header: '',
       width: 56,
@@ -308,7 +342,7 @@ export const ImportItemsTable = ({
   ];
 
   const displayColumns = isCustomerReturn
-    ? columns.filter((c) => c.key !== 'costPrice' && c.key !== 'total')
+    ? columns.filter((c) => c.key !== 'costPrice' && c.key !== 'total' && c.key !== 'warranty')
     : columns;
 
   return (

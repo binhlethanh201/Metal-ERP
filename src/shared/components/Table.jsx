@@ -92,9 +92,14 @@ export const Table = ({
                       : col.align === 'center'
                         ? 'text-center'
                         : 'text-left';
+                  const rs = col.rowSpan
+                    ? col.rowSpan(row[col.key], row, rowIdx, data)
+                    : 1;
+                  if (rs === 0) return null;
                   return (
                     <td
                       key={`${rowIdx}-${col.key}`}
+                      rowSpan={rs > 1 ? rs : undefined}
                       className={`px-4 py-2.5 text-sm text-slate-600 dark:text-[#b3b3b3] overflow-hidden break-all ${alignClass}`}
                     >
                       {col.render ? col.render(row[col.key], row) : row[col.key]}

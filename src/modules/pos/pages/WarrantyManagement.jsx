@@ -98,10 +98,10 @@ const WarrantyManagement = () => {
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-3">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">
             Hàng lỗi / Bảo hành
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
+          <p className="mt-1 text-slate-600 dark:text-[#999999]">
             Danh sách các sản phẩm thu hồi từ khách hàng do hỏng/lỗi (từ các phiếu Đổi hàng)
           </p>
         </div>

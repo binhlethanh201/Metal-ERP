@@ -451,8 +451,8 @@ const ReturnOrderPage = () => {
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-3">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Đổi trả hàng</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Đổi trả hàng</h1>
+          <p className="mt-1 text-slate-600 dark:text-[#999999]">
             Quản lý yêu cầu đổi/trả hàng cho khách đã mua
           </p>
         </div>

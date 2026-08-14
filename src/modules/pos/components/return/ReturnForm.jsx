@@ -424,6 +424,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           quantity: 1,
           sellPrice: product.unitPrice || product.retailPrice || 0,
           maxQty: remainingQty,
+          convertValue: product.convertValue || 1,
         },
       ];
     });
@@ -462,6 +463,21 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
+    // Với EXCHANGE: cảnh báo nếu có thể sản phẩm thay thế không đủ tồn
+    if (isExchange) {
+      const lowStockItems = selectedProducts.filter((sp) => {
+        const item = invoice.items?.find((i) => i._key === sp._key);
+        const sellable = item?.sellableQuantity ?? item?.availableStock ?? 999;
+        return sellable < sp.quantity;
+      });
+      if (lowStockItems.length > 0) {
+        setSubmitError(
+          `Cảnh báo: Sản phẩm "${lowStockItems[0].productName}" có thể không đủ tồn khả dụng để đổi. Vui lòng kiểm tra lại.`
+        );
+        return;
+      }
+    }
+
     setSubmitting(true);
     setSubmitError('');
     let createdReturnId = null;
@@ -479,6 +495,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       payload.items = selectedProducts.map((p) => ({
         productId: p.productId,
         quantity: p.quantity,
+        conversionRate: p.convertValue || 1,
       }));
 
       console.log('[ReturnForm] Payload:', payload);
@@ -495,6 +512,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             addReturnItem(returnId, {
               productId: p.productId,
               quantity: p.quantity,
+              conversionRate: p.convertValue || 1,
             })
           )
         );

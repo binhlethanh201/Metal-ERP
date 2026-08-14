@@ -842,8 +842,8 @@ export const ShiftManagement = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">Quản lý ca bán hàng</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Quản lý ca bán hàng</h1>
+          <p className="mt-1 text-slate-600 dark:text-[#999999]">
             Mở ca, theo dõi đơn hàng và chốt ca cuối ngày
           </p>
         </div>
@@ -871,7 +871,7 @@ export const ShiftManagement = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">Ca đang mở</h2>
-                  <p className="text-sm text-slate-500 dark:text-[#999999]">
+                  <p className="text-slate-600 dark:text-[#999999]">
                     {displayShift.cashier} - Bắt đầu lúc {displayShift.startTime}
                   </p>
                 </div>

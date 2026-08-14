@@ -89,15 +89,8 @@ export const StockImport = () => {
     }
   });
 
-  const [inwardType, setInwardType] = useState(
-    () => Number(localStorage.getItem('stockImport_type')) || 1
-  );
-  const isCustomerReturn = inwardType === 2;
+  const [inwardType, setInwardType] = useState(1);
   const [note, setNote] = useState('');
-
-  useEffect(() => {
-    if (isCustomerReturn && !note.trim()) setNote('Khách hàng trả');
-  }, [inwardType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
@@ -177,15 +170,19 @@ export const StockImport = () => {
         let importItem;
 
         if (matched) {
-          key = getItemKey(matched);
+          key = row.id || getItemKey(matched);
           importItem = {
             ...matched,
             id: key,
             quantity: Number(row.quantity || 0),
             costPrice: Number(row.costPrice || 0),
+            warrantyPeriod: row.warrantyPeriod !== undefined && row.warrantyPeriod !== null
+              ? Number(row.warrantyPeriod)
+              : (matched?.warrantyPeriod ?? 0),
+            warrantyUnit: row.warrantyUnit || matched?.warrantyUnit || 'MONTH',
           };
         } else {
-          key = row.productCode || `new-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+          key = row.id || row.productCode || `new-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
           importItem = {
             id: key,
             productCode: row.productCode || '',
@@ -194,12 +191,16 @@ export const StockImport = () => {
             unit: row.unitName || row.unit || '',
             quantity: Number(row.quantity || 0),
             costPrice: Number(row.costPrice || 0),
+            warrantyPeriod: row.warrantyPeriod !== undefined && row.warrantyPeriod !== null
+              ? Number(row.warrantyPeriod)
+              : 0,
+            warrantyUnit: row.warrantyUnit || 'MONTH',
           };
           newCount++;
         }
 
         const existingIdx = updated.findIndex((i) =>
-          key ? getItemKey(i) === key : false
+          key ? ((i.id || getItemKey(i)) === key) : false
         );
 
         if (existingIdx >= 0) {
@@ -207,6 +208,10 @@ export const StockImport = () => {
             ...updated[existingIdx],
             quantity: Number(row.quantity || 0),
             costPrice: Number(row.costPrice || 0),
+            warrantyPeriod: row.warrantyPeriod !== undefined && row.warrantyPeriod !== null
+              ? Number(row.warrantyPeriod)
+              : (updated[existingIdx].warrantyPeriod ?? 0),
+            warrantyUnit: row.warrantyUnit || updated[existingIdx].warrantyUnit || 'MONTH',
           };
         } else {
           updated.push(importItem);
@@ -229,13 +234,13 @@ export const StockImport = () => {
     setItems((current) => {
       const key = getItemKey(product);
       if (!key) return current;
-      const existing = current.find((i) => getItemKey(i) === key);
+      const existing = current.find((i) => (i.id || getItemKey(i)) === key);
       if (existing) {
         return current.map((i) =>
           getItemKey(i) === key ? { ...i, quantity: Number(i.quantity) + 1 } : i
         );
       }
-      return [...current, { ...product, id: key, quantity: 1, costPrice: product.costPrice || 0 }];
+      return [...current, { ...product, id: key, quantity: 1, costPrice: product.costPrice || 0, warrantyPeriod: product.warrantyPeriod ?? 0, warrantyUnit: product.warrantyUnit || 'MONTH' }];
     });
     setStatus({ type: 'success', message: `Đã thêm/tăng số lượng cho ${product.productName}` });
   }, []);
@@ -243,7 +248,7 @@ export const StockImport = () => {
   const updateItem = (id, field, value) => {
     setItems((curr) =>
       curr.map((item) =>
-        getItemKey(item) === id
+        (item.id || getItemKey(item)) === id
           ? {
               ...item,
               [field]: field === 'quantity' || field === 'costPrice' ? Number(value || 0) : value,
@@ -254,7 +259,7 @@ export const StockImport = () => {
   };
 
   const removeItem = (id) => {
-    setItems((curr) => curr.filter((i) => getItemKey(i) !== id));
+    setItems((curr) => curr.filter((i) => (i.id || getItemKey(i)) !== id));
   };
 
   const totals = useMemo(
@@ -295,6 +300,8 @@ export const StockImport = () => {
         const item = {
           quantity: Number(i.quantity || 0),
           costPrice: Number(i.costPrice || 0),
+          warrantyPeriod: i.warrantyPeriod ?? 0,
+          warrantyUnit: i.warrantyUnit || 'MONTH',
           note: '',
         };
         if (systemId) {
@@ -469,7 +476,7 @@ export const StockImport = () => {
               onAddNewProduct={() => setIsProductModalOpen(true)}
               onImportRows={handleImportRows}
               formatCurrency={formatCurrency}
-              isCustomerReturn={isCustomerReturn}
+              isCustomerReturn={false}
             />
           </div>
 
@@ -487,7 +494,7 @@ export const StockImport = () => {
               isSubmitting={isSubmitting}
               onSubmit={handleFinish}
               formatCurrency={formatCurrency}
-              isCustomerReturn={isCustomerReturn}
+              isCustomerReturn={false}
             />
           </div>
         </div>

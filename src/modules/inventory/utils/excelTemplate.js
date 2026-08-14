@@ -28,12 +28,13 @@ const EXCEL_TEMPLATE_HEADERS = [
   'ĐVT',
   'Số lượng',
   'Đơn giá nhập',
+  'Bảo hành',
 ];
 
 const EXCEL_TEMPLATE_SAMPLE_DATA = [
-  ['1', 'SP-001', 'Thép tấm 10mm', 'Tấm', '10', '50000'],
-  ['2', 'SP-002', 'Inox 304 tấm 1.5mm', 'Tấm', '5', '76000'],
-  ['3', 'SP-003', 'Thép ống D50', 'Cây', '20', '120000'],
+  ['1', 'SP-001', 'Thép tấm 10mm', 'Tấm', '10', '50000', '12 tháng'],
+  ['2', 'SP-002', 'Inox 304 tấm 1.5mm', 'Tấm', '5', '76000', '7 ngày'],
+  ['3', 'SP-003', 'Thép ống D50', 'Cây', '20', '120000', '2 năm'],
 ];
 
 export const downloadExcelTemplate = async () => {
@@ -47,6 +48,7 @@ export const downloadExcelTemplate = async () => {
     { wch: 8 },
     { wch: 10 },
     { wch: 16 },
+    { wch: 14 },
   ];
 
   const wb = XLSX.utils.book_new();
@@ -94,6 +96,55 @@ const parseNumber = (raw) => {
 
 const formatCurrency = (val) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+};
+
+/**
+ * Chuẩn hóa chuỗi Tiếng Việt: NFC + bỏ dấu + lowercase.
+ */
+const normalizeText = (str) => {
+  if (!str) return '';
+  return String(str)
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a')
+    .replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e')
+    .replace(/ì|í|ị|ỉ|ĩ/g, 'i')
+    .replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o')
+    .replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u')
+    .replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y')
+    .replace(/đ/g, 'd')
+    .trim();
+};
+
+/**
+ * Parse ô "Bảo hành" từ Excel.
+ * Trả về { warrantyPeriod: number, warrantyUnit: 'DAY'|'MONTH'|'YEAR' }
+ */
+export const parseWarrantyCell = (raw) => {
+  const s = String(raw ?? '').trim();
+  if (!s || s === '0') return { warrantyPeriod: 0, warrantyUnit: 'MONTH' };
+
+  const numMatch = s.match(/(\d+)/);
+  if (!numMatch) return { warrantyPeriod: 0, warrantyUnit: 'MONTH' };
+  const period = parseInt(numMatch[1], 10);
+
+  const normalized = normalizeText(s);
+  if (normalized.includes('ngay') || normalized.includes('day')) return { warrantyPeriod: period, warrantyUnit: 'DAY' };
+  if (normalized.includes('nam') || normalized.includes('year')) return { warrantyPeriod: period, warrantyUnit: 'YEAR' };
+  return { warrantyPeriod: period, warrantyUnit: 'MONTH' };
+};
+
+/**
+ * Tìm giá trị cột Bảo hành trong row object Excel.
+ */
+export const extractRawWarrantyValue = (rowObj) => {
+  if (!rowObj || typeof rowObj !== 'object') return null;
+  const keys = Object.keys(rowObj);
+  const targetKey = keys.find((k) => {
+    const nk = normalizeText(k);
+    return nk.includes('bao hanh') || nk.includes('bh') || nk.includes('warranty');
+  });
+  return targetKey ? rowObj[targetKey] : null;
 };
 
 /**
@@ -175,6 +226,8 @@ export const parseImportExcelFile = async (file) => {
         }
 
         const sheet = workbook.Sheets[sheetName];
+        // Đọc cả dạng object (có key) để tìm cột Bảo hành linh hoạt
+        const rowsAsObjects = XLSX.utils.sheet_to_json(sheet, { defval: '' });
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
         if (rows.length < 2) {
@@ -189,16 +242,26 @@ export const parseImportExcelFile = async (file) => {
         const normalizedHeaders = headerRow.map((h) =>
           String(h).trim().replace(/\s+/g, ' ')
         );
-        const expectedHeaders = EXCEL_TEMPLATE_HEADERS.map((h) => h.trim());
 
-        const headersMatch = expectedHeaders.every(
-          (expected, i) => normalizedHeaders[i] === expected
-        );
+        // Tìm index của từng cột theo tên (linh hoạt, ko phụ thuộc vị trí)
+        const findColIndex = (keywords) => {
+          return normalizedHeaders.findIndex((h) => {
+            const norm = h.toLowerCase().replace(/\s+/g, '');
+            return keywords.some((kw) => norm.includes(kw.toLowerCase().replace(/\s+/g, '')));
+          });
+        };
 
-        if (!headersMatch) {
+        const idxProductCode = findColIndex(['mã hàng', 'ma hang', 'mã sp', 'productcode', 'product code', 'mã']);
+        const idxProductName = findColIndex(['tên hàng', 'ten hang', 'tên sp', 'productname', 'product name', 'tên']);
+        const idxUnit = findColIndex(['đvt', 'dvt', 'đơn vị', 'don vi', 'unit']);
+        const idxQuantity = findColIndex(['số lượng', 'so luong', 'quantity', 'sl']);
+        const idxCostPrice = findColIndex(['đơn giá', 'don gia', 'giá nhập', 'gia nhap', 'costprice', 'cost price', 'đơn giá nhập']);
+        const idxWarranty = findColIndex(['bảo hành', 'bao hanh', 'bh', 'warranty', 'bảo', 'bảo hành (']);
+
+        if (idxProductCode === -1 || idxProductName === -1 || idxQuantity === -1) {
           resolve({
             success: false,
-            error: `File không đúng định dạng mẫu. Tiêu đề cần có: ${expectedHeaders.join(', ')}. Hãy tải file mẫu và điền dữ liệu.`,
+            error: `File Excel thiếu cột bắt buộc: Mã hàng, Tên hàng, Số lượng. Các cột tìm thấy: ${normalizedHeaders.join(', ')}`,
           });
           return;
         }
@@ -212,17 +275,22 @@ export const parseImportExcelFile = async (file) => {
           return;
         }
 
+        const getVal = (row, idx) => (idx >= 0 ? String(row[idx] ?? '').trim() : '');
+
         // Lưu tất cả dòng raw theo ProductCode để phát hiện chênh lệch giá
         const rawRowsByCode = {};
 
         for (let i = 0; i < dataRows.length; i++) {
           const row = dataRows[i];
+          const rowObj = rowsAsObjects[i] || {};
           const lineNum = i + 2;
-          const productCode = String(row[1] ?? '').trim();
-          const productName = String(row[2] ?? '').trim();
-          const unit = String(row[3] ?? '').trim();
-          const quantityRaw = String(row[4] ?? '').trim();
-          const costPriceRaw = String(row[5] ?? '').trim();
+          const productCode = getVal(row, idxProductCode);
+          const productName = getVal(row, idxProductName);
+          const unit = getVal(row, idxUnit);
+          const quantityRaw = getVal(row, idxQuantity);
+          const costPriceRaw = getVal(row, idxCostPrice);
+          // Ưu tiên lấy từ index, fallback từ object key
+          const warrantyRaw = getVal(row, idxWarranty) || extractRawWarrantyValue(rowObj);
 
           if (!productCode || !productName) {
             resolve({
@@ -250,6 +318,8 @@ export const parseImportExcelFile = async (file) => {
             return;
           }
 
+          const { warrantyPeriod, warrantyUnit } = parseWarrantyCell(warrantyRaw);
+
           if (!rawRowsByCode[productCode]) {
             rawRowsByCode[productCode] = [];
           }
@@ -260,6 +330,8 @@ export const parseImportExcelFile = async (file) => {
             unit,
             quantity,
             costPrice,
+            warrantyPeriod,
+            warrantyUnit,
           });
         }
 
@@ -285,6 +357,8 @@ export const parseImportExcelFile = async (file) => {
               unit: r.unit,
               quantity: r.quantity,
               costPrice: r.costPrice,
+              warrantyPeriod: r.warrantyPeriod,
+              warrantyUnit: r.warrantyUnit,
             });
           } else {
             // Cùng giá -> cộng dồn số lượng
@@ -296,6 +370,8 @@ export const parseImportExcelFile = async (file) => {
               unit: rows[0].unit,
               quantity: totalQty,
               costPrice: rows[0].costPrice,
+              warrantyPeriod: rows[0].warrantyPeriod,
+              warrantyUnit: rows[0].warrantyUnit,
             });
           }
         }

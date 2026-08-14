@@ -6,31 +6,12 @@ import {
   CheckCircle2,
   Clock,
   Search,
-  Plus,
-  Settings,
 } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
 import { Textarea } from '../../../../shared/components/Textarea';
-import Modal from '../../../../shared/components/Modal';
-
-const STORAGE_KEY = 'stockImport_customTypes';
-
-const loadCustomTypes = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveCustomTypes = (types) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(types));
-};
 
 const DEFAULT_TYPES = [
   { value: 1, label: 'Nhập mua hàng từ NCC' },
-  { value: 2, label: 'Khách hàng trả lại' },
 ];
 
 export const ImportTicketForm = ({
@@ -51,12 +32,6 @@ export const ImportTicketForm = ({
   const containerRef = useRef(null);
   const [supplierPopupOpen, setSupplierPopupOpen] = useState(false);
   const [supplierSearch, setSupplierSearch] = useState('');
-  const [typeManagerOpen, setTypeManagerOpen] = useState(false);
-  const [customTypes, setCustomTypes] = useState(loadCustomTypes);
-  const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeMap, setNewTypeMap] = useState(1);
-
-  const allTypes = [...DEFAULT_TYPES, ...customTypes];
 
   const filteredSuppliers = supplierSearch.trim()
     ? suppliers.filter((s) =>
@@ -95,20 +70,13 @@ export const ImportTicketForm = ({
           <label className="block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
             <div className="mb-1.5 flex items-center justify-between">
               <span>Loại phiếu nhập kho</span>
-              <button
-                type="button"
-                onClick={() => setTypeManagerOpen(true)}
-                className="flex items-center gap-1 text-xs font-semibold text-[#004785] hover:underline"
-              >
-                <Settings size={14} /> Quản lý
-              </button>
             </div>
             <select
               value={inwardType}
               onChange={(e) => onChangeInwardType(Number(e.target.value))}
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
             >
-              {allTypes.map((t) => (
+              {DEFAULT_TYPES.map((t) => (
                 <option key={`${t.value}-${t.label}`} value={t.value}>
                   {t.label}
                 </option>
@@ -260,105 +228,6 @@ export const ImportTicketForm = ({
           </div>
         </div>
       </aside>
-
-      <Modal
-        isOpen={typeManagerOpen}
-        onClose={() => setTypeManagerOpen(false)}
-        title="Quản lý loại phiếu nhập"
-        size="md"
-      >
-        <div className="space-y-5">
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">
-                Tên loại phiếu
-              </label>
-              <input
-                type="text"
-                placeholder="VD: Nhập hàng trả góp..."
-                value={newTypeName}
-                onChange={(e) => setNewTypeName(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-[#999999]">Xử lý như</label>
-              <select
-                value={newTypeMap}
-                onChange={(e) => setNewTypeMap(Number(e.target.value))}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
-              >
-                <option value={1}>Nhập mua</option>
-                <option value={2}>Trả lại</option>
-              </select>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const name = newTypeName.trim();
-                if (!name) return;
-                setCustomTypes((prev) => {
-                  const next = [...prev, { value: newTypeMap, label: name }];
-                  saveCustomTypes(next);
-                  return next;
-                });
-                setNewTypeName('');
-              }}
-              className="flex h-[38px] items-center gap-1.5 rounded-lg bg-[#004785] px-4 text-sm font-semibold text-white hover:bg-black"
-            >
-              <Plus size={16} /> Thêm
-            </button>
-          </div>
-
-          <div className="max-h-72 space-y-1 overflow-y-auto">
-            <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
-              Mặc định
-            </div>
-            {DEFAULT_TYPES.map((t) => (
-              <div
-                key={t.value}
-                className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5 dark:bg-[#1a1a1a]"
-              >
-                <span className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{t.label}</span>
-                <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                  Hệ thống
-                </span>
-              </div>
-            ))}
-            {customTypes.length > 0 && (
-              <div className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#808080]">
-                Tuỳ chỉnh
-              </div>
-            )}
-            {customTypes.map((t, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2.5 transition-colors hover:bg-slate-50 dark:border-[#333333] dark:hover:bg-[#272727]"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">{t.label}</span>
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                    {t.value === 1 ? 'Nhập mua' : 'Trả lại'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomTypes((prev) => {
-                      const next = prev.filter((_, idx) => idx !== i);
-                      saveCustomTypes(next);
-                      return next;
-                    });
-                  }}
-                  className="text-xs font-semibold text-red-400 hover:text-red-600 dark:text-red-300 dark:hover:text-red-200"
-                >
-                  Xoá
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Modal>
     </>
   );
 };

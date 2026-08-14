@@ -130,7 +130,8 @@ export const useOwnerWarrantyHistory = () => {
       );
     } catch (err) {
       console.error('Lỗi gửi bảo hành:', err);
-      alert('Gửi bảo hành thất bại: ' + (err.message || ''));
+      const msg = err?.data?.message || err?.message || 'Gửi bảo hành thất bại';
+      alert(msg);
     } finally {
       setAssigningId(null);
     }

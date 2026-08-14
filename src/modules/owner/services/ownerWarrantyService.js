@@ -19,3 +19,8 @@ export const assignSupplier = async (warrantyId, supplierId) => {
 export const acceptWarrantyReturn = async (warrantyId) => {
   return await apiPost(`/api/warranty/${warrantyId}/accept`);
 };
+
+export const getSupplierWarrantyBatches = async (params) => {
+  const qs = new URLSearchParams(params).toString();
+  return await apiGet(`/api/warranty/supplier-batches?${qs}`);
+};
