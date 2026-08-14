@@ -565,7 +565,8 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
 
   // Build map: invoiceCode -> totalRefundedAmount (để hiển thị badge)
   const refundByInvoice = {};
-  const exchangeByInvoice = {};
+  const exchangeDiffByInvoice = {};
+  const warrantyByInvoice = {};
   returnsData.forEach((r) => {
     const rStatus = String(r.status || '').toUpperCase();
     const rType = String(r.returnType || r.return_type || '').toUpperCase();
@@ -577,7 +578,11 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
         (refundByInvoice[key] || 0) + parseFloat(r.refundAmount || r.refund_amount || 0);
     }
     if (rType === 'EXCHANGE') {
-      exchangeByInvoice[key] = true;
+      // Phân biệt đổi chênh (có tiền lệch) vs bảo hành (ngang giá) — backend cùng lưu EXCHANGE.
+      const num = (v) => parseFloat(v ?? 0) || 0;
+      const isDiff = num(r.deltaAmount ?? r.delta_amount) !== 0 || num(r.payAmount ?? r.pay_amount) > 0 || num(r.refundAmountCustomer ?? r.refund_amount_customer) > 0;
+      if (isDiff) exchangeDiffByInvoice[key] = true;
+      else warrantyByInvoice[key] = true;
     }
   });
 
@@ -589,7 +594,8 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
       render: (v, row) => {
         const code = v || row.id || '-';
         const refunded = refundByInvoice[code];
-        const exchanged = exchangeByInvoice[code];
+        const exchangedDiff = exchangeDiffByInvoice[code];
+        const warrantied = warrantyByInvoice[code];
         return (
           <div className="flex flex-col gap-0.5">
             <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{code}</span>
@@ -599,7 +605,12 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
                   🔄 Hoàn {formatCurrency(refunded)}
                 </span>
               )}
-              {exchanged && (
+              {exchangedDiff && (
+                <span className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  🔄 Đổi chênh
+                </span>
+              )}
+              {warrantied && (
                 <span className="inline-flex items-center gap-1 rounded border border-yellow-300 bg-yellow-50 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-700">
                   🔄 Bảo hành
                 </span>

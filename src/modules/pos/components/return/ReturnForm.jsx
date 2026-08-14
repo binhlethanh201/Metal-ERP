@@ -2,12 +2,13 @@
  * ReturnForm - Tạo đơn đổi trả
  * Flow: nhập mã hóa đơn → tìm hóa đơn → chọn sản phẩm → chọn loại + lý do → tạo
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Input } from '../../../../shared/components/Input';
 import { Button } from '../../../../shared/components/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { formatDateTime } from '../../../../shared/utils/formatDate';
+import { useDebounce } from '../../../../shared/hooks/useDebounce';
 import { apiPosGet } from '../../../../services/apiClient';
 import {
   getOrders,
@@ -17,13 +18,16 @@ import {
   cancelReturn,
   getInvoice,
   getProductCategory,
+  getPosProducts,
 } from '../../services/posService';
+import { quoteExchange, createExchange } from '../../services/exchangeService';
+import DeltaCard from '../exchange/DeltaCard';
 
 const POLICIES_STORAGE_KEY = 'pos_category_return_policies';
 
+// Trả hàng (REFUND) chỉ cho trả bằng TIỀN MẶT — trừ thẳng tiền mặt trong ca bán.
 const REFUND_METHODS = [
   { value: 'CASH', label: 'Tiền mặt' },
-  { value: 'TRANSFER', label: 'Chuyển khoản' },
 ];
 
 const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
@@ -40,37 +44,69 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Hạn mức bảo hành (số lượng có thể BH tối đa) cho từng sản phẩm — fetch từ
-  // /api/warranty/{productId}/suggested-suppliers. maxRem = max remainingWarrantyQuantity
-  // giữa các NCC (trường hợp tốt nhất). Dùng để hiện limit cho từng dòng khi tạo đơn BH.
-  const [warrantyLimitMap, setWarrantyLimitMap] = useState({});
+  // === Đổi hàng chênh lệch (SP B + Delta) — dùng khi returnType = EXCHANGE ===
+  const [newItems, setNewItems] = useState([]); // SP B: hàng mới xuất cho khách
+  const [productSearch, setProductSearch] = useState('');
+  const [productResults, setProductResults] = useState([]);
+  const [productLoading, setProductLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [quote, setQuote] = useState(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
 
+  // ---- Tìm SP B (debounced) ----
+  const debouncedProductSearch = useDebounce(productSearch, 350);
   useEffect(() => {
-    if (!invoice?.items?.length) { setWarrantyLimitMap({}); return; }
-    let cancelled = false;
-    const distinctPids = [...new Set(invoice.items.map((it) => it.productId).filter(Boolean))];
-    Promise.all(distinctPids.map(async (pid) => {
-      try {
-        const res = await apiPosGet(`/warranty/${pid}/suggested-suppliers`);
+    if (!debouncedProductSearch.trim()) { setProductResults([]); return; }
+    setProductLoading(true);
+    getPosProducts({ search: debouncedProductSearch.trim() })
+      .then((res) => {
         const data = res?.data || res;
-        const arr = Array.isArray(data) ? data : [];
-        const maxRem = arr.reduce((m, s) => Math.max(m, Number(s.remainingWarrantyQuantity ?? 0)), 0);
-        const bestName = arr
-          .filter((s) => Number(s.remainingWarrantyQuantity ?? 0) === maxRem && maxRem > 0)
-          .map((s) => s.supplierName || s.name || '')
-          .filter(Boolean)[0] || '';
-        return [pid, { maxRem, bestName, suppliers: arr }];
-      } catch {
-        return [pid, { maxRem: 0, bestName: '', suppliers: [] }];
-      }
-    })).then((entries) => {
-      if (cancelled) return;
-      const map = {};
-      entries.forEach(([pid, v]) => { map[pid] = v; });
-      setWarrantyLimitMap(map);
+        const list = Array.isArray(data) ? data : data?.items || [];
+        setProductResults(list);
+      })
+      .catch(() => setProductResults([]))
+      .finally(() => setProductLoading(false));
+  }, [debouncedProductSearch]);
+
+  // ---- Helpers SP B ----
+  const addNewItem = (p) => {
+    const bpId = p.branchProductId || p.id;
+    if (!bpId) return;
+    setNewItems((prev) => {
+      if (prev.some((x) => x.branchProductId === bpId)) return prev;
+      // Giá base (theo ĐVT cơ bản "Cái") — để quy đổi khi chọn ĐVT lớn hơn (Thùng = ×12).
+      const baseUnitPrice = parseFloat(p.retailPrice ?? p.unitPrice ?? p.sellPrice ?? p.price ?? 0);
+      const sellable = parseFloat(p.sellableQuantity ?? p.availableStock ?? 0);
+      const conv = (p.conversionUnits && p.conversionUnits[0]) || null;
+      // Đơn giá theo ĐVT đang chọn (per selected unit): nếu ĐVT có giá riêng dùng giá đó,
+      // không thì = convertValue * baseUnitPrice (vd 1 Thùng = 12 * giá 1 Cái).
+      const convPrice = conv
+        ? (conv.price ?? (conv.convertValue * baseUnitPrice))
+        : baseUnitPrice;
+      return [
+        ...prev,
+        {
+          key: bpId,
+          branchProductId: bpId,
+          productId: p.productId || p.id,
+          productName: p.productName || p.name || '',
+          productCode: p.productCode || p.barcode || '',
+          quantity: 1,
+          conversionRate: conv ? conv.convertValue : 1,
+          unitPrice: convPrice,
+          baseUnitPrice,
+          unitName: conv ? conv.unitName : p.unit || 'Cái',
+          sellable,
+          conversionUnits: p.conversionUnits || [],
+        },
+      ];
     });
-    return () => { cancelled = true; };
-  }, [invoice]);
+  };
+  const updateNewQty = (key, qty) =>
+    setNewItems((prev) => prev.map((p) => (p.key === key ? { ...p, quantity: Math.max(1, qty) } : p)));
+  const updateNewUnit = (key, unitName, convertValue, price) =>
+    setNewItems((prev) => prev.map((p) => (p.key === key ? { ...p, conversionRate: convertValue, unitName, unitPrice: price ?? p.unitPrice } : p)));
+  const removeNewItem = (key) => setNewItems((prev) => prev.filter((p) => p.key !== key));
 
   // Fetch policies từ backend POS khi mở modal, fallback localStorage
   useEffect(() => {
@@ -98,14 +134,46 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       });
   }, [isOpen]);
 
-  const isExchange = returnType === 'EXCHANGE';
+  const isExchange = returnType === 'EXCHANGE';            // Bảo hành
+  const isExchangeDiff = returnType === 'EXCHANGE_DIFF';   // Đổi hàng lệch giá
+  const isRefund = returnType === 'REFUND';
+
+  // ---- Quote đổi chênh lệch (debounced) ----
+  const exchangeQuotePayload = useMemo(() => {
+    if (!isExchangeDiff || !invoice || selectedProducts.length === 0 || newItems.length === 0) return null;
+    return {
+      invoiceId: invoice.invoiceId || invoice.invoiceCode || invoice.id,
+      returnItems: selectedProducts.map((p) => ({
+        invoiceItemId: p.invoiceItemId,
+        quantity: p.quantity,
+        reason: (reason.trim() || 'DEFECTIVE').toUpperCase(),
+      })),
+      newItems: newItems.map((n) => ({
+        branchProductId: n.branchProductId,
+        quantity: n.quantity,
+        conversionRate: n.conversionRate,
+        unitPrice: n.unitPrice,
+      })),
+    };
+  }, [isExchangeDiff, invoice, selectedProducts, newItems, reason]);
+
+  useEffect(() => {
+    if (!exchangeQuotePayload) { setQuote(null); return; }
+    let cancelled = false;
+    setQuoteLoading(true);
+    quoteExchange(exchangeQuotePayload)
+      .then((res) => { if (!cancelled) setQuote(res?.data || res); })
+      .catch(() => { if (!cancelled) setQuote(null); })
+      .finally(() => { if (!cancelled) setQuoteLoading(false); });
+    return () => { cancelled = true; };
+  }, [exchangeQuotePayload]);
 
   // Kiểm tra sản phẩm có được phép đổi/trả theo policy không
   // Trả về { allowed: boolean, reason: string | null }
   const getReturnStatus = (item, type) => {
     const policy = item._policy;
     const catName = item._categoryName || '';
-    const isExchange = type === 'EXCHANGE';
+    const isExchange = type === 'EXCHANGE' || type === 'EXCHANGE_DIFF';
     const actionLabel = isExchange ? 'đổi' : 'trả';
 
     let result;
@@ -152,6 +220,11 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     setNotes('');
     setSubmitting(false);
     setSubmitError('');
+    setNewItems([]);
+    setProductSearch('');
+    setProductResults([]);
+    setPaymentMethod('CASH');
+    setQuote(null);
   };
 
   const handleClose = () => {
@@ -448,6 +521,51 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       setSubmitError('Vui lòng chọn ít nhất một sản phẩm để đổi trả');
       return;
     }
+
+    // === Đổi hàng lệch giá: tạo qua createExchange (1 transaction) ===
+    if (isExchangeDiff) {
+      if (newItems.length === 0) {
+        setSubmitError('Vui lòng chọn ít nhất 1 sản phẩm mới (SP B) để đổi.');
+        setSubmitting(false);
+        return;
+      }
+      if (quote && !quote.eligible) {
+        setSubmitError(quote.restrictionReason || 'Chưa đủ điều kiện đổi hàng.');
+        setSubmitting(false);
+        return;
+      }
+      setSubmitting(true);
+      setSubmitError('');
+      try {
+        const payload = {
+          invoiceId: invoice.invoiceId || invoice.invoiceCode || invoice.id,
+          paymentMethod,
+          note: notes.trim() || undefined,
+          returnItems: selectedProducts.map((p) => ({
+            invoiceItemId: p.invoiceItemId,
+            quantity: p.quantity,
+            reason: (reason.trim() || 'DEFECTIVE').toUpperCase(),
+          })),
+          newItems: newItems.map((n) => ({
+            branchProductId: n.branchProductId,
+            quantity: n.quantity,
+            conversionRate: n.conversionRate,
+            unitPrice: n.unitPrice,
+          })),
+        };
+        const res = await createExchange(payload);
+        onSuccess?.(res?.data || res);
+        handleClose();
+      } catch (err) {
+        const detail = err?.data?.title || err?.data?.message || err?.message || 'Lỗi';
+        setSubmitError('Không thể tạo phiếu đổi hàng: ' + detail);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // === Trả hàng (REFUND) ===
     if (!reason.trim()) {
       setSubmitError('Vui lòng nhập lý do đổi trả');
       return;
@@ -466,30 +584,6 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       );
       setSubmitting(false);
       return;
-    }
-
-    // Bảo hành: KHÔNG cho "BH một phần" — nếu chọn vượt hạn mức (thiếu) thì chặn luôn.
-    if (isExchange) {
-      const over = selectedProducts.find((sp) => {
-        const wl = warrantyLimitMap[sp.productId];
-        if (!wl) return true; // hạn mức chưa tải xong → chặn, đợi tải
-        const cv = sp.convertValue || sp.conversionRate || 1;
-        const selBase = (sp.quantity || 0) * cv;
-        return selBase > (wl.maxRem ?? 0);
-      });
-      if (over) {
-        const wl = warrantyLimitMap[over.productId];
-        const cv = over.convertValue || over.conversionRate || 1;
-        const maxRem = wl?.maxRem ?? 0;
-        const selBase = (over.quantity || 0) * cv;
-        setSubmitError(
-          maxRem <= 0
-            ? `Sản phẩm "${over.productName}" đã hết hạn mức bảo hành — không thể bảo hành.`
-            : `Sản phẩm "${over.productName}" vượt hạn mức bảo hành: chỉ còn ${maxRem} (đơn vị cơ bản), đang chọn ${selBase} — không đủ để bảo hành. Vui lòng giảm số lượng.`
-        );
-        setSubmitting(false);
-        return;
-      }
     }
 
     setSubmitting(true);
@@ -605,8 +699,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <Button variant="secondary" onClick={() => setStep(1)}>
               Quay lại
             </Button>
-            <Button variant="primary" onClick={handleSubmit} loading={submitting} disabled={selectedProducts.length === 0}>
-              {isExchange ? 'Tạo đơn bảo hành' : 'Tạo đơn trả hàng'}
+            <Button variant="primary" onClick={handleSubmit} loading={submitting}
+              disabled={selectedProducts.length === 0 || (isExchangeDiff && (newItems.length === 0 || (quote && !quote.eligible)))}>
+              {isExchangeDiff ? 'Xác nhận đổi hàng' : isExchange ? 'Tạo đơn bảo hành' : 'Tạo đơn trả hàng'}
             </Button>
           </>
         )
@@ -679,71 +774,85 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Loại yêu cầu <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {/* Trả hàng */}
               <button
                 type="button"
                 onClick={() => {
                   setReturnType('REFUND');
-                  setSelectedProducts([]); // Clear khi đổi loại để tránh giữ lại SP không hợp lệ
+                  setSelectedProducts([]);
+                  setNewItems([]);
                 }}
-                className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                className={`flex items-center gap-2 rounded-lg border-2 p-3 transition-all ${
                   returnType === 'REFUND'
-                    ? 'border-[#004785] bg-blue-50'
+                    ? 'border-[#004785] bg-blue-50 dark:bg-blue-900/20'
                     : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
                 }`}
               >
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                    returnType === 'REFUND'
-                      ? 'bg-[#004785] text-white'
-                      : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
-                  }`}
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 15v-1a4 4 0 00-8 0v1m0 0h8m-8 0a4 4 0 01-4-4V8a4 4 0 014-4h8a4 4 0 014 4v3a4 4 0 01-4 4m-8 0a4 4 0 004 4h.5M9 19l-1.5 1.5M9 19l1.5-1.5"
-                    />
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                  returnType === 'REFUND' ? 'bg-[#004785] text-white' : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
+                }`}>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 15v-1a4 4 0 00-8 0v1m0 0h8m-8 0a4 4 0 01-4-4V8a4 4 0 014-4h8a4 4 0 014 4v3a4 4 0 01-4 4m-8 0a4 4 0 004 4h.5M9 19l-1.5 1.5M9 19l1.5-1.5" />
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Trả hàng</p>
-                  <p className="text-xs text-slate-500 dark:text-[#999999]">Hoàn tiền cho khách</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">Trả hàng</p>
+                  <p className="text-[10px] text-slate-500 dark:text-[#999999]">Hoàn tiền cho khách</p>
                 </div>
               </button>
+
+              {/* Bảo hành */}
               <button
                 type="button"
                 onClick={() => {
                   setReturnType('EXCHANGE');
-                  setSelectedProducts([]); // Clear khi đổi loại để tránh giữ lại SP không hợp lệ
+                  setSelectedProducts([]);
+                  setNewItems([]);
                 }}
-                className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                className={`flex items-center gap-2 rounded-lg border-2 p-3 transition-all ${
                   returnType === 'EXCHANGE'
-                    ? 'border-yellow-500 bg-yellow-50'
+                    ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
                     : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
                 }`}
               >
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                    returnType === 'EXCHANGE'
-                      ? 'bg-yellow-500 text-white'
-                      : 'bg-slate-100 text-slate-500'
-                  }`}
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                    />
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                  returnType === 'EXCHANGE' ? 'bg-yellow-500 text-white' : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
+                }`}>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">Bảo hành</p>
-                  <p className="text-xs text-slate-500 dark:text-[#999999]">Đổi sản phẩm cùng loại, không hoàn tiền</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">Bảo hành</p>
+                  <p className="text-[10px] text-slate-500 dark:text-[#999999]">Đổi cùng loại, không hoàn tiền</p>
+                </div>
+              </button>
+
+              {/* Đổi hàng lệch giá */}
+              <button
+                type="button"
+                onClick={() => {
+                  setReturnType('EXCHANGE_DIFF');
+                  setSelectedProducts([]);
+                  setNewItems([]);
+                }}
+                className={`flex items-center gap-2 rounded-lg border-2 p-3 transition-all ${
+                  returnType === 'EXCHANGE_DIFF'
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                    : 'border-slate-200 hover:border-slate-300 dark:border-[#333333] dark:hover:border-[#404040]'
+                }`}
+              >
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                  returnType === 'EXCHANGE_DIFF' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500 dark:bg-[#272727] dark:text-[#999999]'
+                }`}>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-bold text-slate-900 dark:text-[#e5e5e5]">Đổi hàng lệch giá</p>
+                  <p className="text-[10px] text-slate-500 dark:text-[#999999]">Đổi SP khác, thu/chi chênh lệch</p>
                 </div>
               </button>
             </div>
@@ -762,15 +871,6 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 const returnedQty = item._returnedQty || 0;
                 const status = getReturnStatus(item, returnType);
                 const notAllowed = !status.allowed;
-
-                // Hạn mức bảo hành (chỉ dùng khi isExchange). maxRem = đơn vị cơ bản.
-                const wl = isExchange ? warrantyLimitMap[item.productId] : undefined;
-                const cv = item.convertValue || item.conversionRate || 1;
-                const bhMaxRem = wl?.maxRem ?? null; // null = chưa tải xong
-                const bhMaxSell = bhMaxRem != null && cv > 0 ? Math.floor(bhMaxRem / cv) : null; // số ĐVT bán tối đa BH được
-                const bhSelBase = selected ? (selected.quantity || 0) * cv : 0;
-                const bhOver = selected && bhMaxRem != null && bhSelBase > bhMaxRem; // vượt/thiếu → KHÔNG cho BH
-                const bhCapReached = bhMaxSell != null && selected && (selected.quantity || 0) >= bhMaxSell; // đạt mức tối đa → chặn +
 
                 // ========== DEBUG: Kiểm tra trạng thái từng item ==========
                 console.log('[DEBUG] Item render:', {
@@ -795,7 +895,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                     <input
                       type="checkbox"
                       checked={!!selected}
-                      disabled={notAllowed || (isExchange && bhMaxRem === 0)}
+                      disabled={notAllowed}
                       onChange={() =>
                         toggleProduct({ ...item, quantity: remainingQty, _key: itemKey })
                       }
@@ -821,25 +921,6 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                           ❌ {status.reason}
                         </p>
                       )}
-                      {isExchange && (() => {
-                        // Hạn mức BH (đơn vị cơ bản). Vượt/thiếu → KHÔNG cho bảo hành.
-                        if (bhMaxRem == null) {
-                          return <p className="truncate text-[10px] text-slate-300 dark:text-[#555]">Đang tải hạn mức BH…</p>;
-                        }
-                        const unit = item._displayUnit || '';
-                        const color = (bhMaxRem <= 0 || bhOver)
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-green-600 dark:text-green-400';
-                        return (
-                          <p className={`truncate text-[10px] font-semibold ${color}`}>
-                            {bhMaxRem <= 0
-                              ? '⛔ Hết hạn mức BH — không thể bảo hành'
-                              : bhOver
-                                ? `⛔ Vượt hạn mức BH: chỉ còn ${bhMaxRem} (đủ ${bhMaxSell} ${unit}) — đang chọn ${bhSelBase}, KHÔNG đủ để bảo hành. Giảm số lượng.`
-                                : `✓ Hạn mức BH: ${bhMaxRem}${wl.bestName ? ` · ${wl.bestName}` : ''}`}
-                          </p>
-                        );
-                      })()}
                     </div>
                     {selected && remainingQty > 0 && (
                       <div className="flex shrink-0 items-center gap-1">
@@ -856,9 +937,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                         </span>
                         <button
                           type="button"
-                          disabled={notAllowed || (isExchange && !!bhCapReached)}
+                          disabled={notAllowed}
                           onClick={() => updateQty(itemKey, (selected.quantity || 1) + 1)}
-                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${(notAllowed || (isExchange && !!bhCapReached)) ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
+                          className={`flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${notAllowed ? 'border-slate-200 text-slate-300 dark:border-[#333333]' : 'border-slate-200 hover:bg-slate-100 dark:border-[#333333] dark:hover:bg-[#272727]'}`}
                         >
                           +
                         </button>
@@ -891,7 +972,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Refund method + amount — chỉ hiển thị khi trả hàng */}
-          {!isExchange && (
+          {isRefund && (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
@@ -922,33 +1003,118 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             </div>
           )}
 
-          {/* Exchange note */}
-          {isExchange && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/30">
-              <div className="flex items-start gap-3">
-                <svg
-                  className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                  />
-                </svg>
-                <div>
-                  <p className="text-sm font-bold text-yellow-800">Bảo hành — không hoàn tiền</p>
-                  <p className="mt-1 text-xs text-yellow-600">
-                    Khách hàng sẽ đổi sản phẩm cùng loại, cùng mẫu mã. Phiếu này ghi nhận việc đổi
-                    trả, không phát sinh hoàn tiền.
-                  </p>
+          {/* ===== SP B: hàng mới + Delta (khi Đổi hàng lệch giá) ===== */}
+          {isExchangeDiff && (
+            <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-800 dark:bg-blue-900/10">
+              <p className="text-sm font-bold text-slate-700 dark:text-[#e5e5e5]">
+                Hàng mới (SP B) — xuất cho khách
+              </p>
+
+              <Input
+                placeholder="Tìm SP mới theo tên / mã..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+              />
+              {productLoading && <p className="text-xs text-slate-400">Đang tìm...</p>}
+              {!productLoading && productSearch.trim() && productResults.length > 0 && (
+                <div className="max-h-40 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 dark:divide-[#333333] dark:border-[#333333]">
+                  {productResults.slice(0, 20).map((p) => {
+                    const bpId = p.branchProductId || p.id;
+                    const added = newItems.some((x) => x.branchProductId === bpId);
+                    return (
+                      <button
+                        key={bpId}
+                        type="button"
+                        disabled={added}
+                        onClick={() => addNewItem(p)}
+                        className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs hover:bg-slate-50 disabled:opacity-40 dark:hover:bg-[#272727]"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-slate-900 dark:text-[#e5e5e5]">{p.productName || p.name}</p>
+                          <p className="truncate text-[10px] text-slate-400">
+                            {p.productCode || p.barcode || '-'} · {formatCurrency(p.retailPrice ?? p.unitPrice ?? 0)} · còn {p.sellableQuantity ?? p.availableStock ?? 0}
+                          </p>
+                        </div>
+                        <span className="ml-2 shrink-0 font-semibold text-[#004785]">{added ? '✓' : '+'}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+              )}
+
+              {newItems.length > 0 && (
+                <div className="space-y-2">
+                  {newItems.map((n) => (
+                    <div key={n.key} className="rounded-lg border border-slate-200 p-2 dark:border-[#333333]">
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-medium text-slate-900 dark:text-[#e5e5e5]">{n.productName}</p>
+                          <p className="truncate text-[10px] text-slate-400">{n.productCode || '-'}</p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button type="button" onClick={() => updateNewQty(n.key, n.quantity - 1)}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold">-</button>
+                          <input
+                            type="number"
+                            value={n.quantity}
+                            onChange={(e) => updateNewQty(n.key, parseInt(e.target.value || '1', 10))}
+                            className="w-12 rounded border border-slate-200 px-1 py-0.5 text-center text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                          />
+                          <button type="button" onClick={() => updateNewQty(n.key, n.quantity + 1)}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold">+</button>
+                          <button type="button" onClick={() => removeNewItem(n.key)}
+                            className="ml-1 text-xs text-red-500 hover:underline">✕</button>
+                        </div>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
+                        <span>ĐVT:</span>
+                        <select
+                          value={n.unitName}
+                          onChange={(e) => {
+                            const base = { unitName: 'Cái (đvt cơ bản)', convertValue: 1 };
+                            const opt = [base, ...(n.conversionUnits || [])]
+                              .find((u) => u.unitName === e.target.value);
+                            if (!opt) return;
+                            // Đơn giá theo ĐVT chọn: giá riêng của ĐVT nếu có, không thì convertValue * giá base.
+                            const price = opt.price ?? (opt.convertValue * (n.baseUnitPrice || 0));
+                            updateNewUnit(n.key, opt.unitName, opt.convertValue, price);
+                          }}
+                          className="flex-1 rounded border border-slate-300 px-1 py-0.5 text-[10px] outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                        >
+                          <option value="Cái (đvt cơ bản)">Cái (đvt cơ bản) · ×1</option>
+                          {(n.conversionUnits || []).map((u) => (
+                            <option key={u.conversionId || u.unitName} value={u.unitName}>
+                              {u.unitName} · ×{u.convertValue}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                          {formatCurrency(n.quantity * n.unitPrice)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {newItems.length === 0 && (
+                <p className="text-center text-xs text-slate-400">Chưa chọn SP mới nào</p>
+              )}
+
+              {/* Delta card */}
+              <div>
+                {quoteLoading && <p className="text-xs text-slate-400">Đang tính chênh lệch...</p>}
+                {quote && !quoteLoading && (
+                  <DeltaCard quote={quote} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} />
+                )}
+                {!quote && !quoteLoading && (
+                  <p className="rounded-lg border border-dashed border-slate-200 p-3 text-center text-xs text-slate-400 dark:border-[#333333]">
+                    Chọn ít nhất 1 SP A và 1 SP B để tính chênh lệch giá.
+                  </p>
+                )}
               </div>
             </div>
           )}
+
 
           {/* Notes */}
           <div>

@@ -56,10 +56,25 @@ const mapApiDetail = (r) => {
     customerName: r.customerName || 'Khách lẻ',
     userName: r.userName || r.createdBy || '-',
     status: (r.status || 'PENDING').toUpperCase(),
+    returnType: (r.returnType || 'REFUND').toUpperCase(),
     reason: r.reason || '',
     notes: r.notes || '',
     totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
     refundMethod: (r.refundMethod || r.method || 'CASH').toUpperCase(),
+    // Đổi hàng chênh lệch
+    exchangeItems: (r.exchangeItems || []).map((ei) => ({
+      exchangeItemId: ei.exchangeItemId || ei.id,
+      productName: ei.productName || 'Sản phẩm',
+      productCode: ei.productCode || '',
+      quantity: parseFloat(ei.quantity || 0),
+      unitPrice: parseFloat(ei.unitPrice || 0),
+      lineTotal: parseFloat(ei.lineTotal || 0),
+    })),
+    deltaAmount: r.deltaAmount != null ? parseFloat(r.deltaAmount) : null,
+    payAmount: parseFloat(r.payAmount || 0),
+    refundAmountCustomer: parseFloat(r.refundAmountCustomer || 0),
+    paymentMethod: (r.paymentMethod || '').toUpperCase(),
+    deltaLabel: r.deltaLabel || '',
     createdAt: r.createdAt || r.createdAt,
     returnItems: items.length > 0 ? items : r.returnItems || r.items || [],
   };
@@ -168,6 +183,8 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
 
   const statusCfg = STATUS_CONFIG[detail.status] || { label: detail.status, variant: 'secondary' };
   const hasItems = Array.isArray(detail.returnItems) && detail.returnItems.length > 0;
+  const hasExchange = detail.returnType === 'EXCHANGE' && Array.isArray(detail.exchangeItems) && detail.exchangeItems.length > 0;
+  const totalNewValue = hasExchange ? detail.exchangeItems.reduce((s, e) => s + (e.lineTotal || 0), 0) : 0;
 
   return (
     <div className="space-y-4">
@@ -282,6 +299,71 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
           </div>
         </div>
       </Card>
+
+      {/* Hàng mới xuất (SP B) — chỉ đổi hàng chênh lệch */}
+      {hasExchange && (
+        <Card header="Hàng mới xuất (SP B)">
+          <div className="divide-y divide-slate-100 dark:divide-[#333333]">
+            {detail.exchangeItems.map((ei, i) => (
+              <div key={ei.exchangeItemId || i} className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{ei.productName}</p>
+                  <p className="text-xs text-slate-400 dark:text-[#808080]">
+                    SL: {ei.quantity} · Đơn giá: {formatCurrency(ei.unitPrice)}
+                  </p>
+                </div>
+                <p className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{formatCurrency(ei.lineTotal)}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 border-t border-slate-200 pt-3 dark:border-[#333333]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">
+                Tổng giá trị SP B
+              </p>
+              <p className="text-2xl font-extrabold text-[#004785]">{formatCurrency(totalNewValue)}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Chênh lệch đổi hàng (Delta) */}
+      {detail.returnType === 'EXCHANGE' && (
+        <Card header="Chênh lệch đổi hàng">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Chênh lệch</p>
+              <p
+                className={`mt-1 text-lg font-extrabold ${
+                  detail.deltaAmount > 0 ? 'text-emerald-600'
+                  : detail.deltaAmount < 0 ? 'text-red-600'
+                  : 'text-slate-500'
+                }`}
+              >
+                {detail.deltaLabel || '—'}
+              </p>
+            </div>
+            {detail.payAmount > 0 && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Khách trả thêm</p>
+                <p className="mt-1 text-lg font-extrabold text-emerald-600">{formatCurrency(detail.payAmount)}</p>
+              </div>
+            )}
+            {detail.refundAmountCustomer > 0 && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Hoàn lại khách</p>
+                <p className="mt-1 text-lg font-extrabold text-red-600">{formatCurrency(detail.refundAmountCustomer)}</p>
+              </div>
+            )}
+            {detail.paymentMethod && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-[#808080]">Phương thức</p>
+                <p className="mt-1 font-semibold">{REFUND_METHOD_LABELS[detail.paymentMethod] || detail.paymentMethod}</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Actions */}
       {detail.status === 'PENDING' && (

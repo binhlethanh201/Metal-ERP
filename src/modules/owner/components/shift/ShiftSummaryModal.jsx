@@ -14,6 +14,60 @@ const InfoRow = ({ label, value, valueClassName = '' }) => (
 
 const METHOD_LABEL = { Cash: 'Tiền mặt', Transfer: 'Chuyển khoản' };
 
+// Meta cho từng loại hành động trong ca (badge + màu tiền)
+const ACTIVITY_META = {
+  Sale: { label: 'Bán', badge: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+  Refund: { label: 'Hoàn', badge: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+  Exchange: { label: 'Đổi', badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+};
+
+// Label + badge phương thức thanh toán
+const methodBadge = (method) => {
+  if (!method) return null;
+  const m = method.toString();
+  const label =
+    m === 'CASH' || m === 'Cash' || m === 'Tiền mặt' ? 'Tiền mặt'
+    : m === 'TRANSFER' || m === 'Transfer' || m === 'Chuyển khoản' ? 'CK'
+    : m === 'COMBINED' || m === 'Combined' || m.startsWith('[') ? 'Kết hợp'
+    : m;
+  return (
+    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
+      {label}
+    </span>
+  );
+};
+
+// 1 dòng hoạt động: badge loại + mã + khách + phương thức + tiền có dấu
+const ActivityRow = ({ a }) => {
+  const meta = ACTIVITY_META[a.type] || ACTIVITY_META.Sale;
+  const amt = typeof a.totalAmount === 'number' ? a.totalAmount : 0;
+  const isNeg = amt < 0;
+  const isZero = amt === 0;
+  const color = isZero ? 'text-slate-500' : isNeg ? 'text-red-600' : 'text-green-600';
+  return (
+    <div className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <span className={`shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold ${meta.badge}`}>{meta.label}</span>
+        <div className="min-w-0 flex flex-col">
+          {a.description ? (
+            <>
+              <span className="truncate font-medium text-slate-700 dark:text-[#b3b3b3]">{a.description}</span>
+              <span className="truncate font-mono text-[10px] text-slate-400 dark:text-[#808080]">{a.invoiceCode}</span>
+            </>
+          ) : (
+            <span className="truncate font-mono text-slate-600 dark:text-[#999999]">{a.invoiceCode || '—'}</span>
+          )}
+        </div>
+        <span className="hidden shrink-0 truncate text-slate-400 sm:inline dark:text-[#808080]">{a.customerName}</span>
+        {methodBadge(a.paymentMethod)}
+      </div>
+      <span className={`shrink-0 pl-2 font-bold ${color}`}>
+        {isZero ? '0₫' : `${isNeg ? '-' : '+'}${formatCurrency(Math.abs(amt))}`}
+      </span>
+    </div>
+  );
+};
+
 export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = [], ordersLoading }) => {
   const [expandedSalesUser, setExpandedSalesUser] = useState(null);
   const variance = summary?.variance;
@@ -178,6 +232,20 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
             </div>
           )}
 
+          {/* Hoạt động trong ca — Bán / Hoàn / Đổi (từng hành động theo ShiftId) */}
+          {Array.isArray(orders) && orders.length > 0 && (
+            <div>
+              <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                <Receipt size={16} /> Hoạt động trong ca
+              </h4>
+              <div className="space-y-1.5">
+                {orders.map((o) => (
+                  <ActivityRow key={o.id} a={o} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* SalesByUser expandable */}
           {Array.isArray(summary.salesByUser) && summary.salesByUser.length > 0 && (
             <div>
@@ -217,25 +285,7 @@ export const ShiftSummaryModal = ({ open, onClose, summary, loading, orders = []
                             <p className="py-2 text-center text-xs text-slate-400">Không có đơn hàng nào</p>
                           ) : (
                             userOrders.map((o) => (
-                              <div key={'usr-order-' + o.id} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
-                                <div className="flex items-center gap-2">
-                                  <span className="rounded bg-green-100 px-1 py-0.5 text-[10px] font-semibold text-green-700">Bán</span>
-                                  <span className="font-mono text-slate-600 dark:text-[#999999]">{o.invoiceCode}</span>
-                                  <span className="text-slate-400">{o.customerName}</span>
-                                  {o.paymentMethod && (
-                                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                                      {o.paymentMethod === 'CASH' || o.paymentMethod === 'Cash' || o.paymentMethod === 'Tiền mặt'
-                                        ? 'Tiền mặt'
-                                        : o.paymentMethod === 'TRANSFER' || o.paymentMethod === 'Transfer' || o.paymentMethod === 'Chuyển khoản'
-                                          ? 'CK'
-                                          : o.paymentMethod === 'COMBINED' || o.paymentMethod === 'Combined' || o.paymentMethod === 'Kết hợp' || (o.paymentMethod && o.paymentMethod.startsWith('['))
-                                            ? 'Kết hợp'
-                                            : o.paymentMethod}
-                                    </span>
-                                  )}
-                                </div>
-                                <span className="font-bold text-green-600">+{formatCurrency(o.totalAmount)}</span>
-                              </div>
+                              <ActivityRow key={'usr-order-' + o.id} a={o} />
                             ))
                           )}
                         </div>

@@ -31,6 +31,31 @@ const toLocalDateStr = (d) => {
   return `${y}-${m}-${day}`;
 };
 
+// Phân loại phiếu đổi trả:
+//  - Trả (REFUND)                       -> hoàn tiền
+//  - Đổi chênh (EXCHANGE có tiền lệch) -> khách trả thêm(+) / hoàn lại(-)
+//  - Bảo hành (EXCHANGE ngang giá)     -> không đổi tiền
+// Trả về nhãn, màu badge, và số tiền CÓ DẤU (+: khách đưa thêm, -: hoàn lại khách).
+const classifyReturn = (r) => {
+  const rType = String(r?.returnType || r?.return_type || '').toUpperCase();
+  const num = (v) => parseFloat(v ?? 0) || 0;
+  const delta = num(r?.deltaAmount ?? r?.delta_amount);
+  const pay = num(r?.payAmount ?? r?.pay_amount);
+  const refundCust = num(r?.refundAmountCustomer ?? r?.refund_amount_customer);
+  const isRefund = rType === 'REFUND';
+  const isExchangeDiff = !isRefund && (delta !== 0 || pay > 0 || refundCust > 0);
+  const label = isRefund ? 'Trả' : isExchangeDiff ? 'Đổi chênh' : 'Bảo hành';
+  const badge = isRefund
+    ? 'bg-red-100 text-red-700'
+    : isExchangeDiff
+      ? 'bg-amber-100 text-amber-700'
+      : 'bg-yellow-100 text-yellow-800';
+  let signed = 0;
+  if (isRefund) signed = -Math.abs(num(r?.refundAmount ?? r?.refund_amount));
+  else if (isExchangeDiff) signed = delta; // + khách trả thêm, - hoàn lại, 0 = ngang giá
+  return { isRefund, isExchangeDiff, label, badge, signed };
+};
+
 // Lưu/lấy tên thu ngân theo shiftId (dùng khi API không trả về userName)
 const SHIFT_CASHIER_KEY = 'pos_shift_cashiers';
 const getSavedCashiers = () => {
@@ -375,6 +400,29 @@ export const ShiftManagement = () => {
         0
       );
 
+      // Đổi hàng chênh lệch trong ca (returnType=EXCHANGE có Delta > 0):
+      // tiền mặt/CK/đół cộng vào ca. Lọc theo thời gian ca (khác bảo hành — luồng riêng).
+      const shiftExchanges = allReturns.filter((r) => {
+        const rStatus = String(r.status || '').toUpperCase();
+        const rType = String(r.returnType || r.return_type || '').toUpperCase();
+        const rDate = new Date(r.createdAt || r.created_at || 0).getTime();
+        const pay = parseFloat(r.payAmount ?? 0) || 0;
+        const delta = parseFloat(r.deltaAmount ?? 0) || 0;
+        return (
+          rStatus !== 'CANCELLED' &&
+          rType === 'EXCHANGE' &&
+          rDate >= shiftStartUTCForReturns &&
+          (delta !== 0 || pay > 0)
+        );
+      });
+      const exchDeltaTotal = shiftExchanges.reduce((sum, r) => sum + (parseFloat(r.deltaAmount ?? 0) || 0), 0);
+      const exchPayCash = shiftExchanges
+        .filter((r) => String(r.paymentMethod || '').toUpperCase() === 'CASH')
+        .reduce((sum, r) => sum + (parseFloat(r.payAmount ?? 0) || 0), 0);
+      const exchPayTransfer = shiftExchanges
+        .filter((r) => String(r.paymentMethod || '').toUpperCase() === 'TRANSFER')
+        .reduce((sum, r) => sum + (parseFloat(r.payAmount ?? 0) || 0), 0);
+
       // Tính stats từ orders — net revenue = gross - hoàn trả (REFUND) trong ca
       const grossRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
       let totalDiscount = filteredOrders.reduce(
@@ -446,14 +494,14 @@ export const ShiftManagement = () => {
 
       setShiftSummary({
         ...summaryData,
-        totalRevenue,
-        totalSales: totalRevenue,
+        totalRevenue: totalRevenue + exchDeltaTotal,
+        totalSales: totalRevenue + exchDeltaTotal,
         totalDiscount,
         orderCount,
-        cashSales: cashSales - cashRefunds, // trừ tiền mặt đã hoàn
-        cashSalesGross: cashSales, // giữ lại để tính số dư cuối dự kiến
+        cashSales: (cashSales - cashRefunds) + exchPayCash, // trừ tiền mặt đã hoàn + cộng tiền chênh mặt
+        cashSalesGross: cashSales + exchPayCash, // giữ lại để tính số dư cuối dự kiến
         cardSales,
-        transferSales,
+        transferSales: transferSales + exchPayTransfer, // cộng tiền chênh chuyển khoản
         cashRefunds,
       });
       setShiftOrders(filteredOrders);
@@ -943,8 +991,13 @@ export const ShiftManagement = () => {
                 </p>
                 <p className="mt-1 truncate text-lg font-extrabold text-amber-700">
                   {formatCurrency(
-                    (displayShift.openingBalance || 0) + (displayShift.cashSales || 0)
+                    (displayShift.openingBalance || 0) +
+                      (displayShift.cashSales || 0) +
+                      (displayShift.transferSales || 0)
                   )}
+                </p>
+                <p className="mt-0.5 truncate text-[10px] text-amber-500/80">
+                  (tiền mặt + chuyển khoản)
                 </p>
               </div>
             </div>
@@ -995,6 +1048,11 @@ export const ShiftManagement = () => {
                           createdAt: r.createdAt || r.created_at || '',
                           amount: parseFloat(r.refundAmount || r.refund_amount || 0),
                           cashier: r.staffName || r.userName || r.cashier || r.processedBy || '',
+                          // Trường để phân biệt Đổi chênh lệch vs Bảo hành ngang giá
+                          returnType: rType,
+                          deltaAmount: r.deltaAmount ?? r.delta_amount ?? 0,
+                          payAmount: r.payAmount ?? r.pay_amount ?? 0,
+                          refundAmountCustomer: r.refundAmountCustomer ?? r.refund_amount_customer ?? 0,
                         };
                       });
                     const sales = shiftOrders.map((o) => ({
@@ -1087,7 +1145,8 @@ export const ShiftManagement = () => {
                             </div>
                           );
                         }
-                        const isRefund = act._type === 'refund';
+                        const cls = classifyReturn(act);
+                        const isRefund = cls.isRefund;
                         return (
                           <div
                             key={'ret-' + act.id}
@@ -1133,9 +1192,9 @@ export const ShiftManagement = () => {
                                     {act.code}
                                   </span>
                                   <span
-                                    className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}
+                                    className={`rounded px-1 py-0.5 text-[9px] font-semibold ${cls.badge}`}
                                   >
-                                    {isRefund ? 'Trả' : 'Bảo hành'}
+                                    {cls.label}
                                   </span>
                                 </div>
                                 <span className="mt-0.5 text-[9px] text-slate-400">
@@ -1158,11 +1217,13 @@ export const ShiftManagement = () => {
                               )}
                             </div>
                             <div className="flex shrink-0 items-center gap-2">
-                              <span
-                                className={`text-xs font-bold ${isRefund ? 'text-red-600' : ''}`}
-                              >
-                                {isRefund && act.amount > 0 ? `-${formatCurrency(act.amount)}` : ''}
-                              </span>
+                              {cls.signed !== 0 && (
+                                <span
+                                  className={`text-xs font-bold ${cls.signed < 0 ? 'text-red-600' : 'text-green-600'}`}
+                                >
+                                  {cls.signed < 0 ? '-' : '+'}{formatCurrency(Math.abs(cls.signed))}
+                                </span>
+                              )}
                             </div>
                           </div>
                         );
@@ -1523,11 +1584,16 @@ export const ShiftManagement = () => {
                 <div className="mt-1.5 flex items-baseline gap-1">
                   <span className="truncate text-xl font-extrabold text-amber-700">
                     {formatCurrency(
-                      (displayShift?.openingBalance || 0) + (displayShift?.cashSales || 0)
+                      (displayShift?.openingBalance || 0) +
+                        (displayShift?.cashSales || 0) +
+                        (displayShift?.transferSales || 0)
                     )}
                   </span>
                   <span className="shrink-0 text-xs text-amber-500">VNĐ</span>
                 </div>
+                <p className="mt-0.5 truncate text-[10px] text-amber-600/70">
+                  (tiền mặt + chuyển khoản)
+                </p>
               </div>
               <div className="overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 transition-shadow hover:shadow-sm">
                 <p className="truncate text-[11px] font-bold uppercase tracking-wide text-blue-700">
@@ -1601,20 +1667,21 @@ export const ShiftManagement = () => {
                             </div>
                           ))}
                           {userReturns.map((r) => {
-                            const rType = String(r.returnType || r.return_type || '').toUpperCase();
-                            const isRefund = rType === 'REFUND';
+                            const cls = classifyReturn(r);
                             return (
                               <div key={'usr-ret-' + (r.returnCode || r.returnOrderId || r.returnId || r.id)} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
                                 <div className="flex items-center gap-2">
-                                  <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
-                                    {isRefund ? 'Trả' : 'Bảo hành'}
+                                  <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${cls.badge}`}>
+                                    {cls.label}
                                   </span>
                                   <span className="font-mono text-slate-500">{r.returnCode || r.returnOrderId || r.returnId || r.id || ''}</span>
                                   <span className="text-slate-400">{r.customerName || 'Khách lẻ'}</span>
                                 </div>
-                                <span className={`font-bold ${isRefund ? 'text-red-600' : ''}`}>
-                                  {isRefund && (r.refundAmount || r.refund_amount || 0) > 0 ? `-${formatCurrency(r.refundAmount || r.refund_amount || 0)}` : ''}
-                                </span>
+                                {cls.signed !== 0 && (
+                                  <span className={`font-bold ${cls.signed < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                    {cls.signed < 0 ? '-' : '+'}{formatCurrency(Math.abs(cls.signed))}
+                                  </span>
+                                )}
                               </div>
                             );
                           })}
@@ -1968,20 +2035,21 @@ export const ShiftManagement = () => {
                               </div>
                             ))}
                             {userReturns.map((r) => {
-                              const rType = String(r.returnType || r.return_type || '').toUpperCase();
-                              const isRefund = rType === 'REFUND';
+                              const cls = classifyReturn(r);
                               return (
                                 <div key={'det-usr-ret-' + (r.returnCode || r.returnOrderId || r.returnId || r.id)} className="flex items-center justify-between rounded bg-white px-3 py-1.5 text-xs dark:bg-[#1a1a1a]">
                                   <div className="flex items-center gap-2">
-                                    <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
-                                      {isRefund ? 'Trả' : 'Bảo hành'}
+                                    <span className={`rounded px-1 py-0.5 text-[10px] font-semibold ${cls.badge}`}>
+                                      {cls.label}
                                     </span>
                                     <span className="font-mono text-slate-500">{r.returnCode || r.returnOrderId || r.returnId || r.id || ''}</span>
                                     <span className="text-slate-400">{r.customerName || 'Khách lẻ'}</span>
                                   </div>
-                                  <span className={`font-bold ${isRefund ? 'text-red-600' : ''}`}>
-                                    {isRefund && (r.refundAmount || r.refund_amount || 0) > 0 ? `-${formatCurrency(r.refundAmount || r.refund_amount || 0)}` : ''}
-                                  </span>
+                                  {cls.signed !== 0 && (
+                                    <span className={`font-bold ${cls.signed < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                      {cls.signed < 0 ? '-' : '+'}{formatCurrency(Math.abs(cls.signed))}
+                                    </span>
+                                  )}
                                 </div>
                               );
                             })}
@@ -2034,6 +2102,10 @@ export const ShiftManagement = () => {
                         createdAt: r.createdAt || r.created_at || '',
                         amount: parseFloat(r.refundAmount || r.refund_amount || 0),
                         cashier: r.userName || r.cashier || r.processedBy || '',
+                        returnType: rType,
+                        deltaAmount: r.deltaAmount ?? r.delta_amount ?? 0,
+                        payAmount: r.payAmount ?? r.pay_amount ?? 0,
+                        refundAmountCustomer: r.refundAmountCustomer ?? r.refund_amount_customer ?? 0,
                       };
                     });
                     const sales = selectedShiftOrders.map((o) => ({
@@ -2122,7 +2194,8 @@ export const ShiftManagement = () => {
                             </div>
                           );
                         }
-                        const isRefund = act._type === 'refund';
+                        const cls = classifyReturn(act);
+                        const isRefund = cls.isRefund;
                         return (
                           <div
                             key={'detail-ret-' + act.id}
@@ -2166,9 +2239,9 @@ export const ShiftManagement = () => {
                                 {act.code}
                               </span>
                               <span
-                                className={`rounded px-1 py-0.5 text-[9px] font-semibold ${isRefund ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}
+                                className={`rounded px-1 py-0.5 text-[9px] font-semibold ${cls.badge}`}
                               >
-                                {isRefund ? 'Trả' : 'Bảo hành'}
+                                {cls.label}
                               </span>
                               <span className="shrink-0 text-xs text-slate-400 dark:text-[#808080]">
                                 {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
@@ -2186,11 +2259,13 @@ export const ShiftManagement = () => {
                               )}
                             </div>
                             <div className="flex shrink-0 items-center gap-2">
-                              <span
-                                className={`text-xs font-bold ${isRefund ? 'text-red-600' : ''}`}
-                              >
-                                {isRefund && act.amount > 0 ? `-${formatCurrency(act.amount)}` : ''}
-                              </span>
+                              {cls.signed !== 0 && (
+                                <span
+                                  className={`text-xs font-bold ${cls.signed < 0 ? 'text-red-600' : 'text-green-600'}`}
+                                >
+                                  {cls.signed < 0 ? '-' : '+'}{formatCurrency(Math.abs(cls.signed))}
+                                </span>
+                              )}
                             </div>
                           </div>
                         );

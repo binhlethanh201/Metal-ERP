@@ -156,6 +156,94 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
               </table>
             </div>
           </div>
+
+          {/* ==================== HÀNG MỚI XUẤT (SP B) — chỉ đổi hàng chênh lệch ==================== */}
+          {detail.returnType === 'EXCHANGE' && Array.isArray(detail.exchangeItems) && detail.exchangeItems.length > 0 && (
+            <div>
+              <h4 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#999999]">
+                <Package size={16} /> Hàng mới xuất (SP B)
+              </h4>
+              <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm dark:border-[#333333]">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-slate-500 dark:bg-[#1a1a1a] dark:text-[#999999]">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold">Sản phẩm</th>
+                      <th className="px-4 py-3 text-center font-semibold">SL</th>
+                      <th className="px-4 py-3 text-right font-semibold">Đơn giá</th>
+                      <th className="px-4 py-3 text-right font-semibold">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white dark:divide-[#333333] dark:bg-[#0f0f0f]">
+                    {detail.exchangeItems.map((ei, idx) => (
+                      <tr key={ei.exchangeItemId || idx} className="transition-colors hover:bg-slate-50/50 dark:hover:bg-[#272727]/50">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-slate-700 dark:text-[#b3b3b3]">{ei.productName || '—'}</div>
+                          <div className="text-xs text-slate-400 dark:text-[#808080]">{ei.productCode}</div>
+                        </td>
+                        <td className="px-4 py-3 text-center font-medium text-slate-600 dark:text-[#999999]">{ei.quantity}</td>
+                        <td className="px-4 py-3 text-right text-slate-600 dark:text-[#999999]">{formatCurrency(ei.unitPrice)}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-slate-800 dark:text-[#e5e5e5]">{formatCurrency(ei.lineTotal)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                      <td colSpan={3} className="px-4 py-3 text-right font-bold text-slate-700 dark:text-[#b3b3b3]">
+                        Tổng giá trị SP B
+                      </td>
+                      <td className="px-4 py-3 text-right text-base font-bold text-[#004785]">
+                        {formatCurrency(detail.exchangeItems.reduce((s, e) => s + (e.lineTotal || 0), 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ==================== CHÊNH LỆCH ĐỔI HÀNG (Delta) ==================== */}
+          {detail.returnType === 'EXCHANGE' && (
+            <div className="grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2 dark:border-[#333333] dark:bg-[#1a1a1a]/60">
+              <div className="flex flex-col">
+                <InfoRow
+                  label="Chênh lệch (Delta)"
+                  value={detail.deltaLabel || '—'}
+                  valueClassName={
+                    detail.deltaAmount > 0 ? 'text-emerald-700'
+                    : detail.deltaAmount < 0 ? 'text-red-600'
+                    : 'text-slate-500'
+                  }
+                />
+                <InfoRow
+                  label="Số tiền chênh lệch"
+                  value={
+                    detail.deltaAmount == null ? '—'
+                    : detail.deltaAmount === 0 ? '0₫'
+                    : `${detail.deltaAmount > 0 ? '+' : '-'}${formatCurrency(Math.abs(detail.deltaAmount))}`
+                  }
+                  valueClassName={
+                    detail.deltaAmount > 0 ? 'text-emerald-700'
+                    : detail.deltaAmount < 0 ? 'text-red-600'
+                    : 'text-slate-500'
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                {detail.payAmount > 0 && (
+                  <InfoRow label="Khách trả thêm" value={formatCurrency(detail.payAmount)} valueClassName="text-emerald-700" />
+                )}
+                {detail.refundAmountCustomer > 0 && (
+                  <InfoRow label="Hoàn lại khách" value={formatCurrency(detail.refundAmountCustomer)} valueClassName="text-red-600" />
+                )}
+                {detail.deltaAmount === 0 && (
+                  <InfoRow label="Hoàn lại khách" value="0₫ — Đổi ngang giá" valueClassName="text-slate-500" />
+                )}
+                {detail.paymentMethod && (
+                  <InfoRow label="Phương thức thanh toán" value={METHOD_LABEL[detail.paymentMethod] || detail.paymentMethod} />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </Modal>

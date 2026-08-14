@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getShifts, getShiftSummary } from '../services/shiftReturnService';
-import { getOrders } from '../../../modules/pos/services/posService';
 
 const DEFAULT_FILTERS = { from: '', to: '', page: 1, pageSize: 20 };
 
@@ -54,39 +53,23 @@ export const useShiftHistory = () => {
     try {
       const res = await getShiftSummary(shiftId);
       setShiftSummary(res);
-      if (res?.startedAt) {
-        try {
-          const shiftStart = new Date(res.startedAt);
-          const shiftEnd = res.endedAt ? new Date(res.endedAt) : new Date();
-          const ordersData = await getOrders({
-            status: 'Completed',
-            fromDate: shiftStart.toISOString(),
-            toDate: shiftEnd.toISOString(),
-            pageSize: 500,
-          });
-          const rawOrders = Array.isArray(ordersData)
-            ? ordersData
-            : ordersData?.items || ordersData?.data?.items || ordersData?.data || [];
-          const filtered = (Array.isArray(rawOrders) ? rawOrders : [])
-            .filter((o) => {
-              const d = new Date(o.createdAt || o.date || o.invoiceDate || '');
-              return !isNaN(d.getTime()) && d >= shiftStart && d <= shiftEnd;
-            })
-            .map((o) => ({
-              id: o.invoiceCode || o.invoiceId || o.id || '',
-              invoiceCode: o.invoiceCode || o.id || '',
-              createdAt: o.createdAt || o.date || '',
-              customerName: o.customerName || o.customer || 'Khách lẻ',
-              totalAmount: parseFloat(o.totalAmount || o.total || o.grandTotal || 0),
-              paymentMethod: o.paymentMethod || '',
-              cashier: o.userName || o.cashier || o.createdBy || '',
-            }))
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-          setShiftOrders(filtered);
-        } catch (err) {
-          console.error('Lỗi tải đơn hàng trong ca:', err);
-        }
-      }
+      // Backend trả sẵn danh sách Activities (Bán/Hoàn/Đổi) theo ShiftId chính xác —
+      // không còn dùng getOrders theo time-window (lệch ca, thiếu hoàn tiền/đổi hàng).
+      const acts = Array.isArray(res?.activities) ? res.activities : [];
+      const mapped = acts
+        .map((a) => ({
+          id: a.code || `${a.type}-${a.createdAt || ''}`,
+          type: a.type, // Sale | Refund | Exchange
+          invoiceCode: a.code || '',
+          createdAt: a.createdAt || '',
+          customerName: a.customerName || 'Khách lẻ',
+          totalAmount: typeof a.amount === 'number' ? a.amount : 0, // có dấu
+          paymentMethod: a.method || '',
+          cashier: a.userName || '',
+          description: a.description || '',
+        }))
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setShiftOrders(mapped);
     } catch (err) {
       console.error('Lỗi tải chi tiết ca bán:', err);
       alert(err?.data?.message || 'Không thể tải chi tiết ca bán.');

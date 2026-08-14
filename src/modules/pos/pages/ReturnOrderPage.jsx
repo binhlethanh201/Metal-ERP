@@ -102,6 +102,23 @@ const getCreatorName = (r) => {
   return '-';
 };
 
+// Phân biệt 3 loại đơn: Trả hàng (REFUND) / Đổi chênh (EXCHANGE có tiền lệch) / Bảo hành (EXCHANGE ngang giá).
+// Backend lưu cả đổi-chênh và bảo hành đều là ReturnType="EXCHANGE" → chỉ phân biệt qua DeltaAmount/PayAmount.
+const classifyReturn = (r) => {
+  if (!r) return { isRefund: true, isExchange: false, isExchangeDiff: false, isWarranty: false, label: 'Trả hàng' };
+  const rType = String(r.returnType || r.return_type || '').toUpperCase();
+  const num = (v) => parseFloat(v ?? 0) || 0;
+  const delta = num(r.deltaAmount);
+  const pay = num(r.payAmount);
+  const refundCust = num(r.refundAmountCustomer);
+  const isExchange = rType === 'EXCHANGE';
+  const isExchangeDiff = isExchange && (delta !== 0 || pay > 0 || refundCust > 0);
+  const isWarranty = isExchange && !isExchangeDiff; // EXCHANGE ngang giá, không có tiền lệch
+  const isRefund = !isExchange;
+  const label = isExchangeDiff ? 'Đổi chênh' : isWarranty ? 'Bảo hành' : 'Trả hàng';
+  return { isRefund, isExchange, isExchangeDiff, isWarranty, label };
+};
+
 const mapReturn = (r) => ({
   id: r.returnOrderId || r.returnId || r.id,
   returnId: r.returnOrderId || r.returnId || r.id,
@@ -125,6 +142,10 @@ const mapReturn = (r) => ({
   returnType: r.returnType || 'RETURN',
   totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
   refundMethod: r.refundMethod || r.method || 'CASH',
+  deltaAmount: r.deltaAmount != null ? parseFloat(r.deltaAmount) : null,
+  deltaLabel: r.deltaLabel || null,
+  payAmount: r.payAmount != null ? parseFloat(r.payAmount) : null,
+  refundAmountCustomer: r.refundAmountCustomer != null ? parseFloat(r.refundAmountCustomer) : null,
   reason: r.reason || '',
   notes: r.notes || '',
   createdAt: r.createdAt || r.createdAt,
@@ -170,8 +191,20 @@ const mapApiDetail = (r) => {
     notes: r.notes || '',
     totalRefund: parseFloat(r.totalRefund || r.refundAmount || 0),
     refundMethod: r.refundMethod || r.method || 'CASH',
+    deltaAmount: r.deltaAmount != null ? parseFloat(r.deltaAmount) : null,
+    deltaLabel: r.deltaLabel || null,
+    payAmount: r.payAmount != null ? parseFloat(r.payAmount) : null,
+    refundAmountCustomer: r.refundAmountCustomer != null ? parseFloat(r.refundAmountCustomer) : null,
+    paymentMethod: r.paymentMethod || null,
     createdAt: r.createdAt || r.createdAt,
     returnItems: items.length > 0 ? items : r.returnItems || r.items || [],
+    exchangeItems: (r.exchangeItems || []).map((it) => ({
+      productName: it.productName || 'Sản phẩm',
+      productCode: it.productCode || '',
+      quantity: parseFloat(it.quantity || 1),
+      unitPrice: parseFloat(it.unitPrice || 0),
+      lineTotal: parseFloat(it.lineTotal || 0),
+    })),
   };
 };
 
@@ -405,22 +438,30 @@ const ReturnOrderPage = () => {
     {
       key: 'totalRefund',
       header: 'Số tiền',
-      render: (v, row) =>
-        row?.returnType === 'EXCHANGE' ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
-            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-              />
-            </svg>
-            Bảo hành
-          </span>
-        ) : (
-          <span className="text-sm font-semibold text-green-600">{formatCurrency(v || 0)}</span>
-        ),
+      render: (v, row) => {
+        const cls = classifyReturn(row);
+        if (cls.isExchangeDiff) {
+          const d = parseFloat(row.deltaAmount || 0) || 0;
+          const color = d > 0 ? 'text-emerald-600 dark:text-emerald-400' : d < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-[#999999]';
+          const sign = d > 0 ? '+' : d < 0 ? '-' : '';
+          return (
+            <span className={`text-sm font-semibold ${color}`}>
+              {sign}{formatCurrency(Math.abs(d))}
+            </span>
+          );
+        }
+        if (cls.isWarranty) {
+          return (
+            <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              Bảo hành
+            </span>
+          );
+        }
+        return <span className="text-sm font-semibold text-green-600">{formatCurrency(v || 0)}</span>;
+      },
     },
     {
       key: 'status',
@@ -602,24 +643,27 @@ const ReturnOrderPage = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {detail.returnType === 'EXCHANGE' && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                        />
-                      </svg>
-                      Bảo hành
-                    </span>
-                  )}
+                  {(() => {
+                    const cls = classifyReturn(detail);
+                    if (cls.isExchangeDiff) {
+                      return (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                          Đổi lệch giá
+                        </span>
+                      );
+                    }
+                    if (cls.isWarranty) {
+                      return (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
+                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                          Bảo hành
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                   <Badge variant={getStatusVariant(detail.status)}>
                     {getStatusLabel(detail.status)}
                   </Badge>
@@ -655,13 +699,17 @@ const ReturnOrderPage = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500 dark:text-[#999999]">Loại</span>
-                  <span
-                    className={`font-semibold ${detail.returnType === 'EXCHANGE' ? 'text-yellow-700' : ''}`}
-                  >
-                    {detail.returnType === 'EXCHANGE' ? 'Bảo hành' : 'Trả hàng'}
-                  </span>
+                  {(() => {
+                    const cls = classifyReturn(detail);
+                    const color = cls.isExchangeDiff
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : cls.isWarranty
+                        ? 'text-yellow-700'
+                        : '';
+                    return <span className={`font-semibold ${color}`}>{cls.label}</span>;
+                  })()}
                 </div>
-                {detail.returnType !== 'EXCHANGE' && (
+                {classifyReturn(detail).isRefund && (
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500 dark:text-[#999999]">Phương thức hoàn</span>
                     <span className="font-semibold">{getRefundLabel(detail.refundMethod)}</span>
@@ -695,7 +743,7 @@ const ReturnOrderPage = () => {
                       </p>
                       <p className="text-xs text-slate-400 dark:text-[#808080]">Số lượng: {item.quantity} {item.unit || item.baseUnit || ''}</p>
                     </div>
-                    {detail.returnType !== 'EXCHANGE' && (
+                    {classifyReturn(detail).isRefund && (
                       <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
                         {formatCurrency(item.refundAmount || item.quantity * item.sellPrice)}
                       </span>
@@ -709,34 +757,74 @@ const ReturnOrderPage = () => {
               </p>
             )}
 
-            {detail.returnType !== 'EXCHANGE' ? (
-              <div className="mt-3 border-t border-slate-200 pt-3">
-                <div className="flex justify-between font-bold text-[#004785]">
-                  <span>Tổng tiền hoàn</span>
-                  <span className="text-lg">{formatCurrency(detail.totalRefund)}</span>
+            {(() => {
+              const cls = classifyReturn(detail);
+              if (cls.isRefund) {
+                return (
+                  <div className="mt-3 border-t border-slate-200 pt-3">
+                    <div className="flex justify-between font-bold text-[#004785]">
+                      <span>Tổng tiền hoàn</span>
+                      <span className="text-lg">{formatCurrency(detail.totalRefund)}</span>
+                    </div>
+                  </div>
+                );
+              }
+              if (cls.isExchangeDiff) {
+                return <></>;
+              }
+              // Bảo hành (ngang giá, không hoàn tiền)
+              return (
+                <div className="mt-3 border-t border-slate-200 pt-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-yellow-50 p-3">
+                    <svg className="h-5 w-5 shrink-0 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <p className="text-sm font-medium text-yellow-800">Bảo hành — không hoàn tiền</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="mt-3 border-t border-slate-200 pt-3">
-                <div className="flex items-center gap-2 rounded-lg bg-yellow-50 p-3">
-                  <svg
-                    className="h-5 w-5 shrink-0 text-yellow-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                    />
-                  </svg>
-                  <p className="text-sm font-medium text-yellow-800">Bảo hành — không hoàn tiền</p>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </Card>
+
+          {/* Exchange items (SP B) + Delta — hiện cho cả đổi chênh và bảo hành (đều có SP B) */}
+          {classifyReturn(detail).isExchange && (
+            <Card header={`Hàng mới xuất (SP B)${classifyReturn(detail).isExchangeDiff ? ` · ${detail.deltaLabel || ''}` : ''}`}>
+              {detail.exchangeItems?.length > 0 && (
+                <div className="space-y-2">
+                  {detail.exchangeItems.map((it, i) => (
+                    <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0 dark:border-[#333333]">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-slate-900 dark:text-[#e5e5e5]">{it.productName}</p>
+                        <p className="text-xs text-slate-400">SL: {it.quantity}</p>
+                      </div>
+                      <span className="ml-2 shrink-0 text-sm font-bold text-slate-700 dark:text-[#cccccc]">
+                        {formatCurrency(it.lineTotal || it.quantity * it.unitPrice)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {classifyReturn(detail).isExchangeDiff && (
+              <div className="mt-3 border-t border-slate-200 pt-3 dark:border-[#333333]">
+                <div className={`flex items-center justify-between font-bold ${
+                  detail.deltaAmount > 0 ? 'text-emerald-600' : detail.deltaAmount < 0 ? 'text-red-600' : 'text-slate-600 dark:text-[#cccccc]'
+                }`}>
+                  <span>{detail.deltaLabel || 'Chênh lệch'}</span>
+                  <span className="text-lg">
+                    {detail.deltaAmount > 0 ? '+' : detail.deltaAmount < 0 ? '-' : ''}
+                    {formatCurrency(Math.abs(detail.deltaAmount))}
+                  </span>
+                </div>
+                {detail.deltaAmount !== 0 && (
+                  <p className="mt-1 text-xs text-slate-400">
+                    {detail.deltaAmount > 0 ? 'Khách trả thêm' : 'Hoàn lại cho khách'}
+                    {detail.paymentMethod ? ` · ${getRefundLabel(detail.paymentMethod)}` : ''}
+                  </p>
+                )}
+              </div>
+              )}
+            </Card>
+          )}
 
           {/* Notes */}
           {detail.notes && (

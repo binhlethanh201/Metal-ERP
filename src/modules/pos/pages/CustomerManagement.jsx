@@ -193,7 +193,8 @@ export const CustomerManagement = () => {
       let returnsByOrderId = {};
       let returnsByInvoice = {};
       let returnCountByOrderId = {};
-      let hasExchangeByOrder = {};
+      let exchangeDiffByOrder = {};
+      let warrantyByOrder = {};
       try {
         const returnsData = await getReturns({});
         const allReturns = Array.isArray(returnsData)
@@ -234,15 +235,19 @@ export const CustomerManagement = () => {
             returnsByInvoice[key] = (returnsByInvoice[key] || 0) + refund;
           }
         });
-        // Duyệt lại để đánh dấu EXCHANGE (không phụ thuộc thứ tự)
+        // Duyệt lại để đánh dấu EXCHANGE (phân biệt đổi chênh vs bảo hành ngang giá)
         allReturns.forEach((ret) => {
           const retStatus = String(ret.status || '').toUpperCase();
           if (retStatus === 'CANCELLED' || retStatus === 'PENDING' || retStatus === 'DRAFT') return;
           const retType = (ret.returnType || 'RETURN').toUpperCase();
           if (retType !== 'EXCHANGE') return;
-          if (ret.orderId) {
-            hasExchangeByOrder[ret.orderId.toLowerCase()] = true;
-          }
+          // Phân biệt: có tiền lệch → đổi chênh; ngang giá → bảo hành.
+          const num = (v) => parseFloat(v ?? 0) || 0;
+          const isDiff = num(ret.deltaAmount) !== 0 || num(ret.payAmount) > 0 || num(ret.refundAmountCustomer) > 0;
+          if (!ret.orderId) return;
+          const key = ret.orderId.toLowerCase();
+          if (isDiff) exchangeDiffByOrder[key] = true;
+          else warrantyByOrder[key] = true;
         });
       } catch {}
 
@@ -257,7 +262,8 @@ export const CustomerManagement = () => {
           returnsByOrderId[orderId] ?? returnsByInvoice[invCode] ?? 0
         );
         const remaining = Math.max(0, originalValue - refunded);
-        const hasExchange = !!hasExchangeByOrder[orderId];
+        const hasExchangeDiff = !!exchangeDiffByOrder[orderId];
+        const hasWarranty = !!warrantyByOrder[orderId];
         let status = 'COMPLETED';
         if (originalValue > 0 && refunded >= originalValue) status = 'FULLY_REFUNDED';
         else if (refunded > 0 && refunded < originalValue) status = 'PARTIAL_REFUND';
@@ -269,7 +275,8 @@ export const CustomerManagement = () => {
           refunded,
           remaining,
           status,
-          hasExchange,
+          hasExchangeDiff,
+          hasWarranty,
           date: o.createdAt || o.date || '',
         };
       });
@@ -492,19 +499,21 @@ export const CustomerManagement = () => {
     }
   };
 
-  const getOrderStatusBadge = (status, hasExchange) => (
+  const getOrderStatusBadge = (status, hasExchangeDiff, hasWarranty) => (
     <>
-      {hasExchange && <Badge variant="warning">Bảo hành</Badge>}
+      {hasExchangeDiff && <Badge variant="warning">Đổi chênh</Badge>}
+      {hasWarranty && <Badge variant="warning">Bảo hành</Badge>}
       {status === 'FULLY_REFUNDED' && <Badge variant="danger">Hoàn toàn bộ</Badge>}
       {status === 'PARTIAL_REFUND' && <Badge variant="warning">Hoàn một phần</Badge>}
-      {status === 'COMPLETED' && !hasExchange && <Badge variant="success">Hoàn thành</Badge>}
+      {status === 'COMPLETED' && !hasExchangeDiff && !hasWarranty && <Badge variant="success">Hoàn thành</Badge>}
     </>
   );
 
-  const getOrderStatusLabel = (status, hasExchange) => {
-    if (hasExchange && status === 'COMPLETED') return 'Bảo hành';
-    if (hasExchange && status !== 'COMPLETED')
-      return `Bảo hành + ${status === 'FULLY_REFUNDED' ? 'Hoàn toàn bộ' : 'Hoàn một phần'}`;
+  const getOrderStatusLabel = (status, hasExchangeDiff, hasWarranty) => {
+    const exLabel = hasExchangeDiff ? 'Đổi chênh' : hasWarranty ? 'Bảo hành' : null;
+    if (exLabel && status === 'COMPLETED') return exLabel;
+    if (exLabel && status !== 'COMPLETED')
+      return `${exLabel} + ${status === 'FULLY_REFUNDED' ? 'Hoàn toàn bộ' : 'Hoàn một phần'}`;
     if (status === 'FULLY_REFUNDED') return 'Hoàn toàn bộ';
     if (status === 'PARTIAL_REFUND') return 'Hoàn một phần';
     return 'Hoàn thành';
@@ -929,7 +938,7 @@ export const CustomerManagement = () => {
                     {selectedOrder.invoiceCode}
                   </p>
                 </div>
-                {getOrderStatusBadge(selectedOrder.status, selectedOrder.hasExchange)}
+                {getOrderStatusBadge(selectedOrder.status, selectedOrder.hasExchangeDiff, selectedOrder.hasWarranty)}
               </div>
             </div>
 
@@ -955,7 +964,7 @@ export const CustomerManagement = () => {
               <div className="overflow-hidden rounded-lg bg-slate-50 p-4 text-center">
                 <p className="text-xs font-bold uppercase text-slate-500">Trạng thái</p>
                 <p className="mt-1 truncate text-sm font-bold text-slate-700">
-                  {getOrderStatusLabel(selectedOrder.status, selectedOrder.hasExchange)}
+                  {getOrderStatusLabel(selectedOrder.status, selectedOrder.hasExchangeDiff, selectedOrder.hasWarranty)}
                 </p>
               </div>
             </div>
