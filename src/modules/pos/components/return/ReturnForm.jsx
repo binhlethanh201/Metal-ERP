@@ -20,8 +20,10 @@ import {
   getProductCategory,
   getPosProducts,
 } from '../../services/posService';
-import { quoteExchange, createExchange } from '../../services/exchangeService';
+import { quoteExchange, createExchange, payExchangeDiff, confirmExchangeTransfer, cancelExchangePayment } from '../../services/exchangeService';
 import DeltaCard from '../exchange/DeltaCard';
+import ExchangeCashModal from '../exchange/ExchangeCashModal';
+import QRModal from '../cart/QRModal';
 
 const POLICIES_STORAGE_KEY = 'pos_category_return_policies';
 
@@ -53,6 +55,12 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [quote, setQuote] = useState(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
 
+  // === Thanh toán chênh lệch (delta>0) sau khi tạo phiếu (Pending) ===
+  // pendingExchange: { returnOrderId, delta, method } | null
+  const [pendingExchange, setPendingExchange] = useState(null);
+  const [qrData, setQrData] = useState(null);
+  const [payLoading, setPayLoading] = useState(false);
+
   // ---- Tìm SP B (debounced) ----
   const debouncedProductSearch = useDebounce(productSearch, 350);
   useEffect(() => {
@@ -69,6 +77,27 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   }, [debouncedProductSearch]);
 
   // ---- Helpers SP B ----
+  // Tồn khả dụng (đvt cơ bản) của 1 SP B — ưu tiên stockCheck từ quote (backend authoritative),
+  // fallback về sellable lúc chọn sản phẩm.
+  const getAvailBase = (n) => {
+    if (quote?.stockCheck?.length) {
+      const sc = quote.stockCheck.find((s) => String(s.branchProductId) === String(n.branchProductId));
+      if (sc && sc.availableBase != null) return sc.availableBase;
+    }
+    return n.sellable ?? 0;
+  };
+  // Số lượng tối đa theo ĐVT đang chọn = floor(tồn base / conversionRate).
+  const getMaxQty = (n) => {
+    const cr = n.conversionRate > 0 ? n.conversionRate : 1;
+    const max = Math.floor(getAvailBase(n) / cr);
+    return max > 0 ? max : 0;
+  };
+  const clampQty = (n, qty) => {
+    let q = Math.max(1, parseInt(qty, 10) || 1);
+    const max = getMaxQty(n);
+    if (max > 0 && q > max) q = max;
+    return q;
+  };
   const addNewItem = (p) => {
     const bpId = p.branchProductId || p.id;
     if (!bpId) return;
@@ -103,9 +132,15 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     });
   };
   const updateNewQty = (key, qty) =>
-    setNewItems((prev) => prev.map((p) => (p.key === key ? { ...p, quantity: Math.max(1, qty) } : p)));
+    setNewItems((prev) => prev.map((p) => (p.key === key ? { ...p, quantity: clampQty(p, qty) } : p)));
   const updateNewUnit = (key, unitName, convertValue, price) =>
-    setNewItems((prev) => prev.map((p) => (p.key === key ? { ...p, conversionRate: convertValue, unitName, unitPrice: price ?? p.unitPrice } : p)));
+    setNewItems((prev) => prev.map((p) => {
+      if (p.key !== key) return p;
+      const updated = { ...p, conversionRate: convertValue, unitName, unitPrice: price ?? p.unitPrice };
+      // Đổi ĐVT → re-clamp số lượng theo max mới.
+      updated.quantity = clampQty(updated, p.quantity);
+      return updated;
+    }));
   const removeNewItem = (key) => setNewItems((prev) => prev.filter((p) => p.key !== key));
 
   // Fetch policies từ backend POS khi mở modal, fallback localStorage
@@ -202,9 +237,17 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     return result;
   };
   const subtotal = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
-  const discountRatio =
-    invoice?.discountAmount && invoice?.subtotal ? invoice.discountAmount / invoice.subtotal : 0;
-  const discountPortion = subtotal * discountRatio;
+  // Chiết khấu trả hàng branch-level (owner settings đồng bộ xuống localStorage)
+  const returnDiscountPercent = (() => {
+    try {
+      const v = localStorage.getItem('pos_return_discount_percent');
+      const n = v ? parseFloat(v) : 0;
+      return !isNaN(n) && n > 0 ? n : 0;
+    } catch {
+      return 0;
+    }
+  })();
+  const discountPortion = subtotal * (returnDiscountPercent / 100);
   const totalRefund = Math.max(0, subtotal - discountPortion);
 
   const reset = () => {
@@ -225,6 +268,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     setProductResults([]);
     setPaymentMethod('CASH');
     setQuote(null);
+    setPendingExchange(null);
+    setQrData(null);
+    setPayLoading(false);
   };
 
   const handleClose = () => {
@@ -554,7 +600,18 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
           })),
         };
         const res = await createExchange(payload);
-        onSuccess?.(res?.data || res);
+        const created = res?.data || res;
+        const returnOrderId = created?.returnOrderId;
+        const delta = Number(quote?.deltaAmount ?? 0);
+
+        // delta > 0 (lệch giá) → mở popup thanh toán (CASH/TRANSFER) → Completed.
+        // delta == 0 (ngang giá) → Pending, chờ xác nhận ở detail (như cũ).
+        if (delta > 0 && returnOrderId) {
+          setSubmitting(false);
+          setPendingExchange({ returnOrderId, delta, method: paymentMethod });
+          return;
+        }
+        onSuccess?.(created);
         handleClose();
       } catch (err) {
         const detail = err?.data?.title || err?.data?.message || err?.message || 'Lỗi';
@@ -654,6 +711,96 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
+  // === Xử lý thanh toán chênh lệch (delta>0) sau khi tạo phiếu Pending ===
+
+  // CASH: xác nhận tiền mặt → Completed ngay.
+  const handleCashPayConfirm = async (cashReceived) => {
+    if (!pendingExchange) return;
+    setPayLoading(true);
+    try {
+      const res = await payExchangeDiff(pendingExchange.returnOrderId, {
+        method: 'CASH',
+        cashReceived,
+      });
+      const data = res?.data || res;
+      onSuccess?.(data?.returnOrder || data);
+      setPendingExchange(null);
+      setPayLoading(false);
+      handleClose();
+    } catch (err) {
+      setPayLoading(false);
+      setSubmitError('Không thể thanh toán: ' + (err?.data?.title || err?.data?.message || err?.message || 'Lỗi'));
+    }
+  };
+
+  // CASH: bỏ (cash đồng bộ → huỷ luôn RO, restore reserve).
+  const handleCashPayClose = async () => {
+    if (!pendingExchange) return;
+    try {
+      await cancelExchangePayment(pendingExchange.returnOrderId);
+    } catch (_) {}
+    try {
+      await cancelReturn(pendingExchange.returnOrderId);
+    } catch (_) {}
+    setPendingExchange(null);
+    setPayLoading(false);
+    handleClose();
+  };
+
+  // TRANSFER: tạo QR khi pendingExchange bật.
+  useEffect(() => {
+    if (!pendingExchange || pendingExchange.method !== 'TRANSFER') return;
+    let cancelled = false;
+    (async () => {
+      setPayLoading(true);
+      try {
+        const res = await payExchangeDiff(pendingExchange.returnOrderId, { method: 'TRANSFER' });
+        if (cancelled) return;
+        const data = res?.data || res;
+        setQrData({
+          paymentId: data.paymentId,
+          qrImageBase64: data.qrImageBase64,
+          transactionContent: data.transactionContent,
+          amount: data.amount ?? pendingExchange.delta,
+          bankAccountNumber: data.bankAccountNumber || '0975849675',
+          bankName: data.bankName || 'MB Bank',
+        });
+      } catch (err) {
+        if (cancelled) return;
+        setSubmitError('Không thể tạo QR: ' + (err?.data?.title || err?.data?.message || err?.message || 'Lỗi'));
+      } finally {
+        if (!cancelled) setPayLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [pendingExchange]);
+
+  // TRANSFER: xác nhận đã nhận tiền → Completed.
+  const handleQRConfirm = async (paymentId) => {
+    if (!pendingExchange) return;
+    setPayLoading(true);
+    try {
+      const res = await confirmExchangeTransfer(pendingExchange.returnOrderId, { paymentId });
+      const data = res?.data || res;
+      onSuccess?.(data);
+      setQrData(null);
+      setPendingExchange(null);
+      setPayLoading(false);
+      handleClose();
+    } catch (err) {
+      setPayLoading(false);
+      setSubmitError('Xác nhận thất bại: ' + (err?.data?.title || err?.data?.message || err?.message || 'Lỗi'));
+    }
+  };
+
+  // TRANSFER: đóng QR chưa thanh toán → giữ RO Pending (khách trả async), quay về list.
+  const handleQRClose = () => {
+    setQrData(null);
+    setPendingExchange(null);
+    setPayLoading(false);
+    handleClose();
+  };
+
   const renderStepIndicator = () => (
     <div className="mb-6 flex items-center gap-2">
       <div
@@ -674,8 +821,9 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   );
 
   return (
+    <>
     <Modal
-      isOpen={isOpen}
+      isOpen={isOpen && !pendingExchange}
       onClose={handleClose}
       title="Tạo đơn đổi trả"
       size="2xl"
@@ -701,7 +849,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
             </Button>
             <Button variant="primary" onClick={handleSubmit} loading={submitting}
               disabled={selectedProducts.length === 0 || (isExchangeDiff && (newItems.length === 0 || (quote && !quote.eligible)))}>
-              {isExchangeDiff ? 'Xác nhận đổi hàng' : isExchange ? 'Tạo đơn bảo hành' : 'Tạo đơn trả hàng'}
+              {isExchangeDiff ? 'Tạo đơn đổi hàng' : isExchange ? 'Tạo đơn bảo hành' : 'Tạo đơn trả hàng'}
             </Button>
           </>
         )
@@ -948,31 +1096,59 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Refund method + amount — chỉ hiển thị khi trả hàng */}
           {isRefund && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  Phương thức hoàn tiền
-                </label>
-                <select
-                  value={refundMethod}
-                  onChange={(e) => setRefundMethod(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-                >
-                  {REFUND_METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
-                  Số tiền hoàn dự kiến
-                </label>
-                <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-700 dark:bg-green-900/30">
+            <div className="space-y-3">
+              {/* Phân tích tiền hoàn */}
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-[#999999]">Tổng giá trị SP trả</span>
+                  <span className="font-semibold text-slate-700 dark:text-[#e5e5e5]">
+                    {formatCurrency(subtotal)}
+                  </span>
+                </div>
+                {returnDiscountPercent > 0 && (
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="text-amber-600 dark:text-amber-400">
+                      Chiết khấu trả hàng ({returnDiscountPercent}%)
+                    </span>
+                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                      -{formatCurrency(discountPortion)}
+                    </span>
+                  </div>
+                )}
+                <div className="mt-1.5 flex items-center justify-between border-t border-slate-200 pt-1.5 dark:border-[#333333]">
+                  <span className="font-semibold text-slate-600 dark:text-[#cccccc]">Tiền hoàn</span>
                   <span className="text-lg font-bold text-green-700 dark:text-green-400">
                     {formatCurrency(totalRefund)}
                   </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+                    Phương thức hoàn tiền
+                  </label>
+                  <select
+                    value={refundMethod}
+                    onChange={(e) => setRefundMethod(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                  >
+                    {REFUND_METHODS.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">
+                    Số tiền hoàn dự kiến
+                  </label>
+                  <div className="flex items-center rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-700 dark:bg-green-900/30">
+                    <span className="text-lg font-bold text-green-700 dark:text-green-400">
+                      {formatCurrency(totalRefund)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1019,7 +1195,10 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
 
               {newItems.length > 0 && (
                 <div className="space-y-2">
-                  {newItems.map((n) => (
+                  {newItems.map((n) => {
+                    const maxQ = getMaxQty(n);
+                    const atMax = maxQ > 0 && n.quantity >= maxQ;
+                    return (
                     <div key={n.key} className="rounded-lg border border-slate-200 p-2 dark:border-[#333333]">
                       <div className="flex items-center gap-2">
                         <div className="min-w-0 flex-1">
@@ -1027,16 +1206,18 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                           <p className="truncate text-[10px] text-slate-400">{n.productCode || '-'}</p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
-                          <button type="button" onClick={() => updateNewQty(n.key, n.quantity - 1)}
-                            className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold">-</button>
+                          <button type="button" onClick={() => updateNewQty(n.key, n.quantity - 1)} disabled={n.quantity <= 1}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold disabled:opacity-40">-</button>
                           <input
                             type="number"
+                            min={1}
+                            max={maxQ || undefined}
                             value={n.quantity}
-                            onChange={(e) => updateNewQty(n.key, parseInt(e.target.value || '1', 10))}
+                            onChange={(e) => updateNewQty(n.key, e.target.value === '' ? 1 : e.target.value)}
                             className="w-12 rounded border border-slate-200 px-1 py-0.5 text-center text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
                           />
-                          <button type="button" onClick={() => updateNewQty(n.key, n.quantity + 1)}
-                            className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold">+</button>
+                          <button type="button" onClick={() => updateNewQty(n.key, n.quantity + 1)} disabled={atMax}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-xs font-bold disabled:opacity-40">+</button>
                           <button type="button" onClick={() => removeNewItem(n.key)}
                             className="ml-1 text-xs text-red-500 hover:underline">✕</button>
                         </div>
@@ -1067,8 +1248,17 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                           {formatCurrency(n.quantity * n.unitPrice)}
                         </span>
                       </div>
+                      {maxQ > 0 && (
+                        <p className={`mt-1 text-[10px] ${atMax ? 'font-semibold text-amber-600' : 'text-slate-400'}`}>
+                          Tồn khả dụng: {getAvailBase(n)} Cái · tối đa {maxQ} {n.unitName}{atMax ? ' (đạt giới hạn)' : ''}
+                        </p>
+                      )}
+                      {maxQ === 0 && (
+                        <p className="mt-1 text-[10px] font-semibold text-red-500">Hết hàng — không thể đổi sản phẩm này</p>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
               {newItems.length === 0 && (
@@ -1111,6 +1301,26 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
         </div>
       )}
     </Modal>
+
+    {/* Thanh toán tiền mặt — đổi chênh lệch (delta>0, CASH) → Completed */}
+    <ExchangeCashModal
+      isOpen={!!(pendingExchange && pendingExchange.method === 'CASH')}
+      onClose={handleCashPayClose}
+      amount={pendingExchange?.delta || 0}
+      loading={payLoading}
+      error={submitError}
+      onConfirm={handleCashPayConfirm}
+    />
+
+    {/* Thanh toán chuyển khoản — đổi chênh lệch (delta>0, TRANSFER) → QR → Completed */}
+    <QRModal
+      isOpen={!!(pendingExchange && pendingExchange.method === 'TRANSFER' && qrData)}
+      onClose={handleQRClose}
+      qrData={qrData}
+      onConfirm={handleQRConfirm}
+      loading={payLoading}
+    />
+    </>
   );
 };
 

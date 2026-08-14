@@ -18,6 +18,13 @@ export const branchSettingsService = {
   // PUT /api/owner/branches/{branchId}/return-policies/categories
   updateCategoryPolicies: (branchId, policies) =>
     apiPut(ENDPOINTS.OWNER.CATEGORY_RETURN_POLICIES(branchId), { policies }),
+
+  // GET /api/owner/branches/{branchId}/return-policies/discount
+  getReturnDiscount: (branchId) => apiGet(ENDPOINTS.OWNER.RETURN_DISCOUNT(branchId)),
+
+  // PUT /api/owner/branches/{branchId}/return-policies/discount
+  updateReturnDiscount: (branchId, returnDiscountPercent) =>
+    apiPut(ENDPOINTS.OWNER.RETURN_DISCOUNT(branchId), { returnDiscountPercent }),
 };
 
 export default branchSettingsService;

@@ -135,22 +135,38 @@ const POSScreen = () => {
   // Discount tiers
   const [discountTiers, setDiscountTiers] = useState([]);
 
-  // Fetch discount tiers on mount
+  const prevQuickAdd = useRef(quickAddCust);
+  const { user } = useAuth();
+  const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
+
+  // Fetch discount tiers on mount — lọc theo cửa hàng hiện tại để tránh dính chéo.
+  // Resolve branchId giống PosLayout: ưu tiên user object, fallback decode JWT claim.
+  const branchIdForTiers = useMemo(() => {
+    if (user?.branchId) return String(user.branchId);
+    if (user?.BranchId) return String(user.BranchId);
+    if (user?.defaultBranchId) return String(user.defaultBranchId);
+    try {
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.branchId) return String(payload.branchId);
+        if (payload.BranchId) return String(payload.BranchId);
+      }
+    } catch {}
+    return '';
+  }, [user]);
   useEffect(() => {
     const fetchDiscountTiers = async () => {
       try {
-        const res = await apiPosGet('/order-discount-tiers');
+        const query = branchIdForTiers ? `?branchId=${branchIdForTiers}` : '';
+        const res = await apiPosGet(`/order-discount-tiers${query}`);
         setDiscountTiers(res || []);
       } catch (e) {
         console.error('Failed to fetch discount tiers:', e);
       }
     };
     fetchDiscountTiers();
-  }, []);
-
-  const prevQuickAdd = useRef(quickAddCust);
-  const { user } = useAuth();
-  const staffName = user?.fullName || user?.name || user?.userName || user?.email || 'Thu ngân';
+  }, [branchIdForTiers]);
 
   const {
     products: posApiProducts,
@@ -211,7 +227,10 @@ const POSScreen = () => {
     return () => {
       connection.stop().catch(() => {});
     };
-  }, [refetchProducts]);
+    // Kết nối SignalR chỉ dựng 1 lần; cart.revalidateActiveCart đọc qua closure,
+    // không đưa vào deps để tránh dựng lại kết nối mỗi lần giỏ đổi.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refetchProducts]);
 
   // Tự động revalidate giá/tồn kho của các sản phẩm đang nằm trong giỏ hàng hiện tại khi danh sách posProducts thay đổi
   useEffect(() => {
@@ -223,11 +242,19 @@ const POSScreen = () => {
   const hasSaleCreate = hasPermission(user, 'SALE_CREATE');
   const { filteredProducts } = usePosProducts(posProducts, 'Tất cả', search);
 
-  // Calculate discount info based on subtotal
+  // Calculate discount info based on subtotal — CHỈ lấy tier thuộc đúng cửa hàng hiện tại
   const discountInfo = useMemo(() => {
     if (!discountTiers || discountTiers.length === 0 || cart.subtotal <= 0) return null;
-    const sortedTiers = [...discountTiers].sort((a, b) => b.minOrderValue - a.minOrderValue);
-    const applicableTier = sortedTiers.find((t) => cart.subtotal >= t.minOrderValue && t.isActive);
+    // Lọc tier theo branchId của user (strict) — KHÔNG áp dụng khi không xác định được chi nhánh
+    // (tránh rò rỉ tier của chi nhánh khác sang POS).
+    const branchId = branchIdForTiers;
+    if (!branchId) return null;
+    const storeTiers = discountTiers.filter(
+      (t) => t.isActive && String(t.branchId) === String(branchId)
+    );
+    if (storeTiers.length === 0) return null;
+    const sortedTiers = [...storeTiers].sort((a, b) => b.minOrderValue - a.minOrderValue);
+    const applicableTier = sortedTiers.find((t) => cart.subtotal >= t.minOrderValue);
     if (!applicableTier) return null;
     const discountAmount =
       Math.floor((cart.subtotal * (applicableTier.discountPercent / 100)) / 1000) * 1000;
@@ -236,7 +263,7 @@ const POSScreen = () => {
       discountAmount,
       tierName: `Giảm giá ${applicableTier.discountPercent}%`,
     };
-  }, [discountTiers, cart.subtotal]);
+  }, [discountTiers, cart.subtotal, branchIdForTiers]);
 
   const handleAddToCart = useCallback(
     (p, selectedUnit = null) => {

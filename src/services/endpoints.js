@@ -43,6 +43,10 @@ export const ENDPOINTS = {
     // Category Return Policies (Chính sách đổi/trả theo nhóm hàng)
     CATEGORY_RETURN_POLICIES: (branchId) =>
       `/api/owner/branches/${branchId}/return-policies/categories`,
+
+    // Branch-wide Return Discount (Chiết khấu trả hàng cho cả cửa hàng)
+    RETURN_DISCOUNT: (branchId) =>
+      `/api/owner/branches/${branchId}/return-policies/discount`,
   },
 
   // ============ INVENTORY (Tổng kho) ============

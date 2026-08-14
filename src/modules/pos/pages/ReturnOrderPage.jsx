@@ -19,8 +19,11 @@ import {
   finalizeReturn,
   getOrders,
 } from '../services/posService';
+import { payExchangeDiff, confirmExchangeTransfer } from '../services/exchangeService';
 import Icon from '../../../shared/components/Icon';
 import ReturnForm from '../components/return/ReturnForm';
+import ExchangeCashModal from '../components/exchange/ExchangeCashModal';
+import QRModal from '../components/cart/QRModal';
 
 const VN_TZ = 'Asia/Ho_Chi_Minh';
 const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
@@ -102,8 +105,9 @@ const getCreatorName = (r) => {
   return '-';
 };
 
-// Phân biệt 3 loại đơn: Trả hàng (REFUND) / Đổi chênh (EXCHANGE có tiền lệch) / Bảo hành (EXCHANGE ngang giá).
-// Backend lưu cả đổi-chênh và bảo hành đều là ReturnType="EXCHANGE" → chỉ phân biệt qua DeltaAmount/PayAmount.
+// Phân biệt 3 loại đơn: Trả hàng (REFUND) / Đổi chênh (EXCHANGE có SP B) / Bảo hành (EXCHANGE ngang giá, không có SP B).
+// Backend lưu cả đổi-chênh và bảo hành đều là ReturnType="EXCHANGE" → phân biệt qua ExchangeItems (SP B):
+// exchange-diff CÓ ExchangeItems (kể cả khi ngang giá delta=0); bảo hành KHÔNG có.
 const classifyReturn = (r) => {
   if (!r) return { isRefund: true, isExchange: false, isExchangeDiff: false, isWarranty: false, label: 'Trả hàng' };
   const rType = String(r.returnType || r.return_type || '').toUpperCase();
@@ -111,9 +115,11 @@ const classifyReturn = (r) => {
   const delta = num(r.deltaAmount);
   const pay = num(r.payAmount);
   const refundCust = num(r.refundAmountCustomer);
+  const hasExchangeItems = Array.isArray(r.exchangeItems) && r.exchangeItems.length > 0;
   const isExchange = rType === 'EXCHANGE';
-  const isExchangeDiff = isExchange && (delta !== 0 || pay > 0 || refundCust > 0);
-  const isWarranty = false; // EXCHANGE ngang giá, không có tiền lệch
+  // Ưu tiên ExchangeItems (authoritative); fallback delta cho data cũ thiếu exchangeItems.
+  const isExchangeDiff = isExchange && (hasExchangeItems || delta !== 0 || pay > 0 || refundCust > 0);
+  const isWarranty = isExchange && !isExchangeDiff; // EXCHANGE ngang giá, không có SP B
   const isRefund = !isExchange;
   const label = isExchangeDiff ? 'Đổi chênh' : isWarranty ? 'Bảo hành' : 'Trả hàng';
   return { isRefund, isExchange, isExchangeDiff, isWarranty, label };
@@ -149,6 +155,8 @@ const mapReturn = (r) => ({
   reason: r.reason || '',
   notes: r.notes || '',
   createdAt: r.createdAt || r.createdAt,
+  // Cần cho classifyReturn phân biệt đổi-chênh (có SP B) vs bảo hành (không có).
+  exchangeItems: Array.isArray(r.exchangeItems) ? r.exchangeItems : [],
 });
 
 const mapApiDetail = (r) => {
@@ -196,6 +204,7 @@ const mapApiDetail = (r) => {
     payAmount: r.payAmount != null ? parseFloat(r.payAmount) : null,
     refundAmountCustomer: r.refundAmountCustomer != null ? parseFloat(r.refundAmountCustomer) : null,
     paymentMethod: r.paymentMethod || null,
+    paymentId: r.paymentId || null,
     createdAt: r.createdAt || r.createdAt,
     returnItems: items.length > 0 ? items : r.returnItems || r.items || [],
     exchangeItems: (r.exchangeItems || []).map((it) => ({
@@ -222,6 +231,11 @@ const ReturnOrderPage = () => {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+
+  // Resume thanh toán chênh lệch (delta>0) cho phiếu Pending ở detail.
+  const [cashResume, setCashResume] = useState(null); // { returnId, delta }
+  const [qrResume, setQrResume] = useState(null); // qrData cho QRModal
+  const [payLoading, setPayLoading] = useState(false);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -357,7 +371,13 @@ const ReturnOrderPage = () => {
   // --- Finalize ---
   const handleFinalize = async () => {
     if (!detail) return;
-    if (!window.confirm('Xác nhận hoàn tiền cho phiếu đổi trả này?')) return;
+    const cls = classifyReturn(detail);
+    const msg = cls.isExchangeDiff
+      ? 'Xác nhận đổi hàng (lệch giá) cho phiếu này? Kho sẽ được cập nhật và thanh toán theo chênh lệch.'
+      : cls.isExchange
+      ? 'Xác nhận bảo hành cho phiếu đổi trả này?'
+      : 'Xác nhận hoàn tiền cho phiếu đổi trả này?';
+    if (!window.confirm(msg)) return;
     setFinalizing(true);
     try {
       const result = await finalizeReturn(detail.returnId);
@@ -393,6 +413,97 @@ const ReturnOrderPage = () => {
       alert('Không thể hoàn tiền: ' + (err.message || 'Lỗi'));
     } finally {
       setFinalizing(false);
+    }
+  };
+
+  // Refetch chi tiết phiếu đang chọn (dùng sau khi pay/confirm-transfer thành công).
+  const refreshCurrentDetail = useCallback(async () => {
+    if (!detail?.returnId) return;
+    try {
+      const raw = await getReturn(detail.returnId);
+      const data = raw?.data || raw;
+      const fresh = mapApiDetail(data);
+      if (fresh) {
+        setDetail(fresh);
+        setSelected((prev) => (prev ? { ...prev, ...fresh } : prev));
+      }
+    } catch (_) {}
+    setRefreshKey((k) => k + 1);
+  }, [detail?.returnId]);
+
+  // Resume CASH (delta>0) — mở popup nhập tiền mặt.
+  const handleOpenCashResume = () => {
+    if (!detail) return;
+    const delta = Number(detail.deltaAmount ?? 0);
+    setCashResume({ returnId: detail.returnId, delta });
+  };
+
+  const handleCashResumeConfirm = async (cashReceived) => {
+    if (!cashResume) return;
+    setPayLoading(true);
+    try {
+      await payExchangeDiff(cashResume.returnId, { method: 'CASH', cashReceived });
+      setCashResume(null);
+      await refreshCurrentDetail();
+    } catch (err) {
+      alert('Không thể thanh toán: ' + (err?.data?.title || err?.message || 'Lỗi'));
+    } finally {
+      setPayLoading(false);
+    }
+  };
+
+  // Resume TRANSFER — xác nhận đã nhận tiền (phiếu đã có paymentId pending).
+  const handleConfirmTransfer = async () => {
+    if (!detail?.paymentId) {
+      alert('Phiếu chưa có mã thanh toán chuyển khoản. Hãy tạo lại QR.');
+      return;
+    }
+    if (!window.confirm('Xác nhận khách đã chuyển khoản thành công?')) return;
+    setPayLoading(true);
+    try {
+      await confirmExchangeTransfer(detail.returnId, { paymentId: detail.paymentId });
+      await refreshCurrentDetail();
+    } catch (err) {
+      alert('Xác nhận thất bại: ' + (err?.data?.title || err?.message || 'Lỗi'));
+    } finally {
+      setPayLoading(false);
+    }
+  };
+
+  // Tạo lại QR (TRANSFER, delta>0) — khi chưa có paymentId hoặc QR hết hạn.
+  const handleRecreateQR = async () => {
+    if (!detail) return;
+    setPayLoading(true);
+    try {
+      const res = await payExchangeDiff(detail.returnId, { method: 'TRANSFER' });
+      const data = res?.data || res;
+      setQrResume({
+        paymentId: data.paymentId,
+        qrImageBase64: data.qrImageBase64,
+        transactionContent: data.transactionContent,
+        amount: data.amount ?? Number(detail.deltaAmount ?? 0),
+        bankAccountNumber: data.bankAccountNumber || '0975849675',
+        bankName: data.bankName || 'MB Bank',
+        returnOrderId: detail.returnId,
+      });
+    } catch (err) {
+      alert('Không thể tạo QR: ' + (err?.data?.title || err?.message || 'Lỗi'));
+    } finally {
+      setPayLoading(false);
+    }
+  };
+
+  const handleQRResumeConfirm = async (paymentId) => {
+    if (!qrResume) return;
+    setPayLoading(true);
+    try {
+      await confirmExchangeTransfer(qrResume.returnOrderId, { paymentId });
+      setQrResume(null);
+      await refreshCurrentDetail();
+    } catch (err) {
+      alert('Xác nhận thất bại: ' + (err?.data?.title || err?.message || 'Lỗi'));
+    } finally {
+      setPayLoading(false);
     }
   };
 
@@ -834,26 +945,60 @@ const ReturnOrderPage = () => {
           )}
 
           {/* Actions */}
-          {detail.status === 'PENDING' && detail.returnType === 'EXCHANGE' && (
-            <Button
-              variant="success"
-              className="w-full"
-              onClick={handleFinalize}
-              loading={finalizing}
-            >
-              Xác nhận bảo hành
-            </Button>
-          )}
-          {detail.status === 'PENDING' && detail.returnType !== 'EXCHANGE' && (
-            <Button
-              variant="success"
-              className="w-full"
-              onClick={handleFinalize}
-              loading={finalizing}
-            >
-              Xác nhận hoàn tiền
-            </Button>
-          )}
+          {(() => {
+            const cls = classifyReturn(detail);
+            if (detail.status !== 'PENDING') return null;
+            const delta = Number(detail.deltaAmount ?? 0);
+            const method = String(detail.paymentMethod || 'CASH').toUpperCase();
+
+            // Đổi chênh lệch delta>0: phải thanh toán qua popup (CASH / QR) → Completed.
+            if (cls.isExchangeDiff && delta > 0) {
+              if (method === 'TRANSFER') {
+                return (
+                  <div className="flex w-full flex-col gap-2">
+                    <Button
+                      variant="success"
+                      className="w-full"
+                      onClick={handleConfirmTransfer}
+                      loading={payLoading}
+                      disabled={!detail.paymentId}
+                    >
+                      {detail.paymentId ? 'Xác nhận chuyển khoản' : 'Chưa có QR — tạo lại'}
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={handleRecreateQR} loading={payLoading}>
+                      {detail.paymentId ? 'Tạo lại QR' : 'Tạo QR chuyển khoản'}
+                    </Button>
+                  </div>
+                );
+              }
+              return (
+                <Button variant="success" className="w-full" onClick={handleOpenCashResume} loading={payLoading}>
+                  Thanh toán tiền mặt
+                </Button>
+              );
+            }
+
+            // Đổi ngang giá (delta==0) / bảo hành / hoàn tiền → xác nhận trực tiếp.
+            if (cls.isExchangeDiff) {
+              return (
+                <Button variant="success" className="w-full" onClick={handleFinalize} loading={finalizing}>
+                  Xác nhận đổi hàng
+                </Button>
+              );
+            }
+            if (detail.returnType === 'EXCHANGE') {
+              return (
+                <Button variant="success" className="w-full" onClick={handleFinalize} loading={finalizing}>
+                  Xác nhận bảo hành
+                </Button>
+              );
+            }
+            return (
+              <Button variant="success" className="w-full" onClick={handleFinalize} loading={finalizing}>
+                Xác nhận hoàn tiền
+              </Button>
+            );
+          })()}
           {detail.status === 'PENDING' && (
             <Button
               variant="outline"
@@ -883,6 +1028,22 @@ const ReturnOrderPage = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
+      />
+
+      {/* Resume thanh toán chênh lệch (delta>0) cho phiếu Pending ở detail */}
+      <ExchangeCashModal
+        isOpen={!!cashResume}
+        onClose={() => setCashResume(null)}
+        amount={cashResume?.delta || 0}
+        loading={payLoading}
+        onConfirm={handleCashResumeConfirm}
+      />
+      <QRModal
+        isOpen={!!qrResume}
+        onClose={() => setQrResume(null)}
+        qrData={qrResume}
+        onConfirm={handleQRResumeConfirm}
+        loading={payLoading}
       />
     </div>
   );
