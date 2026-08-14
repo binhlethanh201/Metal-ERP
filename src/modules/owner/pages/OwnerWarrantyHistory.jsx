@@ -1,453 +1,358 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from '../../../shared/components/Card';
-import { Table } from '../../../shared/components/Table';
 import { Badge } from '../../../shared/components/Badge';
 import Icon from '../../../shared/components/Icon';
 import Button from '../../../shared/components/Button';
-import Drawer from '../../../shared/components/Drawer';
 import { useDebounce } from '../../../shared/hooks/useDebounce';
 import { formatDate } from '../../../shared/utils/formatDate';
 import { useOwnerWarrantyHistory } from '../hooks/useOwnerWarrantyHistory';
-import { Layers, RotateCcw, Send, PackageCheck } from 'lucide-react';
-
-const STATUS_BADGE = {
-  PENDING_ASSIGN: { variant: 'warning', label: 'Chờ phân công NCC' },
-  AWAITING_SUPPLIER: { variant: 'info', label: 'Chờ hàng về' },
-  COMPLETED: { variant: 'success', label: 'Hoàn tất' },
-};
+import SupplierWarrantyStockView from '../components/warranty/SupplierWarrantyStockView';
+import { Send, PackageCheck, AlertTriangle, Clock, CheckCircle2, Truck, ChevronDown, ChevronRight } from 'lucide-react';
 
 const OwnerWarrantyHistory = () => {
   const {
-    items,
-    totalCount,
-    loading,
-    filters,
-    fetchItems,
-    setPage,
-    setPageSize,
-    setSearch,
-    setDateRange,
-    resetFilters,
-    supplierMap,
-    selectedSupplier,
-    setSelectedSupplier,
-    assigningId,
-    acceptingId,
-    supplierLoadingMap,
-    fetchSuggestedSuppliers,
-    handleAssignSupplier,
-    handleAcceptWarranty,
+    items, totalCount, filters, fetchItems, setPage, setPageSize, setSearch,
+    supplierMap, selectedSupplier, setSelectedSupplier, assigningId, acceptingId, supplierLoadingMap,
+    fetchSuggestedSuppliers, handleAssignSupplier, handleAcceptWarranty,
   } = useOwnerWarrantyHistory();
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const [viewMode, setViewMode] = useState('list');
+  const [expandedCard, setExpandedCard] = useState(null);
+  const [showAllPending, setShowAllPending] = useState(false);
+  // SL gửi BH mỗi dòng (theo ĐVT cơ bản) — cho phép BH một phần. Mặc định = baseQty (gửi hết).
+  const [claimQtyMap, setClaimQtyMap] = useState({});
 
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [draftFilters, setDraftFilters] = useState({
-    fromDate: '',
-    toDate: '',
-  });
+  useEffect(() => { setSearch(debouncedSearch); }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchItems(); }, [filters.page, filters.pageSize, filters.search, filters.fromDate, filters.toDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    setSearch(debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch]);
-
-  useEffect(() => {
-    fetchItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.page, filters.pageSize, filters.search, filters.fromDate, filters.toDate]);
-
-  const openFilterDrawer = () => {
-    setDraftFilters({
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
+  // Tách items: pending ở trên, awaiting+completed ở bảng dưới
+  const pendingItems = useMemo(() => items.filter((i) => i.status === 'PENDING_ASSIGN'), [items]);
+  const historyItems = useMemo(() => {
+    const raw = items.filter((i) => i.status === 'AWAITING_SUPPLIER' || i.status === 'COMPLETED');
+    // Gộp cùng productId trong cùng returnCode
+    const map = new Map();
+    raw.forEach((item) => {
+      const key = `${item.returnCode || ''}_${item.productId || item.id}_${item.assignedSupplierId || item.supplierId || 'none'}`;
+      if (map.has(key)) {
+        const existing = map.get(key);
+        existing.baseQuantity = (existing.baseQuantity || existing.quantity || 0) + (item.baseQuantity || item.quantity || 0);
+        existing.quantity = (existing.quantity || 0) + (item.quantity || 0);
+      } else {
+        map.set(key, { ...item, baseQuantity: item.baseQuantity || item.quantity || 0 });
+      }
     });
-    setIsFilterDrawerOpen(true);
+    return Array.from(map.values()).sort((a, b) => {
+      const ca = a.returnCode || '';
+      const cb = b.returnCode || '';
+      if (ca === cb) return (a.productName || '').localeCompare(b.productName || '');
+      return ca.localeCompare(cb);
+    });
+  }, [items]);
+
+  const pendingCount = pendingItems.length;
+  const awaitingCount = items.filter((i) => i.status === 'AWAITING_SUPPLIER').length;
+  const completedCount = items.filter((i) => i.status === 'COMPLETED').length;
+
+  // Gom pending items theo returnCode, rồi gom theo productId trong mỗi group
+  const pendingGroups = useMemo(() => {
+    const map = new Map();
+    pendingItems.forEach((item) => {
+      const code = item.returnCode || 'unknown';
+      if (!map.has(code)) map.set(code, { returnCode: code, exchangeDate: item.exchangeDate, customerName: item.customerName, items: [] });
+      const group = map.get(code);
+      // Gộp cùng productId -> cộng dồn baseQuantity
+      const existing = group.items.find((i) => i.productId === item.productId);
+      if (existing) {
+        existing.baseQuantity = (existing.baseQuantity || existing.quantity || 0) + (item.baseQuantity || item.quantity || 0);
+        existing.quantity = (existing.quantity || 0) + (item.quantity || 0);
+      } else {
+        group.items.push({ ...item, baseQuantity: item.baseQuantity || item.quantity || 0 });
+      }
+    });
+    return Array.from(map.values());
+  }, [pendingItems]);
+
+  const renderSupplierDropdown = (row) => {
+    const lookupKey = (row.warrantyId || row.warrantyTicketId || '') || (row.returnItemId || '');
+    const suppliers = supplierMap[lookupKey] || [];
+    const isLoading = supplierLoadingMap[lookupKey];
+    if (!suppliers.length && !isLoading) {
+      return <Button variant="outline" size="xs" onClick={() => fetchSuggestedSuppliers(row.warrantyId || row.warrantyTicketId || '', row.productId || row.id, row.returnItemId)} className="text-xs">Tra cứu NCC</Button>;
+    }
+    if (isLoading) return <span className="text-xs text-slate-400">Đang tìm...</span>;
+    return (
+      <select value={selectedSupplier[lookupKey] || ''} onChange={(e) => {
+          const supId = e.target.value;
+          setSelectedSupplier((prev) => ({ ...prev, [lookupKey]: supId }));
+          // Khi chọn NCC, kẹp SL nhập theo hạn mức còn lại (BH một phần): nếu đang nhập
+          // vượt quá remaining của NCC -> hạ xuống đúng remaining. Không ép tăng.
+          const sup = suppliers.find((s) => String(s.id || s.supplierId) === String(supId));
+          const rem = sup?.remainingWarrantyQuantity ?? 0;
+          const need = row.baseQuantity || row.quantity || 0;
+          const newMax = Math.min(need, rem);
+          const cur = Number(claimQtyMap[lookupKey] ?? 0);
+          if (cur > newMax) setClaimQtyMap((prev) => ({ ...prev, [lookupKey]: String(newMax) }));
+        }}
+        className="w-full rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]">
+        <option value="">-- Chọn NCC --</option>
+        {suppliers.map((s) => {
+          const remaining = s.remainingWarrantyQuantity ?? 0;
+          const need = row.baseQuantity || row.quantity || 0;
+          const expiry = s.nearestExpiryDate ? new Date(s.nearestExpiryDate).toLocaleDateString('vi-VN') : '—';
+          // BH một phần: vẫn cho chọn khi remaining < need (sẽ BH tối đa remaining/need).
+          // Chỉ disable khi NCC đã hết sạch hạn mức BH.
+          const partial = remaining > 0 && remaining < need;
+          const disabled = remaining <= 0;
+          return <option key={s.id || s.supplierId} value={s.id || s.supplierId} disabled={disabled}>{s.name || s.supplierName} — Còn: {remaining} | Hạn BH: {expiry}{partial ? ` (BH tối đa ${remaining}/${need})` : ''}{disabled ? ' [HẾT]' : ''}</option>;
+        })}
+      </select>
+    );
   };
 
-  const applyFilters = () => {
-    setDateRange(draftFilters.fromDate, draftFilters.toDate);
-    setIsFilterDrawerOpen(false);
-  };
-
-  const resetDraftFilters = () => {
-    setDraftFilters({ fromDate: '', toDate: '' });
-  };
-
-  let activeFilterCount = 0;
-  if (filters.fromDate) activeFilterCount++;
-  if (filters.toDate) activeFilterCount++;
-
-  const columns = [
-    {
-      header: 'Ngày đổi',
-      key: 'exchangeDate',
-      render: (val) => (
-        <span className="whitespace-nowrap text-sm text-slate-600 dark:text-[#cccccc]">
-          {formatDate(val)}
-        </span>
-      ),
-    },
-    {
-      header: 'Mã phiếu đổi',
-      key: 'returnCode',
-      render: (val) => (
-        <span className="font-bold text-[#004785] dark:text-blue-400">{val}</span>
-      ),
-    },
-    {
-      header: 'Khách hàng',
-      key: 'customerName',
-      render: (val) => (
-        <span className="text-sm font-medium text-slate-800 dark:text-[#e5e5e5]">
-          {val || 'Khách lẻ'}
-        </span>
-      ),
-    },
-    {
-      header: 'Sản phẩm lỗi',
-      key: 'productName',
-      render: (val, row) => (
-        <div className="max-w-[250px]">
-          <p className="truncate font-semibold text-slate-800 dark:text-[#e5e5e5]" title={val}>
-            {val}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-[#999999]">{row.skuCode}</p>
-        </div>
-      ),
-    },
-    {
-      header: 'SL',
-      key: 'quantity',
-      render: (val) => (
-        <span className="font-bold text-red-600 dark:text-red-400">{val}</span>
-      ),
-    },
-    {
-      header: 'Trạng thái',
-      key: 'status',
-      render: (val) => {
-        const badge = STATUS_BADGE[val] || STATUS_BADGE.PENDING_ASSIGN;
-        return (
-          <Badge variant={badge.variant} className="text-xs whitespace-nowrap">
-            {badge.label}
-          </Badge>
-        );
-      },
-    },
-    {
-      header: 'Nhà cung cấp',
-      key: 'warrantyId',
-      render: (val, row) => {
-        const warrantyId = row.warrantyId || row.warrantyTicketId || '';
-        const returnItemId = row.returnItemId || '';
-        const lookupKey = warrantyId || returnItemId;
-        const suppliers = supplierMap[lookupKey] || [];
-        const isLoading = supplierLoadingMap[lookupKey];
-
-        // Nếu đã có assignedSupplierName từ API
-        if (row.status === 'AWAITING_SUPPLIER' || row.status === 'COMPLETED') {
-          return (
-            <span className="text-sm text-slate-700 dark:text-[#b3b3b3]">
-              {row.assignedSupplierName || row.supplierName || '—'}
-            </span>
-          );
-        }
-
-        if (row.status === 'PENDING_ASSIGN') {
-          if (!suppliers.length && !isLoading) {
-            return (
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => fetchSuggestedSuppliers(warrantyId, row.productId || row.id, row.returnItemId)}
-                className="whitespace-nowrap text-xs"
-              >
-                Tra cứu NCC
-              </Button>
-            );
-          }
-
-          if (isLoading) {
-            return <span className="text-xs text-slate-400">Đang tìm NCC...</span>;
-          }
-
-          return (
-            <select
-              value={selectedSupplier[lookupKey] || ''}
-              onChange={(e) =>
-                setSelectedSupplier((prev) => ({
-                  ...prev,
-                  [lookupKey]: e.target.value,
-                }))
-              }
-              className="w-full min-w-[140px] rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#004785] dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-            >
-              <option value="">-- Chọn NCC --</option>
-              {suppliers.map((s) => (
-                <option key={s.id || s.supplierId} value={s.id || s.supplierId}>
-                  {s.name || s.supplierName}
-                </option>
-              ))}
-            </select>
-          );
-        }
-
-        return <span className="text-sm text-slate-400">—</span>;
-      },
-    },
-    {
-      header: 'Thao tác',
-      key: 'actions',
-      render: (val, row) => {
-        const warrantyId = row.warrantyId || row.warrantyTicketId || '';
-        const returnItemId = row.returnItemId || '';
-        const lookupKey = warrantyId || returnItemId;
-        const isAssigning = assigningId === lookupKey;
-        const isAccepting = acceptingId === lookupKey;
-
-        if (row.status === 'PENDING_ASSIGN') {
-          return (
-            <Button
-              variant="primary"
-              size="xs"
-              loading={isAssigning}
-              disabled={isAssigning || !selectedSupplier[lookupKey]}
-              onClick={() =>
-                handleAssignSupplier(lookupKey, selectedSupplier[lookupKey])
-              }
-              className="flex items-center gap-1 whitespace-nowrap text-xs"
-            >
-              <Send size={12} />
-              Gửi NCC
-            </Button>
-          );
-        }
-
-        if (row.status === 'AWAITING_SUPPLIER') {
-          return (
-            <Button
-              variant="success"
-              size="xs"
-              loading={isAccepting}
-              disabled={isAccepting}
-              onClick={() => handleAcceptWarranty(lookupKey)}
-              className="flex items-center gap-1 whitespace-nowrap text-xs"
-            >
-              <PackageCheck size={12} />
-              Xác nhận ACP
-            </Button>
-          );
-        }
-
-        return <span className="text-xs text-slate-400">—</span>;
-      },
-    },
-    {
-      header: 'Lý do',
-      key: 'reason',
-      render: (val) => {
-        let displayReason = val || 'Sản phẩm lỗi';
-        if (val && val.toUpperCase() === 'DEFECTIVE') displayReason = 'Sản phẩm lỗi';
-
-        return (
-          <Badge variant="warning" className="text-xs">
-            {displayReason}
-          </Badge>
-        );
-      },
-    },
-  ];
+  const totalPages = Math.ceil(totalCount / filters.pageSize) || 1;
 
   return (
-    <div className="animate-fade-in flex h-full flex-col gap-4 text-slate-800 dark:text-[#e5e5e5]">
-      {/* ==================== PAGE HEADER ==================== */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#e5e5e5]">
-          Lịch sử hàng bảo hành
-        </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-[#999999]">
-          Danh sách các sản phẩm thu hồi từ khách hàng do hỏng/lỗi (từ các phiếu Đổi hàng)
-        </p>
+    <div className="flex h-full flex-col gap-4 text-slate-800 dark:text-[#e5e5e5]">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e5e5e5]">Bảo hành</h1>
+          <p className="mt-1 text-slate-600 dark:text-[#999999]">Quản lý sản phẩm lỗi và phân công NCC xử lý bảo hành</p>
+        </div>
+        <button onClick={() => setViewMode(viewMode === 'list' ? 'bySupplier' : 'list')}
+          className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-all ${viewMode === 'bySupplier' ? 'border-[#004785] bg-[#004785] text-white' : 'border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-[#404040] dark:text-[#999999]'}`}>
+          <Truck size={16} /> {viewMode === 'bySupplier' ? 'Về danh sách' : 'Bảo hành theo NCC'}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-        <Card padding="p-4" className="border-l-4 border-l-blue-600 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-              <Icon name="handyman" size={20} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 dark:text-[#999999]">TỔNG SẢN PHẨM LỖI</p>
-              <h3 className="text-xl font-bold text-slate-800 dark:text-[#e5e5e5]">
-                {totalCount}
-              </h3>
-            </div>
+      {viewMode === 'bySupplier' ? (
+        <SupplierWarrantyStockView />
+      ) : (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { count: pendingCount, label: 'Chờ phân NCC', icon: AlertTriangle, color: 'border-amber-500 bg-amber-50 text-amber-600' },
+              { count: awaitingCount, label: 'Chờ hàng về', icon: Clock, color: 'border-blue-500 bg-blue-50 text-blue-600' },
+              { count: completedCount, label: 'Hoàn tất', icon: CheckCircle2, color: 'border-green-500 bg-green-50 text-green-600' },
+            ].map((s) => (
+              <Card key={s.label} padding="p-3" className={`border-l-4 ${s.color} shadow-sm dark:bg-[#0f0f0f]`}>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color} dark:bg-opacity-20`}><s.icon size={18} /></div>
+                  <div><p className="text-xs font-semibold uppercase text-slate-500 dark:text-[#999999]">{s.label}</p><h3 className="text-xl font-bold text-slate-900 dark:text-[#e5e5e5]">{s.count}</h3></div>
+                </div>
+              </Card>
+            ))}
           </div>
-        </Card>
-      </div>
 
-      {/* ==================== TOOLBAR ==================== */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
-        <div className="flex w-full items-center gap-2 sm:w-auto">
-          <div className="relative w-full sm:w-[320px]">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <Icon name="search" size={18} />
-            </span>
-            <input
-              type="text"
-              placeholder="Tìm theo mã SP, tên KH, mã phiếu..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-4 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={openFilterDrawer}
-            className="flex items-center gap-1.5"
-          >
-            <Layers size={14} className="text-[#004785]" />
-            Bộ lọc
-            {activeFilterCount > 0 && (
-              <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#004785] px-1 text-[11px] font-bold text-white">
-                {activeFilterCount}
-              </span>
-            )}
-          </Button>
-
-          {activeFilterCount > 0 && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={resetFilters}
-              className="flex items-center gap-1"
-              title="Xóa toàn bộ bộ lọc"
-            >
-              <RotateCcw size={13} /> Đặt lại
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* ==================== BẢNG DANH SÁCH ==================== */}
-      <Card padding="p-0" className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex-1 overflow-auto">
-          <Table
-            columns={columns}
-            data={items}
-            loading={loading}
-            emptyMessage="Không có sản phẩm lỗi nào được ghi nhận."
-          />
-        </div>
-
-        {totalCount > 0 && (
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-[#333333] dark:bg-[#0f0f0f]">
-            <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
+          {/* ===== KHU VỰC 1: ĐƠN CHỜ PHÂN CÔNG ===== */}
+          {pendingGroups.length > 0 && (
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <span>Hiển thị</span>
-                <select
-                  value={filters.pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                  className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]"
-                >
-                  <option value={20}>20 dòng</option>
-                  <option value={50}>50 dòng</option>
-                  <option value={100}>100 dòng</option>
-                </select>
+                <AlertTriangle size={18} className="text-amber-500" />
+                <h2 className="text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">Đơn chờ phân NCC</h2>
+                <Badge variant="warning" className="text-xs">{pendingGroups.length} phiếu</Badge>
               </div>
-              <span>
-                {(filters.page - 1) * filters.pageSize + 1} -{' '}
-                {Math.min(filters.page * filters.pageSize, totalCount)} trong tổng số{' '}
-                {totalCount} sản phẩm
-              </span>
+              <Card padding="p-0" className="overflow-hidden border-2 border-amber-200 dark:border-amber-800">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-amber-200 bg-amber-50/50 text-xs font-semibold uppercase text-amber-800 dark:border-amber-800 dark:bg-amber-900/10 dark:text-amber-400">
+                      <th className="w-8 px-3 py-2.5"></th>
+                      <th className="px-3 py-2.5">Mã phiếu</th>
+                      <th className="px-3 py-2.5">Khách hàng</th>
+                      <th className="px-3 py-2.5">Ngày đổi</th>
+                      <th className="px-3 py-2.5 text-center">SL</th>
+                      <th className="px-3 py-2.5">NCC</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#333333]">
+                    {(showAllPending ? pendingGroups : pendingGroups.slice(0, 6)).map((group) => {
+                      const isExpanded = expandedCard === group.returnCode;
+                      const totalQty = group.items.reduce((s, i) => s + (i.baseQuantity || i.quantity || 0), 0);
+                      return (
+                        <React.Fragment key={group.returnCode}>
+                          <tr
+                            onClick={() => setExpandedCard(isExpanded ? null : group.returnCode)}
+                            className="cursor-pointer"
+                          >
+                            <td className="px-3 py-2.5">
+                              {isExpanded ? <ChevronDown size={16} className="text-amber-600" /> : <ChevronRight size={16} className="text-amber-600" />}
+                            </td>
+                            <td className="px-3 py-2.5 text-sm font-bold text-[#004785] dark:text-blue-400">{group.returnCode}</td>
+                            <td className="px-3 py-2.5 whitespace-nowrap text-slate-800 dark:text-[#e5e5e5]">{group.customerName || 'Khách lẻ'}</td>
+                            <td className="px-3 py-2.5 whitespace-nowrap text-xs text-slate-500">{formatDate(group.exchangeDate)}</td>
+                            <td className="px-3 py-2.5 text-center font-bold text-red-600">{totalQty} sp</td>
+                            <td className="px-3 py-2.5"></td>
+                          </tr>
+                          {isExpanded && group.items.map((item) => {
+                                const baseQty = item.baseQuantity || item.quantity || 0;
+                                const convRate = item.conversionRate || 1;
+                                const lookupKey = (item.warrantyId || item.warrantyTicketId || '') || (item.returnItemId || '');
+                                return (
+                                  <tr key={item.warrantyTicketId || item.returnItemId} className="">
+                                    <td className="px-3 py-2"></td>
+                                    <td className="px-3 py-2 text-xs" colSpan={3}>
+                                      <span className="font-semibold text-slate-700 dark:text-[#b3b3b3]">{item.productName}</span>
+                                      <span className="ml-2 text-slate-400">{item.skuCode}</span>
+                                    </td>
+                                    <td className="px-3 py-2 text-center">
+                                      <span className="font-bold text-red-600">{baseQty}</span>
+                                      {convRate !== 1 && <span className="ml-1 text-xs text-slate-400">({item.quantity || 0}×{convRate})</span>}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <div className="flex items-center gap-1">
+                                        <div className="min-w-0 flex-1">{renderSupplierDropdown(item)}</div>
+                                        {(() => {
+                                          // max = min(SL trả, hạn mức NCC được chọn). Chưa chọn NCC -> max = SL trả.
+                                          const supId = selectedSupplier[lookupKey];
+                                          const sup = (supplierMap[lookupKey] || []).find((s) => String(s.id || s.supplierId) === String(supId));
+                                          const maxQty = Math.min(baseQty, sup?.remainingWarrantyQuantity ?? baseQty);
+                                          const cur = Number(claimQtyMap[lookupKey] ?? 0);
+                                          const setQty = (v) => setClaimQtyMap((p) => ({ ...p, [lookupKey]: String(v) }));
+                                          return (
+                                            <>
+                                              <div className="flex shrink-0 items-center rounded border border-slate-300 dark:border-[#404040]" title={`Số lượng gửi BH (cái) — tối đa ${maxQty}`}>
+                                                <button type="button" onClick={() => setQty(Math.max(0, cur - 1))} disabled={cur <= 0}
+                                                  className="px-1.5 text-base leading-none text-slate-500 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-[#222]">−</button>
+                                                <input type="number" min={0} max={maxQty} value={cur}
+                                                  onChange={(e) => { let v = Number(e.target.value); v = Number.isNaN(v) ? 0 : Math.max(0, Math.min(maxQty, v)); setQty(v); }}
+                                                  className="w-9 border-x border-slate-200 bg-transparent py-1 text-center text-xs font-semibold text-slate-700 outline-none dark:border-[#333] dark:text-[#e5e5e5]" />
+                                                <button type="button" onClick={() => setQty(Math.min(maxQty, cur + 1))} disabled={cur >= maxQty}
+                                                  className="px-1.5 text-base leading-none text-slate-500 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-[#222]">+</button>
+                                              </div>
+                                              <span className="shrink-0 text-[11px] text-slate-400">/{maxQty}</span>
+                                            </>
+                                          );
+                                        })()}
+                                        <button onClick={() => handleAssignSupplier(lookupKey, selectedSupplier[lookupKey], claimQtyMap[lookupKey] ?? 0)}
+                                          disabled={!selectedSupplier[lookupKey] || (Number(claimQtyMap[lookupKey] ?? 0)) <= 0 || assigningId === lookupKey}
+                                          className="shrink-0 rounded p-1 text-slate-400 hover:bg-amber-100 hover:text-amber-600 disabled:opacity-30 dark:hover:bg-amber-900/20">
+                                          <Send size={14} />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </Card>
+              {pendingGroups.length > 6 && !showAllPending && (
+                <button onClick={() => setShowAllPending(true)}
+                  className="w-full rounded-lg border border-dashed border-amber-300 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20">
+                  Xem thêm {pendingGroups.length - 6} đơn chờ
+                </button>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage(Math.max(1, filters.page - 1))}
-                disabled={filters.page <= 1}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999] dark:hover:bg-[#272727]"
-              >
-                <Icon name="chevron_left" className="text-[18px]" />
-              </button>
-              <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">
-                Trang {filters.page} / {Math.ceil(totalCount / filters.pageSize) || 1}
-              </div>
-              <button
-                type="button"
-                onClick={() => setPage(Math.min(Math.ceil(totalCount / filters.pageSize) || 1, filters.page + 1))}
-                disabled={filters.page >= Math.ceil(totalCount / filters.pageSize)}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#999999] dark:hover:bg-[#272727]"
-              >
-                <Icon name="chevron_right" className="text-[18px]" />
-              </button>
-            </div>
-          </div>
-        )}
-      </Card>
+          )}
 
-      {/* ==================== DRAWER LỌC NÂNG CAO ==================== */}
-      <Drawer
-        isOpen={isFilterDrawerOpen}
-        onClose={() => setIsFilterDrawerOpen(false)}
-        title="Bộ lọc hàng bảo hành"
-        widthClass="max-w-sm"
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={resetDraftFilters}
-            >
-              Đặt lại
-            </Button>
-            <Button variant="primary" size="sm" onClick={applyFilters}>
-              Áp dụng
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-5">
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
-              Từ ngày
-            </label>
-            <input
-              type="date"
-              value={draftFilters.fromDate ? draftFilters.fromDate.slice(0, 10) : ''}
-              onChange={(e) =>
-                setDraftFilters((f) => ({
-                  ...f,
-                  fromDate: e.target.value ? `${e.target.value}T00:00:00Z` : '',
-                }))
-              }
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-            />
+          {/* ===== TOOLBAR ===== */}
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm dark:border-[#333333] dark:bg-[#0f0f0f]">
+            <div className="relative w-[260px]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Icon name="search" size={18} /></span>
+              <input type="text" placeholder="Tìm mã SP, tên KH, mã phiếu..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-4 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]" />
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
-              Đến ngày
-            </label>
-            <input
-              type="date"
-              value={draftFilters.toDate ? draftFilters.toDate.slice(0, 10) : ''}
-              onChange={(e) =>
-                setDraftFilters((f) => ({
-                  ...f,
-                  toDate: e.target.value ? `${e.target.value}T23:59:59Z` : '',
-                }))
-              }
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-[#004785] focus:outline-none dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-            />
+
+          {/* ===== KHU VỰC 2: BẢNG LỊCH SỬ ===== */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg bg-white dark:bg-[#0f0f0f]">
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500 dark:border-[#333333] dark:bg-[#1a1a1a] dark:text-[#999999]">
+                    <th className="w-8 px-2 py-3"></th>
+                    <th className="px-3 py-3">Ngày đổi</th>
+                    <th className="px-3 py-3">Mã phiếu</th>
+                    <th className="px-3 py-3">Khách hàng</th>
+                    <th className="px-3 py-3">Sản phẩm lỗi</th>
+                    <th className="px-3 py-3 text-center">SL</th>
+                    <th className="px-3 py-3">Lý do</th>
+                    <th className="px-3 py-3">Trạng thái</th>
+                    <th className="px-3 py-3">Nhà cung cấp</th>
+                    <th className="px-3 py-3 text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyItems.length === 0 ? (
+                    <tr><td colSpan={10} className="px-3 py-8 text-center text-sm text-slate-400">Không có dữ liệu</td></tr>
+                  ) : historyItems.map((row, idx) => {
+                    const baseQty = row.baseQuantity || row.quantity || 0;
+                    const prevSameCode = idx > 0 && historyItems[idx - 1]?.returnCode === row.returnCode;
+                    const sameGroup = historyItems.filter((d, i) => i >= idx && d.returnCode === row.returnCode);
+                    const rowSpan = !prevSameCode ? sameGroup.length : 0;
+                    const isLastOfGroup = idx === historyItems.length - 1 || historyItems[idx + 1]?.returnCode !== row.returnCode;
+                    const lookupKey = (row.warrantyId || row.warrantyTicketId || '') || (row.returnItemId || '');
+                    return (
+                      <tr key={row.warrantyTicketId || row.returnItemId || idx} className={`${row.status === 'AWAITING_SUPPLIER' ? 'border-l-2 border-l-blue-400 ' : 'border-l-2 border-l-green-400 '} ${isLastOfGroup ? 'border-b border-slate-200 dark:border-[#333333]' : ''}`}>
+                        <td className="px-2 py-3 text-center align-top">
+                          {row.status === 'AWAITING_SUPPLIER' ? <Clock size={14} className="text-blue-500" /> : <CheckCircle2 size={14} className="text-green-500" />}
+                        </td>
+                        {rowSpan > 0 ? <td className="px-3 py-3 whitespace-nowrap align-top text-slate-600 dark:text-[#cccccc]" rowSpan={rowSpan}>{formatDate(row.exchangeDate)}</td> : null}
+                        {rowSpan > 0 ? <td className="px-3 py-3 align-top font-bold text-[#004785] dark:text-blue-400" rowSpan={rowSpan}>{row.returnCode}</td> : null}
+                        {rowSpan > 0 ? <td className="px-3 py-3 whitespace-nowrap align-top font-medium text-slate-800 dark:text-[#e5e5e5]" rowSpan={rowSpan}>{row.customerName || 'Khách lẻ'}</td> : null}
+                        <td className="px-3 py-3 align-top">
+                          <div className="flex max-w-[220px] flex-col justify-center">
+                            <p className="truncate font-semibold text-slate-800 dark:text-[#e5e5e5]" title={row.productName}>{row.productName}</p>
+                            <p className="truncate text-xs text-slate-500 dark:text-[#999999]" title={row.skuCode}>{row.skuCode}</p>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3.5 text-center align-top"><span className="font-bold text-red-600 dark:text-red-400">{baseQty}</span></td>
+                        <td className="px-3 py-3.5 align-top"><Badge variant="warning" className="text-xs">{row.reason === 'DEFECTIVE' ? 'Sản phẩm lỗi' : (row.reason || 'Sản phẩm lỗi')}</Badge></td>
+                        <td className="px-3 py-3.5 align-top">
+                          <Badge variant={row.status === 'AWAITING_SUPPLIER' ? 'info' : 'success'} className="text-xs">
+                            {row.status === 'AWAITING_SUPPLIER' ? 'Chờ hàng về' : 'Hoàn tất'}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-3.5 align-top">
+                          <span className="text-sm text-slate-700 dark:text-[#b3b3b3]">{row.assignedSupplierName || row.supplierName || '—'}</span>
+                        </td>
+                        <td className="px-3 py-3.5 text-center align-top">
+                          {row.status === 'AWAITING_SUPPLIER' ? (
+                            <button onClick={() => handleAcceptWarranty(lookupKey)}
+                              disabled={acceptingId === lookupKey}
+                              className="rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-600 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700">
+                              <PackageCheck size={14} className="inline mr-1" />Nhận hàng
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center justify-center rounded-full bg-green-100 p-1 dark:bg-green-900/30">
+                              <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-6 py-3 dark:border-t-[#333333] dark:bg-[#0f0f0f]">
+              <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-[#999999]">
+                <div className="flex items-center gap-2">
+                  <span>Hiển thị</span>
+                  <select value={filters.pageSize} onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs outline-none focus:border-primary dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#d4d4d4]">
+                    <option value={20}>20 dòng</option><option value={50}>50 dòng</option><option value={100}>100 dòng</option>
+                  </select>
+                </div>
+                <span>{totalCount === 0 ? 0 : (filters.page - 1) * filters.pageSize + 1} - {Math.min(filters.page * filters.pageSize, totalCount)} trong tổng số {totalCount} sản phẩm</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setPage(Math.max(1, filters.page - 1))} disabled={filters.page <= 1}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"><Icon name="chevron_left" className="text-[18px]" /></button>
+                <div className="px-3 text-sm text-slate-700 dark:text-[#b3b3b3]">Trang {filters.page} / {totalPages || 1}</div>
+                <button onClick={() => setPage(Math.min(totalPages || 1, filters.page + 1))} disabled={filters.page >= (totalPages || 1)}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-[#999999] dark:hover:bg-[#272727]"><Icon name="chevron_right" className="text-[18px]" /></button>
+              </div>
+            </div>
           </div>
-        </div>
-      </Drawer>
+        </>
+      )}
     </div>
   );
 };
