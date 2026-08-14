@@ -11,7 +11,8 @@ const STEPS = [
     badgeClass: 'bg-blue-100 text-blue-700 border-blue-300',
     desc: 'Tổng số tiền khách hàng trả cho từng sản phẩm trong kỳ. Doanh thu tính theo giá bán trên đơn vị đã chọn (không quy đổi).',
     formula: 'Doanh thu = Tổng( Số lượng bán × Giá bán ) của từng sản phẩm',
-    example: 'Sản phẩm "Cáp điện CVV 4x16": bán 2 cuộn (giá 2.000.000đ/cuộn) + 10 mét lẻ (giá 25.000đ/mét). Doanh thu = 2 × 2.000.000 + 10 × 25.000 = 4.250.000đ',
+    example:
+      'Sản phẩm "Cáp điện CVV 4x16": bán 2 cuộn (giá 2.000.000đ/cuộn) + 10 mét lẻ (giá 25.000đ/mét). Doanh thu = 2 × 2.000.000 + 10 × 25.000 = 4.250.000đ',
     result: 'Doanh thu SP = 4.250.000đ',
   },
   {
@@ -42,9 +43,12 @@ const STEPS = [
     icon: 'trending_up',
     badge: 'DT - GV',
     badgeClass: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-    desc: 'Lợi nhuận gộp là số tiền lãi thu được từ sản phẩm sau khi trừ giá vốn. Biên lợi nhuận cho biết cứ 100đ doanh thu thì lãi bao nhiêu đồng.',
-    formula: 'Lợi nhuận gộp = Doanh thu - Giá vốn\nBiên lợi nhuận = (Lợi nhuận gộp ÷ Doanh thu) × 100%',
-    example: '4.250.000đ - 2.100.000đ = 2.150.000đ. Biên LN = (2.150.000 / 4.250.000) × 100% = 50,6%',
+    desc: 'Lợi nhuận gộp là số tiền lãi thu được từ sản phẩm sau khi trừ giá vốn. Biên lợi nhuận là tỷ lệ phần trăm lãi trên doanh thu — nói cách khác, cứ 100đ bán được thì lãi bao nhiêu đồng.',
+    formula:
+      'Lợi nhuận gộp = Doanh thu - Giá vốn\nBiên lợi nhuận = (Lợi nhuận gộp / Doanh thu) × 100%',
+    note: 'Biên lợi nhuận tính trên doanh thu gốc. Nếu đơn có chiết khấu/giảm giá thì con số này sẽ cao hơn mức lãi thực tế bạn nhận về.',
+    example:
+      '4.250.000đ - 2.100.000đ = 2.150.000đ. Biên LN = (2.150.000 / 4.250.000) × 100% = 50,6%',
     result: 'Lợi nhuận = 2.150.000đ (biên 50,6%)',
   },
   {
@@ -59,7 +63,8 @@ const STEPS = [
       'Doanh thu và giá vốn của SP đã xóa vẫn được tính đầy đủ',
       'Xóa SP không làm mất dữ liệu bán hàng lịch sử',
     ],
-    example: 'Sản phẩm "Băng keo" đã xóa cuối kỳ, nhưng trong kỳ có bán 50 cuộn. Báo cáo vẫn ghi nhận đủ 50 cuộn với doanh thu và giá vốn tương ứng.',
+    example:
+      'Sản phẩm "Băng keo" đã xóa cuối kỳ, nhưng trong kỳ có bán 50 cuộn. Báo cáo vẫn ghi nhận đủ 50 cuộn với doanh thu và giá vốn tương ứng.',
     result: '→ Dữ liệu báo cáo luôn đầy đủ, không bị hao hụt khi xóa sản phẩm',
   },
 ];
@@ -71,14 +76,19 @@ export const ProductProfitHelpModal = ({ isOpen, onClose }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Cách tính Lợi nhuận theo sản phẩm" size="md">
       <div className="space-y-4">
-        <div className="rounded-xl bg-slate-100 px-5 pt-5 pb-3 dark:bg-[#1a1a1a]">
+        <div className="rounded-xl bg-slate-100 px-5 pb-3 pt-5 dark:bg-[#1a1a1a]">
           <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-[#999]">
-            <span>BƯỚC {step + 1} / {STEPS.length}</span>
+            <span>
+              BƯỚC {step + 1} / {STEPS.length}
+            </span>
             <span>{s.subtitle}</span>
           </div>
           <div className="flex h-1.5 gap-1.5 rounded-full bg-slate-200 dark:bg-[#333]">
             {STEPS.map((_, i) => (
-              <div key={i} className={`h-full flex-1 rounded-full transition ${i <= step ? 'bg-[#004785]' : 'bg-transparent'}`} />
+              <div
+                key={i}
+                className={`h-full flex-1 rounded-full transition ${i <= step ? 'bg-[#004785]' : 'bg-transparent'}`}
+              />
             ))}
           </div>
         </div>
@@ -91,15 +101,32 @@ export const ProductProfitHelpModal = ({ isOpen, onClose }) => {
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-[#e5e5e5]">{s.title}</h3>
             </div>
-            <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${s.badgeClass}`}>{s.badge}</span>
+            <span
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${s.badgeClass}`}
+            >
+              {s.badge}
+            </span>
           </div>
 
           <p className="text-sm leading-relaxed text-slate-600 dark:text-[#b3b3b3]">{s.desc}</p>
 
           {s.formula && (
             <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-800 dark:bg-blue-950/20">
-              <span className="text-xs font-bold text-blue-700 dark:text-blue-400">Công thức: </span>
-              <code className="text-xs text-blue-800 dark:text-blue-300 whitespace-pre-line">{s.formula}</code>
+              <span className="text-xs font-bold text-blue-700 dark:text-blue-400">
+                Công thức:{' '}
+              </span>
+              <code className="whitespace-pre-line text-xs text-blue-800 dark:text-blue-300">
+                {s.formula}
+              </code>
+            </div>
+          )}
+
+          {s.note && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs dark:border-amber-800 dark:bg-amber-950/20">
+              <div className="flex items-start gap-1.5">
+                <Icon name="info" size={14} className="mt-0.5 flex-none text-amber-600" />
+                <span className="text-slate-700 dark:text-[#b3b3b3]">{s.note}</span>
+              </div>
             </div>
           )}
 
@@ -107,7 +134,9 @@ export const ProductProfitHelpModal = ({ isOpen, onClose }) => {
             <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs dark:border-[#333] dark:bg-[#1a1a1a]">
               <span className="font-semibold text-slate-700 dark:text-[#b3b3b3]">Ghi nhớ:</span>
               <ul className="list-disc space-y-0.5 pl-4 text-slate-600 dark:text-[#999]">
-                {s.includes.map((item, i) => <li key={i}>{item}</li>)}
+                {s.includes.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
               </ul>
             </div>
           )}
@@ -125,17 +154,27 @@ export const ProductProfitHelpModal = ({ isOpen, onClose }) => {
 
         <div className="flex items-center justify-between border-t border-slate-200 pt-4 dark:border-[#333]">
           <button
-            type="button" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}
+            type="button"
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            disabled={step === 0}
             className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 dark:border-[#404040] dark:text-[#999] dark:hover:bg-[#272727]"
           >
             <Icon name="chevron_left" size={14} /> Quay lại
           </button>
           {step < STEPS.length - 1 ? (
-            <button type="button" onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))} className="inline-flex items-center gap-1 rounded-lg bg-[#004785] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003566]">
+            <button
+              type="button"
+              onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+              className="inline-flex items-center gap-1 rounded-lg bg-[#004785] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003566]"
+            >
               Tiếp theo <Icon name="chevron_right" size={14} />
             </button>
           ) : (
-            <button type="button" onClick={onClose} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+            >
               <Icon name="check" size={14} /> Đã hiểu
             </button>
           )}

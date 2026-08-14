@@ -284,6 +284,8 @@ export const ShiftManagement = () => {
           o.discountPercent || o.discountPercent || o.DiscountPercent || 0
         ),
         paymentMethod: o.paymentMethod || '',
+        cashReceived: o.cashReceived,
+        changeAmount: o.changeAmount,
         cashier: o.userName || o.cashier || o.createdBy || openShift.cashier,
         items: o.items || [],
         itemCount: o.items?.length || o.itemCount || 0,
@@ -461,6 +463,8 @@ export const ShiftManagement = () => {
                   code: needFetch[idx].invoiceCode,
                   totalAmount: amt,
                   paymentMethod: pm,
+                  cashReceived: d.cashReceived,
+                  changeAmount: d.changeAmount,
                 });
               }
             });
@@ -468,7 +472,7 @@ export const ShiftManagement = () => {
             setShiftOrders((prev) =>
               prev.map((o) => {
                 const u = updates.find((x) => x.code === o.invoiceCode);
-                return u ? { ...o, totalAmount: u.totalAmount, paymentMethod: u.paymentMethod } : o;
+                return u ? { ...o, totalAmount: u.totalAmount, paymentMethod: u.paymentMethod, cashReceived: u.cashReceived, changeAmount: u.changeAmount } : o;
               })
             );
             setShiftSummary((prev) => {
@@ -912,7 +916,7 @@ export const ShiftManagement = () => {
                 </p>
                 <p className="mt-1 truncate text-lg font-extrabold text-amber-700">
                   {formatCurrency(
-                    (displayShift.openingBalance || 0) + (displayShift.totalSales || 0)
+                    (displayShift.openingBalance || 0) + (displayShift.cashSales || 0)
                   )}
                 </p>
               </div>
@@ -977,6 +981,8 @@ export const ShiftManagement = () => {
                       amount: o.totalAmount,
                       paymentMethod: o.paymentMethod,
                       cashier: o.cashier || '',
+                      cashReceived: o.cashReceived,
+                      changeAmount: o.changeAmount,
                     }));
                     return [...sales, ...returns]
                       .sort((a, b) => b._time - a._time)
@@ -1028,11 +1034,12 @@ export const ShiftManagement = () => {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex shrink-0 items-center gap-2">
-                                <span className="text-xs font-bold text-green-600">
-                                  +{formatCurrency(act.amount)}
-                                </span>
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
+                              <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-green-600">
+                                    +{formatCurrency(act.amount)}
+                                  </span>
+                                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
                                   {act.paymentMethod === 'CASH' || act.paymentMethod === 'Cash' || act.paymentMethod === 'Tiền mặt'
                                     ? 'Tiền mặt'
                                     : act.paymentMethod === 'TRANSFER' || act.paymentMethod === 'Transfer' || act.paymentMethod === 'Chuyển khoản'
@@ -1043,6 +1050,12 @@ export const ShiftManagement = () => {
                                           ? 'Kết hợp'
                                           : act.paymentMethod || '-'}
                                 </span>
+                                </div>
+                                {act.cashReceived > 0 && act.changeAmount > 0 && (
+                                  <span className="text-[10px] text-slate-400 dark:text-[#808080]">
+                                    Khách đưa: {formatCurrency(act.cashReceived)} - Thừa: {formatCurrency(act.changeAmount)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           );
@@ -1975,6 +1988,8 @@ export const ShiftManagement = () => {
                       amount: o.totalAmount,
                       paymentMethod: o.paymentMethod,
                       cashier: o.cashier || '',
+                      cashReceived: o.cashReceived,
+                      changeAmount: o.changeAmount,
                     }));
                     return [...sales, ...returns]
                       .sort((a, b) => b._time - a._time)
@@ -2022,21 +2037,28 @@ export const ShiftManagement = () => {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex shrink-0 items-center gap-2">
-                                <span className="text-xs font-bold text-green-600">
-                                  +{formatCurrency(act.amount)}
-                                </span>
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
-                                  {act.paymentMethod === 'CASH' || act.paymentMethod === 'Cash' || act.paymentMethod === 'Tiền mặt'
-                                    ? 'Tiền mặt'
-                                    : act.paymentMethod === 'TRANSFER' || act.paymentMethod === 'Transfer' || act.paymentMethod === 'Chuyển khoản'
-                                      ? 'CK'
-                                      : act.paymentMethod === 'CARD' || act.paymentMethod === 'Card' || act.paymentMethod === 'Thẻ'
-                                        ? 'Thẻ'
-                                        : act.paymentMethod === 'COMBINED' || act.paymentMethod === 'Combined' || act.paymentMethod === 'Kết hợp' || (act.paymentMethod && act.paymentMethod.startsWith('['))
-                                          ? 'Kết hợp'
-                                          : act.paymentMethod || '-'}
-                                </span>
+                              <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-green-600">
+                                    +{formatCurrency(act.amount)}
+                                  </span>
+                                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                                    {act.paymentMethod === 'CASH' || act.paymentMethod === 'Cash' || act.paymentMethod === 'Tiền mặt'
+                                      ? 'Tiền mặt'
+                                      : act.paymentMethod === 'TRANSFER' || act.paymentMethod === 'Transfer' || act.paymentMethod === 'Chuyển khoản'
+                                        ? 'CK'
+                                        : act.paymentMethod === 'CARD' || act.paymentMethod === 'Card' || act.paymentMethod === 'Thẻ'
+                                          ? 'Thẻ'
+                                          : act.paymentMethod === 'COMBINED' || act.paymentMethod === 'Combined' || act.paymentMethod === 'Kết hợp' || (act.paymentMethod && act.paymentMethod.startsWith('['))
+                                            ? 'Kết hợp'
+                                            : act.paymentMethod || '-'}
+                                  </span>
+                                </div>
+                                {act.cashReceived > 0 && act.changeAmount > 0 && (
+                                  <span className="text-[10px] text-slate-400">
+                                    Khách đưa: {formatCurrency(act.cashReceived)} - Thừa: {formatCurrency(act.changeAmount)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           );
