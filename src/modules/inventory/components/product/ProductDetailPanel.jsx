@@ -132,12 +132,37 @@ const InfoTabPanel = ({ row, loading }) => {
 
 const DescTabPanel = ({ row, loading, onEdit }) => {
   if (loading) return <div className="p-8 text-center text-slate-400 dark:text-[#808080]">Đang tải...</div>;
+  
+  const hasAttributes = row.attributes && row.attributes.length > 0;
+  
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
-        <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-[#b3b3b3]">Mô tả</h4>
-        <div className="flex min-h-[120px] items-center justify-center text-sm text-slate-400 dark:text-[#808080]">
-          {row.specification || row.description || 'Chưa có mô tả kỹ thuật'}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
+          <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-[#b3b3b3]">Mô tả</h4>
+          <div className="flex flex-1 items-center justify-center text-sm text-slate-400 dark:text-[#808080] min-h-[120px]">
+            {row.specification || row.description || 'Chưa có mô tả kỹ thuật'}
+          </div>
+        </div>
+
+        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-[#333333] dark:bg-[#1a1a1a]">
+          <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-[#b3b3b3]">Thuộc tính</h4>
+          <div className="flex flex-1 flex-col text-sm text-slate-600 dark:text-[#d4d4d4] min-h-[120px]">
+            {hasAttributes ? (
+              <div className="w-full space-y-3">
+                {row.attributes.map((attr, idx) => (
+                  <div key={idx} className="flex justify-between border-b border-slate-100 pb-2 last:border-0 dark:border-[#333333]">
+                    <span className="font-medium text-slate-500 dark:text-[#999999]">{attr.name || 'Thuộc tính'}:</span>
+                    <span className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{attr.value || '-'}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-slate-400 dark:text-[#808080]">
+                Chưa có thuộc tính
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex justify-end">
