@@ -68,9 +68,9 @@ const mapToPosProduct = (p) => {
     name: p.productName || p.name || '',
     price: displayPrice,
     sku: p.productCode || p.barcode || '',
-    stock: p.availableStock ?? p.quantity ?? p.stock ?? 0,
+    stock: p.sellableQuantity ?? p.availableStock ?? p.quantity ?? p.stock ?? 0,
     category: p.categoryName || p.group || p.category || '',
-    status: (p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0 ? 'Còn hàng' : 'Hết hàng',
+    status: (p.sellableQuantity ?? p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0 ? 'Còn hàng' : 'Hết hàng',
     image: p.image || '',
     productId: p.productId || p.id || '',
     barcode: p.barcode || '',
@@ -182,6 +182,17 @@ const POSScreen = () => {
     connection.on('InvoiceFinalized', (data) => {
       console.log('SignalR InvoiceFinalized:', data);
       refetchProducts(); // Tải lại danh sách sản phẩm để cập nhật tồn kho mới nhất
+    });
+
+    connection.on('StockUpdated', (data) => {
+      console.log('[posHub] StockUpdated:', data);
+      refetchProducts().then((freshProducts) => {
+        // Cập nhật trực tiếp stock trong giỏ hàng với dữ liệu mới
+        if (freshProducts && data?.productId) {
+          const mapped = freshProducts.map(mapToPosProduct);
+          cart.revalidateActiveCart(mapped);
+        }
+      });
     });
 
     connection.start()

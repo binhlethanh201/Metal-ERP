@@ -12,6 +12,9 @@ import { getProducts } from '../../../modules/inventory/services/productService'
 const normalizePosProduct = (p) => {
   // API trả PascalCase - hỗ trợ cả lowercase
   const rawConvUnits = p.ConversionUnits ?? p.conversionUnits ?? [];
+  const rawStock = parseFloat(p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0);
+  const warrantyQty = parseFloat(p.WarrantyQuantity ?? p.warrantyQuantity ?? 0);
+  const sellable = Math.max(0, rawStock - warrantyQty);
   return {
     productId: p.ProductId ?? p.productId ?? p.id ?? '',
     productCode: p.ProductCode ?? p.productCode ?? '',
@@ -21,10 +24,12 @@ const normalizePosProduct = (p) => {
     retailPrice: parseFloat(
       p.RetailPrice ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0
     ),
-    availableStock: parseFloat(p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0),
+    // ĐÈ LẠI stock = sellableQuantity để toàn bộ UI (ProductCard, Cart, CheckStock) dùng chung
+    availableStock: sellable,
+    warrantyQuantity: warrantyQty,
+    sellableQuantity: sellable,
     categoryName: p.CategoryName ?? p.categoryName ?? p.category ?? '',
     image: p.ImageUrl ?? p.imageUrl ?? p.image ?? '',
-    // Trạng thái kinh doanh: active/inactive (từ Inventory hoặc trường Status của API)
     productStatus:
       p.ProductStatus ??
       p.productStatus ??
@@ -33,10 +38,7 @@ const normalizePosProduct = (p) => {
       p.Status ??
       p.status ??
       'active',
-    status:
-      (p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0
-        ? 'Còn hàng'
-        : 'Hết hàng',
+    status: sellable > 0 ? 'Còn hàng' : 'Hết hàng',
     // UOM: đơn vị quy đổi - map sang lowercase cho FE
     conversionUnits: rawConvUnits.map((u) => ({
       unitName: u.UnitName ?? u.unitName ?? u.name ?? '',
@@ -44,7 +46,6 @@ const normalizePosProduct = (p) => {
       price: u.Price ?? u.price ?? 0,
     })),
     hasMultipleUnits: rawConvUnits.length > 0,
-    // Đơn vị cơ bản có được phép bán không
     directSale: p.DirectSale ?? p.directSale ?? true,
   };
 };

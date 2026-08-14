@@ -73,8 +73,8 @@ export const usePosCart = (initialItems = []) => {
         displayUnit = `${unitName} (×${convertValue})`; // Thùng (×12)
       else displayUnit = `${unitName} (1/${Math.round(1 / convertValue)} ${baseUnit})`; // Mét (1/100 Cuộn)
 
-      // Lấy stock (API trả về đã là base unit)
-      const baseStock = product.baseStock ?? product.availableStock ?? product.stock ?? 0;
+      // Lấy sellableQuantity (tồn khả dụng bán = tổng tồn - warranty)
+      const baseStock = product.stock ?? product.availableStock ?? 0;
 
       // === FIX: Kiểm tra stock overdraw cho cùng productId ===
       // Tính base units đã sử dụng bởi các items khác cùng productId (loại trừ existed)
@@ -106,7 +106,7 @@ export const usePosCart = (initialItems = []) => {
           convertValue,
           displayUnit,
           baseUnit,
-          baseStock, // Stock gốc (base unit)
+          baseStock, // Stock gốc (base unit) = sellableQuantity
           maxQty: Math.floor(Math.max(0, baseStock) / convertValue), // Số lượng max theo đơn vị đã chọn
         },
       ];
@@ -127,7 +127,7 @@ export const usePosCart = (initialItems = []) => {
       const convertValue = selectedUnit?.convertValue || 1;
       const price = selectedUnit?.price ?? product.price;
       const baseUnit = product.unit || 'Cái';
-      const baseStock = product.baseStock ?? product.availableStock ?? product.stock ?? 0;
+      const baseStock = product.stock ?? product.availableStock ?? 0;
 
       if (existed) {
         // Nếu đã tồn tại, cập nhật quantity về giá trị mới (thay vì cộng dồn)
@@ -170,7 +170,7 @@ export const usePosCart = (initialItems = []) => {
       if (!item) return prev;
 
       const productId = getProductId(item);
-      const baseStock = item.baseStock ?? item.stock ?? 0;
+      const baseStock = item.stock ?? item.baseStock ?? 0;
       const convertValue = item.convertValue || 1;
 
       // === FIX: Kiểm tra stock overdraw cho cùng productId ===
@@ -207,7 +207,7 @@ export const usePosCart = (initialItems = []) => {
       if (!item) return prev;
 
       const productId = getProductId(item);
-      const baseStock = item.baseStock ?? item.stock ?? 0;
+      const baseStock = item.stock ?? item.baseStock ?? 0;
       const convertValue = item.convertValue || 1;
 
       // === FIX: Kiểm tra stock overdraw cho cùng productId ===

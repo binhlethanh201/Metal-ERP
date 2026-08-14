@@ -58,6 +58,8 @@ export const normalizeProduct = (product = {}, index = 0) => {
   const id = product.id || product.productId || `API-${index + 1}`;
   const actualStock = Number(product.actualStock ?? 0);
   const availableStock = Number(product.availableStock ?? actualStock);
+  const warrantyQuantity = Number(product.warrantyQuantity ?? product.WarrantyQuantity ?? 0);
+  const sellableQuantity = Math.max(0, actualStock - warrantyQuantity);
   const productStatus = isInactiveValue(product.productStatus)
     ? 'inactive'
     : isInactiveValue(product.isActive)
@@ -89,6 +91,8 @@ export const normalizeProduct = (product = {}, index = 0) => {
     stock: actualStock,
     actualStock,
     availableStock,
+    warrantyQuantity,
+    sellableQuantity,
     reservedStock: Number(product.reservedStock ?? 0),
     minimumStock: Number(product.minimumStock ?? product.MinimumStock ?? 0),
     minStock: Number(product.minimumStock ?? product.MinimumStock ?? 0),
