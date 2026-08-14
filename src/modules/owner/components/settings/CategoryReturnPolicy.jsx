@@ -353,55 +353,57 @@ const CategoryReturnPolicy = ({ branchId }) => {
         </div>
       )}
 
-      {/* Chiết khấu trả hàng — áp dụng cho cả cửa hàng */}
-      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-900/10">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Icon name="sell" size={18} className="text-amber-600 dark:text-amber-400" />
-            <div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
-                Chiết khấu trả hàng
-              </p>
-              <p className="text-xs text-slate-500 dark:text-[#999999]">
-                Trừ vào tiền hoàn lại — áp dụng cho mọi nhóm hàng
-              </p>
+      {/* Chiết khấu trả hàng — áp dụng cho cả cửa hàng (ĐÃ ẨN THEO YÊU CẦU) */}
+      {false && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-900/10">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Icon name="sell" size={18} className="text-amber-600 dark:text-amber-400" />
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
+                  Chiết khấu trả hàng
+                </p>
+                <p className="text-xs text-slate-500 dark:text-[#999999]">
+                  Trừ vào tiền hoàn lại — áp dụng cho mọi nhóm hàng
+                </p>
+              </div>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={returnDiscount}
+                  disabled={!returnDiscountLoaded}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d*([.,]\d*)?$/.test(v)) setReturnDiscount(v.replace(',', '.'));
+                  }}
+                  placeholder="0"
+                  className="w-20 min-w-[5rem] rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-medium focus:border-[#004785] focus:outline-none disabled:opacity-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                />
+                <span className="text-sm font-medium text-slate-500 dark:text-[#999999]">%</span>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSaveDiscount}
+                disabled={savingDiscount || !returnDiscountLoaded}
+                className="flex items-center gap-1.5"
+              >
+                <Icon name="save" size={16} />
+                {savingDiscount ? 'Đang lưu...' : 'Áp dụng'}
+              </Button>
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={returnDiscount}
-                disabled={!returnDiscountLoaded}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v === '' || /^\d*([.,]\d*)?$/.test(v)) setReturnDiscount(v.replace(',', '.'));
-                }}
-                placeholder="0"
-                className="w-20 min-w-[5rem] rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-medium focus:border-[#004785] focus:outline-none disabled:opacity-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
-              />
-              <span className="text-sm font-medium text-slate-500 dark:text-[#999999]">%</span>
-            </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleSaveDiscount}
-              disabled={savingDiscount || !returnDiscountLoaded}
-              className="flex items-center gap-1.5"
-            >
-              <Icon name="save" size={16} />
-              {savingDiscount ? 'Đang lưu...' : 'Áp dụng'}
-            </Button>
-          </div>
+          {discountMsg && (
+            <p className="mt-2 text-xs font-medium text-green-700 dark:text-green-400">{discountMsg}</p>
+          )}
+          <p className="mt-1.5 text-xs text-slate-400 dark:text-[#808080]">
+            Vd 10% → khách trả hàng hoàn 1.000.000đ sẽ nhận 900.000đ. Để trống = không chiết khấu.
+          </p>
         </div>
-        {discountMsg && (
-          <p className="mt-2 text-xs font-medium text-green-700 dark:text-green-400">{discountMsg}</p>
-        )}
-        <p className="mt-1.5 text-xs text-slate-400 dark:text-[#808080]">
-          Vd 10% → khách trả hàng hoàn 1.000.000đ sẽ nhận 900.000đ. Để trống = không chiết khấu.
-        </p>
-      </div>
+      )}
 
       {configuredEntries.length === 0 ? (
         <div className="py-8 text-center text-sm text-slate-400 dark:text-[#808080]">
