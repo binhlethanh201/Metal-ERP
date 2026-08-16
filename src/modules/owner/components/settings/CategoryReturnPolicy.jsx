@@ -113,6 +113,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
   const [returnDiscountLoaded, setReturnDiscountLoaded] = useState(false);
   const [savingDiscount, setSavingDiscount] = useState(false);
   const [discountMsg, setDiscountMsg] = useState(null);
+  const [isDiscountApplied, setIsDiscountApplied] = useState(false);
 
   const getCategoryName = (cat) => {
     if (typeof cat === 'string') return cat;
@@ -249,7 +250,10 @@ const CategoryReturnPolicy = ({ branchId }) => {
       try {
         const res = await branchSettingsService.getReturnDiscount(branchId);
         const val = res?.data?.returnDiscountPercent;
-        if (!cancelled) setReturnDiscount(val != null ? String(val) : '');
+        if (!cancelled) {
+          setReturnDiscount(val != null ? String(val) : '');
+          if (val != null && val !== '') setIsDiscountApplied(true);
+        }
       } catch {
         if (!cancelled) setReturnDiscount('');
       } finally {
@@ -279,6 +283,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
       await branchSettingsService.updateReturnDiscount(branchId, value);
       syncDiscountToLocal(returnDiscount);
       setDiscountMsg('Đã lưu chiết khấu trả hàng.');
+      setIsDiscountApplied(true);
     } catch (e) {
       alert('Không thể lưu chiết khấu trả hàng. Vui lòng thử lại.');
     } finally {
@@ -353,12 +358,15 @@ const CategoryReturnPolicy = ({ branchId }) => {
         </div>
       )}
 
-      {/* Chiết khấu trả hàng — áp dụng cho cả cửa hàng (ĐÃ ẨN THEO YÊU CẦU) */}
-      {false && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-900/10">
+      {/* Chiết khấu trả hàng — áp dụng cho cả cửa hàng */}
+      <div className={`mb-4 rounded-lg border p-4 transition-colors ${
+        isDiscountApplied 
+          ? 'border-green-200 bg-green-50 dark:border-green-900/40 dark:bg-green-900/10' 
+          : 'border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-900/10'
+      }`}>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Icon name="sell" size={18} className="text-amber-600 dark:text-amber-400" />
+              <Icon name="sell" size={18} className={isDiscountApplied ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'} />
               <div>
                 <p className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
                   Chiết khấu trả hàng
@@ -374,26 +382,38 @@ const CategoryReturnPolicy = ({ branchId }) => {
                   type="text"
                   inputMode="decimal"
                   value={returnDiscount}
-                  disabled={!returnDiscountLoaded}
+                  disabled={!returnDiscountLoaded || isDiscountApplied}
                   onChange={(e) => {
                     const v = e.target.value;
                     if (v === '' || /^\d*([.,]\d*)?$/.test(v)) setReturnDiscount(v.replace(',', '.'));
                   }}
                   placeholder="0"
-                  className="w-20 min-w-[5rem] rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-medium focus:border-[#004785] focus:outline-none disabled:opacity-50 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5]"
+                  className="w-20 min-w-[5rem] rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-medium focus:border-[#004785] focus:outline-none disabled:opacity-50 disabled:bg-slate-100 disabled:text-slate-700 dark:border-[#404040] dark:bg-[#1a1a1a] dark:text-[#e5e5e5] dark:disabled:bg-[#2a2a2a] dark:disabled:text-[#a3a3a3]"
                 />
                 <span className="text-sm font-medium text-slate-500 dark:text-[#999999]">%</span>
               </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleSaveDiscount}
-                disabled={savingDiscount || !returnDiscountLoaded}
-                className="flex items-center gap-1.5"
-              >
-                <Icon name="save" size={16} />
-                {savingDiscount ? 'Đang lưu...' : 'Áp dụng'}
-              </Button>
+              {isDiscountApplied ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsDiscountApplied(false)}
+                  className="flex items-center gap-1.5 border-green-600 text-green-700 hover:bg-green-100 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/50"
+                >
+                  <Icon name="edit" size={16} />
+                  Chỉnh sửa
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveDiscount}
+                  disabled={savingDiscount || !returnDiscountLoaded}
+                  className="flex items-center gap-1.5"
+                >
+                  <Icon name="save" size={16} />
+                  {savingDiscount ? 'Đang lưu...' : 'Áp dụng'}
+                </Button>
+              )}
             </div>
           </div>
           {discountMsg && (
@@ -403,7 +423,6 @@ const CategoryReturnPolicy = ({ branchId }) => {
             Vd 10% → khách trả hàng hoàn 1.000.000đ sẽ nhận 900.000đ. Để trống = không chiết khấu.
           </p>
         </div>
-      )}
 
       {configuredEntries.length === 0 ? (
         <div className="py-8 text-center text-sm text-slate-400 dark:text-[#808080]">

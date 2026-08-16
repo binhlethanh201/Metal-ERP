@@ -14,7 +14,7 @@ const normalizePosProduct = (p) => {
   const rawConvUnits = p.ConversionUnits ?? p.conversionUnits ?? [];
   const rawStock = parseFloat(p.AvailableStock ?? p.availableStock ?? p.quantity ?? p.stock ?? 0);
   const warrantyQty = parseFloat(p.WarrantyQuantity ?? p.warrantyQuantity ?? 0);
-  const sellable = Math.max(0, rawStock - warrantyQty);
+  const sellable = Math.max(0, rawStock); // Bỏ qua warrantyQty theo yêu cầu của user
   return {
     productId: p.ProductId ?? p.productId ?? p.id ?? '',
     productCode: p.ProductCode ?? p.productCode ?? '',

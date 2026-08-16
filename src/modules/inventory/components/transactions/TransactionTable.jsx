@@ -182,7 +182,7 @@ export const TransactionTable = ({
                     onClick={() => onViewDetail?.(row)}
                   >
                     <td className="px-4 py-3">
-                      <TransactionTypeBadge type={row.type} size="sm" />
+                      <TransactionTypeBadge type={row.ticketType || row.type} size="sm" />
                     </td>
                     <td className="px-4 py-3 font-mono font-medium text-slate-900 dark:text-[#e5e5e5]">
                       {row.ticketCode || '-'}

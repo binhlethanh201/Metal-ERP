@@ -45,6 +45,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [returnDiscountPercent, setReturnDiscountPercent] = useState(0);
 
   // === Đổi hàng chênh lệch (SP B + Delta) — dùng khi returnType = EXCHANGE ===
   const [newItems, setNewItems] = useState([]); // SP B: hàng mới xuất cho khách
@@ -146,6 +147,24 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
   // Fetch policies từ backend POS khi mở modal, fallback localStorage
   useEffect(() => {
     if (!isOpen) return;
+
+    // Fetch discount percent
+    apiPosGet('/pos/returns/discount-percent')
+      .then((res) => {
+        const data = res?.data || res;
+        if (data && data.returnDiscountPercent != null) {
+          setReturnDiscountPercent(data.returnDiscountPercent);
+          try { localStorage.setItem('pos_return_discount_percent', data.returnDiscountPercent); } catch {}
+        }
+      })
+      .catch(() => {
+        try {
+          const v = localStorage.getItem('pos_return_discount_percent');
+          const n = v ? parseFloat(v) : 0;
+          setReturnDiscountPercent(!isNaN(n) && n > 0 ? n : 0);
+        } catch {}
+      });
+
     apiPosGet('/pos/returns/category-policies')
       .then((res) => {
         const data = res?.data || res;
@@ -237,16 +256,6 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     return result;
   };
   const subtotal = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
-  // Chiết khấu trả hàng branch-level (owner settings đồng bộ xuống localStorage)
-  const returnDiscountPercent = (() => {
-    try {
-      const v = localStorage.getItem('pos_return_discount_percent');
-      const n = v ? parseFloat(v) : 0;
-      return !isNaN(n) && n > 0 ? n : 0;
-    } catch {
-      return 0;
-    }
-  })();
   const discountPortion = subtotal * (returnDiscountPercent / 100);
   const totalRefund = Math.max(0, subtotal - discountPortion);
 

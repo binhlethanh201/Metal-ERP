@@ -49,6 +49,8 @@ const renderTicketTypeLabel = (ticketType, type) => {
       return 'Xuất hủy / Hao hụt';
     case 'TRANSFER':
       return 'Xuất điều chuyển nội bộ';
+    case 'SALE':
+      return 'Xuất kho bán';
     default:
       return type === 'INWARD' ? 'Nhập kho thông thường' : 'Xuất kho thông thường';
   }

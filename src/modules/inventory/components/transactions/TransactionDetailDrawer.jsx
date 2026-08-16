@@ -299,7 +299,7 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                     <Package className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase tracking-wide">Loại phiếu</span>
                   </div>
-                  <TransactionTypeBadge type={transaction.type} />
+                  <TransactionTypeBadge type={transaction.ticketType || transaction.type} />
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#333333] dark:bg-[#1a1a1a]">

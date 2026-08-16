@@ -12,6 +12,10 @@ const DOC_TYPE_LABELS = {
   BALANCE_ADJUST: 'Điều chỉnh tồn',
   WRITE_OFF: 'Xuất hủy',
   TRANSFER: 'Chuyển kho',
+  EXCHANGE_IN: 'Nhập đổi hàng',
+  EXCHANGE_OUT: 'Xuất đổi hàng',
+  DEFECTIVE_HOLD: 'Tạm giữ hàng lỗi',
+  CUSTOMER_RETURN_DEFECTIVE: 'Khách trả hàng lỗi',
 };
 
 export const InventoryLedgerModal = ({

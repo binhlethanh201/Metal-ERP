@@ -2,6 +2,31 @@ import { useMemo } from 'react';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 const typeConfig = {
+  // Inward Types
+  PURCHASE: {
+    label: 'Nhập hàng',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-900/50',
+    textColor: 'text-emerald-700 dark:text-emerald-300',
+    borderColor: 'border-emerald-200 dark:border-emerald-800',
+    icon: ArrowDownLeft,
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
+  },
+  CUSTOMER_RETURN: {
+    label: 'Khách trả hàng',
+    bgColor: 'bg-amber-50 dark:bg-amber-900/50',
+    textColor: 'text-amber-700 dark:text-amber-300',
+    borderColor: 'border-amber-200 dark:border-amber-800',
+    icon: ArrowDownLeft,
+    iconBg: 'bg-amber-100 dark:bg-amber-900/50',
+  },
+  EXCHANGE_IN: {
+    label: 'Khách đổi hàng',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-900/50',
+    textColor: 'text-emerald-700 dark:text-emerald-300',
+    borderColor: 'border-emerald-200 dark:border-emerald-800',
+    icon: ArrowDownLeft,
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
+  },
   INWARD: {
     label: 'Nhập kho',
     bgColor: 'bg-emerald-50 dark:bg-emerald-900/50',
@@ -9,6 +34,48 @@ const typeConfig = {
     borderColor: 'border-emerald-200 dark:border-emerald-800',
     icon: ArrowDownLeft,
     iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
+  },
+  
+  // Outward Types
+  SALE: {
+    label: 'Bán hàng',
+    bgColor: 'bg-blue-50 dark:bg-blue-900/50',
+    textColor: 'text-blue-700 dark:text-blue-300',
+    borderColor: 'border-blue-200 dark:border-blue-800',
+    icon: ArrowUpRight,
+    iconBg: 'bg-blue-100 dark:bg-blue-900/50',
+  },
+  EXCHANGE_OUT: {
+    label: 'Xuất hàng đổi',
+    bgColor: 'bg-blue-50 dark:bg-blue-900/50',
+    textColor: 'text-blue-700 dark:text-blue-300',
+    borderColor: 'border-blue-200 dark:border-blue-800',
+    icon: ArrowUpRight,
+    iconBg: 'bg-blue-100 dark:bg-blue-900/50',
+  },
+  RETURN_SUPPLIER: {
+    label: 'Trả NCC',
+    bgColor: 'bg-rose-50 dark:bg-rose-900/50',
+    textColor: 'text-rose-700 dark:text-rose-300',
+    borderColor: 'border-rose-200 dark:border-rose-800',
+    icon: ArrowUpRight,
+    iconBg: 'bg-rose-100 dark:bg-rose-900/50',
+  },
+  WRITE_OFF: {
+    label: 'Xuất hủy',
+    bgColor: 'bg-stone-50 dark:bg-stone-900/50',
+    textColor: 'text-stone-700 dark:text-stone-300',
+    borderColor: 'border-stone-200 dark:border-stone-800',
+    icon: ArrowUpRight,
+    iconBg: 'bg-stone-100 dark:bg-stone-900/50',
+  },
+  TRANSFER: {
+    label: 'Xuất nội bộ',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-900/50',
+    textColor: 'text-indigo-700 dark:text-indigo-300',
+    borderColor: 'border-indigo-200 dark:border-indigo-800',
+    icon: ArrowUpRight,
+    iconBg: 'bg-indigo-100 dark:bg-indigo-900/50',
   },
   OUTWARD: {
     label: 'Xuất kho',
