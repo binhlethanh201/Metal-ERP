@@ -15,6 +15,7 @@ import {
   getOutwardInventories,
   getProductsLookup,
   getInwardBySupplier,
+  getInwardInventories,
   getInwardReturnableItems,
 } from '../services/inventoryService';
 import { getSuppliers } from '../services/supplierService';
@@ -143,6 +144,11 @@ export const StockExport = () => {
   const [loadingInwardTickets, setLoadingInwardTickets] = useState(false);
   const [inwardTicketSearch, setInwardTicketSearch] = useState('');
   const [inwardDropdownOpen, setInwardDropdownOpen] = useState(false);
+  const [inwardSearchMode, setInwardSearchMode] = useState('supplier'); // 'supplier' | 'product' | 'code'
+  // ref chặn effect clear/refetch khi NCC được auto-set từ việc chọn đơn (scope "tất cả đơn")
+  const suppressInwardEffectRef = useRef(false);
+  // ref tránh fetch lại "tất cả đơn nhập" liên tục mỗi lần mở dropdown
+  const allInwardLoadedRef = useRef(false);
   const [reasonType, setReasonType] = useState('Xuất trả nhà cung cấp');
   const [note, setNote] = useState('');
 
@@ -162,6 +168,18 @@ export const StockExport = () => {
       return name.includes(kw) || code.includes(kw);
     });
   }, [products, items, productSearch]);
+
+  // Map supplierId -> tên NCC (backend không trả supplierName trong list đơn nhập)
+  const supplierMap = useMemo(() => {
+    const map = {};
+    suppliers.forEach((s) => {
+      const id = s.id || s.supplierId;
+      if (id) map[String(id)] = s.supplierName || s.name || s.fullName || s.companyName || '';
+    });
+    return map;
+  }, [suppliers]);
+
+  const supplierNameOf = (val) => (typeof val === 'string' ? val : '') || '';
 
   const loadData = async (filterParams = {}) => {
     setIsLoading(true);
@@ -230,6 +248,9 @@ export const StockExport = () => {
     setInwardTickets([]);
     setSelectedInwardTicket(null);
     setInwardTicketSearch('');
+    setInwardSearchMode('supplier');
+    allInwardLoadedRef.current = false;
+    suppressInwardEffectRef.current = false;
     setReasonType('Xuất trả nhà cung cấp');
     setNote('');
     setItems([]);
@@ -247,8 +268,19 @@ export const StockExport = () => {
 
   // Fetch inward tickets when supplier is selected (for Return to Supplier)
   useEffect(() => {
-    if (!selectedSupplier || targetType !== 'Nhà cung cấp') {
+    // NCC được auto-set từ việc chọn đơn (scope "tất cả đơn") -> không clear/refetch
+    if (suppressInwardEffectRef.current) {
+      suppressInwardEffectRef.current = false;
+      return;
+    }
+    if (targetType !== 'Nhà cung cấp') {
       setInwardTickets([]);
+      setSelectedInwardTicket(null);
+      return;
+    }
+    if (!selectedSupplier) {
+      // Chưa chọn NCC -> sẽ tải tất cả đơn khi mở dropdown; reset cờ để refetch lần sau
+      allInwardLoadedRef.current = false;
       setSelectedInwardTicket(null);
       return;
     }
@@ -268,6 +300,13 @@ export const StockExport = () => {
     };
     fetchInwardTickets();
   }, [selectedSupplier, targetType]);
+
+  // Khi đã chọn NCC -> ẩn chế độ "Tên NCC", ép về "Mã đơn" nếu đang ở đó
+  useEffect(() => {
+    if (selectedSupplier && inwardSearchMode === 'supplier') {
+      setInwardSearchMode('code');
+    }
+  }, [selectedSupplier, inwardSearchMode]);
 
   const handleInwardTicketChange = async (ticketId) => {
     if (!ticketId) {
@@ -303,15 +342,73 @@ export const StockExport = () => {
     }
   };
 
+  // Tải tất cả đơn nhập (dùng cho scope rộng khi chưa chọn NCC)
+  // Lọc server-side: chỉ đơn PURCHASE + COMPLETED (khớp điều kiện trả hàng).
+  // Controller cap pageSize=100 -> tối đa 100 đơn gần nhất.
+  const fetchAllInwardTickets = async () => {
+    setLoadingInwardTickets(true);
+    try {
+      const res = await getInwardInventories({
+        status: 'COMPLETED',
+        ticketType: 'PURCHASE',
+        pageSize: 100,
+      });
+      setInwardTickets(extractList(res));
+      allInwardLoadedRef.current = true;
+    } catch {
+      setInwardTickets([]);
+    } finally {
+      setLoadingInwardTickets(false);
+    }
+  };
+
+  // Chọn 1 đơn từ dropdown. Nếu chưa set NCC -> tự set NCC theo đơn đó.
+  const handleSelectInwardTicket = (t) => {
+    const tId = t.stockTicketId || t.ticketId;
+    if (!selectedSupplier && t.supplierId) {
+      const s = suppliers.find((x) => String(x.id || x.supplierId) === String(t.supplierId));
+      if (s) {
+        // chặn effect clear/refetch khi NCC được auto-set
+        suppressInwardEffectRef.current = true;
+        setSelectedSupplier(s);
+        setTargetName(s.supplierName || s.name || s.fullName || s.companyName || '');
+        setFieldErrors((prev) => ({ ...prev, targetName: false }));
+        // Thu hẹp danh sách về đơn của NCC này (tránh hiện đơn NCC khác khi mở lại)
+        const sid = String(s.id || s.supplierId);
+        setInwardTickets((prev) =>
+          prev.filter((x) => String(x.supplierId || x.SupplierId || '') === sid)
+        );
+      }
+    }
+    handleInwardTicketChange(tId);
+    setInwardDropdownOpen(false);
+    setInwardTicketSearch('');
+  };
+
   const filteredInwardTickets = useMemo(() => {
     const kw = inwardTicketSearch.toLowerCase().trim();
     return inwardTickets.filter((t) => {
       if (!kw) return true;
-      const code = (t.ticketCode || t.TicketCode || '').toLowerCase();
-      const date = t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : '';
-      return code.includes(kw) || date.includes(kw);
+      if (inwardSearchMode === 'code') {
+        const code = (t.ticketCode || t.TicketCode || '').toLowerCase();
+        const date = t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : '';
+        return code.includes(kw) || date.includes(kw);
+      }
+      if (inwardSearchMode === 'product') {
+        const items = Array.isArray(t.items) ? t.items : Array.isArray(t.Items) ? t.Items : [];
+        return items.some((i) =>
+          String(i.productName || i.ProductName || '').toLowerCase().includes(kw)
+        );
+      }
+      // supplier
+      const sid = String(t.supplierId || t.SupplierId || '');
+      const supName =
+        supplierNameOf(t.supplierName || t.SupplierName) ||
+        supplierNameOf(supplierMap[sid]) ||
+        supplierNameOf(t.supplier?.supplierName || t.supplier?.name);
+      return String(supName).toLowerCase().includes(kw);
     });
-  }, [inwardTickets, inwardTicketSearch]);
+  }, [inwardTickets, inwardTicketSearch, inwardSearchMode, supplierMap]);
 
   const resolvedReason = reasonType;
 
@@ -964,45 +1061,49 @@ export const StockExport = () => {
             {/* Tên đối tượng */}
             {targetType !== '__other__' && (
               <div className="mt-3">
-                <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
-                  {targetType === 'Nhà cung cấp' ? 'Tên nhà cung cấp' : 'Tên đơn vị / bộ phận'}{' '}
-                  <span className="text-red-500">*</span>
-                </label>
+                {!(targetType === 'Nhà cung cấp' && reasonType === 'Xuất trả nhà cung cấp') && (
+                  <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
+                    {targetType === 'Nhà cung cấp' ? 'Tên nhà cung cấp' : 'Tên đơn vị / bộ phận'}{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
+                )}
                 {targetType === 'Nhà cung cấp' ? (
                   <>
-                    <select
-                      className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName
+                    {reasonType !== 'Xuất trả nhà cung cấp' && (
+                      <select
+                        className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-200 ${fieldErrors.targetName
                           ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
                           : 'border-slate-300 dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]'
                         }`}
-                      value={
-                        selectedSupplier ? selectedSupplier.id || selectedSupplier.supplierId || '' : ''
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (!val) {
-                          setSelectedSupplier(null);
-                          setTargetName('');
-                          return;
+                        value={
+                          selectedSupplier ? selectedSupplier.id || selectedSupplier.supplierId || '' : ''
                         }
-                        const s = suppliers.find((x) => (x.id || x.supplierId) === val);
-                        setSelectedSupplier(s || null);
-                        setTargetName(s ? (s.supplierName || s.name || s.fullName || s.companyName || '') : '');
-                        setFieldErrors((prev) => ({ ...prev, targetName: false }));
-                      }}
-                    >
-                      <option value="">-- Chọn nhà cung cấp --</option>
-                      {suppliers.map((s) => (
-                        <option
-                          key={s.id || s.supplierId}
-                          value={s.id || s.supplierId}
-                        >
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (!val) {
+                            setSelectedSupplier(null);
+                            setTargetName('');
+                            return;
+                          }
+                          const s = suppliers.find((x) => (x.id || x.supplierId) === val);
+                          setSelectedSupplier(s || null);
+                          setTargetName(s ? (s.supplierName || s.name || s.fullName || s.companyName || '') : '');
+                          setFieldErrors((prev) => ({ ...prev, targetName: false }));
+                        }}
+                      >
+                        <option value="">-- Chọn nhà cung cấp --</option>
+                        {suppliers.map((s) => (
+                          <option
+                            key={s.id || s.supplierId}
+                            value={s.id || s.supplierId}
+                          >
                           {s.supplierName || s.name || s.fullName || s.companyName || 'NCC'}
                         </option>
                       ))}
-                    </select>
+                      </select>
+                    )}
                     {/* Đơn nhập hàng tham chiếu */}
-                    {reasonType === 'Xuất trả nhà cung cấp' && selectedSupplier && (
+                    {reasonType === 'Xuất trả nhà cung cấp' && (
                       <div className="mt-3">
                         <label className="text-xs font-semibold text-slate-600 dark:text-[#b3b3b3]">
                           Đơn nhập hàng tham chiếu
@@ -1015,6 +1116,10 @@ export const StockExport = () => {
                               if (!loadingInwardTickets) {
                                 setInwardDropdownOpen((o) => !o);
                                 setInwardTicketSearch('');
+                                // Chưa chọn NCC -> tải tất cả đơn nhập (lần đầu mở)
+                                if (!selectedSupplier && !allInwardLoadedRef.current) {
+                                  fetchAllInwardTickets();
+                                }
                               }
                             }}
                             disabled={loadingInwardTickets}
@@ -1033,7 +1138,9 @@ export const StockExport = () => {
                                   })()
                                   : inwardTickets.length === 0
                                     ? '-- Không có đơn nhập nào --'
-                                    : '-- Chọn đơn nhập hàng của NCC này --'}
+                                    : selectedSupplier
+                                      ? '-- Chọn đơn nhập hàng của NCC này --'
+                                      : '-- Chọn đơn nhập hàng (tìm theo NCC / sản phẩm / mã đơn) --'}
                             </span>
                             <Icon
                               name="expand_more"
@@ -1053,6 +1160,30 @@ export const StockExport = () => {
                               />
                               <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-[#333333] dark:bg-[#1a1a1a]">
                                 <div className="border-b border-slate-100 p-3 dark:border-[#333333]">
+                                  {/* Chọn chế độ tìm kiếm */}
+                                  <div className="mb-2 flex gap-1">
+                                    {[
+                                      ...(selectedSupplier ? [] : [{ key: 'supplier', label: 'Tên NCC' }]),
+                                      { key: 'product', label: 'Tên sản phẩm' },
+                                      { key: 'code', label: 'Mã đơn' },
+                                    ].map((m) => (
+                                      <button
+                                        key={m.key}
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setInwardSearchMode(m.key);
+                                          setInwardTicketSearch('');
+                                        }}
+                                        className={`flex-1 rounded-md border-b-2 px-2 py-1.5 text-xs font-medium transition ${inwardSearchMode === m.key
+                                          ? 'border-[#004785] text-[#004785] dark:text-[#7fb3ff]'
+                                          : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-[#b3b3b3]'
+                                          }`}
+                                      >
+                                        {m.label}
+                                      </button>
+                                    ))}
+                                  </div>
                                   <div className="relative">
                                     <Icon
                                       name="search"
@@ -1061,7 +1192,13 @@ export const StockExport = () => {
                                     />
                                     <input
                                       type="text"
-                                      placeholder="Tìm theo mã phiếu hoặc ngày..."
+                                      placeholder={
+                                        inwardSearchMode === 'supplier'
+                                          ? 'Tìm theo tên NCC...'
+                                          : inwardSearchMode === 'product'
+                                            ? 'Tìm theo tên sản phẩm...'
+                                            : 'Tìm theo mã phiếu hoặc ngày...'
+                                      }
                                       className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-[#404040] dark:bg-[#272727] dark:text-[#e5e5e5]"
                                       value={inwardTicketSearch}
                                       onChange={(e) => setInwardTicketSearch(e.target.value)}
@@ -1082,17 +1219,21 @@ export const StockExport = () => {
                                     filteredInwardTickets.map((t) => {
                                       const tId = t.stockTicketId || t.ticketId;
                                       const isSelected = selectedInwardTicket?.ticketId === tId;
+                                      const itemsArr = Array.isArray(t.items) ? t.items : Array.isArray(t.Items) ? t.Items : [];
+                                      const count = t.itemsCount || t.ItemsCount || itemsArr.length || 0;
+                                      const sid = String(t.supplierId || t.SupplierId || '');
+                                      const nccName =
+                                        supplierNameOf(t.supplierName || t.SupplierName) ||
+                                        supplierNameOf(supplierMap[sid]) ||
+                                        supplierNameOf(t.supplier?.supplierName || t.supplier?.name) ||
+                                        '—';
                                       return (
                                         <button
                                           key={tId}
                                           type="button"
                                           className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-blue-50 dark:hover:bg-[#333333] ${isSelected ? 'bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400' : 'text-slate-700 dark:text-[#e5e5e5]'
                                             }`}
-                                          onClick={() => {
-                                            handleInwardTicketChange(tId);
-                                            setInwardDropdownOpen(false);
-                                            setInwardTicketSearch('');
-                                          }}
+                                          onClick={() => handleSelectInwardTicket(t)}
                                         >
                                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500 dark:bg-[#272727] dark:text-[#b3b3b3]">
                                             <Icon name="receipt_long" size={16} />
@@ -1101,8 +1242,13 @@ export const StockExport = () => {
                                             <div className="truncate font-medium">
                                               {t.ticketCode || t.TicketCode}
                                             </div>
-                                            <div className="text-xs text-slate-400">
-                                              {t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : ''} - {t.itemsCount || t.ItemsCount || 0} sản phẩm
+                                            <div className="truncate text-xs text-slate-400">
+                                              {t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : ''} - {count} sản phẩm
+                                              {!selectedSupplier && (
+                                                <span className="ml-1 font-medium text-slate-500 dark:text-[#b3b3b3]">
+                                                  · NCC: {nccName}
+                                                </span>
+                                              )}
                                             </div>
                                           </div>
                                           {isSelected && (

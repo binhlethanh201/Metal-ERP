@@ -105,7 +105,7 @@ const getCreatorName = (r) => {
   return '-';
 };
 
-// Phân biệt 3 loại đơn: Trả hàng (REFUND) / Đổi chênh (EXCHANGE có SP B) / Bảo hành (EXCHANGE ngang giá, không có SP B).
+// Phân biệt 3 loại đơn: Trả hàng (REFUND) / Đổi chênh (EXCHANGE có SP B) / Đổi hàng (EXCHANGE ngang giá, không có SP B).
 // Backend lưu cả đổi-chênh và bảo hành đều là ReturnType="EXCHANGE" → phân biệt qua ExchangeItems (SP B):
 // exchange-diff CÓ ExchangeItems (kể cả khi ngang giá delta=0); bảo hành KHÔNG có.
 const classifyReturn = (r) => {
@@ -121,7 +121,7 @@ const classifyReturn = (r) => {
   const isExchangeDiff = isExchange && (hasExchangeItems || delta !== 0 || pay > 0 || refundCust > 0);
   const isWarranty = isExchange && !isExchangeDiff; // EXCHANGE ngang giá, không có SP B
   const isRefund = !isExchange;
-  const label = isExchangeDiff ? 'Đổi chênh' : isWarranty ? 'Bảo hành' : 'Trả hàng';
+  const label = isExchangeDiff ? 'Đổi chênh' : isWarranty ? 'Đổi hàng' : 'Trả hàng';
   return { isRefund, isExchange, isExchangeDiff, isWarranty, label };
 };
 
@@ -567,7 +567,7 @@ const ReturnOrderPage = () => {
               <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
-              Bảo hành
+              Đổi hàng
             </span>
           );
         }
@@ -769,7 +769,7 @@ const ReturnOrderPage = () => {
                           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                           </svg>
-                          Bảo hành
+                          Đổi hàng
                         </span>
                       );
                     }
@@ -883,14 +883,14 @@ const ReturnOrderPage = () => {
               if (cls.isExchangeDiff) {
                 return <></>;
               }
-              // Bảo hành (ngang giá, không hoàn tiền)
+              // Đổi hàng (ngang giá, không hoàn tiền)
               return (
                 <div className="mt-3 border-t border-slate-200 pt-3">
                   <div className="flex items-center gap-2 rounded-lg bg-yellow-50 p-3">
                     <svg className="h-5 w-5 shrink-0 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
-                    <p className="text-sm font-medium text-yellow-800">Bảo hành — không hoàn tiền</p>
+                    <p className="text-sm font-medium text-yellow-800">Đổi hàng — không hoàn tiền</p>
                   </div>
                 </div>
               );
