@@ -58,7 +58,7 @@ const PaymentModal = ({
           </div>
           <div className="text-right">
             <span className="text-sm text-slate-500 dark:text-[#999999]">Tổng cộng: </span>
-            <span className="text-xl font-extrabold text-[#004785]">
+            <span className="block text-xl font-extrabold break-words text-[#004785]">
               {formatCurrency(finalTotal)}
             </span>
           </div>
@@ -168,7 +168,7 @@ const PaymentModal = ({
                         if (raw === '' || /^\d+$/.test(raw))
                           onLineChange(line.id, 'amount', raw === '' ? 0 : Number(raw));
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-lg font-bold focus:border-[#004785] focus:outline-none dark:border-[#333333] dark:bg-[#1a1a1a]"
+                      className="min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 px-4 py-2.5 text-base font-bold focus:border-[#004785] focus:outline-none sm:text-lg dark:border-[#333333] dark:bg-[#1a1a1a]"
                     />
                     {remaining > 0 && line.amount < remaining && (
                       <button
@@ -188,29 +188,29 @@ const PaymentModal = ({
           </div>
 
           <div className="mt-5 space-y-2 rounded-lg bg-slate-50 p-4 dark:bg-[#1a1a1a]/50">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Tổng đơn hàng</span>
-              <span className="font-bold text-slate-900 dark:text-[#e5e5e5]">{formatCurrency(finalTotal)}</span>
+            <div className="flex justify-between gap-2 text-sm">
+              <span className="min-w-0 shrink-0 text-slate-500">Tổng đơn hàng</span>
+              <span className="min-w-0 break-words text-right font-bold text-slate-900 dark:text-[#e5e5e5]">{formatCurrency(finalTotal)}</span>
             </div>
-            <div className="flex justify-between border-t border-slate-200 pt-2 text-sm dark:border-[#333333]">
-              <span className="text-slate-500">Đã nhập</span>
-              <span className="font-bold text-slate-900">{formatCurrency(totalPaid)}</span>
+            <div className="flex justify-between gap-2 border-t border-slate-200 pt-2 text-sm dark:border-[#333333]">
+              <span className="min-w-0 shrink-0 text-slate-500">Đã nhập</span>
+              <span className="min-w-0 break-words text-right font-bold text-slate-900">{formatCurrency(totalPaid)}</span>
             </div>
             {remaining > 0 ? (
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-red-500">Còn thiếu</span>
-                <span className="font-bold text-red-600">{formatCurrency(remaining)}</span>
+              <div className="flex justify-between gap-2 text-sm">
+                <span className="min-w-0 shrink-0 font-medium text-red-500">Còn thiếu</span>
+                <span className="min-w-0 break-words text-right font-bold text-red-600">{formatCurrency(remaining)}</span>
               </div>
             ) : (
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-green-600">Đã nhập đủ</span>
+              <div className="flex justify-between gap-2 text-sm">
+                <span className="min-w-0 shrink-0 font-medium text-green-600">Đã nhập đủ</span>
                 <span className="font-bold text-green-600">✔</span>
               </div>
             )}
             {totalPaid > finalTotal && (
-              <div className="mt-2 flex justify-between rounded-lg border-2 border-green-400 bg-green-50 p-3 text-sm dark:border-green-600 dark:bg-green-900/30">
-                <span className="font-bold text-green-800 dark:text-green-400">Tiền thừa trả khách</span>
-                <span className="font-bold text-green-700">
+              <div className="mt-2 flex justify-between gap-2 rounded-lg border-2 border-green-400 bg-green-50 p-3 text-sm dark:border-green-600 dark:bg-green-900/30">
+                <span className="min-w-0 shrink-0 font-bold text-green-800 dark:text-green-400">Tiền thừa trả khách</span>
+                <span className="min-w-0 break-words text-right font-bold text-green-700">
                   + {formatCurrency(totalPaid - finalTotal)}
                 </span>
               </div>

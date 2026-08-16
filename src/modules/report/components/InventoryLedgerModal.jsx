@@ -117,8 +117,8 @@ export const InventoryLedgerModal = ({
                       <td className="px-4 py-3 font-mono font-semibold text-[#004785] dark:text-blue-400">
                         {e.docCode || '---'}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                           e.qtyIn > 0
                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
                             : 'bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400'
