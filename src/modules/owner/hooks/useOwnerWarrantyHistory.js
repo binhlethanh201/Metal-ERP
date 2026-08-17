@@ -2,9 +2,8 @@ import { useState, useCallback } from 'react';
 import {
   getOwnerDefectiveItems,
   getSuggestedSuppliers,
-  assignSupplier,
-  acceptWarrantyReturn,
-  initWarrantyFromReturn,
+  createWarrantyClaim,
+  updateWarrantyClaimStatus,
 } from '../services/ownerWarrantyService';
 
 const STATUS_LABELS = {
@@ -76,11 +75,16 @@ export const useOwnerWarrantyHistory = () => {
   const fetchSuggestedSuppliers = useCallback(async (warrantyId, productId, returnItemId) => {
     let actualWarrantyId = warrantyId;
 
-    // Đơn cũ chưa có WarrantyTicket -> khởi tạo
+    // Đơn cũ chưa có WarrantyClaim -> tạo claim từ return item
     if (!actualWarrantyId && returnItemId) {
       try {
-        const initRes = await initWarrantyFromReturn(returnItemId);
-        actualWarrantyId = initRes?.warrantyTicketId || initRes?.warrantyId;
+        const initRes = await createWarrantyClaim({
+          productId,
+          ticketItemId: returnItemId,
+          quantity: 1,
+          claimType: 'REPAIR',
+        });
+        actualWarrantyId = initRes?.claimId || initRes?.data?.claimId;
         if (actualWarrantyId) {
           setItems((prev) =>
             prev.map((item) =>
@@ -91,7 +95,7 @@ export const useOwnerWarrantyHistory = () => {
           );
         }
       } catch (err) {
-        console.error('Lỗi khởi tạo WarrantyTicket:', err);
+        console.error('Lỗi khởi tạo WarrantyClaim:', err);
         alert('Không thể khởi tạo phiếu bảo hành: ' + (err.message || ''));
         return;
       }
@@ -118,14 +122,16 @@ export const useOwnerWarrantyHistory = () => {
       alert('Vui lòng chọn Nhà cung cấp');
       return;
     }
+    if (!warrantyId) {
+      alert('Phiếu bảo hành chưa được khởi tạo. Vui lòng bấm "Tra cứu NCC" trước.');
+      return;
+    }
     setAssigningId(warrantyId);
     try {
-      const res = await assignSupplier(warrantyId, supplierId, totalClaimQty);
-      // BH một phần: NCC không đủ hạn mức cho toàn bộ SL trả -> backend chỉ BH một phần,
-      // báo rõ cho user biết phần dư không được BH.
-      if (res?.isPartial) {
-        alert(res?.message || `Đã gửi bảo hành một phần: ${res.allocatedQty}/${res.claimQty}.`);
-      }
+      // BE hiện không có endpoint gán NCC cho WarrantyClaim -> chỉ chuyển trạng thái.
+      // Lựa chọn NCC (supplierId/totalClaimQty) KHÔNG được BE persist (gap chức năng).
+      const notes = `Gửi bảo hành cho NCC: ${supplierId}${totalClaimQty ? ` - SL: ${totalClaimQty}` : ''}`;
+      await updateWarrantyClaimStatus(warrantyId, 'AWAITING_SUPPLIER', notes);
       setItems((prev) =>
         prev.map((item) =>
           (item.warrantyId || item.warrantyTicketId || item.returnItemId) === warrantyId
@@ -145,7 +151,7 @@ export const useOwnerWarrantyHistory = () => {
     if (!window.confirm('Xác nhận NCC đã giao hàng bảo hành về kho?')) return;
     setAcceptingId(warrantyId);
     try {
-      await acceptWarrantyReturn(warrantyId);
+      await updateWarrantyClaimStatus(warrantyId, 'COMPLETED');
       setItems((prev) =>
         prev.map((item) =>
           (item.warrantyId || item.id) === warrantyId
