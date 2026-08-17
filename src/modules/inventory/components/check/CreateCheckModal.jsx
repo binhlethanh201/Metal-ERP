@@ -85,7 +85,11 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
     getStaffs({ pageSize: 100 })
       .then((res) => {
         const staffs = res?.data?.items || res?.data || [];
-        const qualified = Array.isArray(staffs) ? [...staffs] : [];
+        const qualified = Array.isArray(staffs) ? staffs.filter(s => {
+          const roles = s.roles || [];
+          const perms = s.permissionCodes || [];
+          return roles.includes('Owner') || perms.includes('STOCK_CHECK_COUNT') || perms.includes('STOCK_CHECK_CREATE');
+        }) : [];
         if ((hasCountPerm || isOwner) && !qualified.find((s) => s.userId === currentUserId)) {
           qualified.unshift(me);
         }

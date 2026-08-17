@@ -73,6 +73,8 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
       return sum + qty * price;
     }, 0) || 0;
   const isReturn = transaction?.ticketType === 'CUSTOMER_RETURN' || transaction?.ticketType === 'RETURN_SUPPLIER';
+  const isExchange = (transaction?.reason || transaction?.note || '').toLowerCase().includes('doi hang');
+  const actualPaidAmount = transaction?.totalAmount !== undefined ? transaction.totalAmount : totalAmount;
 
   const handlePrint = async () => {
     if (!transaction) return;
@@ -441,11 +443,30 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                       </div>
                     </div>
                     {!isReturn && (
-                    <div className="text-right">
-                      <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng tiền</p>
-                      <p className="text-2xl font-bold text-emerald-600">
-                        {formatCurrency(totalAmount)}
-                      </p>
+                    <div className="flex gap-8 text-right">
+                      {isExchange ? (
+                        <>
+                          <div>
+                            <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng thành tiền</p>
+                            <p className="text-lg font-semibold text-slate-700 line-through dark:text-[#b3b3b3]">
+                              {formatCurrency(totalAmount)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 dark:text-[#999999]">Thu thêm (Đổi chênh)</p>
+                            <p className="text-2xl font-bold text-[#004785] dark:text-blue-400">
+                              {formatCurrency(actualPaidAmount)}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng tiền</p>
+                          <p className="text-2xl font-bold text-emerald-600">
+                            {formatCurrency(totalAmount)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                     )}
                   </div>

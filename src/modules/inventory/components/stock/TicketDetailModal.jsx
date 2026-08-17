@@ -272,6 +272,8 @@ export const TicketDetailModal = ({
   const isCancelled = statusUpper === 'CANCELLED';
   const isCustomerReturn = detail?.ticketType === 'CUSTOMER_RETURN';
   const isReturnSupplier = detail?.ticketType === 'RETURN_SUPPLIER';
+  const isSale = detail?.ticketType === 'SALE';
+  const isExchange = isSale && (detail?.reason || detail?.note || '').toLowerCase().includes('doi hang');
   const hasInwardRef = isReturnSupplier && !!detail?.inwardTicketId;
   const hidePriceFields = isCustomerReturn || isReturnSupplier;
 
@@ -670,6 +672,23 @@ export const TicketDetailModal = ({
                         })
                       )}
                     </tbody>
+                    {isExchange && detail?.totalAmount > 0 && (
+                      <tfoot className="border-t-2 border-slate-200 dark:border-[#333333]">
+                        <tr>
+                          <td
+                            colSpan={
+                              isCompleted && !hasInwardRef ? 7 : (isCompleted && hasInwardRef ? 7 : 5)
+                            }
+                            className="px-3 py-3 text-right font-bold text-slate-800 dark:text-[#d4d4d4]"
+                          >
+                            Thu thêm từ khách (Đổi chênh):
+                          </td>
+                          <td className="px-3 py-3 text-right font-extrabold text-[#004785] dark:text-[#3b82f6]">
+                            {formatCurrency(detail.totalAmount)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               </div>
