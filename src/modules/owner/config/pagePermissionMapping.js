@@ -53,7 +53,7 @@ export const PAGE_PERMISSION_GROUPS = [
     category: 'Bán hàng',
     viewPermission: '',
     subPermissions: [
-      { codes: ['SALE_CREATE', 'SALE_UPDATE', 'PAYMENT_CREATE', 'PAYMENT_VIEW', 'PRINT_VIEW', 'PROMOTION_VIEW', 'CUSTOMER_VIEW', 'CUSTOMER_CREATE', 'CUSTOMER_UPDATE', 'CUSTOMER_DELETE'], label: 'Bán hàng' },
+      { codes: ['SALE_VIEW', 'SALE_CREATE', 'SALE_UPDATE', 'SALE_DELETE', 'PAYMENT_CREATE', 'PAYMENT_VIEW', 'PRINT_VIEW', 'PROMOTION_VIEW', 'CUSTOMER_VIEW', 'CUSTOMER_CREATE', 'CUSTOMER_UPDATE', 'CUSTOMER_DELETE'], label: 'Bán hàng' },
       { codes: ['SHIFT_CREATE', 'SHIFT_UPDATE', 'SHIFT_FORCE_CLOSE'], label: 'Quản lý ca bán (POS)' },
     ],
   },
