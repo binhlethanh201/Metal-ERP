@@ -178,6 +178,19 @@ const OwnerAuditLogsPage = () => {
   SOFT: 'Mềm',
   HARD: 'Cứng',
   PERMANENT: 'Vĩnh viễn',
+  FINALIZE: 'Hoàn tất',
+  RECORD: 'Ghi nhận',
+  EXCHANGE: 'Đổi hàng',
+  MO_CA: 'Mở ca',
+  CHOT_CA: 'Chốt ca',
+  CHOT_CA_HO: 'Chốt ca hộ',
+  TU_DONG_CHOT_CA: 'Tự động chốt ca',
+  OWNER: 'Chủ cửa hàng',
+  ACCOUNT: 'Tài khoản',
+  USER: 'Người dùng',
+  TICKET: 'Phiếu',
+  INVENTORY: 'Tồn kho',
+  TRANSFER: 'Chuyển kho',
 };
 
 const stripDiacritics = (str) =>

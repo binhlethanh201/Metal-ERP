@@ -465,7 +465,7 @@ export const ShiftManagement = () => {
                 .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
             }
           }
-        } catch {}
+        } catch { }
 
         const isMatch = methodKeywords.some(kw => pm.toLowerCase() === kw.toLowerCase());
         return isMatch ? order.totalAmount : 0;
@@ -610,7 +610,7 @@ export const ShiftManagement = () => {
               prev ? { ...prev, orderCount: ss.orderCount, totalSales: ss.totalSales } : prev
             );
           }
-        } catch (_) {}
+        } catch (_) { }
       }, 2000);
       return () => clearInterval(interval);
     } else {
@@ -728,12 +728,12 @@ export const ShiftManagement = () => {
         ...endResult,
         ...(shiftSummary
           ? {
-              totalRevenue: shiftSummary.totalSales,
-              totalOrders: shiftSummary.orderCount,
-              cashSales: shiftSummary.cashSales,
-              cardSales: shiftSummary.cardSales,
-              transferSales: shiftSummary.transferSales,
-            }
+            totalRevenue: shiftSummary.totalSales,
+            totalOrders: shiftSummary.orderCount,
+            cashSales: shiftSummary.cashSales,
+            cardSales: shiftSummary.cardSales,
+            transferSales: shiftSummary.transferSales,
+          }
           : {}),
         startedAt:
           endResult.startedAt || endResult.startTime || endResult.createdAt || openShift.startedAt,
@@ -992,8 +992,8 @@ export const ShiftManagement = () => {
                 <p className="mt-1 truncate text-lg font-extrabold text-amber-700">
                   {formatCurrency(
                     (displayShift.openingBalance || 0) +
-                      (displayShift.cashSales || 0) +
-                      (displayShift.transferSales || 0)
+                    (displayShift.cashSales || 0) +
+                    (displayShift.transferSales || 0)
                   )}
                 </p>
                 <p className="mt-0.5 truncate text-[10px] text-amber-500/80">
@@ -1125,16 +1125,16 @@ export const ShiftManagement = () => {
                                     +{formatCurrency(act.amount)}
                                   </span>
                                   <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-[#272727] dark:text-[#999999]">
-                                  {act.paymentMethod === 'CASH' || act.paymentMethod === 'Cash' || act.paymentMethod === 'Tiền mặt'
-                                    ? 'Tiền mặt'
-                                    : act.paymentMethod === 'TRANSFER' || act.paymentMethod === 'Transfer' || act.paymentMethod === 'Chuyển khoản'
-                                      ? 'CK'
-                                      : act.paymentMethod === 'CARD' || act.paymentMethod === 'Card' || act.paymentMethod === 'Thẻ'
-                                        ? 'Thẻ'
-                                        : act.paymentMethod === 'COMBINED' || act.paymentMethod === 'Combined' || act.paymentMethod === 'Kết hợp' || (act.paymentMethod && act.paymentMethod.startsWith('['))
-                                          ? 'Kết hợp'
-                                          : act.paymentMethod || '-'}
-                                </span>
+                                    {act.paymentMethod === 'CASH' || act.paymentMethod === 'Cash' || act.paymentMethod === 'Tiền mặt'
+                                      ? 'Tiền mặt'
+                                      : act.paymentMethod === 'TRANSFER' || act.paymentMethod === 'Transfer' || act.paymentMethod === 'Chuyển khoản'
+                                        ? 'CK'
+                                        : act.paymentMethod === 'CARD' || act.paymentMethod === 'Card' || act.paymentMethod === 'Thẻ'
+                                          ? 'Thẻ'
+                                          : act.paymentMethod === 'COMBINED' || act.paymentMethod === 'Combined' || act.paymentMethod === 'Kết hợp' || (act.paymentMethod && act.paymentMethod.startsWith('['))
+                                            ? 'Kết hợp'
+                                            : act.paymentMethod || '-'}
+                                  </span>
                                 </div>
                                 {act.cashReceived > 0 && act.changeAmount > 0 && (
                                   <span className="text-[10px] text-slate-400 dark:text-[#808080]">
@@ -1238,12 +1238,12 @@ export const ShiftManagement = () => {
                     return rDate >= new Date(openShift.startedAt).getTime();
                   }).length >
                   3 && (
-                  <div className="mt-2 text-center">
-                    <span className="text-[10px] font-medium text-slate-400">
-                      ⋮ kéo xuống để xem thêm ⋮
-                    </span>
-                  </div>
-                )}
+                    <div className="mt-2 text-center">
+                      <span className="text-[10px] font-medium text-slate-400">
+                        ⋮ kéo xuống để xem thêm ⋮
+                      </span>
+                    </div>
+                  )}
               </div>
             )}
             {ordersLoading && (
@@ -1302,11 +1302,10 @@ export const ShiftManagement = () => {
               <button
                 type="button"
                 onClick={() => setDateFilter(toLocalDateStr(new Date()))}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${
-                  dateFilter === toLocalDateStr(new Date())
+                className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${dateFilter === toLocalDateStr(new Date())
                     ? 'border-[#004785] bg-[#004785] text-white'
                     : 'border-slate-200 text-slate-500 hover:border-slate-300 dark:border-[#333333] dark:text-[#999999] dark:hover:border-[#404040]'
-                }`}
+                  }`}
               >
                 Hôm nay
               </button>
@@ -1403,8 +1402,8 @@ export const ShiftManagement = () => {
               value={
                 startForm.openingBalance
                   ? (isNaN(Number(startForm.openingBalance))
-                      ? ''
-                      : Number(startForm.openingBalance).toLocaleString('vi-VN'))
+                    ? ''
+                    : Number(startForm.openingBalance).toLocaleString('vi-VN'))
                   : ''
               }
               onChange={(e) => {
@@ -1585,8 +1584,8 @@ export const ShiftManagement = () => {
                   <span className="truncate text-xl font-extrabold text-amber-700">
                     {formatCurrency(
                       (displayShift?.openingBalance || 0) +
-                        (displayShift?.cashSales || 0) +
-                        (displayShift?.transferSales || 0)
+                      (displayShift?.cashSales || 0) +
+                      (displayShift?.transferSales || 0)
                     )}
                   </span>
                   <span className="shrink-0 text-xs text-amber-500">VNĐ</span>
@@ -1751,11 +1750,10 @@ export const ShiftManagement = () => {
 
                     return (
                       <div
-                        className={`mt-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium ${
-                          actualAmount >= expectedAmount
+                        className={`mt-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium ${actualAmount >= expectedAmount
                             ? 'bg-emerald-50 text-emerald-700'
                             : 'bg-amber-50 text-amber-700'
-                        } ${!isReasonable ? '!bg-red-50 !text-red-700' : ''}`}
+                          } ${!isReasonable ? '!bg-red-50 !text-red-700' : ''}`}
                       >
                         {!isReasonable ? (
                           <>

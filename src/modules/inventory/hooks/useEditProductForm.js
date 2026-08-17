@@ -359,6 +359,13 @@ export const useEditProductForm = ({
         }
         return updated;
       }
+      if (field === 'salePrice') {
+        return {
+          ...c,
+          salePrice: value,
+          baseUnit: { ...c.baseUnit, price: value },
+        };
+      }
       return { ...c, [field]: value };
     });
 
