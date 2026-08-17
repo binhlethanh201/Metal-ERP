@@ -134,7 +134,7 @@ const InventoryNotificationDropdown = () => {
     // Cap nhat localStorage truoc de ton tai qua F5
     addReadIds(allIds);
     try {
-      const res = await markNotificationsAsRead(null, true);
+      const res = await markNotificationsAsRead(allIds, true);
       if (res?.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       }

@@ -2,20 +2,29 @@
  * Inventory Check Service - API calls chuyên trách Kiểm kê kho
  * Tất cả hàm được export dưới dạng Named Exports
  */
-import { apiGet, apiPost, apiPut, apiDelete } from '../../../services/apiClient';
+import { apiGet, apiPost, apiPut } from '../../../services/apiClient';
 import ENDPOINTS from '../../../services/endpoints';
 
 /**
  * Lấy danh sách phiếu kiểm kê (Phân trang & Lọc)
  * GET /api/InventoryCheck
+ * BE nhận: status, fromDate, toDate, pageNumber, pageSize
  * @param {Object} filters - status, startDate, endDate, branchId, pageNumber, pageSize, ticketCode
  */
 export const getInventoryChecks = (filters = {}) => {
+  const allowed = ['status', 'pageNumber', 'pageSize'];
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
+    if (value === undefined || value === null || value === '') return;
+    // FE dùng startDate/endDate -> BE dùng fromDate/toDate
+    if (key === 'startDate') {
+      params.set('fromDate', value);
+    } else if (key === 'endDate') {
+      params.set('toDate', value);
+    } else if (allowed.includes(key)) {
       params.set(key, value);
     }
+    // branchId/ticketCode: BE không nhận -> bỏ qua
   });
   const queryString = params.toString();
   return apiGet(
@@ -36,27 +45,31 @@ export const getCounters = () => apiGet(ENDPOINTS.INVENTORY.GET_COUNTERS);
 /**
  * Tạo mới phiếu kiểm kê (Trạng thái: Draft)
  * POST /api/InventoryCheck
- * NOTE: Backend tự resolve branchId từ JWT Token - KHÔNG gửi branchId
- * @param {Array<string>} productIds - Danh sách ID sản phẩm cần kiểm kê (bắt buộc, không rỗng)
+ * BE body: { items: [{ id }], note?, reason? } (branchId tự resolve từ JWT)
+ * @param {Array<string>} productIds - Danh sách ID sản phẩm cần kiểm kê
  * @param {string} notes - Ghi chú/Lý do kiểm kê
- * @param {string|null} assigneeUserId - ID người phụ trách (Staff chỉ được gán cho chính mình)
+ * @param {string|null} assigneeUserId - (BE hiện không hỗ trợ -> bỏ qua)
  */
 export const createInventoryCheck = (productIds, notes, assigneeUserId = null) => {
   return apiPost(ENDPOINTS.INVENTORY.CREATE_INVENTORY_CHECK, {
-    productIds,
-    notes,
-    assigneeUserId: assigneeUserId || null,
+    items: (productIds || []).map((id) => ({ id })),
+    note: notes ?? null,
   });
 };
 
 /**
  * Cập nhật phiếu kiểm kê (Chỉ khi đang ở trạng thái Draft)
  * PUT /api/InventoryCheck/{id}
+ * BE body: { note?, reason? } (không hỗ trợ add/remove product hay assignee)
  * @param {string} id - TicketId
  * @param {Object} data - { notes, assigneeUserId, addProductIds, removeProductIds }
  */
 export const updateInventoryCheck = (id, data) => {
-  return apiPut(ENDPOINTS.INVENTORY.UPDATE_INVENTORY_CHECK(id), data);
+  const payload = {
+    note: data?.notes ?? null,
+    reason: data?.reason ?? null,
+  };
+  return apiPut(ENDPOINTS.INVENTORY.UPDATE_INVENTORY_CHECK(id), payload);
 };
 
 /**
@@ -65,19 +78,23 @@ export const updateInventoryCheck = (id, data) => {
  * @param {string} id - TicketId
  */
 export const deleteInventoryCheck = (id) => {
-  return apiDelete(ENDPOINTS.INVENTORY.DELETE_INVENTORY_CHECK(id));
+  return apiPost(ENDPOINTS.INVENTORY.CANCEL_INVENTORY_CHECK(id), { reason: 'Xóa phiếu nháp' });
 };
 
 /**
  * Nhập số lượng kiểm đếm thực tế và gửi duyệt
- * PUT /api/InventoryCheck/{id}/fill
+ * POST /api/InventoryCheck/{id}/fill-actual
  * Phiếu chuyển từ Draft -> WaitingForApproval
- * SystemQuantity được chốt từ DB tại thời điểm gọi API này
+ * BE body: { quantities: [{ ticketItemId, actualQuantity, discrepancyReason? }] }
  * @param {string} id - TicketId
  * @param {Array<{detailId: string, actualQuantity: number}>} details
  */
 export const fillInventoryCheck = (id, details) => {
-  return apiPut(ENDPOINTS.INVENTORY.FILL_INVENTORY_CHECK(id), { details });
+  const quantities = (details || []).map((d) => ({
+    ticketItemId: d.detailId,
+    actualQuantity: d.actualQuantity,
+  }));
+  return apiPost(ENDPOINTS.INVENTORY.FILL_INVENTORY_CHECK(id), { quantities });
 };
 
 /**
@@ -93,14 +110,17 @@ export const approveInventoryCheck = (id) => {
 };
 
 /**
- * Yêu cầu đếm lại (Reject) - Phiếu về lại Draft, recountNumber tăng 1
+ * Yêu cầu đếm lại (Reject/Recount) - Phiếu về lại Draft, recountNumber tăng 1
  * POST /api/InventoryCheck/{id}/reject
- * Chỉ khi Status = WaitingForApproval, bắt buộc có reason
+ * BE body: { isRecount, note? }
  * @param {string} id - TicketId
  * @param {string} reason - Lý do yêu cầu đếm lại (bắt buộc)
  */
 export const rejectInventoryCheck = (id, reason) => {
-  return apiPost(ENDPOINTS.INVENTORY.REJECT_INVENTORY_CHECK(id), { reason });
+  return apiPost(ENDPOINTS.INVENTORY.REJECT_INVENTORY_CHECK(id), {
+    isRecount: true,
+    note: reason,
+  });
 };
 
 /**
@@ -116,14 +136,17 @@ export const cancelInventoryCheck = (id, reason = '') => {
 
 /**
  * Cập nhật giải trình lý do chênh lệch
- * POST /api/InventoryCheck/{id}/reasons
- * Chỉ khi Status = WaitingForApproval hoặc Completed
- * Chỉ Owner/người có quyền APPROVE
+ * PUT /api/InventoryCheck/{id}/discrepancy-reasons
+ * BE body: { discrepancyReasons: [{ ticketItemId, reason? }] }
  * @param {string} id - TicketId
  * @param {Array<{detailId: string, reasonNote: string}>} details
  */
 export const updateDiscrepancyReasons = (id, details) => {
-  return apiPost(ENDPOINTS.INVENTORY.REASONS_INVENTORY_CHECK(id), { details });
+  const discrepancyReasons = (details || []).map((d) => ({
+    ticketItemId: d.detailId,
+    reason: d.reasonNote,
+  }));
+  return apiPut(ENDPOINTS.INVENTORY.REASONS_INVENTORY_CHECK(id), { discrepancyReasons });
 };
 
 /**
@@ -148,13 +171,13 @@ export const getSystemNotifications = (days = 7) => {
 
 /**
  * Đánh dấu thông báo đã đọc
- * PUT /api/InventoryCheck/notifications/read
- * @param {Array<string>|null} notificationIds - null nếu dùng markAllAsRead
- * @param {boolean} markAllAsRead
+ * POST /api/InventoryCheck/notifications/mark-read
+ * BE body: mảng List<Guid> (raw array, KHÔNG có markAllAsRead)
+ * @param {Array<string>|null} notificationIds - null/mảng rỗng nếu không có id cụ thể
+ * @param {boolean} markAllAsRead - thông tin cho caller; BE không có endpoint mark-all,
+ *   caller phải tự truyền toàn bộ id cần đánh dấu (xem InventoryNotificationDropdown)
  */
 export const markNotificationsAsRead = (notificationIds = null, markAllAsRead = false) => {
-  return apiPut(ENDPOINTS.INVENTORY.MARK_NOTIFICATION_READ, {
-    notificationIds,
-    markAllAsRead,
-  });
+  const ids = Array.isArray(notificationIds) ? notificationIds : [];
+  return apiPost(ENDPOINTS.INVENTORY.MARK_NOTIFICATION_READ, ids);
 };

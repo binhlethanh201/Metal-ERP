@@ -502,7 +502,7 @@ export const CustomerManagement = () => {
   const getOrderStatusBadge = (status, hasExchangeDiff, hasWarranty) => (
     <>
       {hasExchangeDiff && <Badge variant="warning">Đổi chênh</Badge>}
-      {hasWarranty && <Badge variant="warning">Bảo hành</Badge>}
+      {hasWarranty && <Badge variant="warning">Đổi hàng</Badge>}
       {status === 'FULLY_REFUNDED' && <Badge variant="danger">Hoàn toàn bộ</Badge>}
       {status === 'PARTIAL_REFUND' && <Badge variant="warning">Hoàn một phần</Badge>}
       {status === 'COMPLETED' && !hasExchangeDiff && !hasWarranty && <Badge variant="success">Hoàn thành</Badge>}
@@ -510,7 +510,7 @@ export const CustomerManagement = () => {
   );
 
   const getOrderStatusLabel = (status, hasExchangeDiff, hasWarranty) => {
-    const exLabel = hasExchangeDiff ? 'Đổi chênh' : hasWarranty ? 'Bảo hành' : null;
+    const exLabel = hasExchangeDiff ? 'Đổi chênh' : hasWarranty ? 'Đổi hàng' : null;
     if (exLabel && status === 'COMPLETED') return exLabel;
     if (exLabel && status !== 'COMPLETED')
       return `${exLabel} + ${status === 'FULLY_REFUNDED' ? 'Hoàn toàn bộ' : 'Hoàn một phần'}`;

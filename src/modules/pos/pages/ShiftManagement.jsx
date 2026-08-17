@@ -44,14 +44,14 @@ const classifyReturn = (r) => {
   const refundCust = num(r?.refundAmountCustomer ?? r?.refund_amount_customer);
   const isRefund = rType === 'REFUND';
   const isExchangeDiff = !isRefund && (delta !== 0 || pay > 0 || refundCust > 0);
-  const label = isRefund ? 'Trả' : isExchangeDiff ? 'Đổi chênh' : 'Bảo hành';
+  const label = isRefund ? 'Trả' : isExchangeDiff ? 'Đổi chênh' : 'Đổi hàng';
   const badge = isRefund
     ? 'bg-red-100 text-red-700'
     : isExchangeDiff
       ? 'bg-amber-100 text-amber-700'
       : 'bg-yellow-100 text-yellow-800';
   let signed = 0;
-  if (isRefund) signed = -Math.abs(num(r?.refundAmount ?? r?.refund_amount));
+  if (isRefund) signed = -Math.abs(num(r?.refundAmount ?? r?.refund_amount ?? r?.amount));
   else if (isExchangeDiff) signed = delta; // + khách trả thêm, - hoàn lại, 0 = ngang giá
   return { isRefund, isExchangeDiff, label, badge, signed };
 };
@@ -1053,6 +1053,10 @@ export const ShiftManagement = () => {
                           deltaAmount: r.deltaAmount ?? r.delta_amount ?? 0,
                           payAmount: r.payAmount ?? r.pay_amount ?? 0,
                           refundAmountCustomer: r.refundAmountCustomer ?? r.refund_amount_customer ?? 0,
+                          paymentMethod: r.paymentMethod || '',
+                          refundMethod: r.refundMethod || r.refund_method || '',
+                          cashReceived: r.cashReceived ?? null,
+                          changeAmount: r.changeAmount ?? null,
                         };
                       });
                     const sales = shiftOrders.map((o) => ({
@@ -1147,6 +1151,21 @@ export const ShiftManagement = () => {
                         }
                         const cls = classifyReturn(act);
                         const isRefund = cls.isRefund;
+                        // Dòng "đưa/thừa" cho đơn đổi trả tiền mặt
+                        const _isCashRet = isRefund
+                          ? /CASH|TIỀN MẶT|TIEN MAT/i.test(act.refundMethod || '')
+                          : /CASH|TIỀN MẶT|TIEN MAT/i.test(act.paymentMethod || '');
+                        let _cashLine = '';
+                        if (_isCashRet) {
+                          if (cls.isExchangeDiff && cls.signed > 0 && Number(act.cashReceived) > 0) {
+                            _cashLine = `Khách đưa: ${formatCurrency(act.cashReceived)} - Thừa: ${formatCurrency(act.changeAmount || 0)}`;
+                          } else if (cls.signed < 0) {
+                            const _repay = isRefund
+                              ? Math.abs(Number(act.amount) || 0)
+                              : (Math.abs(Number(act.refundAmountCustomer) || 0) || Math.abs(cls.signed));
+                            if (_repay > 0) _cashLine = `Trả khách: ${formatCurrency(_repay)}`;
+                          }
+                        }
                         return (
                           <div
                             key={'ret-' + act.id}
@@ -1216,12 +1235,17 @@ export const ShiftManagement = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="flex shrink-0 items-center gap-2">
+                            <div className="flex shrink-0 flex-col items-end gap-0.5">
                               {cls.signed !== 0 && (
                                 <span
                                   className={`text-xs font-bold ${cls.signed < 0 ? 'text-red-600' : 'text-green-600'}`}
                                 >
                                   {cls.signed < 0 ? '-' : '+'}{formatCurrency(Math.abs(cls.signed))}
+                                </span>
+                              )}
+                              {_cashLine && (
+                                <span className="text-[10px] text-slate-400 dark:text-[#808080]">
+                                  {_cashLine}
                                 </span>
                               )}
                             </div>
@@ -2104,6 +2128,10 @@ export const ShiftManagement = () => {
                         deltaAmount: r.deltaAmount ?? r.delta_amount ?? 0,
                         payAmount: r.payAmount ?? r.pay_amount ?? 0,
                         refundAmountCustomer: r.refundAmountCustomer ?? r.refund_amount_customer ?? 0,
+                        paymentMethod: r.paymentMethod || '',
+                        refundMethod: r.refundMethod || r.refund_method || '',
+                        cashReceived: r.cashReceived ?? null,
+                        changeAmount: r.changeAmount ?? null,
                       };
                     });
                     const sales = selectedShiftOrders.map((o) => ({
@@ -2194,6 +2222,21 @@ export const ShiftManagement = () => {
                         }
                         const cls = classifyReturn(act);
                         const isRefund = cls.isRefund;
+                        // Dòng "đưa/thừa" cho đơn đổi trả tiền mặt
+                        const _isCashRet = isRefund
+                          ? /CASH|TIỀN MẶT|TIEN MAT/i.test(act.refundMethod || '')
+                          : /CASH|TIỀN MẶT|TIEN MAT/i.test(act.paymentMethod || '');
+                        let _cashLine = '';
+                        if (_isCashRet) {
+                          if (cls.isExchangeDiff && cls.signed > 0 && Number(act.cashReceived) > 0) {
+                            _cashLine = `Khách đưa: ${formatCurrency(act.cashReceived)} - Thừa: ${formatCurrency(act.changeAmount || 0)}`;
+                          } else if (cls.signed < 0) {
+                            const _repay = isRefund
+                              ? Math.abs(Number(act.amount) || 0)
+                              : (Math.abs(Number(act.refundAmountCustomer) || 0) || Math.abs(cls.signed));
+                            if (_repay > 0) _cashLine = `Trả khách: ${formatCurrency(_repay)}`;
+                          }
+                        }
                         return (
                           <div
                             key={'detail-ret-' + act.id}
@@ -2256,12 +2299,17 @@ export const ShiftManagement = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="flex shrink-0 items-center gap-2">
+                            <div className="flex shrink-0 flex-col items-end gap-0.5">
                               {cls.signed !== 0 && (
                                 <span
                                   className={`text-xs font-bold ${cls.signed < 0 ? 'text-red-600' : 'text-green-600'}`}
                                 >
                                   {cls.signed < 0 ? '-' : '+'}{formatCurrency(Math.abs(cls.signed))}
+                                </span>
+                              )}
+                              {_cashLine && (
+                                <span className="text-[10px] text-slate-400 dark:text-[#808080]">
+                                  {_cashLine}
                                 </span>
                               )}
                             </div>

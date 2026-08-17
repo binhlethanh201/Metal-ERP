@@ -255,7 +255,16 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     });
     return result;
   };
-  const subtotal = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
+  // Tổng giá trị SP trả theo GIÁ GỐC (chưa qua CK đơn hàng).
+  const grossSubtotal = selectedProducts.reduce((sum, p) => sum + p.quantity * (p.sellPrice || 0), 0);
+  // Tỉ lệ CK đơn hàng gốc: dùng Subtotal/TotalAmount để đúng cho cả CK % và CK số tiền.
+  const invSubTotal = Number(invoice?.subtotal ?? invoice?.subTotalAmount ?? 0);
+  const invTotal = Number(invoice?.totalAmount || 0);
+  const invoiceDiscountRatio =
+    invSubTotal > 0 ? Math.max(0, 1 - invTotal / invSubTotal) : Number(invoice?.discountPercent || 0) / 100;
+  // Giá khách THỰC TRẢ cho các SP được trả (sau CK đơn hàng).
+  const subtotal = Math.max(0, grossSubtotal * (1 - invoiceDiscountRatio));
+  const invoiceDiscountAmount = grossSubtotal - subtotal;
   const discountPortion = subtotal * (returnDiscountPercent / 100);
   const totalRefund = Math.max(0, subtotal - discountPortion);
 
@@ -1111,9 +1120,20 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 dark:text-[#999999]">Tổng giá trị SP trả</span>
                   <span className="font-semibold text-slate-700 dark:text-[#e5e5e5]">
-                    {formatCurrency(subtotal)}
+                    {formatCurrency(grossSubtotal)}
                   </span>
                 </div>
+                {invoiceDiscountAmount > 0 && (
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="text-sky-600 dark:text-sky-400">
+                      Chiết khấu đơn hàng
+                      {invoice?.discountPercent ? ` (${invoice.discountPercent}%)` : ''}
+                    </span>
+                    <span className="font-semibold text-sky-600 dark:text-sky-400">
+                      -{formatCurrency(invoiceDiscountAmount)}
+                    </span>
+                  </div>
+                )}
                 {returnDiscountPercent > 0 && (
                   <div className="mt-1 flex items-center justify-between">
                     <span className="text-amber-600 dark:text-amber-400">
