@@ -18,6 +18,21 @@ const DOC_TYPE_LABELS = {
   CUSTOMER_RETURN_DEFECTIVE: 'Khách trả hàng lỗi',
 };
 
+// Nhãn cho dòng bút toán ĐẢO khi hủy phiếu (IsCancellation=true).
+// Phân biệt rõ "Hủy phiếu nhập kho" (phiếu nhập bị hủy -> trả hàng ra) vs
+// "Hủy phiếu xuất kho" (phiếu xuất bị hủy -> nhận hàng về).
+const CANCEL_DOC_TYPE_LABELS = {
+  PURCHASE: 'Hủy phiếu nhập kho',
+  CUSTOMER_RETURN: 'Hủy phiếu nhập (khách trả)',
+  BALANCE_ADJUST: 'Hủy điều chỉnh tồn',
+  RETURN_SUPPLIER: 'Hủy phiếu xuất kho',
+  WRITE_OFF: 'Hủy phiếu xuất (xuất hủy)',
+  TRANSFER: 'Hủy phiếu xuất (chuyển kho)',
+  SALE: 'Hủy phiếu xuất bán',
+  EXCHANGE_IN: 'Hủy nhập đổi hàng',
+  EXCHANGE_OUT: 'Hủy xuất đổi hàng',
+};
+
 export const InventoryLedgerModal = ({
   isOpen,
   onClose,
@@ -108,8 +123,25 @@ export const InventoryLedgerModal = ({
                     </td>
                   </tr>
                   {/* Ledger entries */}
-                  {entries.map((e, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-[#272727]/60">
+                  {entries.map((e, idx) => {
+                    // Bảo vệ cả 2 kiểu casing (camelCase mặc định web, hoặc PascalCase nếu BE đổi policy).
+                    const isCancel = !!(e.isCancellation ?? e.IsCancellation);
+                    const typeLabel = isCancel
+                      ? (CANCEL_DOC_TYPE_LABELS[e.docType] || `Hủy ${e.docType || ''}`)
+                      : (DOC_TYPE_LABELS[e.docType] || e.docType);
+                    // Dòng hủy: nền XANH + badge xanh đậm để phân biệt với nhập(xanh nhạt)/xuất(đỏ) thường.
+                    const badgeClass = isCancel
+                      ? 'bg-green-600 text-white dark:bg-green-700 dark:text-white'
+                      : e.qtyIn > 0
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400';
+                    const rowClass = isCancel
+                      ? 'bg-green-50 hover:bg-green-100/70 dark:bg-green-950/20 dark:hover:bg-green-900/30'
+                      : 'hover:bg-slate-50/60 dark:hover:bg-[#272727]/60';
+                    // Số lượng dòng hủy cũng tô xanh đậm để nổi bật.
+                    const cancelQtyClass = 'font-bold text-green-700 dark:text-green-400';
+                    return (
+                    <tr key={idx} className={rowClass}>
                       <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-[#999999]">
                         {new Date(e.transactionTime).toLocaleDateString('vi-VN')}{' '}
                         {new Date(e.transactionTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
@@ -118,28 +150,30 @@ export const InventoryLedgerModal = ({
                         {e.docCode || '---'}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          e.qtyIn > 0
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
-                            : 'bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400'
-                        }`}>
-                          {DOC_TYPE_LABELS[e.docType] || e.docType}
+                        <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeClass}`}>
+                          {typeLabel}
                         </span>
+                        {isCancel && e.note && (
+                          <div className="mt-1 text-[10px] leading-tight text-green-700 dark:text-green-400" title={e.note}>
+                            {e.note}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-slate-700 dark:text-[#b3b3b3]">
                         {e.unitCostPrice ? formatCurrency(e.unitCostPrice) : '---'}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {e.qtyIn > 0 ? <span className="font-semibold text-emerald-600">{e.qtyIn}</span> : <span className="text-slate-300">---</span>}
+                        {e.qtyIn > 0 ? <span className={`font-semibold ${isCancel ? cancelQtyClass : 'text-emerald-600'}`}>{e.qtyIn}</span> : <span className="text-slate-300">---</span>}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {e.qtyOut > 0 ? <span className="font-semibold text-rose-600">{e.qtyOut}</span> : <span className="text-slate-300">---</span>}
+                        {e.qtyOut > 0 ? <span className={`font-semibold ${isCancel ? cancelQtyClass : 'text-rose-600'}`}>{e.qtyOut}</span> : <span className="text-slate-300">---</span>}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-slate-800 dark:text-[#e5e5e5]">
                         {e.stockAfter ?? 0}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold dark:border-[#404040] dark:bg-[#1a1a1a]">

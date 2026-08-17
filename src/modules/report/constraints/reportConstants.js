@@ -96,7 +96,37 @@ export const PAYMENT_COLUMNS = [
   {
     key: 'amount',
     header: 'Số tiền',
-    render: (v) => <span className="font-medium text-slate-900">{formatCurrency(v)}</span>,
+    render: (v, row) => {
+      const cancelled = (row?.status || row?.Status) === 'CANCELLED';
+      return (
+        <span className={cancelled ? 'font-medium text-slate-400 line-through dark:text-[#808080]' : 'font-medium text-slate-900 dark:text-[#e5e5e5]'}>
+          {formatCurrency(v)}
+        </span>
+      );
+    },
   },
-  { key: 'note', header: 'Ghi chú' },
+  {
+    key: 'note',
+    header: 'Ghi chú',
+    render: (v, row) => {
+      const cancelled = (row?.status || row?.Status) === 'CANCELLED';
+      return cancelled ? (
+        <span className="text-slate-400 line-through dark:text-[#808080]">{v || '---'}</span>
+      ) : (
+        <span>{v || '---'}</span>
+      );
+    },
+  },
+  {
+    key: 'status',
+    header: 'Trạng thái',
+    render: (v) => {
+      const cancelled = (v || '').toUpperCase() === 'CANCELLED';
+      return cancelled ? (
+        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">Đã hủy</span>
+      ) : (
+        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">Hoạt động</span>
+      );
+    },
+  },
 ];
