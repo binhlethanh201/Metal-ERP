@@ -787,9 +787,12 @@ const POSScreen = () => {
         });
 
         const payments = paymentRes.data || paymentRes;
-        const transferPayment = Array.isArray(payments)
-          ? payments.find((p) => p.Method === 'Transfer' || p.method === 'Transfer')
-          : null;
+        let transferPayment = null;
+        if (Array.isArray(payments)) {
+          transferPayment = payments.find((p) => p.Method === 'Transfer' || p.method === 'Transfer');
+        } else if (payments && (payments.Method === 'Transfer' || payments.method === 'Transfer')) {
+          transferPayment = payments;
+        }
 
         if (transferPayment) {
           setPendingPayLines(lines);

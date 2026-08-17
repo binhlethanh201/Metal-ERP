@@ -551,26 +551,21 @@ const ReturnOrderPage = () => {
       header: 'Số tiền',
       render: (v, row) => {
         const cls = classifyReturn(row);
-        if (cls.isExchangeDiff) {
+        
+        if (cls.isExchange) {
           const d = parseFloat(row.deltaAmount || 0) || 0;
-          const color = d > 0 ? 'text-emerald-600 dark:text-emerald-400' : d < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-[#999999]';
-          const sign = d > 0 ? '+' : d < 0 ? '-' : '';
+          if (d === 0) {
+            return <span className="text-sm font-semibold text-slate-500 dark:text-[#999999]">0 ₫</span>;
+          }
+          const color = d > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+          const sign = d > 0 ? '+' : '-';
           return (
             <span className={`text-sm font-semibold ${color}`}>
               {sign}{formatCurrency(Math.abs(d))}
             </span>
           );
         }
-        if (false && cls.isWarranty) {
-          return (
-            <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
-              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              Đổi hàng
-            </span>
-          );
-        }
+        
         return <span className="text-sm font-semibold text-green-600">{formatCurrency(v || 0)}</span>;
       },
     },

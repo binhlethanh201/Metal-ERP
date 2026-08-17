@@ -26,7 +26,6 @@ const addReadIds = (ids) => {
 
 const InventoryNotificationDropdown = () => {
   const { user } = useAuth();
-  const canViewNotifications = hasPermission(user, 'STOCK_CHECK_VIEW');
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +38,7 @@ const InventoryNotificationDropdown = () => {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const fetchNotifications = async () => {
-    if (!canViewNotifications) return;
+    if (!user) return;
     try {
       setLoading(true);
       const invRes = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 }).catch(() => null);
@@ -110,7 +109,7 @@ const InventoryNotificationDropdown = () => {
   const handleToggle = () => {
     const nextState = !isOpen;
     setIsOpen(nextState);
-    if (nextState && canViewNotifications) {
+    if (nextState) {
       fetchNotifications();
       setTimeout(updatePosition, 0);
     }
@@ -235,7 +234,7 @@ const InventoryNotificationDropdown = () => {
     }
   };
 
-  return canViewNotifications ? (
+  return (
     <div className="relative pl-1">
         <button
           ref={btnRef}
@@ -327,7 +326,7 @@ const InventoryNotificationDropdown = () => {
         </div>
         , document.body)}
     </div>
-      ) : null;
+  );
 };
 
 export default InventoryNotificationDropdown;

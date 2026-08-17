@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { getProductsLookup } from '../../services/inventoryService';
-import { getCounters } from '../../services/inventoryCheckService';
+import { getStaffs } from '../../../owner/services/staffService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
@@ -82,11 +82,11 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
 
     setLoadingStaff(true);
     const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
-    getCounters()
+    getStaffs({ pageSize: 100 })
       .then((res) => {
-        const counters = res?.data || res || [];
-        const qualified = Array.isArray(counters) ? counters : [];
-        if ((hasCountPerm || isOwner) && !qualified.find(s => s.userId === currentUserId)) {
+        const staffs = res?.data?.items || res?.data || [];
+        const qualified = Array.isArray(staffs) ? [...staffs] : [];
+        if ((hasCountPerm || isOwner) && !qualified.find((s) => s.userId === currentUserId)) {
           qualified.unshift(me);
         }
         setStaffList(qualified);

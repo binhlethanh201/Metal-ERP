@@ -20,7 +20,6 @@ export const ImportItemsTable = ({
   const fileInputRef = useRef(null);
   const [importError, setImportError] = useState('');
   const [importWarning, setImportWarning] = useState('');
-  const [importSuccess, setImportSuccess] = useState('');
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -28,7 +27,6 @@ export const ImportItemsTable = ({
 
     setImportError('');
     setImportWarning('');
-    setImportSuccess('');
 
     const result = await parseImportExcelFile(file);
 
@@ -131,8 +129,6 @@ export const ImportItemsTable = ({
     }
 
     onImportRows?.(importRows);
-
-    setImportSuccess(`Đã import ${importRows.length} dòng từ file Excel.`);
 
     if (notFoundList.length > 0) {
       setImportWarning(
@@ -394,20 +390,7 @@ export const ImportItemsTable = ({
             </button>
           </div>
         )}
-        {importSuccess && (
-          <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <span className="mt-0.5 shrink-0 text-emerald-500 text-sm">!</span>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-emerald-800">{importSuccess}</p>
-            </div>
-            <button
-              onClick={() => setImportSuccess('')}
-              className="shrink-0 text-emerald-400 hover:text-emerald-600 text-sm"
-            >
-              x
-            </button>
-          </div>
-        )}
+
 
       <Table
         columns={displayColumns}

@@ -143,6 +143,7 @@ const ExpenseManagement = () => {
         selectedVoucher={selectedVoucher}
         handleConfirm={handleConfirm}
         handleCancel={handleCancel}
+        onSuccessUpdate={refetch}
       />
     </div>
   );

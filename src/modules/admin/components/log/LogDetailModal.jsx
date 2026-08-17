@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '../../../../shared/components/Icon';
+import { translateAction } from './LogTable';
 
 const LogDetailModal = ({ log, onClose }) => {
   if (!log) return null;
@@ -10,7 +11,7 @@ const LogDetailModal = ({ log, onClose }) => {
       `Thời gian: ${log.timestamp}`,
       `Mức độ: ${log.level}`,
       `Nguồn: ${log.source}`,
-      `Hành động: ${log.action}`,
+      `Hành động: ${translateAction(log.action)}`,
       `Mô tả: ${log.description}`,
       log.ipAddress ? `IP: ${log.ipAddress}` : '',
       log.userAgent ? `Trình duyệt: ${log.userAgent}` : '',
@@ -77,7 +78,7 @@ const LogDetailModal = ({ log, onClose }) => {
               </div>
               <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#1a1a1a]">
                 <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-[#999999]">Hành động</p>
-                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{log.action || '—'}</p>
+                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{translateAction(log.action)}</p>
               </div>
             </div>
           </div>

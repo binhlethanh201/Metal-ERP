@@ -144,7 +144,7 @@ export const StockImport = () => {
 
       // Load products - dung API lookup (khong can quyen PRODUCT_VIEW)
       try {
-        const prodRes = await getProductsLookup({ pageSize: 200 });
+        const prodRes = await getProductsLookup({ pageSize: 500, _t: Date.now() });
         setProducts(extractList(prodRes));
       } catch {
         setProducts([]);
@@ -218,11 +218,7 @@ export const StockImport = () => {
       return updated;
     });
 
-    const msg =
-      newCount > 0
-        ? `Đã import ${importedCount} dòng (${newCount} mã mới từ file Excel).`
-        : `Đã import ${importedCount} dòng từ file Excel.`;
-    setStatus({ type: 'success', message: msg });
+    // setStatus({ type: 'success', message: msg }); removed to hide notification
   }, []);
 
   const addProductToTicket = useCallback((product) => {
@@ -280,9 +276,16 @@ export const StockImport = () => {
     [items]
   );
 
-  const openModal = () => {
+  const openModal = async () => {
     setStatus({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
     setIsModalOpen(true);
+    // Tải lại danh sách sản phẩm mới nhất để tránh dính cache các sản phẩm đã xóa
+    try {
+      const prodRes = await getProductsLookup({ pageSize: 500, _t: Date.now() });
+      setProducts(extractList(prodRes));
+    } catch {
+      // Nếu lỗi thì giữ nguyên list cũ hoặc fallback
+    }
   };
 
   const handleFinish = async (isDraft = false) => {

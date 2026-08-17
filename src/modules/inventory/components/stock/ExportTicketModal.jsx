@@ -351,7 +351,10 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      if (!res.ok) throw new Error('Tải template thất bại');
+      if (!res.ok) {
+        if (res.status === 403) throw new Error('Bạn không có quyền thực hiện thao tác này.');
+        throw new Error('Tải template thất bại');
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -359,8 +362,8 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       a.download = 'Template_XuatKho_Excel.xlsx';
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      setStatusMessage('Lỗi: Không thể tải template');
+    } catch (err) {
+      setStatusMessage('Lỗi: ' + (err.message || 'Không thể tải template'));
     }
   };
 
@@ -378,6 +381,10 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+      if (!res.ok) {
+        if (res.status === 403) throw new Error('Bạn không có quyền thực hiện thao tác này.');
+        throw new Error(`Parse thất bại (${res.status})`);
+      }
       const data = await res.json();
       if (data?.success) {
         const { validRows, errors, groups } = data.data;

@@ -118,6 +118,12 @@ const InventoryLayout = () => {
       window.dispatchEvent(new CustomEvent('RefreshNotifications'));
     });
 
+    // Lắng nghe sự kiện không hiện popup, chỉ refresh chuông thông báo
+    connection.on('SilentNotification', () => {
+      console.log('SIGNALR: Received SilentNotification');
+      window.dispatchEvent(new CustomEvent('RefreshNotifications'));
+    });
+
     (async () => {
       try {
         await connection.start();
