@@ -118,16 +118,16 @@ export const ENDPOINTS = {
     GET_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}`,
     UPDATE_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}`,
     DELETE_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}`,
-    FILL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/fill`,
+    FILL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/fill-actual`,
     APPROVE_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/approve`,
     CANCEL_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/cancel`,
-    REASONS_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reasons`,
+    REASONS_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/discrepancy-reasons`,
 
     // ================= KIỂM KÊ KHO =================
     REJECT_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reject`,
     GET_COUNTERS: '/api/InventoryCheck/counters',
     GET_NOTIFICATIONS: '/api/InventoryCheck/notifications',
-    MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/read',
+    MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/mark-read',
 
     // ================= Stock =================
     GET_STOCK: '/api/Stock',
