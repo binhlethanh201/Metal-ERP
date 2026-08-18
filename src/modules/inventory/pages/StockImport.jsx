@@ -298,6 +298,7 @@ export const StockImport = () => {
 
     const payload = {
       inwardType,
+      isConfirm: !isDraft,
       supplierId: parseId(selectedSupplier?.id),
       reason: note || 'Nhập kho',
       note,
@@ -329,8 +330,6 @@ export const StockImport = () => {
       const ticketId = res?.data?.ticketId || res?.data?.stockTicketId;
 
       if (!isDraft && ticketId) {
-        setStatus({ type: 'info', message: 'Đang xác nhận cộng tồn kho thực tế...' });
-        await confirmInwardInventory(ticketId);
         setStatus({
           type: 'success',
           message: `Đã hoàn tất & cộng kho! Mã phiếu: ${res?.data?.ticketCode || ticketId}`,

@@ -199,6 +199,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
 
     const payload = {
       inwardType,
+      isConfirm: !isDraft,
       supplierId: parseId(selectedSupplier?.id),
       reason: note || 'Nhập kho',
       note,
@@ -243,8 +244,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       const ticketId = res?.data?.ticketId || res?.data?.stockTicketId;
 
       if (!isDraft && ticketId) {
-        setStatus({ type: 'info', message: 'Đang xác nhận cộng tồn kho thực tế...' });
-        await confirmInwardInventory(ticketId);
+        // Backend đã xử lý tự động confirm khi nhận isConfirm = true
       }
 
       setItems([]);
