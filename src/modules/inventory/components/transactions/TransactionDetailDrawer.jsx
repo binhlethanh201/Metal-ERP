@@ -70,7 +70,7 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
     transaction?.items?.reduce((sum, item) => {
       const qty = Number(item.quantity || 0);
       const price = Number(item.costPrice || item.unitPrice || 0);
-      return sum + qty * price;
+      return sum + (item.totalPrice !== undefined && item.totalPrice !== null ? Number(item.totalPrice) : qty * price);
     }, 0) || 0;
   const isReturn = transaction?.ticketType === 'CUSTOMER_RETURN' || transaction?.ticketType === 'RETURN_SUPPLIER';
   const isExchange = (transaction?.reason || transaction?.note || '').toLowerCase().includes('doi hang');
@@ -124,7 +124,7 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
         <td class="r">${Number(item.quantity || 0).toLocaleString('vi-VN')}</td>
         ${!isReturn ? `
         <td class="r">${formatCurrency(item.costPrice || item.unitPrice || 0)}</td>
-        <td class="r">${formatCurrency(Number(item.quantity || 0) * Number(item.costPrice || item.unitPrice || 0))}</td>
+        <td class="r">${formatCurrency(item.totalPrice !== undefined && item.totalPrice !== null ? Number(item.totalPrice) : (Number(item.quantity || 0) * Number(item.costPrice || item.unitPrice || 0)))}</td>
         ` : ''}
       </tr>`
       )
@@ -414,8 +414,9 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                           {!isReturn && (
                             <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
                               {formatCurrency(
-                                Number(item.quantity || 0) *
-                                  Number(item.costPrice || item.unitPrice || 0)
+                                item.totalPrice !== undefined && item.totalPrice !== null
+                                  ? Number(item.totalPrice)
+                                  : Number(item.quantity || 0) * Number(item.costPrice || item.unitPrice || 0)
                               )}
                             </td>
                           )}
