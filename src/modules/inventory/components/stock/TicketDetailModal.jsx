@@ -649,7 +649,11 @@ export const TicketDetailModal = ({
                               )}
                               {isCompleted && !hasInwardRef && (
                                 <td className="px-3 py-3 text-right font-medium text-slate-500 dark:text-[#999999]">
-                                  {item.systemQuantity !== undefined ? item.systemQuantity : '---'}
+                                  {item.systemQuantity !== undefined
+                                    ? isConversion
+                                      ? Number((sysQty / convertValue).toFixed(2))
+                                      : item.systemQuantity
+                                    : '---'}
                                 </td>
                               )}
                               {isCompleted && hasInwardRef && (
@@ -665,11 +669,13 @@ export const TicketDetailModal = ({
                                 </td>
                               )}
                               <td className="px-3 py-3 text-right font-extrabold text-[#004785]">
-                                {qty}
+                                {isConversion ? saleQty : qty}
                               </td>
                               {isCompleted && !hasInwardRef && (
                                 <td className="px-3 py-3 text-right font-bold text-green-700">
-                                  {afterQty}
+                                  {isConversion
+                                    ? Number((afterQty / convertValue).toFixed(2))
+                                    : afterQty}
                                 </td>
                               )}
                               {isCompleted && hasInwardRef && (
