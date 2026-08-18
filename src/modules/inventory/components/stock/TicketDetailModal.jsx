@@ -619,7 +619,7 @@ export const TicketDetailModal = ({
                                 {item.productName || 'Sản phẩm'}
                               </td>
                               <td className="px-3 py-3 text-center text-slate-600 dark:text-[#999999]">
-                                {item.unit || item.Unit || item.unitName || item.UnitName || '---'}
+                                {item.unitName || item.UnitName || item.unit || item.Unit || '---'}
                               </td>
                               {type === 'INWARD' && !hidePriceFields && (
                                 <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
