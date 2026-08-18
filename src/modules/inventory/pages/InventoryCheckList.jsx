@@ -55,18 +55,25 @@ const formatUserName = (name) => {
 
 export const getStatusLabel = (item) => {
   if (!item) return '';
-  const status = item.status || item.Status;
+  const status = (item.status || item.Status || '').toUpperCase();
   const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
 
-  if (status === 'Draft') {
+  if (status === 'DRAFT') {
     return recountNumber > 0 ? 'Yêu cầu đếm lại' : 'Nháp';
   }
 
   switch (status) {
-    case 'WaitingForApproval': return 'Chờ duyệt';
-    case 'Completed': return 'Đã hoàn thành';
-    case 'Cancelled': return 'Đã hủy';
-    default: return status;
+    case 'WAITINGFORAPPROVAL':
+    case 'PENDING':
+      return 'Chờ duyệt';
+    case 'COMPLETED':
+      return 'Hoàn tất';
+    case 'CANCELLED':
+      return 'Đã hủy';
+    case 'REJECTED':
+      return 'Từ chối';
+    default:
+      return item.status || item.Status || '';
   }
 };
 
@@ -116,10 +123,10 @@ const InventoryCheckList = () => {
   const renderStatusBadge = (item) => {
     if (!item) return null;
 
-    const status = item.status || item.Status;
+    const rawStatus = (item.status || item.Status || '').toUpperCase();
     const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
 
-    if (status === 'Draft' && recountNumber > 0) {
+    if (rawStatus === 'DRAFT' && recountNumber > 0) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800">
           <RotateCcw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
@@ -128,7 +135,7 @@ const InventoryCheckList = () => {
       );
     }
 
-    if (status === 'Draft') {
+    if (rawStatus === 'DRAFT') {
       return (
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-[#272727] text-slate-600 dark:text-[#b3b3b3] border border-slate-200 dark:border-[#333333]">
           Yêu Cầu Đếm
@@ -136,7 +143,7 @@ const InventoryCheckList = () => {
       );
     }
 
-    if (status === 'WaitingForApproval') {
+    if (rawStatus === 'WAITINGFORAPPROVAL' || rawStatus === 'PENDING') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-800">
           <Clock className="w-3.5 h-3.5 text-orange-500 dark:text-orange-400" />
@@ -145,7 +152,7 @@ const InventoryCheckList = () => {
       );
     }
 
-    if (status === 'Completed') {
+    if (rawStatus === 'COMPLETED') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -154,7 +161,7 @@ const InventoryCheckList = () => {
       );
     }
 
-    if (status === 'Cancelled') {
+    if (rawStatus === 'CANCELLED' || rawStatus === 'REJECTED') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-800">
           <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
@@ -163,7 +170,7 @@ const InventoryCheckList = () => {
       );
     }
 
-    return <span className="text-xs text-gray-500">{status}</span>;
+    return <span className="text-xs text-gray-500">{item.status || item.Status}</span>;
   };
 
   // ==================== FETCH LIST ====================
@@ -244,8 +251,13 @@ const InventoryCheckList = () => {
   // ==================== SUMMARY STATS ====================
   const summary = useMemo(() => {
     const totalItems = checks.reduce((sum, c) => sum + Number(c.totalProducts ?? 0), 0);
-    const drafts = checks.filter((c) => c.status === 'Draft').length;
-    const waiting = checks.filter((c) => c.status === 'WaitingForApproval').length;
+    const drafts = checks.filter(
+      (c) => (c.status || '').toUpperCase() === 'DRAFT'
+    ).length;
+    const waiting = checks.filter((c) => {
+      const s = (c.status || '').toUpperCase();
+      return s === 'WAITINGFORAPPROVAL' || s === 'PENDING';
+    }).length;
     return {
       total: checks.length,
       totalItems,

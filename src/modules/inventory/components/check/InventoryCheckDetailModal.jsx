@@ -48,22 +48,25 @@ const normalizeDetailData = (data) => {
 
 const getStatusLabel = (item) => {
   if (!item) return '...';
-  const status = item.status || item.Status;
+  const status = (item.status || item.Status || '').toUpperCase();
   const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
 
-  if (status === 'Draft') {
+  if (status === 'DRAFT') {
     return recountNumber > 0 ? 'Yêu cầu đếm lại' : 'Nháp (Đang đếm)';
   }
 
   switch (status) {
-    case 'WaitingForApproval':
+    case 'WAITINGFORAPPROVAL':
+    case 'PENDING':
       return 'Chờ duyệt';
-    case 'Completed':
+    case 'COMPLETED':
       return 'Đã hoàn thành';
-    case 'Cancelled':
+    case 'CANCELLED':
       return 'Đã hủy';
+    case 'REJECTED':
+      return 'Từ chối';
     default:
-      return status;
+      return item.status || item.Status || status;
   }
 };
 
@@ -140,9 +143,10 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   if (!isOpen) return null;
 
   // ==================== PERMISSION CHECKS ====================
-  const isDraft = detailData?.status === 'Draft';
-  const isWaiting = detailData?.status === 'WaitingForApproval';
-  const isCompleted = detailData?.status === 'Completed';
+  const rawStatus = (detailData?.status || '').toUpperCase();
+  const isDraft = rawStatus === 'DRAFT';
+  const isWaiting = rawStatus === 'WAITINGFORAPPROVAL' || rawStatus === 'PENDING';
+  const isCompleted = rawStatus === 'COMPLETED';
 
   // const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprovePermission = hasPermission(user, 'STOCK_CHECK_APPROVE');
@@ -695,11 +699,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
           <div className="flex items-center gap-4">
             <Badge
               variant={
-                detailData?.status === 'Completed'
+                isCompleted
                   ? 'success'
-                  : detailData?.status === 'WaitingForApproval'
+                  : isWaiting
                     ? 'warning'
-                    : detailData?.status === 'Cancelled'
+                    : rawStatus === 'CANCELLED' || rawStatus === 'REJECTED'
                       ? 'danger'
                       : 'secondary'
               }
