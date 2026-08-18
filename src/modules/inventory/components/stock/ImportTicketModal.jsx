@@ -320,6 +320,7 @@ export const ImportTicketModal = ({ isOpen, onClose, onSuccess }) => {
             quantity: Number(row.soLuong || 0),
             costPrice: Number(row.donGiaNhap || 0),
             note: row.ghiChu || '',
+            unit: row.donViTinh || '',
           }));
           handleImportRows(mapped);
         }

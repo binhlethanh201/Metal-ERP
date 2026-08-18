@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { getProductsLookup } from '../../services/inventoryService';
-import { getStaffs } from '../../../owner/services/staffService';
+import { getCounters } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
@@ -82,26 +82,36 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
 
     setLoadingStaff(true);
     const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
-    getStaffs({ pageSize: 100, view: 'active' })
+    getCounters()
       .then((res) => {
-        const staffs = res?.data?.items || res?.data || [];
-        const qualified = Array.isArray(staffs) ? staffs.filter(s => {
-          // 1. Bỏ qua tài khoản đã xóa hoặc bị khóa
-          if (s.isDeleted || s.status === 'DELETED' || s.status === 'PERMANENT_DELETED' || s.isActive === 0) return false;
-          if (s.fullName?.includes('(Đã xóa)') || s.email?.startsWith('deleted_') || s.email?.startsWith('del_') || s.email?.endsWith('@mep.deleted')) return false;
-
-          // 2. CHỈ LẤY nhân viên được cấp quyền ĐẾM sản phẩm kiểm kê (STOCK_CHECK_COUNT)
-          const perms = s.permissionCodes || [];
-          return perms.includes('STOCK_CHECK_COUNT');
-        }) : [];
-
-        if ((hasCountPerm || isOwner) && !qualified.find((s) => s.userId === currentUserId)) {
-          qualified.unshift(me);
+        const staffs = res?.data || [];
+        const qualified = Array.isArray(staffs)
+          ? staffs.filter((s) => {
+              if (
+                s.isDeleted ||
+                s.status === 'DELETED' ||
+                s.status === 'PERMANENT_DELETED' ||
+                s.isActive === 0
+              )
+                return false;
+              if (
+                s.fullName?.includes('(Đã xóa)') ||
+                s.email?.startsWith('deleted_') ||
+                s.email?.startsWith('del_') ||
+                s.email?.endsWith('@mep.deleted')
+              )
+                return false;
+              return true;
+            })
+          : [];
+        if (qualified.length > 0) {
+          setStaffList(qualified);
+        } else {
+          setStaffList(hasCountPerm || isOwner ? [me] : []);
         }
-        setStaffList(qualified);
       })
       .catch((err) => {
-        console.error('Lỗi tải danh sách nhân viên:', err);
+        console.error('Lỗi khi lấy danh sách nhân viên đếm:', err);
         setStaffList(hasCountPerm || isOwner ? [me] : []);
       })
       .finally(() => setLoadingStaff(false));

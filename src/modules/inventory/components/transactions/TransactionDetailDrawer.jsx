@@ -70,11 +70,29 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
     transaction?.items?.reduce((sum, item) => {
       const qty = Number(item.quantity || 0);
       const price = Number(item.costPrice || item.unitPrice || 0);
-      return sum + (item.totalPrice !== undefined && item.totalPrice !== null ? Number(item.totalPrice) : qty * price);
+      return (
+        sum +
+        (item.totalPrice !== undefined && item.totalPrice !== null
+          ? Number(item.totalPrice)
+          : qty * price)
+      );
     }, 0) || 0;
-  const isReturn = transaction?.ticketType === 'CUSTOMER_RETURN' || transaction?.ticketType === 'RETURN_SUPPLIER';
-  const isExchange = (transaction?.reason || transaction?.note || '').toLowerCase().includes('doi hang');
-  const actualPaidAmount = transaction?.totalAmount !== undefined ? transaction.totalAmount : totalAmount;
+  const isReturn =
+    transaction?.ticketType === 'CUSTOMER_RETURN' || transaction?.ticketType === 'RETURN_SUPPLIER';
+  const isExchange = (transaction?.reason || transaction?.note || '')
+    .toLowerCase()
+    .includes('doi hang');
+  // Thu thêm đổi chênh: ưu tiên dùng exchangeDeltaAmount (= delta thực từ ReturnOrder)
+  // nếu không có (phiếu cũ), dùng totalAmount từ API (cũng là delta)
+  const actualPaidAmount = isExchange
+    ? transaction?.exchangeDeltaAmount !== undefined && transaction?.exchangeDeltaAmount !== null
+      ? Number(transaction.exchangeDeltaAmount)
+      : transaction?.totalAmount !== undefined
+        ? Number(transaction.totalAmount)
+        : totalAmount
+    : transaction?.totalAmount !== undefined
+      ? Number(transaction.totalAmount)
+      : totalAmount;
 
   const handlePrint = async () => {
     if (!transaction) return;
@@ -94,7 +112,8 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
 
     // Dùng nullish coalescing để giữ giá trị rỗng nếu user cố tình để trống
     const shopName = tpl.branchName ?? tpl.BranchName ?? 'MEP SYSTEM';
-    const shopAddress = tpl.branchAddress ?? tpl.BranchAddress ?? '12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM';
+    const shopAddress =
+      tpl.branchAddress ?? tpl.BranchAddress ?? '12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM';
     const shopPhone = tpl.phone ?? tpl.Phone ?? '028.3999.8888';
     const shopTaxCode = tpl.taxCode ?? tpl.TaxCode ?? '0312345678';
     const headerExtra = tpl.headerText || '';
@@ -109,7 +128,10 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
     const logoUrl = tpl.logoUrl || '';
 
     const printWindow = window.open('', '_blank', 'width=800,height=800');
-    if (!printWindow) { setPrintLoading(false); return; }
+    if (!printWindow) {
+      setPrintLoading(false);
+      return;
+    }
 
     const typeLabel = transaction.type === 'INWARD' ? 'PHIẾU NHẬP KHO' : 'PHIẾU XUẤT KHO';
 
@@ -122,10 +144,14 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
         <td class="name">${item.productName || '-'}</td>
         <td class="c">${item.unit || item.unitName || '-'}</td>
         <td class="r">${Number(item.quantity || 0).toLocaleString('vi-VN')}</td>
-        ${!isReturn ? `
+        ${
+          !isReturn
+            ? `
         <td class="r">${formatCurrency(item.costPrice || item.unitPrice || 0)}</td>
-        <td class="r">${formatCurrency(item.totalPrice !== undefined && item.totalPrice !== null ? Number(item.totalPrice) : (Number(item.quantity || 0) * Number(item.costPrice || item.unitPrice || 0)))}</td>
-        ` : ''}
+        <td class="r">${formatCurrency(item.totalPrice !== undefined && item.totalPrice !== null ? Number(item.totalPrice) : Number(item.quantity || 0) * Number(item.costPrice || item.unitPrice || 0))}</td>
+        `
+            : ''
+        }
       </tr>`
       )
       .join('');
@@ -171,9 +197,13 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
   <div class="header">
     <div class="header-left">
       ${showLogo ? `<img src="${logoUrl}" alt="logo" style="max-height:60px;margin-bottom:4px" />` : ''}
-      ${showBranchInfo ? `<h1>${shopName}</h1>
+      ${
+        showBranchInfo
+          ? `<h1>${shopName}</h1>
       <p>${shopAddress}</p>
-      <p>ĐT: ${shopPhone} • MST: ${shopTaxCode}</p>` : `<h1>${shopName}</h1>`}
+      <p>ĐT: ${shopPhone} • MST: ${shopTaxCode}</p>`
+          : `<h1>${shopName}</h1>`
+      }
     </div>
     <div class="header-right">
       <p class="bold">Mã phiếu: ${transaction.ticketCode || '-'}</p>
@@ -200,8 +230,12 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
         <th width="35%">Tên sản phẩm</th>
         <th width="10%">ĐVT</th>
         <th width="10%">SL</th>
-        ${!isReturn ? `<th width="10%">Đơn giá</th>
-        <th width="15%">Thành tiền</th>` : ''}
+        ${
+          !isReturn
+            ? `<th width="10%">Đơn giá</th>
+        <th width="15%">Thành tiền</th>`
+            : ''
+        }
       </tr>
     </thead>
     <tbody>
@@ -211,14 +245,20 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
       <tr>
         <td colspan="4" class="r bold">Tổng cộng:</td>
         <td class="r bold">${totalQuantity.toLocaleString('vi-VN')}</td>
-        ${!isReturn ? `<td></td>
-        <td class="r bold">${formatCurrency(totalAmount)}</td>` : ''}
+        ${
+          !isReturn
+            ? `<td></td>
+        <td class="r bold">${formatCurrency(totalAmount)}</td>`
+            : ''
+        }
       </tr>
     </tfoot>
   </table>
 
   ${footerExtra ? `<div style="text-align:center;margin-top:10px;font-style:italic">${footerExtra}</div>` : ''}
-  ${showSignature ? `
+  ${
+    showSignature
+      ? `
   <div class="footer">
     <div class="signature">
       <p class="bold">Người lập phiếu</p>
@@ -234,7 +274,9 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
       <p class="bold">Thủ kho</p>
       <p><i>(Ký, ghi rõ họ tên)</i></p>
     </div>
-  </div>` : ''}
+  </div>`
+      : ''
+  }
   <script>window.onload=function(){window.print();}</script>
 </body>
 </html>`);
@@ -262,9 +304,13 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-b-[#333333] dark:bg-[#0f0f0f]">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">Chi tiết phiếu</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-[#e5e5e5]">
+              Chi tiết phiếu
+            </h2>
             {transaction?.ticketCode && (
-              <p className="mt-0.5 font-mono text-sm text-slate-500 dark:text-[#999999]">{transaction.ticketCode}</p>
+              <p className="mt-0.5 font-mono text-sm text-slate-500 dark:text-[#999999]">
+                {transaction.ticketCode}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -317,13 +363,17 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                     <User className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase tracking-wide">Người tạo</span>
                   </div>
-                  <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{transaction.createdByName || '-'}</p>
+                  <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">
+                    {transaction.createdByName || '-'}
+                  </p>
                 </div>
               </div>
 
               {/* General Info */}
               <div className="rounded-xl border border-slate-200 p-4 dark:border-[#333333]">
-                <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Thông tin chung</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                  Thông tin chung
+                </h3>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-3">
                   <div>
                     <p className="text-xs text-slate-500 dark:text-[#999999]">Mã phiếu</p>
@@ -339,7 +389,9 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 dark:text-[#999999]">Đối tượng</p>
-                    <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{transaction.partyName || '-'}</p>
+                    <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">
+                      {transaction.partyName || '-'}
+                    </p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-xs text-slate-500 dark:text-[#999999]">Lý do / Ghi chú</p>
@@ -357,7 +409,9 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
               {/* Items Table */}
               <div className="rounded-xl border border-slate-200 dark:border-[#333333]">
                 <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-b-[#333333] dark:bg-[#1a1a1a]">
-                  <h3 className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">Danh sách sản phẩm</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">
+                    Danh sách sản phẩm
+                  </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -370,13 +424,20 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                         <th className="px-4 py-3 text-right font-medium">ĐVT</th>
                         <th className="px-4 py-3 text-right font-medium">SL</th>
                         {!isReturn && <th className="px-4 py-3 text-right font-medium">Đơn giá</th>}
-                        {!isReturn && <th className="px-4 py-3 text-right font-medium">Thành tiền</th>}
+                        {!isReturn && (
+                          <th className="px-4 py-3 text-right font-medium">Thành tiền</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
                       {transaction.items?.map((item, index) => (
-                        <tr key={item.id || index} className="border-b border-slate-100 dark:border-b-[#333333]">
-                          <td className="px-4 py-3 text-slate-500 dark:text-[#999999]">{index + 1}</td>
+                        <tr
+                          key={item.id || index}
+                          className="border-b border-slate-100 dark:border-b-[#333333]"
+                        >
+                          <td className="px-4 py-3 text-slate-500 dark:text-[#999999]">
+                            {index + 1}
+                          </td>
                           <td className="px-4 py-3">
                             {item.imageUrl ? (
                               <img
@@ -416,7 +477,8 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                               {formatCurrency(
                                 item.totalPrice !== undefined && item.totalPrice !== null
                                   ? Number(item.totalPrice)
-                                  : Number(item.quantity || 0) * Number(item.costPrice || item.unitPrice || 0)
+                                  : Number(item.quantity || 0) *
+                                      Number(item.costPrice || item.unitPrice || 0)
                               )}
                             </td>
                           )}
@@ -444,31 +506,41 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                       </div>
                     </div>
                     {!isReturn && (
-                    <div className="flex gap-8 text-right">
-                      {isExchange ? (
-                        <>
+                      <div className="flex gap-8 text-right">
+                        {isExchange ? (
+                          <>
+                            <div>
+                              <p className="text-xs text-slate-500 dark:text-[#999999]">
+                                Tổng thành tiền
+                              </p>
+                              <p className="text-lg font-semibold text-slate-700 line-through dark:text-[#b3b3b3]">
+                                {formatCurrency(totalAmount)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500 dark:text-[#999999]">
+                                Thu thêm (Đổi chênh)
+                              </p>
+                              {actualPaidAmount !== 0 ? (
+                                <p className="text-2xl font-bold text-[#004785] dark:text-blue-400">
+                                  {formatCurrency(actualPaidAmount)}
+                                </p>
+                              ) : (
+                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                  0 ₫ (Đổi ngang giá)
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
                           <div>
-                            <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng thành tiền</p>
-                            <p className="text-lg font-semibold text-slate-700 line-through dark:text-[#b3b3b3]">
+                            <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng tiền</p>
+                            <p className="text-2xl font-bold text-emerald-600">
                               {formatCurrency(totalAmount)}
                             </p>
                           </div>
-                          <div>
-                            <p className="text-xs text-slate-500 dark:text-[#999999]">Thu thêm (Đổi chênh)</p>
-                            <p className="text-2xl font-bold text-[#004785] dark:text-blue-400">
-                              {formatCurrency(actualPaidAmount)}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <div>
-                          <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng tiền</p>
-                          <p className="text-2xl font-bold text-emerald-600">
-                            {formatCurrency(totalAmount)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

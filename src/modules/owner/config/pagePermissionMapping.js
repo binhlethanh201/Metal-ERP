@@ -77,7 +77,7 @@ export const PAGE_PERMISSION_GROUPS = [
     viewPermission: 'EXPENSE_VIEW',
     subPermissions: [
       { code: 'EXPENSE_CREATE', label: 'Tạo phiếu chi' },
-      { code: 'EXPENSE_CONFIRM', label: 'Duyệt / Hủy phiếu chi' },
+      { codes: ['EXPENSE_CONFIRM', 'EXPENSE_CANCEL'], label: 'Duyệt / Hủy phiếu chi' },
       { code: 'EXPENSE_CATEGORY_MANAGE', label: 'Quản lý danh mục chi phí' },
     ],
   },
