@@ -600,6 +600,12 @@ export const TicketDetailModal = ({
                               : type === 'INWARD'
                                 ? sysQty + qty
                                 : sysQty - qty;
+                          const itemPrice = Number(
+                            item.costPrice ?? item.CostPrice ?? item.unitPrice ?? item.UnitPrice ?? 0
+                          );
+                          const outPrice = Number(
+                            item.unitPrice ?? item.UnitPrice ?? item.costPrice ?? item.CostPrice ?? 0
+                          );
 
                           return (
                             <tr
@@ -617,12 +623,12 @@ export const TicketDetailModal = ({
                               </td>
                               {type === 'INWARD' && !hidePriceFields && (
                                 <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
-                                  {formatCurrency(item.costPrice)}
+                                  {formatCurrency(itemPrice)}
                                 </td>
                               )}
                               {type === 'OUTWARD' && (
                                 <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
-                                  {formatCurrency(item.unitPrice || item.UnitPrice || 0)}
+                                  {formatCurrency(outPrice)}
                                 </td>
                               )}
                               {isCompleted && !hasInwardRef && (
@@ -657,14 +663,12 @@ export const TicketDetailModal = ({
                               )}
                               {type === 'INWARD' && !hidePriceFields && (
                                 <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                  {formatCurrency(qty * Number(item.costPrice || 0))}
+                                  {formatCurrency(qty * itemPrice)}
                                 </td>
                               )}
                               {type === 'OUTWARD' && (
                                 <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                  {formatCurrency(
-                                    qty * Number(item.unitPrice || item.UnitPrice || 0)
-                                  )}
+                                  {formatCurrency(qty * outPrice)}
                                 </td>
                               )}
                             </tr>
@@ -672,6 +676,29 @@ export const TicketDetailModal = ({
                         })
                       )}
                     </tbody>
+                    {type === 'INWARD' && !hidePriceFields && detail?.items?.length > 0 && (
+                      <tfoot className="border-t-2 border-slate-200 bg-slate-50/50 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+                        <tr>
+                          <td
+                            colSpan={isCompleted ? 7 : 5}
+                            className="px-3 py-3 text-right font-bold text-slate-800 dark:text-[#d4d4d4]"
+                          >
+                            Tổng thành tiền:
+                          </td>
+                          <td className="px-3 py-3 text-right font-extrabold text-[#004785] dark:text-blue-400">
+                            {formatCurrency(
+                              detail.items.reduce((sum, itm) => {
+                                const q = Number(itm.quantity || 0);
+                                const p = Number(
+                                  itm.costPrice ?? itm.CostPrice ?? itm.unitPrice ?? itm.UnitPrice ?? 0
+                                );
+                                return sum + q * p;
+                              }, 0)
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                     {isExchange && detail?.totalAmount > 0 && (
                       <tfoot className="border-t-2 border-slate-200 dark:border-[#333333]">
                         <tr>

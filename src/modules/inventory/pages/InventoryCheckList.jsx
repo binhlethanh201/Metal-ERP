@@ -266,18 +266,22 @@ const InventoryCheckList = () => {
     {
       key: 'ticketCode',
       header: 'Mã phiếu',
-      render: (_, row) => (
-        <div className="flex flex-col items-start gap-1">
-          <span className="font-bold text-[#004785] dark:text-blue-300">
-            {row.ticketCode}
-          </span>
-          {row.recountNumber > 0 && (
-            <span className="w-fit rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700 dark:bg-orange-950/30 dark:text-orange-300">
-              Đếm lại (Lần {row.recountNumber ?? row.RecountNumber})
+      render: (_, row) => {
+        const recountCount = Number(row.recountNumber ?? row.RecountNumber ?? 0);
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <span className="font-bold text-[#004785] dark:text-blue-300">
+              {row.ticketCode}
             </span>
-          )}
-        </div>
-      ),
+            {recountCount > 0 && (
+              <span className="inline-flex items-center gap-1 w-fit rounded bg-orange-100 px-1.5 py-0.5 text-[11px] font-bold text-orange-700 dark:bg-orange-950/40 dark:text-orange-300 border border-orange-200 dark:border-orange-800/50">
+                <RotateCcw className="w-3 h-3" />
+                Đếm lại: {recountCount} lần
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'createdAt',
