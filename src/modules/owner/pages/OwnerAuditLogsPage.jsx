@@ -191,6 +191,22 @@ const OwnerAuditLogsPage = () => {
   TICKET: 'Phiếu',
   INVENTORY: 'Tồn kho',
   TRANSFER: 'Chuyển kho',
+  // Specific inventory actions
+  CREATE_INVENTORY_CHECK: 'Tạo phiếu kiểm kê',
+  UPDATE_INVENTORY_CHECK: 'Cập nhật phiếu kiểm kê',
+  FILL_INVENTORY_CHECK: 'Nhập số lượng kiểm kê',
+  APPROVE_INVENTORY_CHECK: 'Duyệt phiếu kiểm kê',
+  REJECT_INVENTORY_CHECK: 'Yêu cầu đếm lại',
+  CANCEL_INVENTORY_CHECK: 'Hủy phiếu kiểm kê',
+  UPDATE_INVENTORY_CHECK_REASON: 'Cập nhật lý do chênh lệch',
+  CREATE_OUTWARD_INVENTORY: 'Tạo phiếu xuất kho',
+  UPDATE_OUTWARD_INVENTORY: 'Cập nhật phiếu xuất kho',
+  CONFIRM_OUTWARD_INVENTORY: 'Xác nhận phiếu xuất kho',
+  CANCEL_OUTWARD_INVENTORY: 'Hủy phiếu xuất kho',
+  CREATE_INWARD_INVENTORY: 'Tạo phiếu nhập kho',
+  UPDATE_INWARD_INVENTORY: 'Cập nhật phiếu nhập kho',
+  CONFIRM_INWARD_INVENTORY: 'Xác nhận phiếu nhập kho',
+  CANCEL_INWARD_INVENTORY: 'Hủy phiếu nhập kho',
 };
 
 const stripDiacritics = (str) =>

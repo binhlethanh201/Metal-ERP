@@ -34,8 +34,12 @@ const InventoryNotificationDropdown = () => {
   const panelRef = useRef(null);
   const navigate = useNavigate();
 
-  // Derived tu local state, khong bi polling ghi de
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const [serverUnreadCount, setServerUnreadCount] = useState(0);
+
+  // Fallback to local calculation if serverUnreadCount is 0 but we have unread local items,
+  // though typically we'll rely on serverUnreadCount.
+  const localUnreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = Math.max(serverUnreadCount, localUnreadCount);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -44,6 +48,9 @@ const InventoryNotificationDropdown = () => {
       const invRes = await getInventoryNotifications({ pageNumber: 1, pageSize: 20 }).catch(() => null);
 
       if (invRes?.success && invRes.data) {
+        if (typeof invRes.data.unreadCount === 'number') {
+          setServerUnreadCount(invRes.data.unreadCount);
+        }
         const invItems = invRes.data.items || [];
         const readIds = getReadIds();
         // Merge voi localStorage de giu isRead qua cac lan F5
@@ -136,6 +143,7 @@ const InventoryNotificationDropdown = () => {
       const res = await markNotificationsAsRead(allIds, true);
       if (res?.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        setServerUnreadCount(0);
       }
     } catch (error) {
       console.error('Failed to mark all as read:', error);
@@ -152,6 +160,7 @@ const InventoryNotificationDropdown = () => {
         setNotifications((prev) =>
           prev.map((n) => (n.notificationId === notif.notificationId ? { ...n, isRead: true } : n))
         );
+        setServerUnreadCount((prev) => Math.max(0, prev - 1));
       } catch (error) {
         console.error('Failed to mark as read:', error);
       }
