@@ -7,7 +7,6 @@ import {
 } from '../../services/inventoryCheckService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../shared/hooks/useAuth';
-import { hasPermission } from '../../../../shared/utils/permissions';
 
 const STORAGE_KEY_PREFIX = 'inventory_notif_read_ids_';
 
