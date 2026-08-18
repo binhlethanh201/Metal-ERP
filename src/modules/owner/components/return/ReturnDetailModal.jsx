@@ -180,7 +180,7 @@ export const ReturnDetailModal = ({ open, onClose, detail, loading, onCancel }) 
                           <div className="font-medium text-slate-700 dark:text-[#b3b3b3]">{ei.productName || '—'}</div>
                           <div className="text-xs text-slate-400 dark:text-[#808080]">{ei.productCode}</div>
                         </td>
-                        <td className="px-4 py-3 text-center font-medium text-slate-600 dark:text-[#999999]">{ei.quantity}</td>
+                        <td className="px-4 py-3 text-center font-medium text-slate-600 dark:text-[#999999]">{ei.quantity} {ei.unit || ei.baseUnit || ''}</td>
                         <td className="px-4 py-3 text-right text-slate-600 dark:text-[#999999]">{formatCurrency(ei.unitPrice)}</td>
                         <td className="px-4 py-3 text-right font-semibold text-slate-800 dark:text-[#e5e5e5]">{formatCurrency(ei.lineTotal)}</td>
                       </tr>

@@ -607,12 +607,21 @@ export const TicketDetailModal = ({
                               : type === 'INWARD'
                                 ? sysQty + qty
                                 : sysQty - qty;
+
+                          const convertValue = Number(item.convertValue || 1);
+                          const isConversion = convertValue > 1 && item.selectedUnit && item.baseUnit && item.selectedUnit !== item.baseUnit;
+                          const saleQty = Number(item.saleQuantity ?? (isConversion ? qty / convertValue : qty));
+
                           const itemPrice = Number(
                             item.costPrice ?? item.CostPrice ?? item.unitPrice ?? item.UnitPrice ?? 0
                           );
                           const outPrice = Number(
-                            item.unitPrice ?? item.UnitPrice ?? item.costPrice ?? item.CostPrice ?? 0
+                            item.sellPrice ?? item.unitPrice ?? item.UnitPrice ?? item.costPrice ?? item.CostPrice ?? 0
                           );
+                          const itemTotal = Number(
+                            item.totalPrice ?? (isConversion ? saleQty * outPrice : qty * outPrice)
+                          );
+                          const displayUnit = item.selectedUnit || item.unitName || item.UnitName || item.unit || item.Unit || '---';
 
                           return (
                             <tr
@@ -626,7 +635,7 @@ export const TicketDetailModal = ({
                                 {item.productName || 'Sản phẩm'}
                               </td>
                               <td className="px-3 py-3 text-center text-slate-600 dark:text-[#999999]">
-                                {item.unitName || item.UnitName || item.unit || item.Unit || '---'}
+                                <span className="font-medium text-slate-800 dark:text-[#e5e5e5]">{displayUnit}</span>
                               </td>
                               {type === 'INWARD' && !hidePriceFields && (
                                 <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
@@ -675,7 +684,7 @@ export const TicketDetailModal = ({
                               )}
                               {type === 'OUTWARD' && (
                                 <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                  {formatCurrency(qty * outPrice)}
+                                  {formatCurrency(itemTotal)}
                                 </td>
                               )}
                             </tr>

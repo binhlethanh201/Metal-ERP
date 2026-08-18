@@ -211,6 +211,8 @@ const mapApiDetail = (r) => {
       productName: it.productName || 'Sản phẩm',
       productCode: it.productCode || '',
       quantity: parseFloat(it.quantity || 1),
+      unit: it.unit || it.Unit || it.baseUnit || it.BaseUnit || '',
+      baseUnit: it.baseUnit || it.BaseUnit || '',
       unitPrice: parseFloat(it.unitPrice || 0),
       lineTotal: parseFloat(it.lineTotal || 0),
     })),
@@ -901,7 +903,7 @@ const ReturnOrderPage = () => {
                     <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0 dark:border-[#333333]">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-900 dark:text-[#e5e5e5]">{it.productName}</p>
-                        <p className="text-xs text-slate-400">SL: {it.quantity}</p>
+                        <p className="text-xs text-slate-400">SL: {it.quantity} {it.unit || it.baseUnit || ''}</p>
                       </div>
                       <span className="ml-2 shrink-0 text-sm font-bold text-slate-700 dark:text-[#cccccc]">
                         {formatCurrency(it.lineTotal || it.quantity * it.unitPrice)}

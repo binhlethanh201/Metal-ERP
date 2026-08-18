@@ -169,9 +169,9 @@ const mapOrder = (o) => {
           item.lineTotal ||
           (item.unitPrice || item.price || 0) * (item.quantity || 0)
       ),
-      unit: item.unit || item.Unit || '',
-      selectedUnit: item.selectedUnit || item.SelectedUnit || '',
-      displayUnit: item.displayUnit || item.selectedUnit || item.SelectedUnit || item.unit || item.Unit || '',
+      unit: item.unit || item.Unit || item.baseUnit || item.BaseUnit || '',
+      selectedUnit: item.selectedUnit || item.SelectedUnit || item.unitName || item.UnitName || '',
+      displayUnit: item.selectedUnit || item.SelectedUnit || item.unitName || item.UnitName || item.unit || item.Unit || item.baseUnit || item.BaseUnit || '',
     })),
     itemCount: (o.items || o.lineItems || []).length || o.itemCount || 0,
     subtotal: parseFloat(o.subtotal || o.Subtotal || o.subTotal || 0),
@@ -979,7 +979,7 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Tiá
                           </p>
                           <p className="text-xs text-slate-400 dark:text-[#808080]">
                             {formatCurrency(item.unitPrice || item.price || 0)} x{' '}
-                            {item.quantity || 0}
+                            {item.quantity || 0} {item.displayUnit || item.selectedUnit || item.unit || ''}
                           </p>
                         </div>
                         <span className="ml-2 shrink-0 text-sm font-bold text-green-600">
@@ -1002,7 +1002,9 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Tiá
                               item.name ||
                               `SP #${item.productId || item.id || ''}`}
                           </span>
-                          <span className="shrink-0 text-slate-500">x {item.quantity || 0}</span>
+                          <span className="shrink-0 text-slate-500">
+                            x {item.quantity || 0} {item.displayUnit || item.selectedUnit || item.unit || ''}
+                          </span>
                         </div>
                       ))}
                       <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-bold text-[#004785]">
