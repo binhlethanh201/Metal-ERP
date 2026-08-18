@@ -35,18 +35,29 @@ const BranchHistoryPanel = ({ branchId }) => {
     const typeStr = String(t).toUpperCase();
     switch (typeStr) {
       case 'IMPORT':
+      case 'PURCHASE':
         return { text: 'Nhập kho', css: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
       case 'EXPORT':
+      case 'SALE':
         return { text: 'Xuất kho', css: 'bg-blue-50 text-blue-700 border-blue-200' };
       case 'CHECK':
       case 'STOCK_CHECK':
-        return { text: 'Kiểm kê kho', css: 'bg-purple-50 text-purple-700 border-purple-200' };
+      case 'INVENTORY_CHECK':
+      case 'BALANCE_ADJUST':
+        return { text: 'Cân bằng kiểm kho', css: 'bg-purple-50 text-purple-700 border-purple-200' };
       case 'RETURN_SUPPLIER':
+      case 'SUPPLIER_RETURN':
         return { text: 'Trả NCC', css: 'bg-amber-50 text-amber-700 border-amber-200' };
+      case 'CUSTOMER_RETURN':
+        return { text: 'Khách trả hàng', css: 'bg-amber-50 text-amber-700 border-amber-200' };
       case 'WRITE_OFF':
         return { text: 'Hủy/Hao hụt', css: 'bg-red-50 text-red-700 border-red-200' };
       case 'TRANSFER':
         return { text: 'Điều chuyển', css: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
+      case 'EXCHANGE_IN':
+        return { text: 'Nhập đổi hàng', css: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+      case 'EXCHANGE_OUT':
+        return { text: 'Xuất đổi hàng', css: 'bg-blue-50 text-blue-700 border-blue-200' };
       default:
         return { text: typeStr, css: 'bg-slate-50 text-slate-700 border-slate-200' };
     }

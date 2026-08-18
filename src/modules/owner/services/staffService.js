@@ -10,11 +10,11 @@ export const getStaffs = ({ page = 1, pageSize = 20, search = '', view, isActive
   if (page) queryParams.set('page', page);
   if (pageSize) queryParams.set('pageSize', pageSize);
   if (search && search.trim() !== '') queryParams.set('search', search.trim());
-  // view: 'active' | 'hidden' | 'deleted' (ưu tiên dùng tham số này)
+  // view: 'active' | 'hidden' | 'deleted'
   if (view) queryParams.set('view', view);
-  // Legacy: vẫn gửi isActive/isDeleted nếu BE cũ yêu cầu
-  if (isActive !== undefined && isActive !== null) queryParams.set('isActive', isActive);
-  if (isDeleted !== undefined && isDeleted !== null) queryParams.set('isDeleted', isDeleted);
+  // Booleany conversion for ASP.NET Core model binder
+  if (isActive !== undefined && isActive !== null) queryParams.set('isActive', Boolean(isActive));
+  if (isDeleted !== undefined && isDeleted !== null) queryParams.set('isDeleted', Boolean(isDeleted));
 
   const queryString = queryParams.toString();
   return apiGet(`${ENDPOINTS.OWNER.STAFFS}${queryString ? `?${queryString}` : ''}`);

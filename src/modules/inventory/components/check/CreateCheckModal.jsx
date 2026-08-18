@@ -76,26 +76,32 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       .finally(() => setLoadingProducts(false));
   }, [isOpen]);
 
-  // Fetch staff - chỉ Owner mới cần; filter theo permission có STOCK_CHECK_CREATE
+  // Fetch staff - chỉ Owner/người quản lý mới cần; CHỈ lấy nhân viên được cấp quyền "Đếm sản phẩm kiểm kê" (STOCK_CHECK_COUNT)
   useEffect(() => {
     if (!isOpen || (!isOwner && !canCreate && !canApprove)) return;
 
     setLoadingStaff(true);
     const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
-    getStaffs({ pageSize: 100 })
+    getStaffs({ pageSize: 100, view: 'active' })
       .then((res) => {
         const staffs = res?.data?.items || res?.data || [];
         const qualified = Array.isArray(staffs) ? staffs.filter(s => {
-          const roles = s.roles || [];
+          // 1. Bỏ qua tài khoản đã xóa hoặc bị khóa
+          if (s.isDeleted || s.status === 'DELETED' || s.status === 'PERMANENT_DELETED' || s.isActive === 0) return false;
+          if (s.fullName?.includes('(Đã xóa)') || s.email?.startsWith('deleted_') || s.email?.startsWith('del_') || s.email?.endsWith('@mep.deleted')) return false;
+
+          // 2. CHỈ LẤY nhân viên được cấp quyền ĐẾM sản phẩm kiểm kê (STOCK_CHECK_COUNT)
           const perms = s.permissionCodes || [];
-          return roles.includes('Owner') || perms.includes('STOCK_CHECK_COUNT') || perms.includes('STOCK_CHECK_CREATE');
+          return perms.includes('STOCK_CHECK_COUNT');
         }) : [];
+
         if ((hasCountPerm || isOwner) && !qualified.find((s) => s.userId === currentUserId)) {
           qualified.unshift(me);
         }
         setStaffList(qualified);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Lỗi tải danh sách nhân viên:', err);
         setStaffList(hasCountPerm || isOwner ? [me] : []);
       })
       .finally(() => setLoadingStaff(false));

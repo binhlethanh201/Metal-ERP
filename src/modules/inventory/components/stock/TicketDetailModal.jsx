@@ -42,8 +42,11 @@ const renderTicketTypeLabel = (ticketType, type) => {
     case 'CUSTOMER_RETURN':
       return 'Khách hàng trả lại';
     case 'BALANCE_ADJUST':
+    case 'INVENTORY_CHECK':
+    case 'CHECK':
       return 'Cân bằng kiểm kho';
     case 'RETURN_SUPPLIER':
+    case 'SUPPLIER_RETURN':
       return 'Trả hàng cho NCC';
     case 'WRITE_OFF':
       return 'Xuất hủy / Hao hụt';
@@ -51,6 +54,10 @@ const renderTicketTypeLabel = (ticketType, type) => {
       return 'Xuất điều chuyển nội bộ';
     case 'SALE':
       return 'Xuất kho bán';
+    case 'EXCHANGE_IN':
+      return 'Nhập đổi hàng';
+    case 'EXCHANGE_OUT':
+      return 'Xuất đổi hàng';
     default:
       return type === 'INWARD' ? 'Nhập kho thông thường' : 'Xuất kho thông thường';
   }
