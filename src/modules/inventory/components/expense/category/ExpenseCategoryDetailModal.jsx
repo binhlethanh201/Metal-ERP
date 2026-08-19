@@ -15,11 +15,13 @@ const ExpenseCategoryDetailModal = ({
   const [editingName, setEditingName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [localError, setLocalError] = useState('');
 
   React.useEffect(() => {
     if (isOpen && category) {
       setEditingName(category.categoryName || '');
       setIsEditing(false);
+      setLocalError('');
     }
   }, [isOpen, category]);
 
@@ -31,7 +33,7 @@ const ExpenseCategoryDetailModal = ({
       setIsEditing(false);
       onClose();
     } catch (err) {
-      // error handled by parent
+      setLocalError(err.message || 'Lỗi khi lưu.');
     } finally {
       setSaving(false);
     }
@@ -47,7 +49,7 @@ const ExpenseCategoryDetailModal = ({
       await onDelete(category.categoryId);
       onClose();
     } catch (err) {
-      // error handled by parent
+      setLocalError(err.message || 'Lỗi khi xóa.');
     }
   };
 
@@ -152,6 +154,12 @@ const ExpenseCategoryDetailModal = ({
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {localError && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200">
+              {localError}
             </div>
           )}
         </div>
