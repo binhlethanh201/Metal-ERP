@@ -845,6 +845,7 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       className="pr-8 text-right font-bold text-[#004785]"
                       type="text"
                       inputMode="numeric"
+                      disabled={!!product && field === 'costPrice'}
                       value={
                         f.form[field] != null && f.form[field] !== '' ? fmtMoney(f.form[field]) : ''
                       }
