@@ -572,9 +572,17 @@ export const StockExport = () => {
           // Đảm bảo có đủ dữ liệu sản phẩm để tra cứu tồn kho
           const existingIds = new Set(products.map((p) => String(getItemKey(p))));
           let availableProducts = products;
+          
           const missingIds = validRows
-            .map((row) => String(row.productId || row.resolvedProductId || ''))
-            .filter((id) => id && !existingIds.has(id));
+            .filter((row) => {
+              const pid = String(row.productId || row.resolvedProductId || '');
+              if (pid && existingIds.has(pid)) return false;
+              // If it can be matched by productCode, it's not missing
+              if (row.maSanPham && products.some(p => String(p.productCode) === String(row.maSanPham))) return false;
+              return true;
+            })
+            .map((row) => String(row.productId || row.resolvedProductId || ''));
+            
           if (missingIds.length > 0) {
             try {
               const allRes = await getProductsLookup({ pageSize: 1000 });
@@ -590,13 +598,15 @@ export const StockExport = () => {
               (p) =>
                 String(getItemKey(p)) === String(pid) ||
                 String(p.productId || p.Id || '') === String(pid) ||
-                String(p.productCode || p.ProductCode || '') === String(pid)
+                String(p.productCode || p.ProductCode || '') === String(pid) ||
+                (p.productCode && row.maSanPham && p.productCode === row.maSanPham)
             );
-            const stock = matchedProduct ? getProductStock(matchedProduct) : 0;
+            const finalId = matchedProduct ? getItemKey(matchedProduct) : pid;
+            const stock = matchedProduct ? (matchedProduct.actualStock ?? matchedProduct.availableStock ?? matchedProduct.stock ?? matchedProduct.quantity ?? 0) : 0;
             const unit = matchedProduct ? getUnit(matchedProduct) : '';
             return {
-              branchProductId: pid,
-              productId: pid,
+              branchProductId: finalId,
+              productId: finalId,
               productCode: row.maSanPham || '',
               productName: row.tenSanPham || '',
               unit,

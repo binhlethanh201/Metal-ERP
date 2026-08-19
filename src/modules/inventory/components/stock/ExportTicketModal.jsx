@@ -402,12 +402,19 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
         if (validRows?.length > 0) {
           const mappedItems = validRows.map((row) => {
             const pid = row.productId || row.resolvedProductId || '';
-            const matchedProduct = products.find((p) => String(getItemKey(p)) === String(pid));
+            const matchedProduct = products.find(
+              (p) => 
+                String(getItemKey(p)) === String(pid) ||
+                String(p.productId || p.Id || '') === String(pid) ||
+                String(p.productCode || p.ProductCode || '') === String(pid) ||
+                (p.productCode && row.maSanPham && p.productCode === row.maSanPham)
+            );
+            const finalId = matchedProduct ? getItemKey(matchedProduct) : pid;
             const stock = matchedProduct ? getProductStock(matchedProduct) : 0;
             const unit = matchedProduct ? getUnit(matchedProduct) : '';
             return {
-              branchProductId: pid,
-              productId: pid,
+              branchProductId: finalId,
+              productId: finalId,
               productCode: row.maSanPham || '',
               productName: row.tenSanPham || '',
               unit,
