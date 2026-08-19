@@ -566,6 +566,15 @@ const POSScreen = () => {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
           shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
           shiftData.totalRevenue = shiftData.totalSales;
+
+          lines.forEach(line => {
+            const amt = Number(line.amount) || 0;
+            if (line.method === 'Cash' || line.method === 'Tiền mặt' || line.method.toLowerCase() === 'cash') {
+              shiftData.cashSales = (shiftData.cashSales || 0) + Math.min(amt, finalTotal);
+            } else if (line.method === 'Transfer' || line.method === 'Chuyển khoản' || line.method.toLowerCase() === 'transfer') {
+              shiftData.transferSales = (shiftData.transferSales || 0) + Math.min(amt, finalTotal);
+            }
+          });
           localStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
       } catch (_) {}
@@ -937,6 +946,20 @@ const POSScreen = () => {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
           shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
           shiftData.totalRevenue = shiftData.totalSales;
+          
+          if (pendingPayLines.length > 0) {
+            pendingPayLines.forEach(line => {
+              const amt = Number(line.amount) || 0;
+              if (line.method === 'Cash' || line.method === 'Tiền mặt' || line.method.toLowerCase() === 'cash') {
+                shiftData.cashSales = (shiftData.cashSales || 0) + Math.min(amt, finalTotal);
+              } else if (line.method === 'Transfer' || line.method === 'Chuyển khoản' || line.method.toLowerCase() === 'transfer') {
+                shiftData.transferSales = (shiftData.transferSales || 0) + Math.min(amt, finalTotal);
+              }
+            });
+          } else {
+            shiftData.transferSales = (shiftData.transferSales || 0) + finalTotal;
+          }
+
           localStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
       } catch (_) {}

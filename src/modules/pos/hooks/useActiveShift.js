@@ -67,6 +67,12 @@ export const useActiveShift = ({ enabled = true } = {}) => {
           startedAt: open.startedAt,
           userName: open.userName || open.openedByUserName,
           userId: open.userId || open.openedByUserId,
+          totalSales: parseFloat(open.totalRevenue || open.totalSales || open.revenue || 0),
+          totalRevenue: parseFloat(open.totalRevenue || open.totalSales || open.revenue || 0),
+          orderCount: parseInt(open.totalOrders || open.orderCount || 0, 10),
+          cashSales: parseFloat(open.totalCash || open.cashSales || 0),
+          cardSales: parseFloat(open.totalCard || open.cardSales || 0),
+          transferSales: parseFloat(open.totalTransfer || open.transferSales || 0),
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
         setActiveShift(mapped);
