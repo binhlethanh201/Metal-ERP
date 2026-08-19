@@ -214,18 +214,28 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
       setSelectedInwardTicket({ ticketId });
 
       // Auto-populate items from inward ticket's returnable items
-      const autoItems = returnableItems.map((ri) => ({
-        branchProductId: ri.branchProductId,
-        productId: ri.branchProductId,
-        productCode: ri.productCode || '',
-        productName: ri.productName || '',
-        unit: ri.unitName || '',
-        quantity: 0,
-        maxStock: Math.min(ri.maxReturnableQuantity, ri.actualStock || 0),
-        unitPrice: ri.unitPrice || 0,
-        inwardTicketItemId: ri.inwardTicketItemId,
-        priceLocked: true, // Khóa đơn giá từ phiếu nhập
-      }));
+      const autoItems = returnableItems.map((ri) => {
+        const activeProduct = products.find((p) => 
+          String(getItemKey(p)) === String(ri.branchProductId) || 
+          (p.productCode && ri.productCode && p.productCode === ri.productCode)
+        );
+        
+        const finalId = activeProduct ? getItemKey(activeProduct) : ri.branchProductId;
+        const actualStock = activeProduct ? getProductStock(activeProduct) : (ri.actualStock || 0);
+
+        return {
+          branchProductId: finalId,
+          productId: finalId,
+          productCode: ri.productCode || '',
+          productName: ri.productName || '',
+          unit: ri.unitName || '',
+          quantity: 0,
+          maxStock: Math.min(ri.maxReturnableQuantity, actualStock),
+          unitPrice: ri.unitPrice || 0,
+          inwardTicketItemId: ri.inwardTicketItemId,
+          priceLocked: true, // Khóa đơn giá từ phiếu nhập
+        };
+      });
       setItems(autoItems);
       setStatusMessage('');
     } catch (err) {
@@ -460,7 +470,12 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
     }
 
     items.forEach((item) => {
-      if (!item.quantity || Number(item.quantity) <= 0) {
+      const isDeleted = !products.some((p) => String(getItemKey(p)) === String(getItemKey(item)));
+      
+      if (isDeleted) {
+        errors.push(`Sản phẩm "${item.productName}" không tồn tại trong hệ thống (đã bị xóa), vui lòng xóa khỏi phiếu`);
+        fields[`qty_${getItemKey(item)}`] = true;
+      } else if (!item.quantity || Number(item.quantity) <= 0) {
         errors.push(`Sản phẩm "${item.productName}" chưa nhập số lượng hoặc số lượng không hợp lệ`);
         fields[`qty_${getItemKey(item)}`] = true;
       }
@@ -1209,12 +1224,13 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
                 <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
                   {items.map((item, idx) => {
                     const key = getItemKey(item);
+                    const isDeleted = !products.some((p) => String(getItemKey(p)) === String(key));
                     const maxStock = item.maxStock ?? 999999;
                     const isOverStock = item.quantity > maxStock;
                     return (
                       <tr
                         key={key}
-                        className={`group transition-colors ${isOverStock ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/40' : 'hover:bg-blue-50/30 dark:hover:bg-[#333333]'}`}
+                        className={`group transition-colors ${isDeleted ? 'bg-slate-50/70 opacity-60 grayscale dark:bg-[#1a1a1a]/70' : isOverStock ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/40' : 'hover:bg-blue-50/30 dark:hover:bg-[#333333]'}`}
                       >
                         <td className="py-3 pl-5 pr-2 text-center">
                           <span
@@ -1238,6 +1254,11 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
                             <span className="truncate text-[13px] font-semibold text-slate-800 dark:text-[#e5e5e5]">
                               {item.productName}
                             </span>
+                            {isDeleted && (
+                              <span className="ml-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-[#404040] dark:text-[#b3b3b3]">
+                                Đã xóa
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-3 text-center">
@@ -1258,24 +1279,27 @@ export const ExportTicketModal = ({ isOpen, onClose, onSuccess }) => {
                           >
                             <button
                               type="button"
+                              disabled={isDeleted}
                               onClick={() =>
                                 updateItemQty(key, Math.max(0, (item.quantity || 0) - 1))
                               }
-                              className="flex h-7 w-7 items-center justify-center rounded-l-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
+                              className={`flex h-7 w-7 items-center justify-center rounded-l-lg ${isDeleted ? 'cursor-not-allowed text-slate-300 dark:text-[#555]' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]'}`}
                             >
                               <Icon name="remove" size={14} />
                             </button>
                             <input
                               type="number"
                               min="0"
-                              className={`h-7 w-14 border-x border-slate-200 bg-transparent text-center text-[13px] font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isOverStock ? 'text-red-600' : 'text-slate-800 dark:text-[#e5e5e5]'} dark:border-[#404040]`}
+                              disabled={isDeleted}
+                              className={`h-7 w-14 border-x border-slate-200 bg-transparent text-center text-[13px] font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isOverStock ? 'text-red-600' : 'text-slate-800 dark:text-[#e5e5e5]'} dark:border-[#404040] ${isDeleted ? 'cursor-not-allowed opacity-50' : ''}`}
                               value={item.quantity}
                               onChange={(e) => updateItemQty(key, e.target.value)}
                             />
                             <button
                               type="button"
+                              disabled={isDeleted}
                               onClick={() => updateItemQty(key, (item.quantity || 0) + 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-r-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
+                              className={`flex h-7 w-7 items-center justify-center rounded-r-lg ${isDeleted ? 'cursor-not-allowed text-slate-300 dark:text-[#555]' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]'}`}
                             >
                               <Icon name="add" size={14} />
                             </button>
