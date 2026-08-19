@@ -255,11 +255,7 @@ const AccountSettingsPage = () => {
             <InfoRow label="Email">
               <span className="text-slate-500 dark:text-[#999999]">{profile.email || user?.email || '—'}</span>
             </InfoRow>
-            {profile.username && (
-              <InfoRow label=" Tên đăng nhập">
-                <span className="text-slate-500 dark:text-[#999999]">{profile.username}</span>
-              </InfoRow>
-            )}
+
             <InfoRow label="Vai trò">
               <div className="flex flex-wrap gap-1">
                 {roles.length > 0 ? (

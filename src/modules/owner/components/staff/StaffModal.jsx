@@ -120,8 +120,8 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
       alert('Email không đúng định dạng. Vui lòng nhập địa chỉ email hợp lệ.');
       return;
     }
-    if (!staff && form.defaultRoleType !== 'Owner' && (!form.username || !form.password)) {
-      alert('Tên đăng nhập và Mật khẩu là bắt buộc khi tạo mới!');
+    if (!staff && form.defaultRoleType !== 'Owner' && !form.password) {
+      alert('Mật khẩu là bắt buộc khi tạo mới!');
       return;
     }
     if (!staff && form.defaultRoleType === 'Owner' && !form.password) {
@@ -145,6 +145,7 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
     });
 
     const submitData = { ...form, permissionCodes: cleanedCodes };
+    if (!submitData.username) submitData.username = submitData.email;
     if (!staff) submitData.customPermissionCodes = submitData.permissionCodes;
     onSave(submitData);
   };
@@ -257,17 +258,14 @@ const StaffModal = ({ isOpen, onClose, staff, permissions = [], onSave, isAdminC
     >
       <form id="staff-form" onSubmit={handleSubmit}>
         <div className="mb-6 grid grid-cols-2 gap-5">
-          {!staff && form.defaultRoleType !== 'Owner' && (
-            <Input label="Tên đăng nhập" required placeholder="VD: nguyenvan_a"
-              value={form.username || ''} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-          )}
+
+          <Input label="Email" type="email" required placeholder="VD: nguyenvana@gmail.com"
+            value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <Input label="Họ và tên" required placeholder="VD: Nguyễn Văn A"
+            value={form.fullName || ''} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
           <Input label="Mật khẩu" type="password" required={!staff} hint={staff ? '(Bỏ trống nếu không đổi)' : ''}
             placeholder="Nhập mật khẩu..." value={form.password || ''}
             onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          <Input label="Họ và tên" required placeholder="VD: Nguyễn Văn A"
-            value={form.fullName || ''} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
-          <Input label="Email" type="email" required placeholder="VD: nguyenvana@gmail.com"
-            value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <Input label="Số điện thoại" placeholder="VD: 0912345678"
             value={form.phoneNumber || ''} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} />
 
