@@ -719,7 +719,7 @@ export const TicketDetailModal = ({
                         })
                       )}
                     </tbody>
-                    {!hidePriceFields && detail?.items?.length > 0 && (
+                    {!hidePriceFields && detail?.items?.length > 0 && !isExchange && (
                       <tfoot className="border-t-2 border-slate-200 bg-slate-50/50 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
                         {detail.discountAmount > 0 && (
                           <tr>
