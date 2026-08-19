@@ -9,10 +9,9 @@ export const PAGE_PERMISSION_GROUPS = [
     category: 'Hàng hóa & Kho',
     viewPermission: 'PRODUCT_VIEW',
     subPermissions: [
-      { code: 'PRODUCT_CREATE', label: 'Thêm hàng hóa mới' },
+      { codes: ['PRODUCT_CREATE', 'PRODUCT_CATEGORY_MANAGE'], label: 'Thêm hàng hóa/ nhóm hàng / thương hiệu' },
       { code: 'PRODUCT_UPDATE', label: 'Chỉnh sửa thông tin hàng hóa' },
       { code: 'PRODUCT_DELETE', label: 'Xóa hàng hóa' },
-      { code: 'PRODUCT_CATEGORY_MANAGE', label: 'Quản lý nhóm hàng & thương hiệu' },
     ],
   },
   {

@@ -126,6 +126,7 @@ export const ENDPOINTS = {
     // ================= KIỂM KÊ KHO =================
     REJECT_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reject`,
     GET_COUNTERS: '/api/InventoryCheck/counters',
+    GET_ASSIGNEES: '/api/InventoryCheck/assignees',
     GET_NOTIFICATIONS: '/api/InventoryCheck/notifications',
     MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/mark-read',
 

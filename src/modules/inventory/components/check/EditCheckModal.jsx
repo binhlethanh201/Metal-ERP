@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { getProductsLookup } from '../../services/inventoryService';
-import { getStaffs } from '../../../owner/services/staffService';
+import { getAssignees } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
@@ -78,17 +78,14 @@ const EditCheckModal = ({ isOpen, onClose, detailData, onSave }) => {
         setLoadingStaff(true);
         const hasCountPerm = hasPermission(user, 'STOCK_CHECK_COUNT');
         const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
-        getStaffs({ pageSize: 100, view: 'active' })
+        getAssignees()
           .then((res) => {
-            const staffs = res?.data?.items || res?.data || [];
+            const staffs = res?.data || [];
             const qualified = Array.isArray(staffs) ? staffs.filter(s => {
-              // 1. Bỏ qua tài khoản đã xóa hoặc bị khóa
+              // Bỏ qua tài khoản đã xóa hoặc bị khóa
               if (s.isDeleted || s.status === 'DELETED' || s.status === 'PERMANENT_DELETED' || s.isActive === 0) return false;
               if (s.fullName?.includes('(Đã xóa)') || s.email?.startsWith('deleted_') || s.email?.startsWith('del_') || s.email?.endsWith('@mep.deleted')) return false;
-
-              // 2. CHỈ LẤY nhân viên được cấp quyền ĐẾM sản phẩm kiểm kê (STOCK_CHECK_COUNT)
-              const perms = s.permissionCodes || [];
-              return perms.includes('STOCK_CHECK_COUNT');
+              return true;
             }) : [];
 
             if ((hasCountPerm || isOwner) && !qualified.find((s) => s.userId === currentUserId)) {

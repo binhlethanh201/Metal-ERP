@@ -40,6 +40,7 @@ export const getInventoryCheckDetail = (id) =>
   apiGet(ENDPOINTS.INVENTORY.GET_INVENTORY_CHECK(id));
 
 export const getCounters = () => apiGet(ENDPOINTS.INVENTORY.GET_COUNTERS);
+export const getAssignees = () => apiGet(ENDPOINTS.INVENTORY.GET_ASSIGNEES);
 
 /**
  * Tạo mới phiếu kiểm kê (Trạng thái: Draft)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { getProductsLookup } from '../../services/inventoryService';
-import { getCounters } from '../../services/inventoryCheckService';
+import { getAssignees } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
@@ -82,7 +82,7 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
 
     setLoadingStaff(true);
     const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
-    getCounters()
+    getAssignees()
       .then((res) => {
         const staffs = res?.data || [];
         const qualified = Array.isArray(staffs)
