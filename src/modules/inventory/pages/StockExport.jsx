@@ -320,7 +320,7 @@ export const StockExport = () => {
       const res = await getInwardReturnableItems(ticketId);
       const returnableItems = res?.data?.items || res?.data || [];
       if (!Array.isArray(returnableItems) || returnableItems.length === 0) {
-        setStatusMessage('Phiếu nhập này không còn sản phẩm nào có thể trả.');
+        setStatusMessage('Lỗi: Phiếu nhập này không còn sản phẩm nào có thể trả.');
         return;
       }
       setSelectedInwardTicket({ ticketId });
