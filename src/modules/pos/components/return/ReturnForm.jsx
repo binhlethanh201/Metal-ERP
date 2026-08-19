@@ -316,7 +316,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
     setInvoiceLoading(true);
     setInvoiceError('');
     try {
-      const ordersData = await getOrders({ status: 'Completed', pageSize: 200 });
+      const ordersData = await getOrders({ status: 'Completed,Cancelled', pageSize: 200 });
       const orders = Array.isArray(ordersData)
         ? ordersData
         : (ordersData?.items ?? ordersData?.data ?? []);
@@ -330,6 +330,12 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
       );
 
       if (found) {
+        if (found.status === 'Cancelled') {
+          setInvoiceError('Đơn đã bị hủy không thể đổi trả');
+          setInvoiceLoading(false);
+          return;
+        }
+
         // Fetch full invoice detail to get items (getOrders doesn't include items)
         let fullInvoice = found;
         const invId = found.invoiceId || found.invoiceCode || found.id;

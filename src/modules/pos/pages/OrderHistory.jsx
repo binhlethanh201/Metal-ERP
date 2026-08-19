@@ -192,6 +192,7 @@ const mapOrder = (o) => {
     discountPercent: parseFloat(o.discountPercent || o.DiscountPercent || 0),
     taxAmount: parseFloat(o.taxAmount || o.vat || o.tax || 0),
     note: o.note || o.notes || '',
+    status: o.status || o.Status || '',
   };
 };
 
@@ -221,7 +222,7 @@ const OrderHistory = () => {
     try {
       // Fetch orders, returns, và posProducts song song
       const [data, returnsRaw, posProductsRaw] = await Promise.all([
-        getOrders({ status: 'Completed', pageSize: 1000 }),
+        getOrders({ status: 'Completed,Cancelled', pageSize: 1000 }),
         getReturns({}).catch(() => []),
         getPosProducts({}).catch(() => []),
       ]);
@@ -600,20 +601,28 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
           <div className="flex flex-col gap-0.5">
             <span className="font-mono text-xs font-bold text-[#004785] dark:text-blue-300">{code}</span>
             <div className="flex flex-wrap gap-1">
-              {refunded > 0 && (
+              {row.status === 'Cancelled' ? (
                 <span className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
-                  🔄 Hoàn {formatCurrency(refunded)}
+                  ❌ Đơn đã hủy
                 </span>
-              )}
-              {exchangedDiff && (
-                <span className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  🔄 Đổi chênh
-                </span>
-              )}
-              {warrantied && (
-                <span className="inline-flex items-center gap-1 rounded border border-yellow-300 bg-yellow-50 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-700">
-                  🔄 Bảo hành
-                </span>
+              ) : (
+                <>
+                  {refunded > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                      🔄 Hoàn {formatCurrency(refunded)}
+                    </span>
+                  )}
+                  {exchangedDiff && (
+                    <span className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      🔄 Đổi chênh
+                    </span>
+                  )}
+                  {warrantied && (
+                    <span className="inline-flex items-center gap-1 rounded border border-yellow-300 bg-yellow-50 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-700">
+                      🔄 Bảo hành
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
