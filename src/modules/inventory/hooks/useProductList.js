@@ -249,9 +249,19 @@ export const useProductList = (queryParams) => {
     }
   };
 
-  const handleDeleteProduct = async (id) => {
-    const confirmed = window.confirm('Bạn có chắc muốn xóa hàng hóa này?');
-    if (!confirmed) return;
+  const handleDeleteProduct = async (id, skipConfirm = false) => {
+    const product = products.find((p) => p.productId === id || p.id === id);
+    const stock = product ? (product.actualStock || product.stock || product.inventory || 0) : 0;
+
+    if (!skipConfirm) {
+      let confirmed;
+      if (stock > 0) {
+        confirmed = window.confirm('Sản phẩm này VẪN CÒN TỒN KHO. Bạn có chắc chắn muốn xóa sản phẩm này không?');
+      } else {
+        confirmed = window.confirm('Bạn có chắc muốn xóa hàng hóa này?');
+      }
+      if (!confirmed) return;
+    }
     const previousProducts = [...products];
     setProducts((prev) => prev.filter((item) => item.productId !== id && item.id !== id));
     try {
