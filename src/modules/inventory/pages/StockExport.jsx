@@ -58,7 +58,8 @@ const normalizeExportRows = (item, index) => {
       reason: item?.reason || item?.Reason || '',
       status: item?.status || item?.Status || 'COMPLETED',
       cancelReason: item?.cancelReason || '',
-      partyName,
+      partyName: item?.supplierName || partyName,
+      supplierName: item?.supplierName,
     },
   ];
 };
@@ -117,6 +118,7 @@ export const StockExport = () => {
   const today = nowDateTime();
   const { user } = useAuth();
   const canCreate = hasPermission(user, 'STOCK_OUTWARD_CREATE');
+  const canConfirm = hasPermission(user, 'STOCK_OUTWARD_CONFIRM');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exports, setExports] = useState([]);
@@ -689,6 +691,11 @@ export const StockExport = () => {
 
     if (!canCreate) {
       setStatusMessage('Bạn không có quyền tạo phiếu xuất kho');
+      return;
+    }
+
+    if (!isDraft && !canConfirm) {
+      setStatusMessage('Bạn không có quyền xác nhận xuất kho (Cần quyền Duyệt phiếu). Vui lòng chọn Lưu chờ duyệt.');
       return;
     }
 

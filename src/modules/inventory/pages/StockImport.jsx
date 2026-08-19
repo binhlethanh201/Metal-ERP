@@ -16,6 +16,8 @@ import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Modal } from '../../../shared/components/Modal';
 import Icon from '../../../shared/components/Icon';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasAnyPermission } from '../../../shared/utils/permissions';
 
 const fallbackProducts = [
   {
@@ -75,6 +77,9 @@ const normalizeInwardRow = (item, index) => {
 };
 
 export const StockImport = () => {
+  const { user } = useAuth();
+  const canConfirm = hasAnyPermission(user, ['STOCK_INWARD_UPDATE']);
+
   const [products, setProducts] = useState(fallbackProducts);
   const [suppliers, setSuppliers] = useState([]);
 
@@ -289,6 +294,11 @@ export const StockImport = () => {
   };
 
   const handleFinish = async (isDraft = false) => {
+    if (!isDraft && !canConfirm) {
+      setStatus({ type: 'error', message: 'Bạn không có quyền hoàn tất phiếu (Cần quyền Cập nhật / Duyệt phiếu). Vui lòng chọn Lưu nháp.' });
+      return;
+    }
+
     if (!items.length) {
       setStatus({ type: 'error', message: 'Vui lòng chọn ít nhất 1 sản phẩm trước khi hoàn tất' });
       return;
@@ -314,6 +324,7 @@ export const StockImport = () => {
         } else {
           item.productCode = i.productCode || i.id || '';
           item.productName = i.productName || '';
+          item.unit = i.unitName || i.unit || 'Cái';
         }
         return item;
       }),
@@ -498,6 +509,7 @@ export const StockImport = () => {
               onSubmit={handleFinish}
               formatCurrency={formatCurrency}
               isCustomerReturn={isCustomerReturn}
+              canConfirm={canConfirm}
             />
           </div>
         </div>

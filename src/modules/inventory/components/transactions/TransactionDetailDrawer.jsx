@@ -533,11 +533,29 @@ export const TransactionDetailDrawer = ({ isOpen, onClose, transaction, loading 
                             </div>
                           </>
                         ) : (
-                          <div>
-                            <p className="text-xs text-slate-500 dark:text-[#999999]">Tổng tiền</p>
-                            <p className="text-2xl font-bold text-emerald-600">
-                              {formatCurrency(totalAmount)}
-                            </p>
+                          <div className="flex flex-col items-end gap-1">
+                            {transaction?.discountAmount > 0 && (
+                              <div className="flex w-full items-center justify-end gap-6 text-sm text-slate-600 dark:text-[#b3b3b3]">
+                                <span>Tiền gốc:</span>
+                                <span className="font-medium line-through">
+                                  {formatCurrency((transaction?.totalAmount || totalAmount) + transaction.discountAmount)}
+                                </span>
+                              </div>
+                            )}
+                            {transaction?.discountAmount > 0 && (
+                              <div className="flex w-full items-center justify-end gap-6 text-sm text-red-500">
+                                <span>Chiết khấu:</span>
+                                <span className="font-semibold">
+                                  -{formatCurrency(transaction.discountAmount)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex w-full items-center justify-end gap-6 mt-1">
+                              <span className="text-xs text-slate-500 dark:text-[#999999]">Tổng thanh toán</span>
+                              <span className="text-2xl font-bold text-emerald-600">
+                                {formatCurrency(transaction?.totalAmount !== undefined && transaction?.totalAmount !== null ? transaction.totalAmount : totalAmount)}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>

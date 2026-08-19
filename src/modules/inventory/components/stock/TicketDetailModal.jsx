@@ -719,8 +719,21 @@ export const TicketDetailModal = ({
                         })
                       )}
                     </tbody>
-                    {type === 'INWARD' && !hidePriceFields && detail?.items?.length > 0 && (
+                    {!hidePriceFields && detail?.items?.length > 0 && (
                       <tfoot className="border-t-2 border-slate-200 bg-slate-50/50 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+                        {detail.discountAmount > 0 && (
+                          <tr>
+                            <td
+                              colSpan={isCompleted ? 7 : 5}
+                              className="px-3 py-2 text-right font-medium text-slate-500 dark:text-[#999999]"
+                            >
+                              Chiết khấu đã áp dụng:
+                            </td>
+                            <td className="px-3 py-2 text-right font-semibold text-red-500">
+                              -{formatCurrency(detail.discountAmount)}
+                            </td>
+                          </tr>
+                        )}
                         <tr>
                           <td
                             colSpan={isCompleted ? 7 : 5}
@@ -730,17 +743,19 @@ export const TicketDetailModal = ({
                           </td>
                           <td className="px-3 py-3 text-right font-extrabold text-[#004785] dark:text-blue-400">
                             {formatCurrency(
-                              detail.items.reduce((sum, itm) => {
-                                const q = Number(itm.quantity || 0);
-                                const p = Number(
-                                  itm.costPrice ??
-                                    itm.CostPrice ??
-                                    itm.unitPrice ??
-                                    itm.UnitPrice ??
-                                    0
-                                );
-                                return sum + q * p;
-                              }, 0)
+                              type === 'OUTWARD' && detail?.totalAmount !== undefined && detail?.totalAmount !== null && detail?.totalAmount !== 0
+                                ? detail.totalAmount
+                                : detail.items.reduce((sum, itm) => {
+                                    const q = Number(itm.quantity || 0);
+                                    const p = Number(
+                                      itm.costPrice ??
+                                        itm.CostPrice ??
+                                        itm.unitPrice ??
+                                        itm.UnitPrice ??
+                                        0
+                                    );
+                                    return sum + q * p;
+                                  }, 0)
                             )}
                           </td>
                         </tr>

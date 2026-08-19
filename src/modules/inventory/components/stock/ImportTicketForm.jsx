@@ -47,6 +47,7 @@ export const ImportTicketForm = ({
   onSubmit,
   formatCurrency,
   isCustomerReturn = false,
+  canConfirm = true,
 }) => {
   const containerRef = useRef(null);
   const [supplierPopupOpen, setSupplierPopupOpen] = useState(false);

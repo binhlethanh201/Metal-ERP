@@ -320,7 +320,7 @@ export const ImportItemsTable = ({
           variant="outline"
           size="sm"
           onClick={onAddNewProduct}
-          className="flex items-center gap-2"
+          className="hidden items-center gap-2"
         >
           <Plus size={16} />
           Thêm sản phẩm
@@ -395,7 +395,7 @@ export const ImportItemsTable = ({
       <Table
         columns={displayColumns}
         data={items}
-        emptyMessage='Chưa có sản phẩm nào. Hãy tìm kiếm ở ô trên hoặc bấm "Thêm sản phẩm".'
+        emptyMessage='Chưa có sản phẩm nào. Hãy tìm kiếm ở ô trên.'
       />
     </section>
   );

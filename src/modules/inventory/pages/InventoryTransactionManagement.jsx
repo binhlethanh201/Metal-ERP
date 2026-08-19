@@ -41,10 +41,9 @@ const formatDate = (dateString) => {
 };
 
 const calculateTotalAmount = (item) => {
-  if (item?.totalAmount !== undefined && item?.totalAmount !== null)
-    return Number(item.totalAmount);
+  let calculated = 0;
   if (Array.isArray(item?.items)) {
-    return item.items.reduce((sum, i) => {
+    calculated = item.items.reduce((sum, i) => {
       const convertValue = Number(i.convertValue || 1);
       const isConversion =
         convertValue > 1 &&
@@ -64,7 +63,11 @@ const calculateTotalAmount = (item) => {
       );
     }, 0);
   }
-  return 0;
+  
+  if (item?.totalAmount !== undefined && item?.totalAmount !== null && Number(item.totalAmount) !== 0) {
+    return Number(item.totalAmount);
+  }
+  return calculated;
 };
 
 // Map backend status to UI status

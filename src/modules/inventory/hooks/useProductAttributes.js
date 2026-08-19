@@ -44,7 +44,7 @@ export const useProductAttributes = (form, setForm) => {
   const addAttrRow = () => {
     setForm((c) => ({
       ...c,
-      attributes: [...(c.attributes || []), { id: Date.now(), name: '', value: '' }],
+      attributes: [...(c.attributes || []), { id: crypto.randomUUID(), name: '', value: '' }],
     }));
   };
 
