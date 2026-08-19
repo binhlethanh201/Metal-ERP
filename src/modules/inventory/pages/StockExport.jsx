@@ -913,7 +913,8 @@ export const StockExport = () => {
                 msg.includes('chưa') ||
                 msg.includes('tối thiểu') ||
                 msg.includes('không hợp lệ') ||
-                msg.includes('vượt');
+                msg.includes('vượt') ||
+                msg.includes('quyền');
               return (
                 <div
                   className={`flex items-start gap-3 rounded-lg border p-4 ${isError
