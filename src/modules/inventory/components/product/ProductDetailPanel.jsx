@@ -179,18 +179,68 @@ const DescTabPanel = ({ row, loading, onEdit }) => {
 };
 
 const BottomToolbar = ({ row, fullData, onEdit, onDelete }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const stock = fullData?.actualStock ?? fullData?.stock ?? fullData?.inventory ?? 0;
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    if (stock > 0) {
+      setShowConfirm(true);
+    } else {
+      onDelete?.(row.id || row.productId);
+    }
+  };
+
+  const handleConfirmDelete = (e) => {
+    e.stopPropagation();
+    setShowConfirm(false);
+    onDelete?.(row.id || row.productId, true); // skip native confirm
+  };
+
+  const handleCancelDelete = (e) => {
+    e.stopPropagation();
+    setShowConfirm(false);
+  };
+
   return (
     <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-4 dark:border-[#333333]">
-      <div className="flex gap-4">
+      <div className="flex gap-4 relative">
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete?.(row.id || row.productId);
-          }}
+          onClick={handleDeleteClick}
           className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-red-600 dark:text-[#b3b3b3] dark:hover:text-red-400"
         >
           <Icon name="delete" size={18} /> Xóa
         </button>
+
+        {showConfirm && (
+          <div 
+            className="absolute bottom-full left-0 mb-3 w-72 z-50 rounded-xl bg-red-600 p-4 shadow-xl border border-red-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <Icon name="warning" size={24} className="text-white shrink-0 mt-0.5" />
+              <p className="text-sm font-bold text-white leading-snug">
+                Sản phẩm này vẫn còn tồn kho. Bạn có chắc chắn muốn xóa sản phẩm này không?
+              </p>
+            </div>
+            <div className="mt-4 flex gap-2 justify-end">
+              <button 
+                onClick={handleCancelDelete} 
+                className="rounded-lg bg-red-500/50 border border-red-400/50 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-500 transition"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleConfirmDelete} 
+                className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 shadow-sm transition"
+              >
+                Chắc chắn xóa
+              </button>
+            </div>
+            {/* Arrow tail */}
+            <div className="absolute -bottom-1.5 left-4 h-3 w-3 rotate-45 border-b border-r border-red-700 bg-red-600"></div>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <button

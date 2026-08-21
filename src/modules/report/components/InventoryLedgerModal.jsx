@@ -8,14 +8,19 @@ const DOC_TYPE_LABELS = {
   PURCHASE: 'Nhập mua NCC',
   SALE: 'Bán hàng',
   RETURN_SUPPLIER: 'Xuất trả NCC',
+  SUPPLIER_RETURN: 'Xuất trả NCC',
   CUSTOMER_RETURN: 'Khách trả hàng',
-  BALANCE_ADJUST: 'Điều chỉnh tồn',
+  BALANCE_ADJUST: 'Cân bằng kiểm kho',
+  INVENTORY_CHECK: 'Cân bằng kiểm kho',
+  CHECK: 'Cân bằng kiểm kho',
   WRITE_OFF: 'Xuất hủy',
   TRANSFER: 'Chuyển kho',
   EXCHANGE_IN: 'Nhập đổi hàng',
   EXCHANGE_OUT: 'Xuất đổi hàng',
   DEFECTIVE_HOLD: 'Tạm giữ hàng lỗi',
   CUSTOMER_RETURN_DEFECTIVE: 'Khách trả hàng lỗi',
+  STOCK_IMPORT: 'Nhập kho',
+  STOCK_EXPORT: 'Xuất kho',
 };
 
 // Nhãn cho dòng bút toán ĐẢO khi hủy phiếu (IsCancellation=true).
@@ -24,13 +29,18 @@ const DOC_TYPE_LABELS = {
 const CANCEL_DOC_TYPE_LABELS = {
   PURCHASE: 'Hủy phiếu nhập kho',
   CUSTOMER_RETURN: 'Hủy phiếu nhập (khách trả)',
-  BALANCE_ADJUST: 'Hủy điều chỉnh tồn',
+  BALANCE_ADJUST: 'Hủy cân bằng kiểm kho',
+  INVENTORY_CHECK: 'Hủy cân bằng kiểm kho',
+  CHECK: 'Hủy cân bằng kiểm kho',
   RETURN_SUPPLIER: 'Hủy phiếu xuất kho',
+  SUPPLIER_RETURN: 'Hủy phiếu xuất kho',
   WRITE_OFF: 'Hủy phiếu xuất (xuất hủy)',
   TRANSFER: 'Hủy phiếu xuất (chuyển kho)',
   SALE: 'Hủy phiếu xuất bán',
   EXCHANGE_IN: 'Hủy nhập đổi hàng',
   EXCHANGE_OUT: 'Hủy xuất đổi hàng',
+  STOCK_IMPORT: 'Hủy phiếu nhập kho',
+  STOCK_EXPORT: 'Hủy phiếu xuất kho',
 };
 
 export const InventoryLedgerModal = ({
@@ -126,20 +136,21 @@ export const InventoryLedgerModal = ({
                   {entries.map((e, idx) => {
                     // Bảo vệ cả 2 kiểu casing (camelCase mặc định web, hoặc PascalCase nếu BE đổi policy).
                     const isCancel = !!(e.isCancellation ?? e.IsCancellation);
+                    const docTypeKey = (e.docType || '').trim().toUpperCase();
                     const typeLabel = isCancel
-                      ? (CANCEL_DOC_TYPE_LABELS[e.docType] || `Hủy ${e.docType || ''}`)
-                      : (DOC_TYPE_LABELS[e.docType] || e.docType);
-                    // Dòng hủy: nền XANH + badge xanh đậm để phân biệt với nhập(xanh nhạt)/xuất(đỏ) thường.
+                      ? (CANCEL_DOC_TYPE_LABELS[docTypeKey] || `Hủy ${DOC_TYPE_LABELS[docTypeKey] || e.docType || ''}`)
+                      : (DOC_TYPE_LABELS[docTypeKey] || e.docType);
+                    // Dòng hủy: dùng badge đỏ nhạt giống xuất hàng bình thường để đồng bộ UI
                     const badgeClass = isCancel
-                      ? 'bg-green-600 text-white dark:bg-green-700 dark:text-white'
+                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400'
                       : e.qtyIn > 0
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
                         : 'bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400';
-                    const rowClass = isCancel
-                      ? 'bg-green-50 hover:bg-green-100/70 dark:bg-green-950/20 dark:hover:bg-green-900/30'
-                      : 'hover:bg-slate-50/60 dark:hover:bg-[#272727]/60';
-                    // Số lượng dòng hủy cũng tô xanh đậm để nổi bật.
-                    const cancelQtyClass = 'font-bold text-green-700 dark:text-green-400';
+                    
+                    const rowClass = 'hover:bg-slate-50/60 dark:hover:bg-[#272727]/60';
+                    
+                    // Số lượng dòng hủy cũng dùng màu đỏ để đồng bộ
+                    const cancelQtyClass = 'font-bold text-rose-700 dark:text-rose-400';
                     return (
                     <tr key={idx} className={rowClass}>
                       <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-[#999999]">

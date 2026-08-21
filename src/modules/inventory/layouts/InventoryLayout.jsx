@@ -118,6 +118,28 @@ const InventoryLayout = () => {
       window.dispatchEvent(new CustomEvent('RefreshNotifications'));
     });
 
+    // Lắng nghe sự kiện không hiện popup, chỉ refresh chuông thông báo
+    connection.on('SilentNotification', () => {
+      console.log('SIGNALR: Received SilentNotification');
+      window.dispatchEvent(new CustomEvent('RefreshNotifications'));
+    });
+
+    // Lắng nghe Thông báo kiểm kê / kho từ hệ thống
+    connection.on('ReceiveInventoryNotification', (data) => {
+      console.log('SIGNALR: Received ReceiveInventoryNotification', data);
+      
+      // Có thể hiện Toast nếu cần, hoặc chỉ update badge
+      if (data && data.message) {
+        addToast(
+          data.title || 'Thông báo kho mới',
+          'info',
+          data.message,
+          data.notificationId
+        );
+      }
+      window.dispatchEvent(new CustomEvent('RefreshNotifications'));
+    });
+
     (async () => {
       try {
         await connection.start();

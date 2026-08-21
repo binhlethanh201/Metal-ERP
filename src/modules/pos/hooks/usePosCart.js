@@ -281,7 +281,17 @@ export const usePosCart = (initialItems = []) => {
         if (!currentProduct) return item;
 
         const basePrice = Number(currentProduct.price ?? currentProduct.retailPrice ?? 0);
-        const newPrice = item.convertValue ? basePrice * item.convertValue : basePrice;
+        let newPrice = basePrice;
+        if (item.convertValue && item.convertValue !== 1) {
+          const pcu = currentProduct.conversionUnits?.find(
+            (u) => String(u.unitName) === String(item.selectedUnit) || Number(u.convertValue) === Number(item.convertValue)
+          );
+          if (pcu && Number(pcu.price) > 0) {
+            newPrice = Number(pcu.price);
+          } else {
+            newPrice = basePrice * item.convertValue;
+          }
+        }
         const newStock = Number(currentProduct.stock ?? currentProduct.availableStock ?? 0);
 
         if (item.price !== newPrice || item.baseStock !== newStock || item.stock !== newStock) {

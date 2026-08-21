@@ -12,11 +12,10 @@ import ENDPOINTS from '../../../services/endpoints';
  * @param {Object} filters - status, startDate, endDate, branchId, pageNumber, pageSize, ticketCode
  */
 export const getInventoryChecks = (filters = {}) => {
-  const allowed = ['status', 'pageNumber', 'pageSize'];
+  const allowed = ['status', 'pageNumber', 'pageSize', 'ticketCode'];
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return;
-    // FE dùng startDate/endDate -> BE dùng fromDate/toDate
     if (key === 'startDate') {
       params.set('fromDate', value);
     } else if (key === 'endDate') {
@@ -24,7 +23,7 @@ export const getInventoryChecks = (filters = {}) => {
     } else if (allowed.includes(key)) {
       params.set(key, value);
     }
-    // branchId/ticketCode: BE không nhận -> bỏ qua
+    // branchId: BE tự resolve -> bỏ qua
   });
   const queryString = params.toString();
   return apiGet(
@@ -41,6 +40,7 @@ export const getInventoryCheckDetail = (id) =>
   apiGet(ENDPOINTS.INVENTORY.GET_INVENTORY_CHECK(id));
 
 export const getCounters = () => apiGet(ENDPOINTS.INVENTORY.GET_COUNTERS);
+export const getAssignees = () => apiGet(ENDPOINTS.INVENTORY.GET_ASSIGNEES);
 
 /**
  * Tạo mới phiếu kiểm kê (Trạng thái: Draft)
@@ -54,6 +54,7 @@ export const createInventoryCheck = (productIds, notes, assigneeUserId = null) =
   return apiPost(ENDPOINTS.INVENTORY.CREATE_INVENTORY_CHECK, {
     items: (productIds || []).map((id) => ({ id })),
     note: notes ?? null,
+    assigneeUserId: assigneeUserId
   });
 };
 

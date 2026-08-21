@@ -44,7 +44,7 @@ export const ENDPOINTS = {
     CATEGORY_RETURN_POLICIES: (branchId) =>
       `/api/owner/branches/${branchId}/return-policies/categories`,
 
-    // Branch-wide Return Discount (Chiết khấu trả hàng cho cả cửa hàng)
+    // Branch-wide Return Discount (Tiền phạt trả hàng cho cả cửa hàng)
     RETURN_DISCOUNT: (branchId) =>
       `/api/owner/branches/${branchId}/return-policies/discount`,
   },
@@ -126,6 +126,7 @@ export const ENDPOINTS = {
     // ================= KIỂM KÊ KHO =================
     REJECT_INVENTORY_CHECK: (id) => `/api/InventoryCheck/${id}/reject`,
     GET_COUNTERS: '/api/InventoryCheck/counters',
+    GET_ASSIGNEES: '/api/InventoryCheck/assignees',
     GET_NOTIFICATIONS: '/api/InventoryCheck/notifications',
     MARK_NOTIFICATION_READ: '/api/InventoryCheck/notifications/mark-read',
 

@@ -41,15 +41,33 @@ const formatDate = (dateString) => {
 };
 
 const calculateTotalAmount = (item) => {
-  if (Number(item?.totalAmount) > 0) return Number(item.totalAmount);
+  let calculated = 0;
   if (Array.isArray(item?.items)) {
-    return item.items.reduce((sum, i) => {
-      const price = Number(i.costPrice || i.unitPrice || i.UnitPrice || 0);
-      const qty = Number(i.quantity || 0);
-      return sum + price * qty;
+    calculated = item.items.reduce((sum, i) => {
+      const convertValue = Number(i.convertValue || 1);
+      const isConversion =
+        convertValue > 1 &&
+        (i.selectedUnit || i.unitName) &&
+        i.baseUnit &&
+        (i.selectedUnit || i.unitName) !== i.baseUnit;
+      const rawQty = Number(i.quantity || 0);
+      const saleQty = Number(i.saleQuantity ?? (isConversion ? rawQty / convertValue : rawQty));
+      const price = Number(i.sellPrice || i.unitPrice || i.costPrice || i.UnitPrice || 0);
+      return (
+        sum +
+        (i.totalPrice !== undefined && i.totalPrice !== null
+          ? Number(i.totalPrice)
+          : isConversion
+            ? saleQty * price
+            : rawQty * price)
+      );
     }, 0);
   }
-  return 0;
+  
+  if (item?.totalAmount !== undefined && item?.totalAmount !== null && Number(item.totalAmount) !== 0) {
+    return Number(item.totalAmount);
+  }
+  return calculated;
 };
 
 // Map backend status to UI status
@@ -84,6 +102,9 @@ const normalizeInwardInventory = (item) => ({
   itemCount: item?.items?.length || 0,
   totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
   totalAmount: calculateTotalAmount(item),
+  exchangeDeltaAmount:
+    item?.exchangeDeltaAmount !== undefined ? Number(item.exchangeDeltaAmount) : undefined,
+  isExchangeTicket: !!item?.isExchangeTicket,
   createdByName: item?.userName || item?.createdByName || '-',
   status: mapStatus(item?.status),
   branchName: item?.branchName || '-',
@@ -119,8 +140,22 @@ const normalizeOutwardInventory = (item) => ({
     '-',
   partyId: item?.customerId || null,
   itemCount: item?.items?.length || 0,
-  totalQuantity: item?.items?.reduce((sum, i) => sum + Number(i.quantity || 0), 0) || 0,
+  totalQuantity:
+    item?.items?.reduce((sum, i) => {
+      const convertValue = Number(i.convertValue || 1);
+      const isConversion =
+        convertValue > 1 &&
+        (i.selectedUnit || i.unitName) &&
+        i.baseUnit &&
+        (i.selectedUnit || i.unitName) !== i.baseUnit;
+      const rawQty = Number(i.quantity || 0);
+      const saleQty = Number(i.saleQuantity ?? (isConversion ? rawQty / convertValue : rawQty));
+      return sum + (isConversion ? saleQty : rawQty);
+    }, 0) || 0,
   totalAmount: calculateTotalAmount(item),
+  exchangeDeltaAmount:
+    item?.exchangeDeltaAmount !== undefined ? Number(item.exchangeDeltaAmount) : undefined,
+  isExchangeTicket: !!item?.isExchangeTicket,
   createdByName: item?.userName || item?.createdByName || '-',
   status: mapStatus(item?.status),
   branchName: item?.branchName || '-',
@@ -132,15 +167,37 @@ const normalizeOutwardInventory = (item) => ({
 });
 
 // Normalize item
-const normalizeItem = (item) => ({
-  id: item?.ticketItemId || item?.branchProductId,
-  productCode: item?.productCode || '-',
-  productName: item?.productName || '-',
-  unit: item?.unit || item?.Unit || item?.unitName || item?.UnitName || '-',
-  quantity: Number(item?.quantity || 0),
-  costPrice: Number(item?.costPrice || item?.unitPrice || item?.UnitPrice || 0),
-  imageUrl: item?.imageUrl || null,
-});
+const normalizeItem = (item) => {
+  const convertValue = Number(item?.convertValue || 1);
+  const baseUnit = item?.baseUnit || '';
+  const selectedUnit = item?.selectedUnit || item?.unitName || item?.unit || item?.Unit || '-';
+  const isConversion = convertValue > 1 && baseUnit && selectedUnit !== baseUnit;
+  const rawQty = Number(item?.quantity || 0);
+  const saleQty = Number(item?.saleQuantity ?? (isConversion ? rawQty / convertValue : rawQty));
+  const price = Number(
+    item?.sellPrice ?? item?.unitPrice ?? item?.costPrice ?? item?.UnitPrice ?? 0
+  );
+  const displayQty = isConversion ? saleQty : rawQty;
+  const totalPrice =
+    item?.totalPrice !== undefined && item?.totalPrice !== null
+      ? Number(item.totalPrice)
+      : displayQty * price;
+
+  return {
+    id: item?.ticketItemId || item?.branchProductId,
+    productCode: item?.productCode || '-',
+    productName: item?.productName || '-',
+    unit: selectedUnit,
+    quantity: displayQty,
+    costPrice: price,
+    unitPrice: price,
+    totalPrice: totalPrice,
+    imageUrl: item?.imageUrl || null,
+    convertValue: convertValue,
+    baseUnit: baseUnit,
+    selectedUnit: selectedUnit,
+  };
+};
 
 // Main component
 export const InventoryTransactionManagement = () => {
@@ -809,17 +866,14 @@ export const InventoryTransactionManagement = () => {
                       {(row.totalQuantity || 0).toLocaleString('vi-VN')}
                     </td>
                     <td className="max-w-[140px] px-4 py-3 text-right font-medium text-slate-900 dark:text-[#e5e5e5]">
-                      {row.ticketType === 'CUSTOMER_RETURN' ? (
+                      {row.ticketType === 'CUSTOMER_RETURN' && row.totalAmount === undefined ? (
                         <span className="text-xs italic text-slate-400 dark:text-[#808080]">
                           Khách hàng trả
                         </span>
-                      ) : (row.note || '').includes('INVENTORY_ADJUSTMENT') ? (
+                      ) : (row.note || '').includes('INVENTORY_ADJUSTMENT') &&
+                        row.totalAmount === undefined ? (
                         <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
                           Cân bằng kho
-                        </span>
-                      ) : row.type === 'OUTWARD' && row.totalAmount === 0 ? (
-                        <span className="text-xs italic text-slate-400 dark:text-[#808080]">
-                          {row.reason || row.ticketType || '-'}
                         </span>
                       ) : (
                         formatCurrency(row.totalAmount)

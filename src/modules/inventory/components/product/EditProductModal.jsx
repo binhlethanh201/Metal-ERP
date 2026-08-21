@@ -267,31 +267,8 @@ const AttributeEditor = ({ f }) => (
                     className={`flex h-10 cursor-pointer items-center justify-between px-4 ${attr.name === item ? 'bg-blue-50 text-[#004785] dark:bg-[#272727]' : 'hover:bg-slate-100 dark:hover:bg-[#333333]'}`}
                   >
                     <span className="flex-1 text-sm dark:text-[#d4d4d4]">{item}</span>
-                    <IconButton
-                      icon={({ size }) => <Icon name="edit" size={size} />}
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        f.setEditAttrIndex(aidx);
-                        f.setEditAttrValue(item);
-                        f.setEditAttrModalOpen(true);
-                        f.setOpenDropdownId(null);
-                      }}
-                    />
                   </div>
                 ))}
-                <div
-                  onClick={() => {
-                    f.setEditingAttrId(attr.id);
-                    f.setNewAttrName('');
-                    f.setCreateAttrModalOpen(true);
-                    f.setOpenDropdownId(null);
-                  }}
-                  className="flex h-10 cursor-pointer items-center px-4 hover:bg-slate-100 dark:hover:bg-[#333333]"
-                >
-                  <span className="text-sm font-medium text-[#004785]">+ Tạo thuộc tính mới</span>
-                </div>
               </div>
             )}
           </div>
@@ -312,6 +289,7 @@ const AttributeEditor = ({ f }) => (
       ))}
       <div>
         <Button
+          type="button"
           variant="outline"
           size="sm"
           onClick={(e) => {
@@ -867,6 +845,7 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       className="pr-8 text-right font-bold text-[#004785]"
                       type="text"
                       inputMode="numeric"
+                      disabled={!!product && field === 'costPrice'}
                       value={
                         f.form[field] != null && f.form[field] !== '' ? fmtMoney(f.form[field]) : ''
                       }
@@ -891,16 +870,6 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                       options={Array.isArray(f.locations) ? f.locations : []}
                       placeholder="Tìm hoặc chọn vị trí..."
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        f.setNewLocationName('');
-                        f.setCreateLocationModalOpen(true);
-                      }}
-                      className="mt-1 text-sm font-semibold text-[#004785] hover:underline"
-                    >
-                      + Tạo vị trí mới
-                    </button>
                   </div>
                   <div className="space-y-1">
                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#b3b3b3]">

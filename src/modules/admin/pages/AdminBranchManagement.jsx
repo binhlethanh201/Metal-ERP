@@ -142,20 +142,28 @@ const AdminBranchManagement = () => {
     }
   };
 
-  const handleDelete = async (branch) => {
+  const handleDelete = async (branch, force = false) => {
     if (
+      !force &&
       !window.confirm(
         `Bạn có chắc muốn xoá nháp cửa hàng "${branch.branchName}"? Cửa hàng sẽ bị ẩn khỏi hệ thống nhưng có thể khôi phục hoặc xoá hẳn sau.`
       )
     )
       return;
     try {
-      await deleteAdminBranch(branch.branchId);
+      await deleteAdminBranch(branch.branchId, force);
       alert('Đã xoá nháp cửa hàng.');
       fetchData();
     } catch (err) {
       console.error('Soft delete branch error:', err);
-      alert(err.message || 'Xoá nháp thất bại');
+      const msg = err.response?.data?.message || err.message || '';
+      if (msg && msg.includes('Khong the xoa chi nhanh vi con')) {
+        if (window.confirm(`${msg}\n\nBạn có muốn BỎ QUA cảnh báo và tiếp tục xoá không?`)) {
+          return handleDelete(branch, true);
+        }
+      } else {
+        alert(msg || 'Xoá nháp thất bại');
+      }
     }
   };
 
@@ -171,19 +179,27 @@ const AdminBranchManagement = () => {
     }
   };
 
-  const handleHardDelete = async (branch) => {
+  const handleHardDelete = async (branch, force = false) => {
     if (
+      !force &&
       !window.confirm(`XOÁ HẲN cửa hàng "${branch.branchName}"?\nHành động này không thể hoàn tác.`)
     )
       return;
-    if (!window.confirm('Bạn chắc chắn 100%? Dữ liệu sẽ bị xoá vĩnh viễn.')) return;
+    if (!force && !window.confirm('Bạn chắc chắn 100%? Dữ liệu sẽ bị xoá vĩnh viễn.')) return;
     try {
-      await hardDeleteAdminBranch(branch.branchId);
+      await hardDeleteAdminBranch(branch.branchId, force);
       alert('Đã xoá hẳn cửa hàng.');
       fetchData();
     } catch (err) {
       console.error('Hard delete branch error:', err);
-      alert(err.message || 'Xoá hẳn thất bại');
+      const msg = err.response?.data?.message || err.message || '';
+      if (msg && msg.includes('Khong the xoa chi nhanh vi con')) {
+        if (window.confirm(`${msg}\n\nBạn có muốn BỎ QUA cảnh báo và tiếp tục xoá hẳn không?`)) {
+          return handleHardDelete(branch, true);
+        }
+      } else {
+        alert(msg || 'Xoá hẳn thất bại');
+      }
     }
   };
 

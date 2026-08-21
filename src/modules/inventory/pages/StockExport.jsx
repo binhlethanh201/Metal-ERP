@@ -58,7 +58,8 @@ const normalizeExportRows = (item, index) => {
       reason: item?.reason || item?.Reason || '',
       status: item?.status || item?.Status || 'COMPLETED',
       cancelReason: item?.cancelReason || '',
-      partyName,
+      partyName: item?.supplierName || partyName,
+      supplierName: item?.supplierName,
     },
   ];
 };
@@ -117,6 +118,7 @@ export const StockExport = () => {
   const today = nowDateTime();
   const { user } = useAuth();
   const canCreate = hasPermission(user, 'STOCK_OUTWARD_CREATE');
+  const canConfirm = hasPermission(user, 'STOCK_OUTWARD_CONFIRM');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exports, setExports] = useState([]);
@@ -318,22 +320,34 @@ export const StockExport = () => {
       const res = await getInwardReturnableItems(ticketId);
       const returnableItems = res?.data?.items || res?.data || [];
       if (!Array.isArray(returnableItems) || returnableItems.length === 0) {
-        setStatusMessage('Phiếu nhập này không còn sản phẩm nào có thể trả.');
+        setStatusMessage('Lỗi: Phiếu nhập này không còn sản phẩm nào có thể trả.');
         return;
       }
       setSelectedInwardTicket({ ticketId });
-      const autoItems = returnableItems.map((ri) => ({
-        branchProductId: ri.branchProductId,
-        productId: ri.branchProductId,
-        productCode: ri.productCode || '',
-        productName: ri.productName || '',
-        unit: ri.unitName || '',
-        quantity: 0,
-        maxStock: Math.min(ri.maxReturnableQuantity, ri.actualStock || 0),
-        unitPrice: ri.unitPrice || 0,
-        inwardTicketItemId: ri.inwardTicketItemId,
-        priceLocked: true,
-      }));
+      const autoItems = returnableItems.map((ri) => {
+        const activeProduct = products.find((p) => 
+          String(getItemKey(p)) === String(ri.branchProductId) || 
+          (p.productCode && ri.productCode && p.productCode === ri.productCode)
+        );
+        
+        const finalId = activeProduct ? getItemKey(activeProduct) : ri.branchProductId;
+        const actualStock = activeProduct 
+          ? (activeProduct.actualStock ?? activeProduct.availableStock ?? activeProduct.stock ?? activeProduct.quantity ?? 0) 
+          : (ri.actualStock || 0);
+
+        return {
+          branchProductId: finalId,
+          productId: finalId,
+          productCode: ri.productCode || '',
+          productName: ri.productName || '',
+          unit: ri.unitName || '',
+          quantity: 0,
+          maxStock: Math.min(ri.maxReturnableQuantity, Number(actualStock)),
+          unitPrice: ri.unitPrice || 0,
+          inwardTicketItemId: ri.inwardTicketItemId,
+          priceLocked: true,
+        };
+      });
       setItems(autoItems);
       setStatusMessage('');
     } catch (err) {
@@ -558,9 +572,17 @@ export const StockExport = () => {
           // Đảm bảo có đủ dữ liệu sản phẩm để tra cứu tồn kho
           const existingIds = new Set(products.map((p) => String(getItemKey(p))));
           let availableProducts = products;
+          
           const missingIds = validRows
-            .map((row) => String(row.productId || row.resolvedProductId || ''))
-            .filter((id) => id && !existingIds.has(id));
+            .filter((row) => {
+              const pid = String(row.productId || row.resolvedProductId || '');
+              if (pid && existingIds.has(pid)) return false;
+              // If it can be matched by productCode, it's not missing
+              if (row.maSanPham && products.some(p => String(p.productCode) === String(row.maSanPham))) return false;
+              return true;
+            })
+            .map((row) => String(row.productId || row.resolvedProductId || ''));
+            
           if (missingIds.length > 0) {
             try {
               const allRes = await getProductsLookup({ pageSize: 1000 });
@@ -576,13 +598,15 @@ export const StockExport = () => {
               (p) =>
                 String(getItemKey(p)) === String(pid) ||
                 String(p.productId || p.Id || '') === String(pid) ||
-                String(p.productCode || p.ProductCode || '') === String(pid)
+                String(p.productCode || p.ProductCode || '') === String(pid) ||
+                (p.productCode && row.maSanPham && p.productCode === row.maSanPham)
             );
-            const stock = matchedProduct ? getProductStock(matchedProduct) : 0;
+            const finalId = matchedProduct ? getItemKey(matchedProduct) : pid;
+            const stock = matchedProduct ? (matchedProduct.actualStock ?? matchedProduct.availableStock ?? matchedProduct.stock ?? matchedProduct.quantity ?? 0) : 0;
             const unit = matchedProduct ? getUnit(matchedProduct) : '';
             return {
-              branchProductId: pid,
-              productId: pid,
+              branchProductId: finalId,
+              productId: finalId,
               productCode: row.maSanPham || '',
               productName: row.tenSanPham || '',
               unit,
@@ -669,7 +693,12 @@ export const StockExport = () => {
     }
 
     items.forEach((item) => {
-      if (!item.quantity || Number(item.quantity) <= 0) {
+      const isDeleted = !products.some((p) => String(getItemKey(p)) === String(getItemKey(item)));
+      
+      if (isDeleted) {
+        errors.push(`Sản phẩm "${item.productName}" không tồn tại trong hệ thống (đã bị xóa), vui lòng xóa khỏi phiếu`);
+        fields[`qty_${getItemKey(item)}`] = true;
+      } else if (!item.quantity || Number(item.quantity) <= 0) {
         errors.push(`Sản phẩm "${item.productName}" chưa nhập số lượng hoặc số lượng không hợp lệ`);
         fields[`qty_${getItemKey(item)}`] = true;
       } else if (item.maxStock != null && Number(item.quantity) > item.maxStock) {
@@ -689,6 +718,11 @@ export const StockExport = () => {
 
     if (!canCreate) {
       setStatusMessage('Bạn không có quyền tạo phiếu xuất kho');
+      return;
+    }
+
+    if (!isDraft && !canConfirm) {
+      setStatusMessage('Bạn không có quyền xác nhận xuất kho (Cần quyền Duyệt phiếu). Vui lòng chọn Lưu chờ duyệt.');
       return;
     }
 
@@ -906,7 +940,8 @@ export const StockExport = () => {
                 msg.includes('chưa') ||
                 msg.includes('tối thiểu') ||
                 msg.includes('không hợp lệ') ||
-                msg.includes('vượt');
+                msg.includes('vượt') ||
+                msg.includes('quyền');
               return (
                 <div
                   className={`flex items-start gap-3 rounded-lg border p-4 ${isError
@@ -1620,12 +1655,13 @@ export const StockExport = () => {
                   <tbody className="divide-y divide-slate-50 dark:divide-[#333333]">
                     {items.map((item, idx) => {
                       const key = getItemKey(item);
+                      const isDeleted = !products.some((p) => String(getItemKey(p)) === String(key));
                       const maxStock = item.maxStock ?? 999999;
                       const isOverStock = item.quantity > maxStock;
                       return (
                         <tr
                           key={key}
-                          className={`group transition-colors ${isOverStock ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/40' : 'hover:bg-blue-50/30 dark:hover:bg-[#333333]'}`}
+                          className={`group transition-colors ${isDeleted ? 'bg-slate-50/70 opacity-60 grayscale dark:bg-[#1a1a1a]/70' : isOverStock ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/40' : 'hover:bg-blue-50/30 dark:hover:bg-[#333333]'}`}
                         >
                           <td className="py-3 pl-5 pr-2 text-center">
                             <span
@@ -1649,6 +1685,11 @@ export const StockExport = () => {
                               <span className="truncate text-[13px] font-semibold text-slate-800 dark:text-[#e5e5e5]">
                                 {item.productName}
                               </span>
+                              {isDeleted && (
+                                <span className="ml-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-[#404040] dark:text-[#b3b3b3]">
+                                  Đã xóa
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="px-3 py-3 text-center">
@@ -1669,24 +1710,27 @@ export const StockExport = () => {
                             >
                               <button
                                 type="button"
+                                disabled={isDeleted}
                                 onClick={() =>
                                   updateItemQty(key, Math.max(0, (item.quantity || 0) - 1))
                                 }
-                                className="flex h-7 w-7 items-center justify-center rounded-l-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
+                                className={`flex h-7 w-7 items-center justify-center rounded-l-lg ${isDeleted ? 'cursor-not-allowed text-slate-300 dark:text-[#555]' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]'}`}
                               >
                                 <Icon name="remove" size={14} />
                               </button>
                               <input
                                 type="number"
                                 min="0"
-                                className={`h-7 w-14 border-x border-slate-200 bg-transparent text-center text-[13px] font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isOverStock ? 'text-red-600' : 'text-slate-800 dark:text-[#e5e5e5]'} dark:border-[#404040]`}
+                                disabled={isDeleted}
+                                className={`h-7 w-14 border-x border-slate-200 bg-transparent text-center text-[13px] font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isOverStock ? 'text-red-600' : 'text-slate-800 dark:text-[#e5e5e5]'} dark:border-[#404040] ${isDeleted ? 'cursor-not-allowed opacity-50' : ''}`}
                                 value={item.quantity}
                                 onChange={(e) => updateItemQty(key, e.target.value)}
                               />
                               <button
                                 type="button"
+                                disabled={isDeleted}
                                 onClick={() => updateItemQty(key, (item.quantity || 0) + 1)}
-                                className="flex h-7 w-7 items-center justify-center rounded-r-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]"
+                                className={`flex h-7 w-7 items-center justify-center rounded-r-lg ${isDeleted ? 'cursor-not-allowed text-slate-300 dark:text-[#555]' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-[#808080] dark:hover:bg-[#404040]'}`}
                               >
                                 <Icon name="add" size={14} />
                               </button>

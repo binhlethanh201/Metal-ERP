@@ -14,8 +14,8 @@ const buildQuery = (params = {}) => {
 };
 
 // ── Lịch sử Ca bán ──────────────────────────────────────
-export const getShifts = ({ from, to, page = 1, pageSize = 20 } = {}) =>
-  apiGet(`${SHIFTS_BASE}${buildQuery({ from, to, page, pageSize })}`);
+export const getShifts = ({ search, from, to, page = 1, pageSize = 20 } = {}) =>
+  apiGet(`${SHIFTS_BASE}${buildQuery({ search, from, to, page, pageSize })}`);
 
 export const getShiftSummary = (shiftId) => apiGet(`${SHIFTS_BASE}/${shiftId}/summary`);
 

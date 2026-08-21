@@ -607,7 +607,14 @@ export const ShiftManagement = () => {
           const ss = JSON.parse(localStorage.getItem('pos_active_shift') || 'null');
           if (ss && (ss.orderCount > 0 || ss.totalSales > 0)) {
             setShiftSummary((prev) =>
-              prev ? { ...prev, orderCount: ss.orderCount, totalSales: ss.totalSales } : prev
+              prev ? { 
+                ...prev, 
+                orderCount: ss.orderCount, 
+                totalSales: ss.totalSales,
+                cashSales: ss.cashSales,
+                transferSales: ss.transferSales,
+                cardSales: ss.cardSales
+              } : prev
             );
           }
         } catch (_) { }

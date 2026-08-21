@@ -48,22 +48,25 @@ const normalizeDetailData = (data) => {
 
 const getStatusLabel = (item) => {
   if (!item) return '...';
-  const status = item.status || item.Status;
+  const status = (item.status || item.Status || '').toUpperCase();
   const recountNumber = Number(item.recountNumber ?? item.RecountNumber ?? 0);
 
-  if (status === 'Draft') {
+  if (status === 'DRAFT') {
     return recountNumber > 0 ? 'Yêu cầu đếm lại' : 'Nháp (Đang đếm)';
   }
 
   switch (status) {
-    case 'WaitingForApproval':
+    case 'WAITINGFORAPPROVAL':
+    case 'PENDING':
       return 'Chờ duyệt';
-    case 'Completed':
+    case 'COMPLETED':
       return 'Đã hoàn thành';
-    case 'Cancelled':
+    case 'CANCELLED':
       return 'Đã hủy';
+    case 'REJECTED':
+      return 'Từ chối';
     default:
-      return status;
+      return item.status || item.Status || status;
   }
 };
 
@@ -140,9 +143,10 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
   if (!isOpen) return null;
 
   // ==================== PERMISSION CHECKS ====================
-  const isDraft = detailData?.status === 'Draft';
-  const isWaiting = detailData?.status === 'WaitingForApproval';
-  const isCompleted = detailData?.status === 'Completed';
+  const rawStatus = (detailData?.status || '').toUpperCase();
+  const isDraft = rawStatus === 'DRAFT';
+  const isWaiting = rawStatus === 'WAITINGFORAPPROVAL' || rawStatus === 'PENDING';
+  const isCompleted = rawStatus === 'COMPLETED';
 
   // const canCreate = hasPermission(user, 'STOCK_CHECK_CREATE');
   const canApprovePermission = hasPermission(user, 'STOCK_CHECK_APPROVE');
@@ -656,8 +660,10 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-[#e5e5e5]">
         Chi tiết phiếu: <span className="text-[#004785]">{detailData?.ticketCode || '...'}</span>
-        {detailData?.recountNumber > 0 && (
-          <Badge variant="warning">Đếm lại lần {detailData.recountNumber}</Badge>
+        {Number(detailData?.recountNumber ?? detailData?.RecountNumber ?? 0) > 0 && (
+          <Badge variant="warning">
+            Đếm lại lần {detailData?.recountNumber ?? detailData?.RecountNumber}
+          </Badge>
         )}
       </div>
       <div className="text-sm font-normal text-slate-500 dark:text-[#999999]">
@@ -693,11 +699,11 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
           <div className="flex items-center gap-4">
             <Badge
               variant={
-                detailData?.status === 'Completed'
+                isCompleted
                   ? 'success'
-                  : detailData?.status === 'WaitingForApproval'
+                  : isWaiting
                     ? 'warning'
-                    : detailData?.status === 'Cancelled'
+                    : rawStatus === 'CANCELLED' || rawStatus === 'REJECTED'
                       ? 'danger'
                       : 'secondary'
               }
@@ -714,16 +720,18 @@ const InventoryCheckDetailModal = ({ isOpen, onClose, ticketId, onActionSuccess,
           </div>
 
           {/* Cảnh báo đếm lại */}
-          {detailData.recountNumber > 0 && (
+          {Number(detailData?.recountNumber ?? detailData?.RecountNumber ?? 0) > 0 && (
             <div className="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4 shadow-sm dark:border-orange-800 dark:bg-orange-950/30">
               <Icon name="warning" className="mt-0.5 shrink-0 text-orange-500" size={20} />
               <div>
                 <strong className="mb-1 block text-sm font-bold text-orange-800 dark:text-orange-300">
-                  Phiếu này đã bị yêu cầu đếm lại!
+                  Phiếu này đã bị yêu cầu đếm lại (Lần {detailData?.recountNumber ?? detailData?.RecountNumber})!
                 </strong>
-                <span className="text-sm italic text-orange-700 dark:text-orange-400">
-                  Lý do: "{detailData.recountReason}"
-                </span>
+                {detailData?.recountReason && (
+                  <span className="text-sm italic text-orange-700 dark:text-orange-400">
+                    Lý do: "{detailData.recountReason}"
+                  </span>
+                )}
               </div>
             </div>
           )}

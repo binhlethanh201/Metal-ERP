@@ -44,7 +44,7 @@ const renderStatusBadge = (val) => {
   }
 };
 
-const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, handleCancel }) => {
+const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, handleCancel, onSuccessUpdate }) => {
   const { user } = useAuth();
   const [detailVoucher, setDetailVoucher] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -60,9 +60,22 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
   const [editAmount, setEditAmount] = useState('');
   const [editNote, setEditNote] = useState('');
 
+  const formatAmountDisplay = (val) => {
+    if (!val) return '';
+    return Number(val).toLocaleString('vi-VN');
+  };
+
+  const handleAmountChange = (e) => {
+    const raw = e.target.value.replace(/\./g, '');
+    if (/^\d*$/.test(raw)) {
+      setEditAmount(raw);
+    }
+  };
+
   const isPending = detailVoucher?.status === 'PENDING';
   const isCreator = detailVoucher?.createdBy && user?.userId && detailVoucher.createdBy === user.userId;
-  const canEdit = isPending && isCreator;
+  const isOwner = user?.roles?.some((r) => r.roleName === 'Owner') || user?.role === 'Owner';
+  const canEdit = isPending && (isCreator || isOwner);
 
   useEffect(() => {
     if (isOpen && selectedVoucher) {
@@ -139,6 +152,9 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
       });
       setDetailVoucher((prev) => ({ ...prev, reason: editReason.trim(), amount, note: editNote.trim() }));
       setIsEditing(false);
+      if (onSuccessUpdate) {
+        onSuccessUpdate();
+      }
     } catch (err) {
       alert(err?.data?.message || err?.message || 'Cập nhật phiếu chi thất bại.');
     } finally {
@@ -275,7 +291,13 @@ const ExpenseDetailModal = ({ isOpen, onClose, selectedVoucher, handleConfirm, h
             {isEditing ? (
               <div className="space-y-3">
                 <Input label="Lý do chi" value={editReason} onChange={(e) => setEditReason(e.target.value)} />
-                <Input label="Số tiền" type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} />
+                <Input 
+                  label="Số tiền" 
+                  type="text" 
+                  inputMode="numeric"
+                  value={formatAmountDisplay(editAmount)} 
+                  onChange={handleAmountChange} 
+                />
                 <Textarea label="Ghi chú" rows={2} value={editNote} onChange={(e) => setEditNote(e.target.value)} />
                 <div className="flex justify-end gap-2 pt-1">
                   <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)} disabled={actionLoading}>Hủy</Button>

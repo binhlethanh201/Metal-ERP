@@ -67,6 +67,8 @@ const mapApiDetail = (r) => {
       productName: ei.productName || 'Sản phẩm',
       productCode: ei.productCode || '',
       quantity: parseFloat(ei.quantity || 0),
+      unit: ei.unit || ei.Unit || ei.baseUnit || ei.BaseUnit || '',
+      baseUnit: ei.baseUnit || ei.BaseUnit || '',
       unitPrice: parseFloat(ei.unitPrice || 0),
       lineTotal: parseFloat(ei.lineTotal || 0),
     })),
@@ -309,7 +311,7 @@ const ReturnDetail = ({ initialData, onBack, onUpdated }) => {
                 <div>
                   <p className="font-medium text-slate-900 dark:text-[#e5e5e5]">{ei.productName}</p>
                   <p className="text-xs text-slate-400 dark:text-[#808080]">
-                    SL: {ei.quantity} · Đơn giá: {formatCurrency(ei.unitPrice)}
+                    SL: {ei.quantity} {ei.unit || ei.baseUnit || ''} · Đơn giá: {formatCurrency(ei.unitPrice)}
                   </p>
                 </div>
                 <p className="font-semibold text-slate-800 dark:text-[#e5e5e5]">{formatCurrency(ei.lineTotal)}</p>

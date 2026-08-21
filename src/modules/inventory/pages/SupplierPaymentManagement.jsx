@@ -20,6 +20,8 @@ const getMethodLabel = (method) => {
       return 'Chuyển khoản';
     case 'Credit':
       return 'Tín dụng';
+    case 'RETURN_REFUND':
+      return 'Tiền hoàn trả hàng';
     default:
       return method;
   }

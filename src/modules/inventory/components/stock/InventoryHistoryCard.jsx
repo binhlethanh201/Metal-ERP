@@ -103,7 +103,8 @@ export const InventoryHistoryCard = ({
     filteredTickets = filteredTickets.filter((t) => {
       const code = (t.ticketCode || '').toLowerCase();
       const product = (t.productName || '').toLowerCase();
-      return code.includes(kw) || product.includes(kw);
+      const party = (t.partyName || t.supplierName || t.SupplierName || '').toLowerCase();
+      return code.includes(kw) || product.includes(kw) || party.includes(kw);
     });
   }
 

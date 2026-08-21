@@ -3,7 +3,7 @@
  * API: /pos/customers - GET list, POST create, PUT update
  */
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
@@ -59,6 +59,7 @@ const isValidPhone = (phone) => /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
 export const CustomerManagement = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { addToast } = useOutletContext();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -408,6 +409,7 @@ export const CustomerManagement = () => {
     const errs = validateForm(form);
     if (Object.keys(errs).length > 0) {
       setFormErrors(errs);
+      addToast('Vui lòng kiểm tra lại thông tin khách hàng.', 'error');
       return;
     }
     setSaving(true);
@@ -448,6 +450,7 @@ export const CustomerManagement = () => {
     const errs = validateForm(form);
     if (Object.keys(errs).length > 0) {
       setFormErrors(errs);
+      addToast('Vui lòng kiểm tra lại thông tin khách hàng.', 'error');
       return;
     }
     setSaving(true);
@@ -493,7 +496,7 @@ export const CustomerManagement = () => {
       setShowDeleteModal(false);
       setDeletingCustomer(null);
     } catch (err) {
-      alert('Lỗi: ' + (err.message || 'Không thể xóa khách hàng'));
+      addToast(err.message || 'Không thể xóa khách hàng', 'error');
     } finally {
       setDeleting(false);
     }
@@ -1011,7 +1014,6 @@ export const CustomerManagement = () => {
               placeholder="VD: 0903123456"
               value={form.phone}
               inputMode="numeric"
-              maxLength={10}
               onChange={(e) => {
                 setForm((f) => ({ ...f, phone: e.target.value }));
                 setFormErrors((p) => ({ ...p, phone: '' }));
@@ -1107,7 +1109,6 @@ export const CustomerManagement = () => {
               placeholder="VD: 0903123456"
               value={form.phone}
               inputMode="numeric"
-              maxLength={10}
               onChange={(e) => {
                 setForm((f) => ({ ...f, phone: e.target.value }));
                 setFormErrors((p) => ({ ...p, phone: '' }));
@@ -1188,7 +1189,7 @@ export const CustomerManagement = () => {
               ({deletingCustomer.phone})?
             </p>
             <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-              Nếu khách đã có đơn hàng, hệ thống sẽ chỉ ẩn khách (soft-delete) để giữ lịch sử.
+              Nếu khách đã có đơn hàng, hệ thống sẽ chỉ ẩn khách (xóa mềm) để giữ lịch sử.
             </div>
           </div>
         )}

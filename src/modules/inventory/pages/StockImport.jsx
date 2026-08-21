@@ -16,6 +16,8 @@ import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';
 import { Modal } from '../../../shared/components/Modal';
 import Icon from '../../../shared/components/Icon';
+import { useAuth } from '../../../shared/hooks/useAuth';
+import { hasAnyPermission } from '../../../shared/utils/permissions';
 
 const fallbackProducts = [
   {
@@ -75,6 +77,9 @@ const normalizeInwardRow = (item, index) => {
 };
 
 export const StockImport = () => {
+  const { user } = useAuth();
+  const canConfirm = hasAnyPermission(user, ['STOCK_INWARD_UPDATE']);
+
   const [products, setProducts] = useState(fallbackProducts);
   const [suppliers, setSuppliers] = useState([]);
 
@@ -144,7 +149,7 @@ export const StockImport = () => {
 
       // Load products - dung API lookup (khong can quyen PRODUCT_VIEW)
       try {
-        const prodRes = await getProductsLookup({ pageSize: 200 });
+        const prodRes = await getProductsLookup({ pageSize: 500, _t: Date.now() });
         setProducts(extractList(prodRes));
       } catch {
         setProducts([]);
@@ -218,11 +223,7 @@ export const StockImport = () => {
       return updated;
     });
 
-    const msg =
-      newCount > 0
-        ? `Đã import ${importedCount} dòng (${newCount} mã mới từ file Excel).`
-        : `Đã import ${importedCount} dòng từ file Excel.`;
-    setStatus({ type: 'success', message: msg });
+    // setStatus({ type: 'success', message: msg }); removed to hide notification
   }, []);
 
   const addProductToTicket = useCallback((product) => {
@@ -280,12 +281,24 @@ export const StockImport = () => {
     [items]
   );
 
-  const openModal = () => {
+  const openModal = async () => {
     setStatus({ type: 'info', message: 'Sẵn sàng tạo phiếu nhập kho' });
     setIsModalOpen(true);
+    // Tải lại danh sách sản phẩm mới nhất để tránh dính cache các sản phẩm đã xóa
+    try {
+      const prodRes = await getProductsLookup({ pageSize: 500, _t: Date.now() });
+      setProducts(extractList(prodRes));
+    } catch {
+      // Nếu lỗi thì giữ nguyên list cũ hoặc fallback
+    }
   };
 
   const handleFinish = async (isDraft = false) => {
+    if (!isDraft && !canConfirm) {
+      setStatus({ type: 'error', message: 'Bạn không có quyền hoàn tất phiếu (Cần quyền Cập nhật / Duyệt phiếu). Vui lòng chọn Lưu nháp.' });
+      return;
+    }
+
     if (!items.length) {
       setStatus({ type: 'error', message: 'Vui lòng chọn ít nhất 1 sản phẩm trước khi hoàn tất' });
       return;
@@ -295,6 +308,7 @@ export const StockImport = () => {
 
     const payload = {
       inwardType,
+      isConfirm: !isDraft,
       supplierId: parseId(selectedSupplier?.id),
       reason: note || 'Nhập kho',
       note,
@@ -310,6 +324,7 @@ export const StockImport = () => {
         } else {
           item.productCode = i.productCode || i.id || '';
           item.productName = i.productName || '';
+          item.unit = i.unitName || i.unit || 'Cái';
         }
         return item;
       }),
@@ -326,8 +341,6 @@ export const StockImport = () => {
       const ticketId = res?.data?.ticketId || res?.data?.stockTicketId;
 
       if (!isDraft && ticketId) {
-        setStatus({ type: 'info', message: 'Đang xác nhận cộng tồn kho thực tế...' });
-        await confirmInwardInventory(ticketId);
         setStatus({
           type: 'success',
           message: `Đã hoàn tất & cộng kho! Mã phiếu: ${res?.data?.ticketCode || ticketId}`,
@@ -496,6 +509,7 @@ export const StockImport = () => {
               onSubmit={handleFinish}
               formatCurrency={formatCurrency}
               isCustomerReturn={isCustomerReturn}
+              canConfirm={canConfirm}
             />
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../../shared/components/Icon';
 import { getProductsLookup } from '../../services/inventoryService';
-import { getCounters } from '../../services/inventoryCheckService';
+import { getAssignees } from '../../services/inventoryCheckService';
 import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import { hasRole } from '../../../../shared/utils/roleRedirect';
@@ -76,22 +76,42 @@ const CreateCheckModal = ({ isOpen, onClose, onSave }) => {
       .finally(() => setLoadingProducts(false));
   }, [isOpen]);
 
-  // Fetch staff - chỉ Owner mới cần; filter theo permission có STOCK_CHECK_CREATE
+  // Fetch staff - chỉ Owner/người quản lý mới cần; CHỈ lấy nhân viên được cấp quyền "Đếm sản phẩm kiểm kê" (STOCK_CHECK_COUNT)
   useEffect(() => {
     if (!isOpen || (!isOwner && !canCreate && !canApprove)) return;
 
     setLoadingStaff(true);
     const me = { userId: currentUserId, fullName: user?.fullName || 'Tôi' };
-    getCounters()
+    getAssignees()
       .then((res) => {
-        const counters = res?.data || res || [];
-        const qualified = Array.isArray(counters) ? counters : [];
-        if ((hasCountPerm || isOwner) && !qualified.find(s => s.userId === currentUserId)) {
-          qualified.unshift(me);
+        const staffs = res?.data || [];
+        const qualified = Array.isArray(staffs)
+          ? staffs.filter((s) => {
+              if (
+                s.isDeleted ||
+                s.status === 'DELETED' ||
+                s.status === 'PERMANENT_DELETED' ||
+                s.isActive === 0
+              )
+                return false;
+              if (
+                s.fullName?.includes('(Đã xóa)') ||
+                s.email?.startsWith('deleted_') ||
+                s.email?.startsWith('del_') ||
+                s.email?.endsWith('@mep.deleted')
+              )
+                return false;
+              return true;
+            })
+          : [];
+        if (qualified.length > 0) {
+          setStaffList(qualified);
+        } else {
+          setStaffList(hasCountPerm || isOwner ? [me] : []);
         }
-        setStaffList(qualified);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Lỗi khi lấy danh sách nhân viên đếm:', err);
         setStaffList(hasCountPerm || isOwner ? [me] : []);
       })
       .finally(() => setLoadingStaff(false));

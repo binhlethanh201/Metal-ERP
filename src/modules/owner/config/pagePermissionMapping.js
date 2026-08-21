@@ -9,10 +9,9 @@ export const PAGE_PERMISSION_GROUPS = [
     category: 'Hàng hóa & Kho',
     viewPermission: 'PRODUCT_VIEW',
     subPermissions: [
-      { code: 'PRODUCT_CREATE', label: 'Thêm hàng hóa mới' },
+      { codes: ['PRODUCT_CREATE', 'PRODUCT_CATEGORY_MANAGE'], label: 'Thêm hàng hóa/ nhóm hàng / thương hiệu' },
       { code: 'PRODUCT_UPDATE', label: 'Chỉnh sửa thông tin hàng hóa' },
       { code: 'PRODUCT_DELETE', label: 'Xóa hàng hóa' },
-      { code: 'PRODUCT_CATEGORY_MANAGE', label: 'Quản lý nhóm hàng & thương hiệu' },
     ],
   },
   {
@@ -53,7 +52,7 @@ export const PAGE_PERMISSION_GROUPS = [
     category: 'Bán hàng',
     viewPermission: '',
     subPermissions: [
-      { codes: ['SALE_CREATE', 'SALE_UPDATE', 'PAYMENT_CREATE', 'PAYMENT_VIEW', 'PRINT_VIEW', 'PROMOTION_VIEW', 'CUSTOMER_VIEW', 'CUSTOMER_CREATE', 'CUSTOMER_UPDATE', 'CUSTOMER_DELETE'], label: 'Bán hàng' },
+      { codes: ['SALE_VIEW', 'SALE_CREATE', 'SALE_UPDATE', 'SALE_DELETE', 'PAYMENT_CREATE', 'PAYMENT_VIEW', 'PRINT_VIEW', 'PROMOTION_VIEW', 'CUSTOMER_VIEW', 'CUSTOMER_CREATE', 'CUSTOMER_UPDATE', 'CUSTOMER_DELETE'], label: 'Bán hàng' },
       { codes: ['SHIFT_CREATE', 'SHIFT_UPDATE', 'SHIFT_FORCE_CLOSE'], label: 'Quản lý ca bán (POS)' },
     ],
   },
@@ -77,7 +76,7 @@ export const PAGE_PERMISSION_GROUPS = [
     viewPermission: 'EXPENSE_VIEW',
     subPermissions: [
       { code: 'EXPENSE_CREATE', label: 'Tạo phiếu chi' },
-      { code: 'EXPENSE_CONFIRM', label: 'Duyệt / Hủy phiếu chi' },
+      { codes: ['EXPENSE_CONFIRM', 'EXPENSE_CANCEL'], label: 'Duyệt / Hủy phiếu chi' },
       { code: 'EXPENSE_CATEGORY_MANAGE', label: 'Quản lý danh mục chi phí' },
     ],
   },

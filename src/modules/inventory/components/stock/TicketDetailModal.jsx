@@ -42,8 +42,11 @@ const renderTicketTypeLabel = (ticketType, type) => {
     case 'CUSTOMER_RETURN':
       return 'Khách hàng trả lại';
     case 'BALANCE_ADJUST':
+    case 'INVENTORY_CHECK':
+    case 'CHECK':
       return 'Cân bằng kiểm kho';
     case 'RETURN_SUPPLIER':
+    case 'SUPPLIER_RETURN':
       return 'Trả hàng cho NCC';
     case 'WRITE_OFF':
       return 'Xuất hủy / Hao hụt';
@@ -51,6 +54,10 @@ const renderTicketTypeLabel = (ticketType, type) => {
       return 'Xuất điều chuyển nội bộ';
     case 'SALE':
       return 'Xuất kho bán';
+    case 'EXCHANGE_IN':
+      return 'Nhập đổi hàng';
+    case 'EXCHANGE_OUT':
+      return 'Xuất đổi hàng';
     default:
       return type === 'INWARD' ? 'Nhập kho thông thường' : 'Xuất kho thông thường';
   }
@@ -112,7 +119,9 @@ export const TicketDetailModal = ({
         if (active && data) {
           setDetail(data);
           setEditReason(
-            data.reason || data.note || (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : '')
+            data.reason ||
+              data.note ||
+              (data.ticketType === 'CUSTOMER_RETURN' ? 'Khách hàng trả' : '')
           );
 
           // Tra cứu tên nhà cung cấp từ supplierId
@@ -174,7 +183,7 @@ export const TicketDetailModal = ({
       }
     };
     fetchReturnable();
-    // eslint-disable-next-line react-hooks/exhaustive-deps 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detail?.inwardTicketId, detail?.ticketType]);
 
   const handleConfirm = async () => {
@@ -272,6 +281,9 @@ export const TicketDetailModal = ({
   const isCancelled = statusUpper === 'CANCELLED';
   const isCustomerReturn = detail?.ticketType === 'CUSTOMER_RETURN';
   const isReturnSupplier = detail?.ticketType === 'RETURN_SUPPLIER';
+  const isSale = detail?.ticketType === 'SALE';
+  const isExchange =
+    isSale && (detail?.reason || detail?.note || '').toLowerCase().includes('doi hang');
   const hasInwardRef = isReturnSupplier && !!detail?.inwardTicketId;
   const hidePriceFields = isCustomerReturn || isReturnSupplier;
 
@@ -304,9 +316,10 @@ export const TicketDetailModal = ({
       onReload && onReload();
       onClose();
     } catch (e) {
-      const msg = e?.status === 403
-        ? 'Bạn không có quyền hủy phiếu này.'
-        : (e?.message || 'Không thể hủy phiếu nháp này');
+      const msg =
+        e?.status === 403
+          ? 'Bạn không có quyền hủy phiếu này.'
+          : e?.message || 'Không thể hủy phiếu nháp này';
       onNotify && onNotify({ type: 'error', message: msg });
     } finally {
       setIsCancelling(false);
@@ -528,7 +541,7 @@ export const TicketDetailModal = ({
                     </span>
                     <p className="mt-0.5 font-semibold text-slate-800 dark:text-[#d4d4d4]">
                       {(() => {
-                        const raw = (detail.reason || detail.note || '');
+                        const raw = detail.reason || detail.note || '';
                         if (isCustomerReturn && (!raw || raw === 'Nhập kho'))
                           return 'Khách hàng trả';
                         return raw || 'Không có';
@@ -599,6 +612,42 @@ export const TicketDetailModal = ({
                                 ? sysQty + qty
                                 : sysQty - qty;
 
+                          const convertValue = Number(item.convertValue || 1);
+                          const isConversion =
+                            convertValue > 1 &&
+                            item.selectedUnit &&
+                            item.baseUnit &&
+                            item.selectedUnit !== item.baseUnit;
+                          const saleQty = Number(
+                            item.saleQuantity ?? (isConversion ? qty / convertValue : qty)
+                          );
+
+                          const itemPrice = Number(
+                            item.costPrice ??
+                              item.CostPrice ??
+                              item.unitPrice ??
+                              item.UnitPrice ??
+                              0
+                          );
+                          const outPrice = Number(
+                            item.sellPrice ??
+                              item.unitPrice ??
+                              item.UnitPrice ??
+                              item.costPrice ??
+                              item.CostPrice ??
+                              0
+                          );
+                          const itemTotal = Number(
+                            item.totalPrice ?? (isConversion ? saleQty * outPrice : qty * outPrice)
+                          );
+                          const displayUnit =
+                            item.selectedUnit ||
+                            item.unitName ||
+                            item.UnitName ||
+                            item.unit ||
+                            item.Unit ||
+                            '---';
+
                           return (
                             <tr
                               key={item.ticketItemId || idx}
@@ -611,16 +660,18 @@ export const TicketDetailModal = ({
                                 {item.productName || 'Sản phẩm'}
                               </td>
                               <td className="px-3 py-3 text-center text-slate-600 dark:text-[#999999]">
-                                {item.unit || item.Unit || item.unitName || item.UnitName || '---'}
+                                <span className="font-medium text-slate-800 dark:text-[#e5e5e5]">
+                                  {displayUnit}
+                                </span>
                               </td>
                               {type === 'INWARD' && !hidePriceFields && (
                                 <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
-                                  {formatCurrency(item.costPrice)}
+                                  {formatCurrency(itemPrice)}
                                 </td>
                               )}
                               {type === 'OUTWARD' && (
                                 <td className="px-3 py-3 text-right text-slate-600 dark:text-[#999999]">
-                                  {formatCurrency(item.unitPrice || item.UnitPrice || 0)}
+                                  {formatCurrency(outPrice)}
                                 </td>
                               )}
                               {isCompleted && !hasInwardRef && (
@@ -641,7 +692,7 @@ export const TicketDetailModal = ({
                                 </td>
                               )}
                               <td className="px-3 py-3 text-right font-extrabold text-[#004785]">
-                                {qty}
+                                {isConversion ? saleQty : qty}
                               </td>
                               {isCompleted && !hasInwardRef && (
                                 <td className="px-3 py-3 text-right font-bold text-green-700">
@@ -655,14 +706,12 @@ export const TicketDetailModal = ({
                               )}
                               {type === 'INWARD' && !hidePriceFields && (
                                 <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                  {formatCurrency(qty * Number(item.costPrice || 0))}
+                                  {formatCurrency(qty * itemPrice)}
                                 </td>
                               )}
                               {type === 'OUTWARD' && (
                                 <td className="px-3 py-3 text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                                  {formatCurrency(
-                                    qty * Number(item.unitPrice || item.UnitPrice || 0)
-                                  )}
+                                  {formatCurrency(itemTotal)}
                                 </td>
                               )}
                             </tr>
@@ -670,6 +719,82 @@ export const TicketDetailModal = ({
                         })
                       )}
                     </tbody>
+                    {!hidePriceFields && detail?.items?.length > 0 && !isExchange && (
+                      <tfoot className="border-t-2 border-slate-200 bg-slate-50/50 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+                        {detail.discountAmount > 0 && (
+                          <tr>
+                            <td
+                              colSpan={isCompleted ? 7 : 5}
+                              className="px-3 py-2 text-right font-medium text-slate-500 dark:text-[#999999]"
+                            >
+                              Chiết khấu đã áp dụng:
+                            </td>
+                            <td className="px-3 py-2 text-right font-semibold text-red-500">
+                              -{formatCurrency(detail.discountAmount)}
+                            </td>
+                          </tr>
+                        )}
+                        <tr>
+                          <td
+                            colSpan={isCompleted ? 7 : 5}
+                            className="px-3 py-3 text-right font-bold text-slate-800 dark:text-[#d4d4d4]"
+                          >
+                            Tổng thành tiền:
+                          </td>
+                          <td className="px-3 py-3 text-right font-extrabold text-[#004785] dark:text-blue-400">
+                            {formatCurrency(
+                              type === 'OUTWARD' && detail?.totalAmount !== undefined && detail?.totalAmount !== null && detail?.totalAmount !== 0
+                                ? detail.totalAmount
+                                : detail.items.reduce((sum, itm) => {
+                                    const q = Number(itm.quantity || 0);
+                                    const p = Number(
+                                      itm.costPrice ??
+                                        itm.CostPrice ??
+                                        itm.unitPrice ??
+                                        itm.UnitPrice ??
+                                        0
+                                    );
+                                    return sum + q * p;
+                                  }, 0)
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
+                    {isExchange && (detail?.exchangeDeltaAmount ?? 0) !== 0 && (
+                      <tfoot className="border-t-2 border-slate-200 dark:border-[#333333]">
+                        <tr>
+                          <td
+                            colSpan={
+                              isCompleted && !hasInwardRef ? 7 : isCompleted && hasInwardRef ? 7 : 5
+                            }
+                            className="px-3 py-3 text-right font-bold text-slate-800 dark:text-[#d4d4d4]"
+                          >
+                            Thu thêm từ khách (Đổi chênh):
+                          </td>
+                          <td className="px-3 py-3 text-right font-extrabold text-[#004785] dark:text-[#3b82f6]">
+                            {formatCurrency(Math.abs(detail.exchangeDeltaAmount))}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
+                    {isExchange && (detail?.exchangeDeltaAmount ?? 0) === 0 && (
+                      <tfoot className="border-t-2 border-slate-200 dark:border-[#333333]">
+                        <tr>
+                          <td
+                            colSpan={
+                              isCompleted && !hasInwardRef ? 7 : isCompleted && hasInwardRef ? 7 : 5
+                            }
+                            className="px-3 py-3 text-right font-bold text-slate-800 dark:text-[#d4d4d4]"
+                          >
+                            Thu thêm từ khách (Đổi chênh):
+                          </td>
+                          <td className="px-3 py-3 text-right font-extrabold text-green-600 dark:text-green-400">
+                            0 ₫ (Đổi ngang giá)
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               </div>

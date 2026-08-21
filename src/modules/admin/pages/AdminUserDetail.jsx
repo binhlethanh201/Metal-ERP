@@ -19,6 +19,7 @@ import ConfirmActionModal from '../components/ConfirmActionModal';
 import AssignRoleModal from '../components/account/AssignRoleModal';
 import AssignBranchModal from '../components/account/AssignBranchModal';
 import { getRoleLabel, getRoleName } from '../../../shared/utils/roles';
+import { translateAction } from '../components/log/LogTable';
 
 const AdminUserDetail = () => {
   const { id } = useParams();
@@ -404,7 +405,7 @@ const AdminUserDetail = () => {
               {activities.map((log, idx) => (
                 <div key={idx} className="relative pl-6">
                   <div className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-[#004785] ring-4 ring-white dark:bg-blue-600 dark:ring-[#0f0f0f]" />
-                  <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{log.action}</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{translateAction(log.action)}</div>
                   <div className="mt-1 text-[11px] font-semibold text-slate-400 dark:text-[#808080]">
                     {log.timestamp
                     ? new Date(log.timestamp.endsWith('Z') || log.timestamp.includes('+') ? log.timestamp : log.timestamp + 'Z').toLocaleString('vi-VN')
