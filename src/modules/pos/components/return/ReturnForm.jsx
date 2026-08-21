@@ -1143,7 +1143,7 @@ const ReturnForm = ({ isOpen, onClose, onSuccess }) => {
                 {returnDiscountPercent > 0 && (
                   <div className="mt-1 flex items-center justify-between">
                     <span className="text-amber-600 dark:text-amber-400">
-                      Chiết khấu trả hàng ({returnDiscountPercent}%)
+                      Tiền phạt trả hàng ({returnDiscountPercent}%)
                     </span>
                     <span className="font-semibold text-amber-600 dark:text-amber-400">
                       -{formatCurrency(discountPortion)}
