@@ -44,7 +44,7 @@ export const ENDPOINTS = {
     CATEGORY_RETURN_POLICIES: (branchId) =>
       `/api/owner/branches/${branchId}/return-policies/categories`,
 
-    // Branch-wide Return Discount (Chiết khấu trả hàng cho cả cửa hàng)
+    // Branch-wide Return Discount (Tiền phạt trả hàng cho cả cửa hàng)
     RETURN_DISCOUNT: (branchId) =>
       `/api/owner/branches/${branchId}/return-policies/discount`,
   },
