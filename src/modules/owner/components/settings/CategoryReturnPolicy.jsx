@@ -108,7 +108,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
   const [formReturn, setFormReturn] = useState({ ...emptyDuration });
   const [formExchange, setFormExchange] = useState({ ...emptyDuration });
 
-  // Chiết khấu trả hàng branch-level (%) — áp dụng cho mọi nhóm hàng
+  // Tiền phạt trả hàng branch-level (%) — áp dụng cho mọi nhóm hàng
   const [returnDiscount, setReturnDiscount] = useState('');
   const [returnDiscountLoaded, setReturnDiscountLoaded] = useState(false);
   const [savingDiscount, setSavingDiscount] = useState(false);
@@ -241,7 +241,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
     } catch {}
   };
 
-  // Tải chiết khấu trả hàng branch-level
+  // Tải Tiền phạt trả hàng branch-level
   useEffect(() => {
     if (!branchId) return;
     let cancelled = false;
@@ -263,7 +263,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
     return () => { cancelled = true; };
   }, [branchId]);
 
-  // Đồng bộ chiết khấu trả hàng xuống localStorage để ReturnForm dùng được
+  // Đồng bộ Tiền phạt trả hàng xuống localStorage để ReturnForm dùng được
   const syncDiscountToLocal = (percent) => {
     try {
       localStorage.setItem('pos_return_discount_percent', percent || '');
@@ -273,7 +273,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
   const handleSaveDiscount = async () => {
     const num = parseFloat(returnDiscount);
     if (returnDiscount !== '' && (isNaN(num) || num < 0 || num > 100)) {
-      alert('Chiết khấu trả hàng phải là số từ 0 đến 100 (%).');
+      alert('Tiền phạt trả hàng phải là số từ 0 đến 100 (%).');
       return;
     }
     setSavingDiscount(true);
@@ -282,10 +282,10 @@ const CategoryReturnPolicy = ({ branchId }) => {
       const value = returnDiscount === '' ? null : num;
       await branchSettingsService.updateReturnDiscount(branchId, value);
       syncDiscountToLocal(returnDiscount);
-      setDiscountMsg('Đã lưu chiết khấu trả hàng.');
+      setDiscountMsg('Đã lưu Tiền phạt trả hàng.');
       setIsDiscountApplied(true);
     } catch (e) {
-      alert('Không thể lưu chiết khấu trả hàng. Vui lòng thử lại.');
+      alert('Không thể lưu Tiền phạt trả hàng. Vui lòng thử lại.');
     } finally {
       setSavingDiscount(false);
     }
@@ -358,7 +358,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
         </div>
       )}
 
-      {/* Chiết khấu trả hàng — áp dụng cho cả cửa hàng */}
+      {/* Tiền phạt trả hàng — áp dụng cho cả cửa hàng */}
       <div className={`mb-4 rounded-lg border p-4 transition-colors ${
         isDiscountApplied 
           ? 'border-green-200 bg-green-50 dark:border-green-900/40 dark:bg-green-900/10' 
@@ -369,7 +369,7 @@ const CategoryReturnPolicy = ({ branchId }) => {
               <Icon name="sell" size={18} className={isDiscountApplied ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'} />
               <div>
                 <p className="text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">
-                  Chiết khấu trả hàng
+                  Tiền phạt trả hàng
                 </p>
                 <p className="text-xs text-slate-500 dark:text-[#999999]">
                   Trừ vào tiền hoàn lại — áp dụng cho mọi nhóm hàng
