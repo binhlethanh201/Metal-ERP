@@ -83,7 +83,23 @@ export const PURCHASE_COLUMNS = [
     header: 'Tổng tiền',
     render: (v) => <span className="font-medium text-slate-900">{formatCurrency(v)}</span>,
   },
-  { key: 'status', header: 'Trạng thái' },
+  {
+    key: 'status',
+    header: 'Trạng thái',
+    render: (v) => {
+      const statusStr = (v || '').toUpperCase();
+      if (statusStr === 'CANCELLED') {
+        return <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">Đã hủy</span>;
+      }
+      if (statusStr === 'COMPLETED') {
+        return <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">Hoàn thành</span>;
+      }
+      if (statusStr === 'PENDING') {
+        return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">Đang chờ</span>;
+      }
+      return <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-400">{v}</span>;
+    },
+  },
 ];
 
 export const PAYMENT_COLUMNS = [
