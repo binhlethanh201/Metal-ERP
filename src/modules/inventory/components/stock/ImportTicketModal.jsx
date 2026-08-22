@@ -8,7 +8,7 @@ import { useAuth } from '../../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../../shared/utils/permissions';
 import {
   createInwardInventory,
-  confirmInwardInventory,
+  // confirmInwardInventory,
   getProductsLookup,
 } from '../../services/inventoryService';
 import { getSuppliers } from '../../services/supplierService';

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   createInwardInventory,
-  confirmInwardInventory,
+  // confirmInwardInventory,
   getInwardInventories,
   getProductsLookup,
 } from '../services/inventoryService';
@@ -167,8 +167,9 @@ export const StockImport = () => {
 
   const handleImportRows = useCallback((rows) => {
     if (!rows || rows.length === 0) return;
-
+    // eslint-disable-next-line 
     let importedCount = 0;
+    // eslint-disable-next-line 
     let newCount = 0;
 
     setItems((current) => {
