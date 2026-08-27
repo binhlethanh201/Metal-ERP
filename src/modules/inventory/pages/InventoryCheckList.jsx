@@ -324,23 +324,7 @@ const InventoryCheckList = () => {
         </span>
       ),
     },
-    {
-      key: 'totalProducts',
-      header: 'Số lượng',
-      render: (_, row) => {
-        if (row.totalDiscrepancy == null) {
-          return <span className="text-sm font-semibold text-slate-700 dark:text-[#b3b3b3]">---</span>;
-        }
-        
-        const discrepancy = Number(row.totalDiscrepancy);
-        const isPositive = discrepancy > 0;
-        const isNegative = discrepancy < 0;
-        const colorClass = isPositive ? 'text-emerald-600' : isNegative ? 'text-red-600' : 'text-slate-400';
-        const displayValue = isPositive ? `+${discrepancy}` : discrepancy;
-        
-        return <span className={`text-sm font-bold ${colorClass}`}>{displayValue}</span>;
-      },
-    },
+
     {
       key: 'status',
       header: 'Trạng thái',
