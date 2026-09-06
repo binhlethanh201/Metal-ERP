@@ -10,6 +10,8 @@ import IconButton from '../../../../shared/components/IconButton';
 import { getProduct } from '../../services/productService';
 import { useEditProductForm } from '../../hooks/useEditProductForm';
 import { formatMoney } from '../../utils/productUtils';
+import { ScanButton } from '../../../pos/components/cart/ScanButton';
+import BarcodeScannerModal from '../../../pos/components/cart/BarcodeScannerModal';
 
 const fmtMoney = (v) => formatMoney(v);
 
@@ -689,6 +691,7 @@ const UnitManagement = ({ f }) => (
 
 const EditProductModalContent = ({ onClose, product, onSave, title, productList, initialTab }) => {
   const f = useEditProductForm({ product, onSave, onClose, productList, initialTab });
+  const [showScanner, setShowScanner] = useState(false);
 
   const footerContent = (
     <div className="flex w-full items-center justify-end">
@@ -737,12 +740,22 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
                     value={f.form.productCode || f.form.id || ''}
                     onChange={(e) => f.handleChange('productCode', e.target.value)}
                   />
-                  <Input
-                    label="Mã vạch"
-                    placeholder="Nhập mã vạch"
-                    value={f.form.barcode || ''}
-                    onChange={(e) => f.handleChange('barcode', e.target.value)}
-                  />
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <Input
+                        label="Mã vạch"
+                        placeholder="Nhập mã vạch"
+                        value={f.form.barcode || ''}
+                        onChange={(e) => f.handleChange('barcode', e.target.value)}
+                      />
+                    </div>
+                    <ScanButton
+                      title="Quét mã vạch sản phẩm"
+                      onScanComplete={(barcode) => {
+                        f.handleChange('barcode', barcode);
+                      }}
+                    />
+                  </div>
                 </div>
                 <Input
                   label="Tên hàng"
@@ -1119,6 +1132,15 @@ const EditProductModalContent = ({ onClose, product, onSave, title, productList,
           onChange={(e) => f.setEditAttrValue(e.target.value)}
         />
       </Modal>
+      <BarcodeScannerModal
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        resultTitle="Quét mã vạch sản phẩm"
+        onScanComplete={(barcode) => {
+          f.handleChange('barcode', barcode);
+          setShowScanner(false);
+        }}
+      />
     </>
   );
 };

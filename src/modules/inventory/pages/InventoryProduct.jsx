@@ -11,6 +11,7 @@ import { CategoryBrandManagerModal } from '../components/product/CategoryBrandMa
 import { LocationAttributeModal } from '../components/product/LocationAttributeModal';
 import { EditProductModal } from '../components/product/EditProductModal';
 import { ProductImportModal } from '../components/product/ProductImportModal';
+import { ScanButton } from '../../pos/components/cart/ScanButton';
 
 export const ProductManagement = () => {
   const [expandedId, setExpandedId] = useState('');
@@ -208,6 +209,14 @@ export const ProductManagement = () => {
                 onChange={(e) => setDraftSearch(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') applySearch();
+                }}
+              />
+              <ScanButton
+                title="Tra cứu sản phẩm"
+                onScanComplete={(barcode) => {
+                  setDraftSearch(barcode);
+                  filters.setSearch(barcode);
+                  filters.setCurrentPage(1);
                 }}
               />
             </div>

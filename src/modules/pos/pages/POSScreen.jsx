@@ -39,46 +39,40 @@ const newPaymentLine = (method = 'cash') => ({ id: Date.now(), method, amount: 0
 
 // Map API product sang format POS cart (có hỗ trợ UOM)
 const mapToPosProduct = (p) => {
-  console.log('[DEBUG mapToPosProduct] product data:', {
-    productId: p.productId || p.productCode || p.id,
-    name: p.productName || p.name,
-    retailPrice: p.retailPrice,
-    floorPrice: p.floorPrice,
-    unitPrice: p.unitPrice,
-    salePrice: p.salePrice,
-    price: p.price,
-    unit: p.unit,
-    conversionUnits: p.conversionUnits,
-  });
-  const conversionUnits = p.conversionUnits || [];
-  const baseDirectSale = p.directSale ?? p.DirectSale ?? true;
-  // Tổng số đơn vị có thể bán (base + quy đổi)
-  const totalSellableUnits = (baseDirectSale ? 1 : 0) + conversionUnits.length;
-  const hasMultipleUnits = totalSellableUnits > 1;
-  // Nếu base unit không được bán, lấy giá từ đơn vị quy đổi đầu tiên
-  const displayPrice = baseDirectSale
-    ? (p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0)
-    : (conversionUnits[0]?.price ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0);
-  const displayUnit = baseDirectSale
-    ? (p.unit || 'Cái')
-    : (conversionUnits[0]?.unitName ?? p.unit ?? 'Cái');
+  try {
+    const conversionUnits = p.conversionUnits || [];
+    const baseDirectSale = p.directSale ?? p.DirectSale ?? true;
+    // Tổng số đơn vị có thể bán (base + quy đổi)
+    const totalSellableUnits = (baseDirectSale ? 1 : 0) + conversionUnits.length;
+    const hasMultipleUnits = totalSellableUnits > 1;
+    // Nếu base unit không được bán, lấy giá từ đơn vị quy đổi đầu tiên
+    const displayPrice = baseDirectSale
+      ? (p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0)
+      : (conversionUnits[0]?.price ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0);
+    const displayUnit = baseDirectSale
+      ? (p.unit || 'Cái')
+      : (conversionUnits[0]?.unitName ?? p.unit ?? 'Cái');
 
-  return {
-    id: p.productId || p.productCode || p.id || '',
-    name: p.productName || p.name || '',
-    price: displayPrice,
-    sku: p.productCode || p.barcode || '',
-    stock: p.sellableQuantity ?? p.availableStock ?? p.quantity ?? p.stock ?? 0,
-    category: p.categoryName || p.group || p.category || '',
-    status: (p.sellableQuantity ?? p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0 ? 'Còn hàng' : 'Hết hàng',
-    image: p.image || '',
-    productId: p.productId || p.id || '',
-    barcode: p.barcode || '',
-    unit: displayUnit,
-    conversionUnits: conversionUnits,
-    hasMultipleUnits: hasMultipleUnits,
-    directSale: baseDirectSale,
-  };
+    return {
+      id: p.productId || p.productCode || p.id || '',
+      name: p.productName || p.name || '',
+      price: displayPrice,
+      sku: p.productCode || p.barcode || '',
+      stock: p.sellableQuantity ?? p.availableStock ?? p.quantity ?? p.stock ?? 0,
+      category: p.categoryName || p.group || p.category || 'Tất cả',
+      status: (p.sellableQuantity ?? p.availableStock ?? p.quantity ?? p.stock ?? 0) > 0 ? 'Còn hàng' : 'Hết hàng',
+      image: p.image || '',
+      productId: p.productId || p.id || '',
+      barcode: p.barcode || '',
+      unit: displayUnit,
+      conversionUnits: conversionUnits,
+      hasMultipleUnits: hasMultipleUnits,
+      directSale: baseDirectSale,
+    };
+  } catch (err) {
+    console.error('❌ Error mapping product:', p, err);
+    throw err;
+  }
 };
 
 const POSScreen = () => {
@@ -107,6 +101,15 @@ const POSScreen = () => {
       sessionStorage.removeItem(CUSTOMER_SESSION_KEY);
     }
   }, [selectedCustomer]);
+
+  // Debug: listen global keydown để xem scanner có gửi keystroke vào window không
+  useEffect(() => {
+    const handleGlobalKey = (e) => {
+      console.log('[GLOBAL KEY]', { key: e.key, code: e.code, target: e.target?.tagName, inputType: e.target?.tagName === 'INPUT' ? e.target.value : null });
+    };
+    document.addEventListener('keydown', handleGlobalKey);
+    return () => document.removeEventListener('keydown', handleGlobalKey);
+  }, []);
   const [showPayModal, setShowPayModal] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -152,7 +155,7 @@ const POSScreen = () => {
         if (payload.branchId) return String(payload.branchId);
         if (payload.BranchId) return String(payload.BranchId);
       }
-    } catch {}
+    } catch { }
     return '';
   }, [user]);
   useEffect(() => {
@@ -217,20 +220,20 @@ const POSScreen = () => {
         const userStr = localStorage.getItem('user');
         const user = userStr ? JSON.parse(userStr) : null;
         if (user && user.branchId) {
-          connection.invoke('JoinBranchGroup', user.branchId).catch(() => {});
+          connection.invoke('JoinBranchGroup', user.branchId).catch(() => { });
         } else if (user && user.defaultBranchId) {
-          connection.invoke('JoinBranchGroup', user.defaultBranchId).catch(() => {});
+          connection.invoke('JoinBranchGroup', user.defaultBranchId).catch(() => { });
         }
       })
       .catch((err) => console.warn('PosHub connection err:', err));
 
     return () => {
-      connection.stop().catch(() => {});
+      connection.stop().catch(() => { });
     };
     // Kết nối SignalR chỉ dựng 1 lần; cart.revalidateActiveCart đọc qua closure,
     // không đưa vào deps để tránh dựng lại kết nối mỗi lần giỏ đổi.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refetchProducts]);
+  }, [refetchProducts]);
 
   // Tự động revalidate giá/tồn kho của các sản phẩm đang nằm trong giỏ hàng hiện tại khi danh sách posProducts thay đổi
   useEffect(() => {
@@ -549,12 +552,12 @@ const POSScreen = () => {
         console.error('[POS] finalizeInvoice error:', finalErr);
         const errorMsg = finalErr.data?.message || finalErr.message || 'Thanh toán thất bại, vui lòng thử lại.';
         if (addToast) addToast(errorMsg, 'error');
-        
+
         // Cố gắng hủy hóa đơn Draft nếu có thể
         try {
           await cancelInvoice(invoice.invoiceId);
-        } catch (_) {}
-        
+        } catch (_) { }
+
         setPaying(false);
         return; // DỪNG LUỒNG THANH TOÁN TẠI ĐÂY, không clear cart!
       }
@@ -577,7 +580,7 @@ const POSScreen = () => {
           });
           localStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
-      } catch (_) {}
+      } catch (_) { }
 
       // Hiển thị thành công
       const order = {
@@ -769,7 +772,7 @@ const POSScreen = () => {
         // Xử lý phân bổ tiền thanh toán vào đơn hàng (để payment amount ko vượt quá finalTotal)
         let remainingToApply = finalTotal;
         const processedLines = validLines.map((l) => ({ ...l, applied: 0 }));
-        
+
         // Ưu tiên trừ tiền các hình thức không phải Cash trước (như Chuyển khoản)
         for (let l of processedLines) {
           if (l.method !== 'Cash') {
@@ -827,14 +830,14 @@ const POSScreen = () => {
               customer: selectedCustomer?.name || 'Khách lẻ',
             });
             localStorage.setItem('pos_pending_orders', JSON.stringify(pendingOrders));
-          } catch (_) {}
+          } catch (_) { }
           try {
             const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
             savedPM[invoiceId] = JSON.stringify([
               { method: 'Chuyển khoản', amount: transferPayment.Amount || transferPayment.amount },
             ]);
             localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
-          } catch (_) {}
+          } catch (_) { }
 
           setShowPayModal(false);
           setShowQRModal(true);
@@ -946,7 +949,7 @@ const POSScreen = () => {
           shiftData.orderCount = (shiftData.orderCount || 0) + 1;
           shiftData.totalSales = (shiftData.totalSales || 0) + finalTotal;
           shiftData.totalRevenue = shiftData.totalSales;
-          
+
           if (pendingPayLines.length > 0) {
             pendingPayLines.forEach(line => {
               const amt = Number(line.amount) || 0;
@@ -962,14 +965,14 @@ const POSScreen = () => {
 
           localStorage.setItem('pos_active_shift', JSON.stringify(shiftData));
         }
-      } catch (_) {}
+      } catch (_) { }
       // 4. Hiển thị thành công
       const payLinesResolved =
         pendingPayLines.length > 0
           ? pendingPayLines.map((l) => ({
-              method: PAYMENT_LABELS[l.method.toLowerCase()] || l.method,
-              amount: l.amount,
-            }))
+            method: PAYMENT_LABELS[l.method.toLowerCase()] || l.method,
+            amount: l.amount,
+          }))
           : [{ method: 'Chuyển khoản', amount: finalTotal }];
       const totalPaidResolved =
         pendingPayLines.length > 0 ? pendingPayLines.reduce((s, l) => s + l.amount, 0) : finalTotal;
@@ -996,13 +999,13 @@ const POSScreen = () => {
         const pendingOrders = JSON.parse(localStorage.getItem('pos_pending_orders') || '[]');
         const filtered = pendingOrders.filter((o) => o.paymentId !== paymentId);
         localStorage.setItem('pos_pending_orders', JSON.stringify(filtered));
-      } catch (_) {}
+      } catch (_) { }
       // Lưu phương thức thanh toán để OrderHistory hiển thị
       try {
         const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
         savedPM[pendingInvoice.invoiceId] = JSON.stringify(payLinesResolved);
         localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
-      } catch (_) {}
+      } catch (_) { }
       setShowPayModal(false);
       setShowSuccess(true);
       cart.clearCart();
@@ -1058,13 +1061,13 @@ const POSScreen = () => {
           customer: selectedCustomer?.name || 'Khách lẻ',
         });
         localStorage.setItem('pos_pending_orders', JSON.stringify(pendingOrders));
-      } catch (_) {}
+      } catch (_) { }
       // Lưu phương thức thanh toán vào localStorage để OrderHistory hiển thị
       try {
         const savedPM = JSON.parse(localStorage.getItem('pos_order_payments') || '{}');
         savedPM[invoiceId] = JSON.stringify([{ method: 'Chuyển khoản', amount: amount }]);
         localStorage.setItem('pos_order_payments', JSON.stringify(savedPM));
-      } catch (_) {}
+      } catch (_) { }
       setShowQRModal(true);
       setShowPayModal(false);
       setPaying(false); // Đã hiển thị QR, tắt loading
@@ -1169,8 +1172,20 @@ const POSScreen = () => {
               </svg>
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm sản phẩm..."
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  console.log('[DEBUG] Search onChange:', e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && search.trim()) {
+                    e.preventDefault();
+                    console.log('[DEBUG] Search Enter pressed, barcode:', search);
+                    addToast?.(`Đã quét mã: ${search}`, 'success');
+                  }
+                }}
+                onFocus={() => console.log('[DEBUG] Search input focused')}
+                onBlur={() => console.log('[DEBUG] Search input blurred')}
+                placeholder="Tìm sản phẩm hoặc quét mã vạch..."
                 className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 dark:text-[#e5e5e5] dark:placeholder:text-[#888]"
               />
               {productsLoading && posProducts.length > 0 && (

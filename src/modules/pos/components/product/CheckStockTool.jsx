@@ -5,6 +5,7 @@ import { Input } from '../../../../shared/components/Input';
 import { Table } from '../../../../shared/components/Table';
 import Icon from '../../../../shared/components/Icon';
 import { getPosProducts } from '../../services/posService';
+import BarcodeScannerModal from '../cart/BarcodeScannerModal';
 
 const CheckStockTool = ({ isOpen, onClose }) => {
   const [keyword, setKeyword] = useState('');
@@ -13,6 +14,7 @@ const CheckStockTool = ({ isOpen, onClose }) => {
   const [selected, setSelected] = useState(null);
   const [stock, setStock] = useState(null);
   const [error, setError] = useState('');
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   const handleSearch = async () => {
     if (!keyword.trim()) return;
@@ -110,7 +112,7 @@ const CheckStockTool = ({ isOpen, onClose }) => {
       <div className="space-y-4">
         {/* Search */}
         <div className="flex gap-2">
-          <div className="flex-1">
+          <div className="relative flex-1">
             <Input
               label="Tìm sản phẩm"
               placeholder="Nhập tên, mã SP hoặc barcode..."
@@ -119,6 +121,14 @@ const CheckStockTool = ({ isOpen, onClose }) => {
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               icon={<Icon name="search" size={16} />}
             />
+            <button
+              type="button"
+              onClick={() => setShowCameraScanner(true)}
+              title="Quét mã vạch bằng camera"
+              className="absolute right-2 top-[38px] flex h-7 w-7 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/50"
+            >
+              <Icon name="barcode_scanner" size={16} />
+            </button>
           </div>
           <div className="flex items-end pb-1">
             <Button variant="primary" onClick={handleSearch} loading={loading}>
@@ -210,6 +220,17 @@ const CheckStockTool = ({ isOpen, onClose }) => {
         )}
       </div>
     </Modal>
+
+    <BarcodeScannerModal
+      isOpen={showCameraScanner}
+      onClose={() => setShowCameraScanner(false)}
+      resultTitle="Quét barcode tra cứu tồn kho"
+      onScanComplete={(barcode) => {
+        setKeyword(barcode);
+        setShowCameraScanner(false);
+        setTimeout(() => handleSearch(), 300);
+      }}
+    />
   );
 };
 
