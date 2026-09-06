@@ -2,7 +2,7 @@
  * BarcodeScannerModal - Modal quét mã vạch bằng camera
  * Tích hợp html5-qrcode vào Modal của dự án
  */
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
 import Icon from '../../../../shared/components/Icon';
@@ -70,7 +70,7 @@ export const BarcodeScannerModal = ({ isOpen, onClose, onScanComplete, resultTit
     if (!isOpen) {
       clearResult();
     }
-  }, [isOpen]);
+  }, [isOpen, clearResult]);
 
   const handleOpen = async () => {
     await startScanning('scanner-container');

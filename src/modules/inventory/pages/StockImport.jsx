@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   createInwardInventory,
-  confirmInwardInventory,
   getInwardInventories,
   getProductsLookup,
 } from '../services/inventoryService';
@@ -168,9 +167,6 @@ export const StockImport = () => {
   const handleImportRows = useCallback((rows) => {
     if (!rows || rows.length === 0) return;
 
-    let importedCount = 0;
-    let newCount = 0;
-
     setItems((current) => {
       const updated = [...current];
 
@@ -200,7 +196,6 @@ export const StockImport = () => {
             quantity: Number(row.quantity || 0),
             costPrice: Number(row.costPrice || 0),
           };
-          newCount++;
         }
 
         const existingIdx = updated.findIndex((i) =>
@@ -216,8 +211,6 @@ export const StockImport = () => {
         } else {
           updated.push(importItem);
         }
-
-        importedCount++;
       }
 
       return updated;

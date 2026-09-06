@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = {
 };
 
 export const useBarcodeScanner = (scanConfig = {}) => {
-  const config = useMemo(() => ({ ...DEFAULT_CONFIG, ...scanConfig }), [JSON.stringify(scanConfig)]);
+  const mergedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...scanConfig }), [scanConfig.qrbox?.width, scanConfig.qrbox?.height]);
 
   const [isScanning, setIsScanning] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState(true);
@@ -103,9 +103,9 @@ export const useBarcodeScanner = (scanConfig = {}) => {
       }
 
       GlobalScannerInstance = new Html5QrcodeScanner(containerId, {
-        fps: config.fps,
-        qrbox: config.qrbox,
-        aspectRatio: config.aspectRatio,
+        fps: mergedConfig.fps,
+        qrbox: mergedConfig.qrbox,
+        aspectRatio: mergedConfig.aspectRatio,
         disableFlip: false,
       }, false);
 
@@ -119,7 +119,7 @@ export const useBarcodeScanner = (scanConfig = {}) => {
       setIsScanning(false);
       return false;
     }
-  }, [config, onScanSuccess, onScanFailure]);
+  }, [mergedConfig, onScanSuccess, onScanFailure]);
 
   const stopScanning = useCallback(async () => {
     if (scannerRef.current) {
