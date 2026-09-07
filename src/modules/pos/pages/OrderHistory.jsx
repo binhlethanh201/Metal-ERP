@@ -15,6 +15,7 @@ import { formatDate } from '../../../shared/utils/formatDate';
 import { getOrders, getInvoice, getReturns, getPosProducts } from '../services/posService';
 import { getInvoiceTemplate } from '../../owner/services/printTemplateService';
 import Icon from '../../../shared/components/Icon';
+import DraftPreviewModal from '../components/order/DraftPreviewModal';
 
 const VN_TZ = 'Asia/Ho_Chi_Minh';
 const formatDateTimeVN = (date) => formatDate(date, 'DD/MM/YYYY HH:mm', { timeZone: VN_TZ });
@@ -202,6 +203,7 @@ const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [returnsData, setReturnsData] = useState([]); // danh sách hoàn trả để tính net revenue
   const [draftToDelete, setDraftToDelete] = useState(null);
+  const [draftToPrint, setDraftToPrint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
@@ -800,6 +802,14 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setDraftToPrint(d)}
+                        title="In nháp"
+                      >
+                        In
+                      </Button>
+                      <Button
                         variant="primary"
                         size="sm"
                         onClick={() => navigate('/pos', { state: { draft: d } })}
@@ -1162,6 +1172,12 @@ ${order.change > 0 ? `<div class="flex-between"><span style="color:#e65100;">Ti�
           </div>
         </Modal>
       )}
+
+      <DraftPreviewModal
+        isOpen={!!draftToPrint}
+        onClose={() => setDraftToPrint(null)}
+        draft={draftToPrint}
+      />
     </div>
   );
 };

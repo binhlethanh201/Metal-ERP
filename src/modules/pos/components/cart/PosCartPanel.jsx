@@ -138,6 +138,7 @@ const PosCartPanel = ({
   onClearCart,
   onPay,
   onSaveDraft,
+  onPreviewInvoice,
   onQtyChange,
   onRemoveItem,
   payMethod,
@@ -260,6 +261,12 @@ const PosCartPanel = ({
             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-[#004785] hover:text-[#004785] active:scale-95 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]"
           >
             Lưu bản nháp
+          </button>
+          <button
+            onClick={onPreviewInvoice}
+            className="w-full rounded-lg border border-blue-300 bg-blue-50 py-2.5 text-xs font-bold uppercase tracking-widest text-blue-700 transition-all hover:border-blue-500 hover:bg-blue-100 active:scale-95 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+          >
+            In hóa đơn
           </button>
         </div>
       </div>

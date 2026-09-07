@@ -15,6 +15,7 @@ import PaymentModal from '../components/cart/PaymentModal';
 import QRModal from '../components/cart/QRModal';
 import SuccessModal from '../components/order/SuccessModal';
 import ReceiptModal from '../components/order/ReceiptModal';
+import CartPreviewModal from '../components/order/CartPreviewModal';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
 import Icon from '../../../shared/components/Icon';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
@@ -135,6 +136,7 @@ const POSScreen = () => {
   const [showUnitSelector, setShowUnitSelector] = useState(false);
   const [selectedProductForUnit, setSelectedProductForUnit] = useState(null);
   const [showStorePolicy, setShowStorePolicy] = useState(false);
+  const [showPreviewInvoice, setShowPreviewInvoice] = useState(false);
 
   // Discount tiers
   const [discountTiers, setDiscountTiers] = useState([]);
@@ -307,6 +309,13 @@ const POSScreen = () => {
     cart.clearCart();
     setSelectedCustomer(null);
   }, [cart]);
+  const handlePreviewInvoice = useCallback(() => {
+    if (cart.cart.length === 0) {
+      showNotice('Giỏ hàng trống');
+      return;
+    }
+    setShowPreviewInvoice(true);
+  }, [cart.cart.length, showNotice]);
   // const handleApplyVoucher = useCallback(() => {}, []);
 
   // ---- Load draft neu co ----
@@ -1156,6 +1165,7 @@ const POSScreen = () => {
               isSplitPay={isSplitPay}
               onToggleSplitPay={setIsSplitPay}
               embedded
+              onPreviewInvoice={handlePreviewInvoice}
             />
           </div>
         </div>
@@ -1318,6 +1328,14 @@ const POSScreen = () => {
       <StorePolicyModal
         isOpen={showStorePolicy}
         onClose={() => setShowStorePolicy(false)}
+      />
+
+      <CartPreviewModal
+        isOpen={showPreviewInvoice}
+        onClose={() => setShowPreviewInvoice(false)}
+        cart={cart.cart}
+        subtotal={cart.subtotal}
+        customer={selectedCustomer}
       />
     </>
   );
