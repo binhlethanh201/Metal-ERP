@@ -261,6 +261,19 @@ export const usePosCart = (initialItems = []) => {
     localStorage.removeItem(CART_STORAGE_KEY);
   }, []);
 
+  // Listen for discount changes triggered from PosCartPanel UI
+  useEffect(() => {
+    const handleDiscountChange = (e) => {
+      setCart((prev) =>
+        prev.map((item) =>
+          item.id === e.detail.itemId ? { ...item, discountPercent: e.detail.discountPercent } : item
+        )
+      );
+    };
+    window.addEventListener('cart:discount', handleDiscountChange);
+    return () => window.removeEventListener('cart:discount', handleDiscountChange);
+  }, []);
+
   /**
    * Revalidate active cart items against latest products
    * Updates price and stock for matching items if they changed
@@ -311,7 +324,11 @@ export const usePosCart = (initialItems = []) => {
     });
   }, []);
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => {
+    const lineTotal = item.price * item.quantity;
+    const discountPercent = item.discountPercent || 0;
+    return sum + lineTotal * (1 - discountPercent / 100);
+  }, 0);
   const discount = 0; // Voucher removed; tier discount applied separately in PaymentModal
   const total = subtotal;
 

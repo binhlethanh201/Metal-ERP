@@ -460,7 +460,7 @@ const POSScreen = () => {
         localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
       }
 
-      // 2. Thêm từng sản phẩm vào hóa đơn (kèm UOM data)
+      // 2. Thêm từng sản phẩm vào hóa đơn (kèm UOM data + chiết khấu)
       console.log(
         '[DEBUG] addInvoiceItem payloads:',
         cart.cart.map((item) => ({
@@ -470,6 +470,7 @@ const POSScreen = () => {
           unitPrice: item.price,
           selectedUnit: item.selectedUnit,
           convertValue: item.convertValue,
+          discountPercent: item.discountPercent || 0,
         }))
       );
       await Promise.all(
@@ -480,6 +481,7 @@ const POSScreen = () => {
             unitPrice: item.price,
             selectedUnit: item.selectedUnit,
             convertValue: item.convertValue,
+            discountPercent: item.discountPercent || 0,
           })
         )
       );
@@ -674,6 +676,7 @@ const POSScreen = () => {
               unitPrice: item.price,
               selectedUnit: item.selectedUnit,
               convertValue: item.convertValue,
+              discountPercent: item.discountPercent || 0,
             });
             return addInvoiceItem(invoice.invoiceId, {
               productId: item.productId || item.id,
@@ -681,6 +684,7 @@ const POSScreen = () => {
               unitPrice: item.price,
               selectedUnit: item.selectedUnit,
               convertValue: item.convertValue,
+              discountPercent: item.discountPercent || 0,
             });
           })
         );
@@ -753,7 +757,7 @@ const POSScreen = () => {
           map[invoiceId] = staffName;
           localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
         }
-        // Thêm sản phẩm (kèm UOM data)
+        // Thêm sản phẩm (kèm UOM data + chiết khấu)
         await Promise.all(
           cart.cart.map((item) =>
             addInvoiceItem(invoice.invoiceId, {
@@ -762,6 +766,7 @@ const POSScreen = () => {
               unitPrice: item.price,
               selectedUnit: item.selectedUnit,
               convertValue: item.convertValue,
+              discountPercent: item.discountPercent || 0,
             })
           )
         );
@@ -872,7 +877,7 @@ const POSScreen = () => {
           map[invoiceId] = staffName;
           localStorage.setItem('pos_order_cashiers', JSON.stringify(map));
         }
-        // Thêm sản phẩm (kèm UOM data)
+        // Thêm sản phẩm (kèm UOM data + chiết khấu)
         await Promise.all(
           cart.cart.map((item) =>
             addInvoiceItem(invoice.invoiceId, {
@@ -881,6 +886,7 @@ const POSScreen = () => {
               unitPrice: item.price,
               selectedUnit: item.selectedUnit,
               convertValue: item.convertValue,
+              discountPercent: item.discountPercent || 0,
             })
           )
         );

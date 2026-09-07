@@ -1,6 +1,134 @@
-/** Panel giỏ hàng POS - Danh sách item + số lượng + chọn khách hàng + tạm tính/giảm giá/tổng + nút Thanh toán/Lưu nháp. */
+/** Panel giỏ hàng POS - Danh sách item + số lượng + chiết khấu từng sản phẩm + tạm tính/giảm giá/tổng + nút Thanh toán/Lưu nháp. */
 import Icon from '../../../../shared/components/Icon';
 const formatCurrency = (v) => `${Math.max(0, v).toLocaleString('vi-VN')}đ`;
+
+const DiscountInput = ({ value, onChange, id }) => {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="text-[9px] font-medium text-slate-400 dark:text-[#666]">Chiết khấu (%)</span>
+      <input
+        type="number"
+        min="0"
+        max="100"
+        value={value || ''}
+        placeholder="0"
+        onChange={(e) => {
+          const numVal = Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0));
+          onChange(id, numVal);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+        }}
+        className="w-12 rounded border border-slate-200 bg-white px-1 py-0.5 text-center text-xs font-semibold outline-none transition-colors focus:border-blue-400 dark:border-[#333] dark:bg-[#0f0f0f] dark:text-[#e5e5e5] dark:focus:border-blue-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
+    </div>
+  );
+};
+
+const CartItemRow = ({ item, onQtyChange, onRemoveItem, onDiscountChange }) => {
+  const discountPercent = item.discountPercent || 0;
+  const lineTotal = item.price * item.quantity;
+  const finalLineTotal = lineTotal * (1 - discountPercent / 100);
+
+  return (
+    <div className="flex items-center gap-x-2">
+      {/* Product Image & Info */}
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <div className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
+          {item.image ? (
+            <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
+          ) : (
+            <span className="text-xs font-bold text-slate-300 dark:text-[#808080]">
+              {item.name?.charAt(0) || '?'}
+            </span>
+          )}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h5 className="truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
+            {item.name}
+          </h5>
+          <p className="mt-0.5 whitespace-nowrap text-base font-black text-[#004785]">
+            {formatCurrency(item.price)}
+            <span className="ml-1 text-xs font-medium text-slate-500 dark:text-[#999999]">
+              / {item.displayUnit || item.selectedUnit || 'Cái'}
+            </span>
+          </p>
+          
+          {/* Discount badge */}
+          {discountPercent > 0 && (
+            <span className="mt-0.5 inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+              Giảm {discountPercent}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Quantity Controls */}
+      <div className="flex items-center gap-x-1.5">
+        <button
+          onClick={() => onQtyChange(item.id, -1)}
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#999] dark:hover:bg-[#333]"
+        >
+          −
+        </button>
+        <input
+          type="number"
+          min="1"
+          max={item.stock || 999999}
+          step="1"
+          defaultValue={item.quantity}
+          key={`qty-${item.id}-${item.quantity}`}
+          onBlur={(e) => {
+            const val = parseInt(e.target.value, 10);
+            const safe = isNaN(val) || val < 1 ? 1 : Math.min(val, item.stock || 999999);
+            if (safe !== item.quantity) onQtyChange(item.id, safe - item.quantity);
+            else e.target.value = String(item.quantity);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === '-' || e.key === 'e' || e.key === '.') e.preventDefault();
+            if (e.key === 'Enter') e.target.blur();
+          }}
+          className="w-8 text-center text-sm font-bold outline-none [appearance:textfield] dark:bg-transparent dark:text-[#e5e5e5] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
+        <button
+          onClick={() => onQtyChange(item.id, 1)}
+          disabled={item.quantity >= (item.stock || 999999)}
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#999] dark:hover:bg-[#333]"
+        >
+          +
+        </button>
+      </div>
+
+      {/* Discount Input */}
+      <DiscountInput 
+        id={item.id}
+        value={discountPercent} 
+        onChange={onDiscountChange} 
+      />
+
+      {/* Thành tiền */}
+      <div className="flex min-w-[90px] flex-col items-end">
+        <span className="text-[9px] font-medium text-slate-400 dark:text-[#666]">Thành tiền</span>
+        <span className="text-sm font-bold text-[#004785]">
+          {formatCurrency(finalLineTotal)}
+        </span>
+        {discountPercent > 0 && (
+          <span className="text-[10px] text-slate-400 line-through">
+            ({formatCurrency(lineTotal)})
+          </span>
+        )}
+      </div>
+
+      {/* Remove Button */}
+      <button
+        onClick={() => onRemoveItem(item.id)}
+        className="text-base text-slate-300 hover:text-red-600 active:scale-95 dark:text-[#666]"
+      >
+        <Icon name="close" className="text-base" />
+      </button>
+    </div>
+  );
+};
 
 const PosCartPanel = ({
   cart,
@@ -16,9 +144,6 @@ const PosCartPanel = ({
   onPayMethodChange,
   isSplitPay,
   onToggleSplitPay,
-  onOpenHeldOrders,
-  onOpenPriceCheck,
-  onOpenStockCheck,
   embedded,
   disabled = false,
 }) => {
@@ -27,6 +152,7 @@ const PosCartPanel = ({
     ['account_balance', 'Chuyển khoản'],
     ['merge', 'Kết hợp'],
   ];
+
   return (
     <aside
       className={`flex flex-col bg-white dark:bg-[#0f0f0f] ${
@@ -50,77 +176,15 @@ const PosCartPanel = ({
       {/* Danh sách sản phẩm */}
       <div className="custom-scrollbar flex flex-1 flex-col gap-y-4 overflow-y-auto p-4">
         {cart.map((item) => (
-          <div key={item.id} className="flex items-center gap-x-2">
-            <div className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-[#333333] dark:bg-[#1a1a1a]/50">
-              {item.image ? (
-                <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
-              ) : (
-                <span className="text-xs font-bold text-slate-300 dark:text-[#808080]">
-                  {item.name?.charAt(0) || '?'}
-                </span>
-              )}
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <h5 className="truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
-                {item.name}
-              </h5>
-              <div className="mt-0.5 whitespace-nowrap text-base font-black text-[#004785]">
-                {formatCurrency(item.price)}
-                <span className="ml-1 text-xs font-medium text-slate-500 dark:text-[#999999]">
-                  / {item.displayUnit || item.selectedUnit || 'Cái'}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-x-1.5">
-              {item.quantity > 1 && (
-                <span className="ml-3 whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-[#999999]">
-                  Thành tiền:
-                  <span className="ml-1 text-sm font-black text-[#004785]">
-                    {formatCurrency(item.price * item.quantity)}
-                  </span>
-                </span>
-              )}
-              <button
-                onClick={() => onQtyChange(item.id, -1)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#999] dark:hover:bg-[#333]"
-              >
-                -
-              </button>
-              <input
-                type="number"
-                min="1"
-                max={item.stock || 999999}
-                step="1"
-                defaultValue={item.quantity}
-                key={`qty-${item.id}-${item.quantity}`}
-                onBlur={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  const maxQty = item.stock || 999999;
-                  const safe = isNaN(val) || val < 1 ? 1 : Math.min(val, maxQty);
-                  if (safe !== item.quantity) onQtyChange(item.id, safe - item.quantity);
-                  else e.target.value = String(item.quantity);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === '-' || e.key === 'e' || e.key === '.') e.preventDefault();
-                  if (e.key === 'Enter') e.target.blur();
-                }}
-                className="w-8 text-center text-sm font-bold outline-none [appearance:textfield] dark:bg-transparent dark:text-[#e5e5e5] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              />
-              <button
-                onClick={() => onQtyChange(item.id, 1)}
-                disabled={item.quantity >= (item.stock || 999999)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#999] dark:hover:bg-[#333]"
-              >
-                +
-              </button>
-            </div>
-            <button
-              onClick={() => onRemoveItem(item.id)}
-              className="text-base text-slate-300 hover:text-red-600 active:scale-95 dark:text-[#666]"
-            >
-              <Icon name="close" className="text-base" />
-            </button>
-          </div>
+          <CartItemRow
+            key={item.id}
+            item={item}
+            onQtyChange={onQtyChange}
+            onRemoveItem={onRemoveItem}
+            onDiscountChange={(itemId, discountPercent) => {
+              window.dispatchEvent(new CustomEvent('cart:discount', { detail: { itemId, discountPercent } }));
+            }}
+          />
         ))}
         {cart.length === 0 && (
           <div className="py-16 text-center text-sm font-semibold text-slate-400 dark:text-[#808080]">
