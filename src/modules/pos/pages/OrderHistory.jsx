@@ -321,6 +321,7 @@ const OrderHistory = () => {
     const shopName = tpl.branchName || 'MEP SYSTEM';
     const shopAddress = tpl.branchAddress || '12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM';
     const shopPhone = tpl.phone || '028.3999.8888';
+    // eslint-disable-next-line no-unused-vars
     const shopTaxCode = tpl.taxCode || '0312345678';
     const thankYou = tpl.thankYouMessage || 'Cảm ơn quý khách!';
     const paperSize = tpl.paperSize === 'K58' ? '58mm' : '80mm';
