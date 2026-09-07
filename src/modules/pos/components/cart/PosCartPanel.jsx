@@ -217,7 +217,7 @@ const PosCartPanel = ({
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="mb-4 grid grid-cols-3 gap-1.5">
           {paymentMethods.map(([icon, method]) => (
             <button
               key={method}
@@ -225,7 +225,7 @@ const PosCartPanel = ({
                 onToggleSplitPay(false);
                 onPayMethodChange(method);
               }}
-              className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2.5 transition-all active:scale-95 ${
+              className={`flex flex-col items-center gap-0.5 rounded-md border py-1.5 text-[10px] font-bold transition-all active:scale-95 ${
                 !isSplitPay && payMethod === method
                   ? 'border-[#004785] bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-[#333333] dark:bg-[#0f0f0f] dark:hover:border-[#404040]'
@@ -233,10 +233,10 @@ const PosCartPanel = ({
             >
               <Icon
                 name={icon}
-                className={`text-lg ${!isSplitPay && payMethod === method ? 'dark:text-blue-300' : ''}`}
+                className={`text-base ${!isSplitPay && payMethod === method ? 'dark:text-blue-300' : ''}`}
               />
               <span
-                className={`text-[10px] font-bold ${!isSplitPay && payMethod === method ? 'text-slate-600 dark:text-blue-300' : 'text-slate-600 dark:text-[#999999]'}`}
+                className={`text-[9px] font-bold uppercase ${!isSplitPay && payMethod === method ? 'text-slate-600 dark:text-blue-300' : 'text-slate-500 dark:text-[#999999]'}`}
               >
                 {method}
               </span>
@@ -244,29 +244,29 @@ const PosCartPanel = ({
           ))}
         </div>
 
-        <div className="flex flex-col gap-y-2">
+        <div className="flex gap-2">
+          <button
+            onClick={onSaveDraft}
+            className="flex-1 rounded-lg border border-slate-200 bg-white py-3 text-xs font-bold tracking-wider text-slate-600 transition-all hover:border-[#004785] hover:text-[#004785] dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]"
+          >
+            Lưu bản nháp
+          </button>
           <button
             onClick={onPay}
             disabled={disabled}
-            className={`w-full rounded-lg py-4 text-sm font-black uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all active:scale-95 ${
+            className={`flex-1 rounded-lg py-3 text-xs font-black uppercase tracking-widest shadow-sm ${
               disabled
                 ? 'cursor-not-allowed bg-slate-400 text-slate-200 dark:bg-[#333333] dark:text-[#999999]'
-                : 'bg-[#004785] text-white hover:opacity-90'
+                : 'bg-gradient-to-r from-blue-700 to-[#004785] text-white'
             }`}
           >
             {disabled ? 'ĐANG XỬ LÝ...' : 'THANH TOÁN'}
           </button>
           <button
-            onClick={onSaveDraft}
-            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-xs font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-[#004785] hover:text-[#004785] active:scale-95 dark:border-[#333333] dark:bg-[#0f0f0f] dark:text-[#999999]"
-          >
-            Lưu bản nháp
-          </button>
-          <button
             onClick={onPreviewInvoice}
-            className="w-full rounded-lg border border-blue-300 bg-blue-50 py-2.5 text-xs font-bold uppercase tracking-widest text-blue-700 transition-all hover:border-blue-500 hover:bg-blue-100 active:scale-95 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+            className="flex-1 rounded-lg border border-blue-300 bg-blue-50 py-3 text-xs font-bold tracking-wider text-blue-700 transition-all hover:border-blue-500 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
           >
-            In hóa đơn
+            In Bản Nháp
           </button>
         </div>
       </div>

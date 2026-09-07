@@ -18,7 +18,6 @@ const handlePrint = async (order) => {
   const shopName = tpl.branchName || 'MEP SYSTEM';
   const shopAddress = tpl.branchAddress || '12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM';
   const shopPhone = tpl.phone || '028.3999.8888';
-  const shopTaxCode = tpl.taxCode || '0312345678'; // eslint-disable-line no-unused-vars -- future use for tax code display
   const thankYou = tpl.thankYouMessage || 'Cảm ơn quý khách!';
   const paperSize = tpl.paperSize === 'K58' ? '58mm' : '80mm';
   const fontSize = tpl.fontSize || 13;
@@ -30,18 +29,24 @@ const handlePrint = async (order) => {
   const showBranchInfo = tpl.showBranchInfo !== false;
   const showPaymentMethod = tpl.showPaymentMethod !== false;
 
-  const printWindow = window.open('', '_blank', 'width=420,height=800');
-  if (!printWindow) return;
-
   const itemsHtml = (order.items || [])
     .map(
-      (item) => `
+      (item) => {
+        const qty = Number(item.quantity) || 0;
+        const unitPrice = Number(item.price) || 0; // giá gốc
+        const discountPercent = Number(item.discountPercent || item.DiscountPercent) || 0;
+        const totalOriginal = unitPrice * qty;
+        const paidAmount = totalOriginal * (1 - discountPercent / 100);
+        return `
       <tr>
         <td class="text-left">${item.name}</td>
-        <td class="text-center">${item.quantity}</td>
+        <td class="text-center">${qty}</td>
         <td class="text-center">${cleanUnit(item.displayUnit || item.selectedUnit || item.unit || '')}</td>
-        <td class="text-right">${formatCurrency(item.price * item.quantity)}</td>
-      </tr>`
+        <td class="text-right">
+          ${formatCurrency(paidAmount)}${discountPercent > 0 ? `<br><s style="color:#c62828;font-size:11px">${formatCurrency(totalOriginal)}</s>` : ''}
+        </td>
+      </tr>`;
+      }
     )
     .join('');
 
@@ -49,6 +54,9 @@ const handlePrint = async (order) => {
   const payLinesHtml = payLines
     .map((pl) => `<div class="flex-between"><span>${pl.method}</span><span>${formatCurrency(pl.amount)}</span></div>`)
     .join('');
+
+  const printWindow = window.open('', '_blank', 'width=420,height=800');
+  if (!printWindow) return;
 
   printWindow.document.write(`<!DOCTYPE html>
 <html lang="vi">
@@ -167,16 +175,26 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
             <span className="text-center">ĐVT</span>
             <span className="text-right">Thành tiền</span>
           </div>
-          {lastOrder.items.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-4 gap-2 py-1.5 text-sm text-slate-700 dark:text-[#b3b3b3] border-b border-slate-100 dark:border-slate-800 last:border-0">
-              <span className="font-medium">{item.name}</span>
-              <span className="text-center font-semibold">{item.quantity}</span>
-              <span className="text-center">{cleanUnit(item.displayUnit || item.selectedUnit || item.unit || '')}</span>
-              <span className="text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
-                {formatCurrency(item.price * item.quantity)}
-              </span>
-            </div>
-          ))}
+          {lastOrder.items.map((item, idx) => {
+            const qty = Number(item.quantity) || 0;
+            const unitPrice = Number(item.price) || 0; // giá gốc
+            const discountPercent = Number(item.discountPercent || item.DiscountPercent) || 0;
+            const totalOriginal = unitPrice * qty; // tổng giá gốc
+            const paidAmount = totalOriginal * (1 - discountPercent / 100); // số tiền thực trả
+            return (
+              <div key={idx} className="grid grid-cols-4 gap-2 py-1.5 text-sm text-slate-700 dark:text-[#b3b3b3] border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <span className="font-medium">{item.name}</span>
+                <span className="text-center font-semibold">{qty}</span>
+                <span className="text-center">{cleanUnit(item.displayUnit || item.selectedUnit || item.unit || '')}</span>
+                <span className="text-right leading-tight">
+                  <span className="block font-bold text-slate-900 dark:text-[#e5e5e5]">{formatCurrency(paidAmount)}</span>
+                  {discountPercent > 0 && (
+                    <span className="block text-xs text-red-500 line-through">{formatCurrency(totalOriginal)}</span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
         <div className="space-y-2 bg-slate-50 p-4 rounded-lg dark:bg-[#1a1a1a]/50">
           <div className="flex justify-between text-sm">

@@ -3,7 +3,7 @@
  * Su dung cac component con: CustomerBar, PaymentModal, SuccessModal, ReceiptModal, CustomerPickerModal.
  */
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useOutletContext, useLocation } from 'react-router-dom';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../shared/utils/permissions';
 import { trimUnitName } from '../../../shared/utils/formatCurrency';
@@ -16,6 +16,7 @@ import QRModal from '../components/cart/QRModal';
 import SuccessModal from '../components/order/SuccessModal';
 import ReceiptModal from '../components/order/ReceiptModal';
 import CartPreviewModal from '../components/order/CartPreviewModal';
+import DraftsPanel from '../components/cart/DraftsPanel';
 import CustomerPickerModal from '../components/customer/CustomerPickerModal';
 import Icon from '../../../shared/components/Icon';
 import QuickAddCustomerModal from '../components/customer/QuickAddCustomerModal';
@@ -78,6 +79,7 @@ const mapToPosProduct = (p) => {
 };
 
 const POSScreen = () => {
+  const navigate = useNavigate();
   const { search, setSearch, showNotice, quickAddCust, drafts, setDrafts, setFooterInfo, addToast } =
     useOutletContext();
   const location = useLocation();
@@ -433,6 +435,7 @@ const POSScreen = () => {
   }, [currentOrderCode, selectedCustomer, setFooterInfo]);
 
   // ---- Thanh toán ----
+  console.log('[DEBUG] POS Cart subtotal:', cart.subtotal, 'Discount info:', discountInfo);
   const finalTotal = Math.max(0, cart.subtotal - (discountInfo?.discountAmount || 0));
   const totalPaid = payLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
   const remaining = Math.max(0, finalTotal - totalPaid);
@@ -1118,6 +1121,14 @@ const POSScreen = () => {
       <div className="flex flex-1 gap-2 overflow-hidden p-3">
         {/* Center: Cart panel */}
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#333] dark:bg-[#1a1a1a]">
+          {drafts.length > 0 && (
+            <DraftsPanel
+              drafts={drafts}
+              customer={selectedCustomer}
+              onContinue={(d) => navigate('/pos', { state: { draft: d } })}
+              onDelete={(d) => setDrafts((prev) => prev.filter((x) => x.id !== d.id))}
+            />
+          )}
           <CustomerBar
             selectedCustomer={selectedCustomer}
             onOpenPicker={() => setShowCustModal(true)}
