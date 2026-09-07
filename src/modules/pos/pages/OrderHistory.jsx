@@ -405,7 +405,7 @@ const OrderHistory = () => {
   ${showLogo ? `<img src="${logoUrl}" alt="logo" style="max-height:44px;margin-bottom:3px" />` : ''}
   ${showBranchInfo ? `<div class="bold fs-lg">${shopName}</div>
   <div>${shopAddress}</div>
-  <div class="fs-sm">ĐT: ${shopPhone} &bull; MST: ${shopTaxCode}</div>` : `<div class="bold fs-lg">${shopName}</div>`}
+  <div class="fs-sm">ĐT: ${shopPhone}</div>` : `<div class="bold fs-lg">${shopName}</div>`}
 </div>
 <hr>
 <div class="text-center">

@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = {
 };
 
 export const useBarcodeScanner = (scanConfig = {}) => {
-  const mergedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...scanConfig }), [scanConfig.qrbox?.width, scanConfig.qrbox?.height]);
+  const mergedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...scanConfig }), [scanConfig]);
 
   const [isScanning, setIsScanning] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState(true);
