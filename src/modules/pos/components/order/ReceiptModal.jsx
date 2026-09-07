@@ -16,7 +16,7 @@ const handlePrint = async (order) => {
   const shopName = tpl.branchName || 'MEP SYSTEM';
   const shopAddress = tpl.branchAddress || '12 Nguyễn Văn Bảo, P.4, Gò Vấp, TP.HCM';
   const shopPhone = tpl.phone || '028.3999.8888';
-  const shopTaxCode = tpl.taxCode || '0312345678';
+  const shopTaxCode = tpl.taxCode || '0312345678'; // eslint-disable-line no-unused-vars -- future use for tax code display
   const thankYou = tpl.thankYouMessage || 'Cảm ơn quý khách!';
   const paperSize = tpl.paperSize === 'K58' ? '58mm' : '80mm';
   const fontSize = tpl.fontSize || 13;
