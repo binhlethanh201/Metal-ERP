@@ -84,8 +84,8 @@ export const CartItem = ({ item, onQuantityChange, onRemove, onDiscountChange })
         </button>
         <div className="flex flex-col items-center">
           <span className="w-12 text-center text-sm font-semibold">{item.quantity}</span>
-          {displayUnit && item.convertValue !== 1 && (
-            <span className="text-[10px] text-slate-400 dark:text-[#808080]">{displayUnit}</span>
+          {(displayUnit || item.baseUnit) && item.convertValue !== 1 && (
+            <span className="text-[10px] text-slate-400 dark:text-[#808080]">{displayUnit || item.baseUnit}</span>
           )}
           {displayUnit && item.convertValue !== 1 && (
             <span

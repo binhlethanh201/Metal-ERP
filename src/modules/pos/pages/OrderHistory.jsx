@@ -353,11 +353,13 @@ const OrderHistory = () => {
       ? payLines.map((pl) => `<div class="flex-between"><span>${translatePayment(pl.method)}</span><span>${formatCurrency(pl.amount)}</span></div>`).join('')
       : '';
 
+    const cleanUnit = (name) => name ? name.replace(/^[\d]+\s+/g, '').trim() : '';
     const itemsHtml = (order.items || [])
       .map((item) => `
       <tr>
         <td class="text-left">${item.productName || item.name || 'SP'}</td>
-        <td class="text-center">${item.quantity || 0} ${item.displayUnit || item.selectedUnit || item.unit || ''} x ${formatCurrency(item.unitPrice || item.price || 0)}</td>
+        <td class="text-center">${item.quantity || 0}</td>
+        <td class="text-center">${cleanUnit(item.displayUnit || item.selectedUnit || item.unit || '')}</td>
         <td class="text-right">${formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 0))}</td>
       </tr>`)
       .join('');
@@ -391,6 +393,8 @@ const OrderHistory = () => {
   th,td{padding:3px 0;vertical-align:top}
   th{font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px dashed #000}
   th.w40{width:42%}
+  th.w10{width:10%}
+  th.w15{width:15%}
   th.w30{width:30%}
   th.w28{width:28%}
   @media print{
@@ -417,7 +421,7 @@ const OrderHistory = () => {
 </div>
 <hr>
 ${showCashierName && (order.cashier || order.userName) ? `<div class="flex-between"><span>Thu ngân:</span><span class="bold">${order.cashier || order.userName}</span></div><hr>` : ''}
-${itemsHtml ? `<table><thead><tr><th class="text-left w40">MẶT HÀNG</th><th class="text-center w30">SL x GIÁ</th><th class="text-right w28">T.TIỀN</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr>` : ''}
+${itemsHtml ? `<table><thead><tr><th class="text-left w40">MẶT HÀNG</th><th class="text-center w10">SL</th><th class="text-center w15">ĐVT</th><th class="text-right w28">T.TIỀN</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr>` : ''}
 <div class="flex-between"><span>Tạm tính</span><span>${formatCurrency(order.subtotal)}</span></div>
 ${order.discount > 0 ? `<div class="flex-between"><span style="color:#c62828;">Giảm giá</span><span style="color:#c62828;">-${formatCurrency(order.discount)}</span></div>` : ''}
 <div class="flex-between bold fs-lg"><span>TỔNG CỘNG</span><span>${formatCurrency(order.total)}</span></div>

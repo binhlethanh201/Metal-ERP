@@ -6,6 +6,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import { hasPermission } from '../../../shared/utils/permissions';
+import { trimUnitName } from '../../../shared/utils/formatCurrency';
 import PosCartPanel from '../components/cart/PosCartPanel';
 import ProductGrid from '../components/product/ProductGrid';
 import CustomerBar from '../components/customer/CustomerBar';
@@ -50,8 +51,8 @@ const mapToPosProduct = (p) => {
       ? (p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0)
       : (conversionUnits[0]?.price ?? p.retailPrice ?? p.unitPrice ?? p.salePrice ?? p.price ?? 0);
     const displayUnit = baseDirectSale
-      ? (p.unit || 'Cái')
-      : (conversionUnits[0]?.unitName ?? p.unit ?? 'Cái');
+      ? trimUnitName(p.unit || 'Cái')
+      : trimUnitName(conversionUnits[0]?.unitName ?? p.unit ?? 'Cái');
 
     return {
       id: p.productId || p.productCode || p.id || '',

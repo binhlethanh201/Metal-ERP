@@ -5,14 +5,14 @@
 import { useState } from 'react';
 import { Modal } from '../../../../shared/components/Modal';
 import { Button } from '../../../../shared/components/Button';
-import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { formatCurrency, trimUnitName } from '../../../../shared/utils/formatCurrency';
 
 const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
   const [selectedUnitId, setSelectedUnitId] = useState('base');
 
   if (!product) return null;
 
-  const baseUnit = product.unit || 'Cái';
+  const baseUnit = trimUnitName(product.unit || 'Cái'); // bỏ tiền tố số từ DB
   const baseStock = product.availableStock ?? product.stock ?? 0;
   // API trả về PascalCase (ConversionUnits) - hỗ trợ cả lowercase
   const rawConversionUnits = product.ConversionUnits ?? product.conversionUnits ?? [];
@@ -31,7 +31,7 @@ const UnitSelector = ({ isOpen, onClose, product, onSelect }) => {
         }]
       : []),
     ...rawConversionUnits.map((u) => {
-      const unitName = u.UnitName ?? u.unitName ?? u.name ?? baseUnit;
+      const unitName = trimUnitName(u.UnitName ?? u.unitName ?? u.name ?? baseUnit); // bỏ tiền tố số từ DB
       let convertValue = u.ConvertValue ?? u.convertValue ?? 1;
       const price = u.Price ?? u.price ?? product.price * convertValue;
 

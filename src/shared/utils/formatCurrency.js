@@ -12,4 +12,7 @@ export const formatCurrency = (amount) => {
   }).format(amount);
 };
 
+/** Helper: trim tiền tố số ở đầu tên đơn vị (VD: "1 Bộ" → "Bộ") */
+export const trimUnitName = (name) => name ? name.replace(/^[\d]+\s+/g, '').trim() : '';
+
 export default formatCurrency;

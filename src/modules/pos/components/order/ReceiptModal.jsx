@@ -4,6 +4,8 @@ import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { formatDateTime } from '../../../../shared/utils/formatDate';
 import { getInvoiceTemplate } from '../../../owner/services/printTemplateService';
 
+const cleanUnit = (name) => name ? name.replace(/^[\d]+\s+/g, '').trim() : '';
+
 const handlePrint = async (order) => {
   let tpl = {};
   try {
@@ -36,7 +38,8 @@ const handlePrint = async (order) => {
       (item) => `
       <tr>
         <td class="text-left">${item.name}</td>
-        <td class="text-center">${item.quantity} ${item.displayUnit || item.selectedUnit || item.unit || ''} x ${formatCurrency(item.price)}</td>
+        <td class="text-center">${item.quantity}</td>
+        <td class="text-center">${cleanUnit(item.displayUnit || item.selectedUnit || item.unit || '')}</td>
         <td class="text-right">${formatCurrency(item.price * item.quantity)}</td>
       </tr>`
     )
@@ -76,6 +79,8 @@ const handlePrint = async (order) => {
   th,td{padding:3px 0;vertical-align:top}
   th{font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px dashed #000}
   th.w40{width:42%}
+  th.w10{width:10%}
+  th.w15{width:15%}
   th.w30{width:30%}
   th.w28{width:28%}
   @media print{
@@ -103,7 +108,7 @@ const handlePrint = async (order) => {
 <hr>
 ${showCashierName && (order.cashier || order.userName) ? `<div class="flex-between"><span>Thu ngân:</span><span class="bold">${order.cashier || order.userName}</span></div><hr>` : ''}
 <table>
-  <thead><tr><th class="text-left w40">MẶT HÀNG</th><th class="text-center w30">SL x GIÁ</th><th class="text-right w28">T.TIỀN</th></tr></thead>
+  <thead><tr><th class="text-left w40">MẶT HÀNG</th><th class="text-center w10">SL</th><th class="text-center w15">ĐVT</th><th class="text-right w28">T.TIỀN</th></tr></thead>
   <tbody>${itemsHtml}</tbody>
 </table>
 <hr>
@@ -130,7 +135,7 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
     isOpen={isOpen}
     onClose={onClose}
     title="Hóa đơn bán hàng"
-    size="md"
+    size="xl"
     footer={
       <>
         <Button variant="secondary" onClick={onClose}>
@@ -149,62 +154,60 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
     }
   >
     {lastOrder && (
-      <div className="space-y-3 text-sm">
-        <div className="text-center">
-          <p className="font-bold text-slate-900 dark:text-[#e5e5e5]">HÓA ĐƠN BÁN HÀNG</p>
-          <p className="text-xs text-slate-500 dark:text-[#999999]">Mã: {lastOrder.id}</p>
-          <p className="text-xs text-slate-400 dark:text-[#808080]">{formatDateTime(lastOrder.date)}</p>
+      <div className="space-y-4 text-base">
+        <div className="text-center border-b pb-3 dark:border-slate-700">
+          <p className="font-extrabold text-lg text-slate-900 dark:text-[#e5e5e5] tracking-wide uppercase">HÓA ĐƠN BÁN HÀNG</p>
+          <p className="text-sm mt-1 font-semibold text-slate-600 dark:text-[#999999]">Mã: {lastOrder.id}</p>
+          <p className="text-sm text-slate-500 dark:text-[#808080]">{formatDateTime(lastOrder.date)}</p>
         </div>
-        <div className="border-b border-t border-slate-200 py-2 dark:border-[#333333]">
-          <div className="mb-1 grid grid-cols-4 gap-1 text-xs font-bold text-slate-500 dark:text-[#999999]">
+        <div className="border-t border-b py-3 dark:border-slate-700">
+          <div className="mb-2 grid grid-cols-4 gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#999999]">
             <span>Sản phẩm</span>
             <span className="text-center">SL</span>
-            <span className="text-right">Đơn giá</span>
+            <span className="text-center">ĐVT</span>
             <span className="text-right">Thành tiền</span>
           </div>
           {lastOrder.items.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-4 gap-1 py-0.5 text-xs text-slate-700 dark:text-[#b3b3b3]">
-              <span className="truncate">{item.name}</span>
-              <span className="text-center">
-                {item.quantity} {item.displayUnit || item.selectedUnit || item.unit || ''}
-              </span>
-              <span className="text-right">{formatCurrency(item.price)}</span>
-              <span className="text-right font-medium">
+            <div key={idx} className="grid grid-cols-4 gap-2 py-1.5 text-sm text-slate-700 dark:text-[#b3b3b3] border-b border-slate-100 dark:border-slate-800 last:border-0">
+              <span className="font-medium">{item.name}</span>
+              <span className="text-center font-semibold">{item.quantity}</span>
+              <span className="text-center">{cleanUnit(item.displayUnit || item.selectedUnit || item.unit || '')}</span>
+              <span className="text-right font-bold text-slate-900 dark:text-[#e5e5e5]">
                 {formatCurrency(item.price * item.quantity)}
               </span>
             </div>
           ))}
         </div>
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-slate-500 dark:text-[#999999]">
-            <span>Tạm tính</span>
-            <span>{formatCurrency(lastOrder.subtotal)}</span>
+        <div className="space-y-2 bg-slate-50 p-4 rounded-lg dark:bg-[#1a1a1a]/50">
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-600 dark:text-[#999999]">Tạm tính</span>
+            <span className="font-semibold">{formatCurrency(lastOrder.subtotal)}</span>
           </div>
           {lastOrder.discount > 0 && (
-            <div className="flex justify-between text-xs text-emerald-600">
-              <span>Giảm giá {lastOrder.discountPercent || ''}%</span>
+            <div className="flex justify-between text-sm text-emerald-600 font-medium">
+              <span>Giảm giá</span>
               <span>-{formatCurrency(lastOrder.discount)}</span>
             </div>
           )}
-          <div className="flex justify-between border-t border-slate-200 pt-1 font-bold text-[#004785] dark:border-[#333333]">
-            <span>TỔNG CỘNG</span>
-            <span>{formatCurrency(lastOrder.total)}</span>
+          <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+            <span className="font-bold text-base text-slate-900 dark:text-[#e5e5e5]">TỔNG CỘNG</span>
+            <span className="font-extrabold text-lg text-[#004785]">{formatCurrency(lastOrder.total)}</span>
           </div>
         </div>
-        <div className="space-y-1 rounded-lg bg-slate-50 p-3 text-xs dark:bg-[#1a1a1a]/50">
+        <div className="space-y-2 rounded-lg bg-slate-50 p-4 text-sm dark:bg-[#1a1a1a]/50">
           <div className="flex justify-between">
-            <span>Khách hàng:</span>
-            <span className="font-medium">{lastOrder.customer}</span>
+            <span className="text-slate-600 dark:text-[#999999]">Khách hàng:</span>
+            <span className="font-semibold">{lastOrder.customer}</span>
           </div>
           {lastOrder.payLines.map((pl, i) => (
             <div key={i} className="flex justify-between">
               <span>{pl.method}:</span>
-              <span className="font-medium">{formatCurrency(pl.amount)}</span>
+              <span className="font-semibold">{formatCurrency(pl.amount)}</span>
             </div>
           ))}
-          <div className="flex justify-between border-t border-slate-200 pt-1 dark:border-[#333333]">
+          <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
             <span>Đã thanh toán:</span>
-            <span className="font-bold text-green-600">{formatCurrency(lastOrder.totalPaid)}</span>
+            <span className="font-bold text-green-600 text-base">{formatCurrency(lastOrder.totalPaid)}</span>
           </div>
           {lastOrder.change > 0 && (
             <div className="flex justify-between">
@@ -213,7 +216,7 @@ const ReceiptModal = ({ isOpen, onClose, lastOrder }) => (
             </div>
           )}
         </div>
-        <p className="text-center text-xs text-slate-400 dark:text-[#808080]">Cảm ơn quý khách!</p>
+        <p className="text-center text-sm text-slate-400 dark:text-[#808080] italic">Cảm ơn quý khách!</p>
       </div>
     )}
   </Modal>

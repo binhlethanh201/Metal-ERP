@@ -7,6 +7,9 @@ import { useState, useCallback, useEffect } from 'react';
 
 const CART_STORAGE_KEY = 'pos_cart_items';
 
+/** Helper: trim tiền tố số ở đầu tên đơn vị (VD: "1 Bộ" → "Bộ", "2 Thùng" → "Thùng") */
+const trimUnitPrefix = (name) => name ? name.replace(/^[\d]+\s+/g, '').trim() : '';
+
 /**
  * Helper: Tính productId gốc từ item.id (cắt phần "-unitName" nếu có)
  */
@@ -66,12 +69,13 @@ export const usePosCart = (initialItems = []) => {
       const price = selectedUnit?.price ?? product.price;
 
       // Tạo displayUnit string
-      const baseUnit = product.unit || 'Cái';
+      const baseUnit = trimUnitPrefix(product.unit || 'Cái');
+      const cleanedUnitName = trimUnitPrefix(unitName);
       let displayUnit;
-      if (convertValue === 1) displayUnit = unitName;
+      if (convertValue === 1) displayUnit = cleanedUnitName;
       else if (convertValue >= 1)
-        displayUnit = `${unitName} (×${convertValue})`; // Thùng (×12)
-      else displayUnit = `${unitName} (1/${Math.round(1 / convertValue)} ${baseUnit})`; // Mét (1/100 Cuộn)
+        displayUnit = `${cleanedUnitName} (×${convertValue})`;
+      else displayUnit = `${cleanedUnitName} (1/${Math.round(1 / convertValue)} ${baseUnit})`;
 
       // Lấy sellableQuantity (tồn khả dụng bán = tổng tồn - warranty)
       const baseStock = product.stock ?? product.availableStock ?? 0;
@@ -102,7 +106,7 @@ export const usePosCart = (initialItems = []) => {
           id: itemId,
           quantity: 1,
           price, // Giá theo đơn vị đã chọn
-          selectedUnit: unitName,
+          selectedUnit: cleanedUnitName,
           convertValue,
           displayUnit,
           baseUnit,
@@ -126,8 +130,9 @@ export const usePosCart = (initialItems = []) => {
       const unitName = selectedUnit?.name || product.unit || 'Cái';
       const convertValue = selectedUnit?.convertValue || 1;
       const price = selectedUnit?.price ?? product.price;
-      const baseUnit = product.unit || 'Cái';
+      const baseUnit = trimUnitPrefix(product.unit || 'Cái');
       const baseStock = product.stock ?? product.availableStock ?? 0;
+      const cleanedUnitName = trimUnitPrefix(unitName);
 
       if (existed) {
         // Nếu đã tồn tại, cập nhật quantity về giá trị mới (thay vì cộng dồn)
@@ -141,9 +146,9 @@ export const usePosCart = (initialItems = []) => {
 
       // Tạo mới với quantity được chỉ định
       let displayUnit;
-      if (convertValue === 1) displayUnit = unitName;
-      else if (convertValue >= 1) displayUnit = `${unitName} (×${convertValue})`;
-      else displayUnit = `${unitName} (1/${Math.round(1 / convertValue)} ${baseUnit})`;
+      if (convertValue === 1) displayUnit = cleanedUnitName;
+      else if (convertValue >= 1) displayUnit = `${cleanedUnitName} (×${convertValue})`;
+      else displayUnit = `${cleanedUnitName} (1/${Math.round(1 / convertValue)} ${baseUnit})`;
 
       return [
         ...prev,
@@ -153,7 +158,7 @@ export const usePosCart = (initialItems = []) => {
           id: itemId,
           quantity: quantity,
           price,
-          selectedUnit: unitName,
+          selectedUnit: cleanedUnitName,
           convertValue,
           displayUnit,
           baseUnit,
