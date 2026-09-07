@@ -50,8 +50,8 @@ const ProductCard = ({
           </div>
         )}
         <div className="flex min-w-0 flex-1 items-center justify-between gap-2 pr-3">
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-slate-800 dark:text-[#e5e5e5]">{product.name}</h3>
+          <div className="min-w-0 break-words">
+            <h3 className="text-sm font-semibold leading-tight text-slate-800 dark:text-[#e5e5e5] break-all">{product.name}</h3>
             <p className="mt-0.5 text-xs text-slate-400 dark:text-[#808080]">{product.sku}</p>
             <div className="mt-1 flex items-center gap-2">
               <span
@@ -115,8 +115,8 @@ const ProductCard = ({
         </span>
       )}
       <div className="flex h-[180px] flex-col justify-between p-4">
-        <div>
-          <h3 className="line-clamp-2 min-h-[48px] text-[16px] font-semibold leading-6 text-slate-800 dark:text-[#e5e5e5]">
+        <div className="break-words min-h-[48px]">
+          <h3 className="text-[16px] font-semibold leading-snug text-slate-800 dark:text-[#e5e5e5] break-all">
             {product.name}
           </h3>
         </div>
