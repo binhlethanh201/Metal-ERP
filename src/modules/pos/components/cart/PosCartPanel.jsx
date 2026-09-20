@@ -1,8 +1,13 @@
 /** Panel giỏ hàng POS - Danh sách item + số lượng + chiết khấu từng sản phẩm + tạm tính/giảm giá/tổng + nút Thanh toán/Lưu nháp. */
+import { useEffect, useRef } from 'react';
 import Icon from '../../../../shared/components/Icon';
 const formatCurrency = (v) => `${Math.max(0, v).toLocaleString('vi-VN')}đ`;
 
-const DiscountInput = ({ value, onChange, id }) => {
+const DiscountInput = ({ value, onChange, id, item }) => {
+  const lineTotal = item.price * item.quantity;
+  const prevCustomTotal = item.customTotal || 0;
+  const prevDiscountPercent = item.discountPercent || 0;
+
   return (
     <div className="flex flex-col items-center gap-0.5">
       <span className="text-[9px] font-medium text-slate-400 dark:text-[#666]">Chiết khấu (%)</span>
@@ -14,7 +19,19 @@ const DiscountInput = ({ value, onChange, id }) => {
         placeholder="0"
         onChange={(e) => {
           const numVal = Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0));
-          onChange(id, numVal);
+          let newCustomTotal;
+          // When discount becomes 0%, reset to base lineTotal
+          if (numVal === 0) {
+            newCustomTotal = lineTotal;
+          } else if (prevCustomTotal > 0) {
+            // Scale from previous effective total (user had customized total before)
+            const basePrice = prevCustomTotal / Math.max(0.001, 1 - prevDiscountPercent / 100);
+            newCustomTotal = Math.round(basePrice * (1 - numVal / 100));
+          } else {
+            // Standard calculation from base
+            newCustomTotal = Math.round(lineTotal * (1 - numVal / 100));
+          }
+          onChange(id, numVal, newCustomTotal);
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.currentTarget.blur();
@@ -25,10 +42,30 @@ const DiscountInput = ({ value, onChange, id }) => {
   );
 };
 
-const CartItemRow = ({ item, onQtyChange, onRemoveItem, onDiscountChange }) => {
+const handleTotalChange = (item, newTotalRaw) => {
+  const lineTotal = item.price * item.quantity;
+  const newTotal = Math.max(0, parseFloat(newTotalRaw) || 0);
+
+  let calculatedDiscountPercent = 0;
+  if (newTotal < lineTotal) {
+    calculatedDiscountPercent = ((lineTotal - newTotal) / lineTotal) * 100;
+  } else {
+    // newTotal >= lineTotal → no discount, set to 0
+    calculatedDiscountPercent = 0;
+  }
+
+  return { customTotal: newTotal, calculatedDiscountPercent };
+};
+
+const CartItemRow = ({ item, onQtyChange, onRemoveItem, onDiscountChange, onTotalChange }) => {
   const discountPercent = item.discountPercent || 0;
   const lineTotal = item.price * item.quantity;
-  const finalLineTotal = lineTotal * (1 - discountPercent / 100);
+  const rawValueRef = useRef(lineTotal.toString());
+
+  // Reset rawValueRef when item price/qty change externally
+  useEffect(() => {
+    rawValueRef.current = (item.price * item.quantity).toString();
+  }, [item.price, item.quantity]);
 
   return (
     <div className="flex items-center gap-x-2">
@@ -47,12 +84,6 @@ const CartItemRow = ({ item, onQtyChange, onRemoveItem, onDiscountChange }) => {
           <h5 className="truncate text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">
             {item.name}
           </h5>
-          <p className="mt-0.5 whitespace-nowrap text-base font-black text-[#004785]">
-            {formatCurrency(item.price)}
-            <span className="ml-1 text-xs font-medium text-slate-500 dark:text-[#999999]">
-              / {item.displayUnit || item.selectedUnit || 'Cái'}
-            </span>
-          </p>
           
           {/* Discount badge */}
           {discountPercent > 0 && (
@@ -102,16 +133,51 @@ const CartItemRow = ({ item, onQtyChange, onRemoveItem, onDiscountChange }) => {
       {/* Discount Input */}
       <DiscountInput 
         id={item.id}
+        item={item}
         value={discountPercent} 
-        onChange={onDiscountChange} 
+        onChange={(itemId, discountPercent, newCustomTotal) => {
+          window.dispatchEvent(new CustomEvent('cart:discount', { detail: { itemId, discountPercent, customTotal: newCustomTotal } }));
+        }} 
       />
 
-      {/* Thành tiền */}
-      <div className="flex min-w-[90px] flex-col items-end">
+      {/* Thành tiền - Editable */}
+      <div className="flex min-w-[100px] flex-col items-end">
         <span className="text-[9px] font-medium text-slate-400 dark:text-[#666]">Thành tiền</span>
-        <span className="text-sm font-bold text-[#004785]">
-          {formatCurrency(finalLineTotal)}
-        </span>
+        <input
+          type="text"
+          defaultValue={lineTotal.toLocaleString('vi-VN')}
+          onChange={(e) => {
+            const selEnd = e.target.selectionEnd;
+            const numStr = e.target.value.replace(/[^0-9]/g, '');
+            rawValueRef.current = numStr;
+            e.target.value = parseInt(numStr || 0).toLocaleString('vi-VN');
+            if (!numStr) return;
+            const { customTotal, calculatedDiscountPercent } = handleTotalChange(item, numStr);
+            const roundedDiscount = Math.round(calculatedDiscountPercent * 100) / 100;
+            window.dispatchEvent(new CustomEvent('cart:discount', { detail: { itemId: item.id, discountPercent: roundedDiscount, customTotal } }));
+            setTimeout(() => {
+              e.target.setSelectionRange(selEnd || numStr.length, selEnd || numStr.length);
+            }, 0);
+          }}
+          onFocus={(e) => {
+            e.target.select();
+            rawValueRef.current = e.target.value.replace(/[^0-9]/g, '');
+          }}
+          onBlur={(e) => {
+            const numStr = e.target.value.replace(/[^0-9]/g, '');
+            const val = parseInt(numStr || lineTotal, 10);
+            if (isNaN(val) || val <= 0) {
+              rawValueRef.current = lineTotal.toString();
+            }
+            e.target.value = parseInt(rawValueRef.current).toLocaleString('vi-VN');
+            // When blurred back to default, clear customTotal from state
+            const diff = Math.abs(parseInt(rawValueRef.current || 0) - parseInt(lineTotal));
+            if (diff < 1) {
+              window.dispatchEvent(new CustomEvent('cart:discount', { detail: { itemId: item.id, discountPercent: 0, customTotal: 0 } }));
+            }
+          }}
+          className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-right text-sm font-bold text-[#004785] outline-none transition-colors hover:border-slate-200 focus:border-blue-400 focus:bg-white dark:hover:border-[#333] dark:focus:border-blue-500 dark:focus:bg-[#0f0f0f] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
         {discountPercent > 0 && (
           <span className="text-[10px] text-slate-400 line-through">
             ({formatCurrency(lineTotal)})
@@ -182,8 +248,11 @@ const PosCartPanel = ({
             item={item}
             onQtyChange={onQtyChange}
             onRemoveItem={onRemoveItem}
-            onDiscountChange={(itemId, discountPercent) => {
-              window.dispatchEvent(new CustomEvent('cart:discount', { detail: { itemId, discountPercent } }));
+            onDiscountChange={(itemId, discountPercent, newCustomTotal) => {
+              window.dispatchEvent(new CustomEvent('cart:discount', { detail: { itemId, discountPercent, customTotal: newCustomTotal } }));
+            }}
+            onTotalChange={(itemId, newTotal) => {
+              window.dispatchEvent(new CustomEvent('cart:totalChange', { detail: { itemId, newTotal } }));
             }}
           />
         ))}

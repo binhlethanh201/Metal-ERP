@@ -4,7 +4,7 @@
  */
 
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export const CartItem = ({ item, onQuantityChange, onRemove, onDiscountChange }) => {
   const subtotal = item.price * item.quantity;
@@ -21,12 +21,33 @@ export const CartItem = ({ item, onQuantityChange, onRemove, onDiscountChange })
 
   const [isEditingDiscount, setIsEditingDiscount] = useState(false);
   const [discountInput, setDiscountInput] = useState(discountPercent);
+  const rawValueRef = useRef(subtotal.toString());
+
+  // Reset rawValueRef when item price/qty change externally
+  useEffect(() => {
+    rawValueRef.current = subtotal.toString();
+  }, [item.price, item.quantity]);
 
   const handleDiscountSubmit = useCallback(() => {
     const val = Math.min(100, Math.max(0, Number(discountInput) || 0));
-    onDiscountChange?.(item.id, val);
+    // Calculate new customTotal based on PREVIOUS effective total
+    const prevCustomTotal = item.customTotal || 0;
+    const prevDiscountPercent = item.discountPercent || 0;
+    const lineTotal = item.price * item.quantity;
+    let newCustomTotal;
+    if (val === 0) {
+      // Discount = 0%, reset to base price × qty
+      newCustomTotal = lineTotal;
+    } else if (prevCustomTotal > 0 && prevDiscountPercent > 0) {
+      // Scale from previous effective total
+      const basePrice = prevCustomTotal / Math.max(0.001, 1 - prevDiscountPercent / 100);
+      newCustomTotal = Math.round(basePrice * (1 - val / 100));
+    } else {
+      newCustomTotal = Math.round(lineTotal * (1 - val / 100));
+    }
+    onDiscountChange?.(item.id, val, newCustomTotal);
     setIsEditingDiscount(false);
-  }, [discountInput, item.id, onDiscountChange]);
+  }, [discountInput, item.id, item.price, item.quantity, item.customTotal]);
 
   const handleDiscountKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
@@ -38,15 +59,28 @@ export const CartItem = ({ item, onQuantityChange, onRemove, onDiscountChange })
     }
   }, [handleDiscountSubmit, discountPercent]);
 
+  const handleTotalChange = (newTotalRaw, newTotalVal) => {
+    const lineTotal = item.price * item.quantity;
+    const newTotal = Math.max(0, parseFloat(newTotalRaw) || 0);
+    const customTotal = newTotalVal != null ? newTotalVal : newTotal;
+
+    let calculatedDiscountPercent = 0;
+    if (newTotal < lineTotal) {
+      calculatedDiscountPercent = ((lineTotal - newTotal) / lineTotal) * 100;
+    } else {
+      // newTotal >= lineTotal → no discount, set to 0
+      calculatedDiscountPercent = 0;
+    }
+
+    const roundedDiscount = Math.round(calculatedDiscountPercent * 100) / 100;
+    onDiscountChange?.(item.id, roundedDiscount, customTotal);
+  };
+
   return (
     <div className="flex gap-3 rounded-lg bg-slate-50 p-3 dark:bg-[#1a1a1a]/50">
       {/* Product Info */}
       <div className="flex-1">
         <h4 className="text-sm font-bold text-slate-900 dark:text-[#e5e5e5]">{item.name}</h4>
-        <p className="text-xs text-slate-500 dark:text-[#999999]">
-          {formatCurrency(item.price)}
-          {displayUnit && <span className="ml-1 text-slate-400 dark:text-[#808080]">/ {displayUnit}</span>}
-        </p>
 
         {/* Discount info */}
         {discountPercent > 0 && (
@@ -60,9 +94,49 @@ export const CartItem = ({ item, onQuantityChange, onRemove, onDiscountChange })
           </div>
         )}
 
-        <p className="text-xs font-semibold text-[#004785]">
-          Thành tiền: {formatCurrency(finalSubtotal)}
-        </p>
+        {/* Thành tiền - Editable */}
+        <div className="flex flex-col items-start gap-0.5">
+          <span className="text-[9px] font-medium text-slate-400 dark:text-[#666]">Thành tiền</span>
+          <input
+            type="text"
+            defaultValue={subtotal.toLocaleString('vi-VN')}
+            onChange={(e) => {
+              const selEnd = e.target.selectionEnd;
+              const numStr = e.target.value.replace(/[^0-9]/g, '');
+              rawValueRef.current = numStr;
+              e.target.value = parseInt(numStr || 0).toLocaleString('vi-VN');
+              if (!numStr) return;
+              const numVal = parseInt(numStr, 10);
+              handleTotalChange(numStr, numVal);
+              setTimeout(() => {
+                e.target.setSelectionRange(selEnd || numStr.length, selEnd || numStr.length);
+              }, 0);
+            }}
+            onFocus={(e) => {
+              e.target.select();
+              rawValueRef.current = e.target.value.replace(/[^0-9]/g, '');
+            }}
+            onBlur={(e) => {
+              const numStr = e.target.value.replace(/[^0-9]/g, '');
+              const val = parseInt(numStr || subtotal, 10);
+              if (isNaN(val) || val <= 0) {
+                rawValueRef.current = subtotal.toString();
+              }
+              e.target.value = parseInt(rawValueRef.current).toLocaleString('vi-VN');
+              // When blurred back to default, clear customTotal from state
+              const diff = Math.abs(parseInt(rawValueRef.current || 0) - parseInt(subtotal));
+              if (diff < 1) {
+                onDiscountChange?.(item.id, 0, 0);
+              }
+            }}
+            className="w-32 rounded border border-transparent bg-transparent px-1 py-0.5 text-left text-xs font-semibold text-[#004785] outline-none transition-colors hover:border-slate-200 focus:border-blue-400 focus:bg-white dark:hover:border-[#333] dark:focus:border-blue-500 dark:focus:bg-[#0f0f0f] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
+          {discountPercent > 0 && (
+            <span className="text-[9px] text-slate-400 line-through">
+              ({formatCurrency(subtotal)})
+            </span>
+          )}
+        </div>
 
         {/* Stock warning */}
         {item.convertValue !== 1 && (

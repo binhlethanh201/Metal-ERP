@@ -196,9 +196,14 @@ export const usePosCart = (initialItems = []) => {
       const maxQty = Math.floor(remainingStock / convertValue);
 
       return prev
-        .map((it) =>
-          it.id === id ? { ...it, quantity: Math.max(1, Math.min(maxQty, newQty)) } : it
-        )
+        .map((it) => {
+          if (it.id === id) {
+            const updated = { ...it, quantity: Math.max(1, Math.min(maxQty, newQty)) };
+            delete updated.customTotal;
+            return updated;
+          }
+          return it;
+        })
         .filter((it) => it.quantity > 0);
     });
   }, []);
@@ -233,9 +238,14 @@ export const usePosCart = (initialItems = []) => {
       const maxQty = Math.floor(remainingStock / convertValue);
 
       return prev
-        .map((it) =>
-          it.id === id ? { ...it, quantity: Math.max(1, Math.min(maxQty, newQty)) } : it
-        )
+        .map((it) => {
+          if (it.id === id) {
+            const updated = { ...it, quantity: Math.max(1, Math.min(maxQty, newQty)) };
+            delete updated.customTotal;
+            return updated;
+          }
+          return it;
+        })
         .filter((it) => it.quantity > 0);
     });
   }, []);
@@ -266,13 +276,28 @@ export const usePosCart = (initialItems = []) => {
     localStorage.removeItem(CART_STORAGE_KEY);
   }, []);
 
-  // Listen for discount changes triggered from PosCartPanel UI
+  // Listen for discount/total changes triggered from PosCartPanel UI
   useEffect(() => {
     const handleDiscountChange = (e) => {
       setCart((prev) =>
-        prev.map((item) =>
-          item.id === e.detail.itemId ? { ...item, discountPercent: e.detail.discountPercent } : item
-        )
+        prev.map((item) => {
+          if (item.id !== e.detail.itemId) return item;
+          const updated = { ...item };
+
+          // Always update discount percent
+          if (e.detail.discountPercent != null) {
+            updated.discountPercent = e.detail.discountPercent;
+          }
+
+          // ALWAYS persist customTotal when sent by UI (covers both Total input AND Discount input cases)
+          if (e.detail.customTotal > 0) {
+            updated.customTotal = e.detail.customTotal;
+          } else if (e.detail.customTotal === 0 || e.detail.customTotal == null) {
+            delete updated.customTotal;
+          }
+
+          return updated;
+        })
       );
     };
     window.addEventListener('cart:discount', handleDiscountChange);
@@ -330,6 +355,10 @@ export const usePosCart = (initialItems = []) => {
   }, []);
 
   const subtotal = cart.reduce((sum, item) => {
+    // Use customTotal if user explicitly changed "Thành tiền", otherwise calculate normally
+    if (item.customTotal != null && item.customTotal > 0) {
+      return sum + item.customTotal;
+    }
     const lineTotal = item.price * item.quantity;
     const discountPercent = item.discountPercent || 0;
     return sum + lineTotal * (1 - discountPercent / 100);
